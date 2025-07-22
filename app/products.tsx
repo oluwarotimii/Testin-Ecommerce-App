@@ -1,101 +1,54 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, TextInput } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, TextInput, ActivityIndicator } from 'react-native';
 import { Search, Filter, Grid3x3 as Grid3X3, List, Star, Heart } from 'lucide-react-native';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'expo-router';
+import apiService from '@/services/apiService';
 
 export default function ProductsScreen() {
   const router = useRouter();
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [searchQuery, setSearchQuery] = useState('');
+  const [products, setProducts] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const products = [
-    {
-      id: 1,
-      name: 'iPhone 15 Pro Max',
-      price: 1199,
-      originalPrice: 1299,
-      rating: 4.8,
-      reviews: 1250,
-      image: 'https://images.pexels.com/photos/788946/pexels-photo-788946.jpeg?auto=compress&cs=tinysrgb&w=400',
-      discount: 8,
-      inStock: true,
-      category: 'Electronics'
-    },
-    {
-      id: 2,
-      name: 'MacBook Air M3',
-      price: 1299,
-      originalPrice: null,
-      rating: 4.9,
-      reviews: 890,
-      image: 'https://images.pexels.com/photos/205421/pexels-photo-205421.jpeg?auto=compress&cs=tinysrgb&w=400',
-      discount: null,
-      inStock: true,
-      category: 'Electronics'
-    },
-    {
-      id: 3,
-      name: 'AirPods Pro 2nd Gen',
-      price: 249,
-      originalPrice: 279,
-      rating: 4.7,
-      reviews: 567,
-      image: 'https://images.pexels.com/photos/3780681/pexels-photo-3780681.jpeg?auto=compress&cs=tinysrgb&w=400',
-      discount: 11,
-      inStock: true,
-      category: 'Electronics'
-    },
-    {
-      id: 4,
-      name: 'iPad Pro 12.9"',
-      price: 1099,
-      originalPrice: null,
-      rating: 4.8,
-      reviews: 432,
-      image: 'https://images.pexels.com/photos/1334597/pexels-photo-1334597.jpeg?auto=compress&cs=tinysrgb&w=400',
-      discount: null,
-      inStock: false,
-      category: 'Electronics'
-    },
-    {
-      id: 5,
-      name: 'Apple Watch Series 9',
-      price: 399,
-      originalPrice: 429,
-      rating: 4.6,
-      reviews: 789,
-      image: 'https://images.pexels.com/photos/437037/pexels-photo-437037.jpeg?auto=compress&cs=tinysrgb&w=400',
-      discount: 7,
-      inStock: true,
-      category: 'Electronics'
-    },
-    {
-      id: 6,
-      name: 'Sony WH-1000XM5',
-      price: 349,
-      originalPrice: 399,
-      rating: 4.5,
-      reviews: 234,
-      image: 'https://images.pexels.com/photos/3394650/pexels-photo-3394650.jpeg?auto=compress&cs=tinysrgb&w=400',
-      discount: 13,
-      inStock: true,
-      category: 'Electronics'
-    },
-  ];
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        setLoading(true);
+        const response = await apiService.get('products');
+        if (response.success) {
+          setProducts(response.data);
+        } else {
+          setError(response.error || 'Failed to fetch products');
+        }
+      } catch (err: any) {
+        setError(err.message || 'An unexpected error occurred');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProducts();
+  }, []);
+
+  const filteredProducts = products.filter(product =>
+    product.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   const renderGridView = () => (
     <View style={styles.gridContainer}>
-      {products.map((product) => (
+      {filteredProducts.map((product) => (
         <TouchableOpacity 
-          key={product.id} 
+          key={product.product_id} 
           style={styles.gridItem}
-          onPress={() => router.push(`/product/${product.id}`)}
+          onPress={() => router.push(`/product/${product.product_id}`)}
         >
           <View style={styles.imageContainer}>
-            <Image source={{ uri: product.image }} style={styles.productImage} />
-            {product.discount && (
+            <Image source={{ uri: product.thumb }} style={styles.productImage} />
+            {product.special && (
               <View style={styles.discountBadge}>
-                <Text style={styles.discountText}>-{product.discount}%</Text>
+                <Text style={styles.discountText}>-{Math.round(((product.price - product.special) / product.price) * 100)}%</Text>
               </View>
             )}
             <TouchableOpacity style={styles.wishlistButton}>
@@ -106,16 +59,16 @@ export default function ProductsScreen() {
             <Text style={styles.productName} numberOfLines={2}>{product.name}</Text>
             <View style={styles.ratingContainer}>
               <Star size={12} color="#FFD700" fill="#FFD700" />
-              <Text style={styles.ratingText}>{product.rating}</Text>
-              <Text style={styles.reviewsText}>({product.reviews})</Text>
+              <Text style={styles.ratingText}>{product.rating || 0}</Text>
+              <Text style={styles.reviewsText}>({product.reviews || 0})</Text>
             </View>
             <View style={styles.priceContainer}>
-              <Text style={styles.price}>${product.price}</Text>
-              {product.originalPrice && (
-                <Text style={styles.originalPrice}>${product.originalPrice}</Text>
+              <Text style={styles.price}>{product.special ? `${product.special}` : `${product.price}`}</Text>
+              {product.special && (
+                <Text style={styles.originalPrice}>${product.price}</Text>
               )}
             </View>
-            {!product.inStock && (
+            {!product.stock_status && (
               <Text style={styles.outOfStock}>Out of Stock</Text>
             )}
           </View>
@@ -126,17 +79,17 @@ export default function ProductsScreen() {
 
   const renderListView = () => (
     <View style={styles.listContainer}>
-      {products.map((product) => (
+      {filteredProducts.map((product) => (
         <TouchableOpacity 
-          key={product.id} 
+          key={product.product_id} 
           style={styles.listItem}
-          onPress={() => router.push(`/product/${product.id}`)}
+          onPress={() => router.push(`/product/${product.product_id}`)}
         >
           <View style={styles.listImageContainer}>
-            <Image source={{ uri: product.image }} style={styles.listImage} />
-            {product.discount && (
+            <Image source={{ uri: product.thumb }} style={styles.listImage} />
+            {product.special && (
               <View style={styles.listDiscountBadge}>
-                <Text style={styles.discountText}>-{product.discount}%</Text>
+                <Text style={styles.discountText}>-{Math.round(((product.price - product.special) / product.price) * 100)}%</Text>
               </View>
             )}
           </View>
@@ -145,16 +98,16 @@ export default function ProductsScreen() {
             <Text style={styles.categoryText}>{product.category}</Text>
             <View style={styles.ratingContainer}>
               <Star size={12} color="#FFD700" fill="#FFD700" />
-              <Text style={styles.ratingText}>{product.rating}</Text>
-              <Text style={styles.reviewsText}>({product.reviews})</Text>
+              <Text style={styles.ratingText}>{product.rating || 0}</Text>
+              <Text style={styles.reviewsText}>({product.reviews || 0})</Text>
             </View>
             <View style={styles.priceContainer}>
-              <Text style={styles.price}>${product.price}</Text>
-              {product.originalPrice && (
-                <Text style={styles.originalPrice}>${product.originalPrice}</Text>
+              <Text style={styles.price}>{product.special ? `${product.special}` : `${product.price}`}</Text>
+              {product.special && (
+                <Text style={styles.originalPrice}>${product.price}</Text>
               )}
             </View>
-            {!product.inStock && (
+            {!product.stock_status && (
               <Text style={styles.outOfStock}>Out of Stock</Text>
             )}
           </View>
@@ -206,7 +159,13 @@ export default function ProductsScreen() {
 
       {/* Results Count */}
       <View style={styles.resultsContainer}>
-        <Text style={styles.resultsText}>{products.length} products found</Text>
+        {loading ? (
+          <ActivityIndicator size="small" color="#007AFF" />
+        ) : error ? (
+          <Text style={styles.errorText}>Error: {error}</Text>
+        ) : (
+          <Text style={styles.resultsText}>{filteredProducts.length} products found</Text>
+        )}
       </View>
 
       {/* Products */}
@@ -215,7 +174,15 @@ export default function ProductsScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
-        {viewMode === 'grid' ? renderGridView() : renderListView()}
+        {loading ? (
+          <ActivityIndicator size="large" color="#007AFF" style={styles.loadingIndicator} />
+        ) : error ? (
+          <Text style={styles.errorText}>Error loading products: {error}</Text>
+        ) : filteredProducts.length === 0 ? (
+          <Text style={styles.noProductsText}>No products found.</Text>
+        ) : (
+          viewMode === 'grid' ? renderGridView() : renderListView()
+        )}
       </ScrollView>
     </View>
   );
@@ -424,5 +391,20 @@ const styles = StyleSheet.create({
     padding: 12,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  loadingIndicator: {
+    marginTop: 50,
+  },
+  errorText: {
+    textAlign: 'center',
+    color: 'red',
+    marginTop: 20,
+    fontSize: 16,
+  },
+  noProductsText: {
+    textAlign: 'center',
+    color: '#8E8E93',
+    marginTop: 20,
+    fontSize: 16,
   },
 });

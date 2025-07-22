@@ -1,5 +1,5 @@
 import { View, StyleSheet, ScrollView, Dimensions } from 'react-native';
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import CarouselItem from './CarouselItem';
 import { useThemeColors } from '@/hooks/useColorScheme';
 
@@ -25,12 +25,39 @@ export default function InstagramCarousel({ data, onItemPress }: InstagramCarous
   const colors = useThemeColors();
   const [activeIndex, setActiveIndex] = useState(0);
   const scrollViewRef = useRef<ScrollView>(null);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const handleScroll = (event: any) => {
     const scrollPosition = event.nativeEvent.contentOffset.x;
     const index = Math.round(scrollPosition / (ITEM_WIDTH + 16));
     setActiveIndex(index);
   };
+
+  const startAutoPlay = () => {
+    intervalRef.current = setInterval(() => {
+      setActiveIndex(prevIndex => {
+        const nextIndex = prevIndex === data.length - 1 ? 0 : prevIndex + 1;
+        scrollViewRef.current?.scrollTo({ x: nextIndex * (ITEM_WIDTH + 16), animated: true });
+        return nextIndex;
+      });
+    }, 3000);
+  };
+
+  const stopAutoPlay = () => {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+    }
+  };
+
+  useEffect(() => {
+    if (data.length > 1) {
+      startAutoPlay();
+    }
+
+    return () => {
+      stopAutoPlay();
+    };
+  }, [data.length]);
 
   if (!data || data.length === 0) {
     return null;
@@ -44,6 +71,8 @@ export default function InstagramCarousel({ data, onItemPress }: InstagramCarous
         pagingEnabled={false}
         showsHorizontalScrollIndicator={false}
         onMomentumScrollEnd={handleScroll}
+        onScrollBeginDrag={stopAutoPlay}
+        onScrollEndDrag={startAutoPlay}
         decelerationRate="fast"
         snapToInterval={ITEM_WIDTH + 16}
         snapToAlignment="start"
