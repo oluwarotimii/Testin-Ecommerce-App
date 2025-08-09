@@ -6,11 +6,21 @@ export default function SplashScreen() {
   const router = useRouter();
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      router.replace('/welcome');
-    }, 3000);
+    const checkSessionAndNavigate = async () => {
+      try {
+        const response = await apiService.getAccountDetails();
+        if (response.success) {
+          router.replace('/(tabs)'); // User is logged in, go to main app
+        } else {
+          router.replace('/welcome'); // No valid session, go to welcome/login
+        }
+      } catch (error) {
+        console.error("Splash screen session check failed:", error);
+        router.replace('/welcome'); // Error, assume no session and go to welcome
+      }
+    };
 
-    return () => clearTimeout(timer);
+    checkSessionAndNavigate();
   }, []);
 
   return (

@@ -5,87 +5,103 @@ import { useRouter } from 'expo-router';
 
 export default function CheckoutScreen() {
   const router = useRouter();
-  const [selectedAddress, setSelectedAddress] = useState(0);
-  const [selectedPayment, setSelectedPayment] = useState(0);
-  const [selectedShipping, setSelectedShipping] = useState(0);
-  const [promoCode, setPromoCode] = useState('');
+  const [addresses, setAddresses] = useState<any[]>([]);
+  const [paymentMethods, setPaymentMethods] = useState<any[]>([]);
+  const [shippingMethods, setShippingMethods] = useState<any[]>([]);
+  const [cartItems, setCartItems] = useState<any[]>([]);
 
-  const addresses = [
-    {
-      id: 1,
-      name: 'Home',
-      address: '123 Main St, Apt 4B',
-      city: 'New York, NY 10001',
-      isDefault: true
-    },
-    {
-      id: 2,
-      name: 'Work',
-      address: '456 Business Ave, Suite 200',
-      city: 'New York, NY 10002',
-      isDefault: false
-    },
-  ];
+  const [loadingAddresses, setLoadingAddresses] = useState(true);
+  const [loadingPaymentMethods, setLoadingPaymentMethods] = useState(true);
+  const [loadingShippingMethods, setLoadingShippingMethods] = useState(true);
+  const [loadingCart, setLoadingCart] = useState(true);
+  const [placingOrder, setPlacingOrder] = useState(false);
 
-  const paymentMethods = [
-    {
-      id: 1,
-      type: 'card',
-      name: 'Visa ending in 1234',
-      icon: '💳',
-      isDefault: true
-    },
-    {
-      id: 2,
-      type: 'card',
-      name: 'Mastercard ending in 5678',
-      icon: '💳',
-      isDefault: false
-    },
-    {
-      id: 3,
-      type: 'paypal',
-      name: 'PayPal',
-      icon: '🅿️',
-      isDefault: false
-    },
-  ];
+  const fetchCheckoutData = useCallback(async () => {
+    try {
+      setLoadingAddresses(true);
+      const addressResponse = await apiService.getAddressBook();
+      if (addressResponse.success && addressResponse.addresses) {
+        setAddresses(addressResponse.addresses);
+        if (addressResponse.addresses.length > 0) {
+          setSelectedAddress(0);
+        }
+      }
+    } catch (error) {
+      console.error("Failed to fetch addresses:", error);
+    } finally {
+      setLoadingAddresses(false);
+    }
 
-  const shippingMethods = [
-    {
-      id: 1,
-      name: 'Standard Shipping',
-      time: '5-7 business days',
-      price: 0,
-      description: 'Free shipping on orders over $50'
-    },
-    {
-      id: 2,
-      name: 'Express Shipping',
-      time: '2-3 business days',
-      price: 9.99,
-      description: 'Faster delivery'
-    },
-    {
-      id: 3,
-      name: 'Next Day Delivery',
-      time: '1 business day',
-      price: 19.99,
-      description: 'Order by 2 PM for next day delivery'
-    },
-  ];
+    try {
+      setLoadingPaymentMethods(true);
+      const paymentResponse = await apiService.getPaymentMethods();
+      if (paymentResponse.success && paymentResponse.payment_methods) {
+        setPaymentMethods(paymentResponse.payment_methods);
+        if (paymentResponse.payment_methods.length > 0) {
+          setSelectedPayment(0);
+        }
+      }
+    } catch (error) {
+      console.error("Failed to fetch payment methods:", error);
+    } finally {
+      setLoadingPaymentMethods(false);
+    }
 
-  const orderSummary = {
-    subtotal: 1547.99,
-    shipping: shippingMethods[selectedShipping].price,
-    tax: 123.84,
-    discount: 0,
-    total: 1671.83 + shippingMethods[selectedShipping].price
-  };
+    try {
+      setLoadingShippingMethods(true);
+      const shippingResponse = await apiService.getShippingMethods();
+      if (shippingResponse.success && shippingResponse.shipping_methods) {
+        setShippingMethods(shippingResponse.shipping_methods);
+        if (shippingResponse.shipping_methods.length > 0) {
+          setSelectedShipping(0);
+        }
+      }
+    } catch (error) {
+      console.error("Failed to fetch shipping methods:", error);
+    } finally {
+      setLoadingShippingMethods(false);
+    }
 
-  const handlePlaceOrder = () => {
-    // TODO: Implement order placement logic
-    router.push('/order-confirmation');
+    try {
+      setLoadingCart(true);
+      const cartResponse = await apiService.getCartContents();
+      if (cartResponse.success && cartResponse.products) {
+        setCartItems(cartResponse.products);
+      }
+    } catch (error) {
+      console.error("Failed to fetch cart contents:", error);
+    } finally {
+      setLoadingCart(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchCheckoutData();
+  }, [fetchCheckoutData]);
+
+  const selectedShippingMethod = shippingMethods[selectedShipping];
+
+  const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  const shippingCost = selectedShippingMethod ? selectedShippingMethod.price : 0;
+  const tax = subtotal * 0.08; // Assuming a fixed 8% tax for now
+  const discount = 0; // Implement promo code logic later
+  const total = subtotal + shippingCost + tax - discount;
+
+  const handlePlaceOrder = async () => {
+    setPlacingOrder(true);
+    try {
+      const response = await apiService.createOrder();
+      if (response.success) {
+        router.push('/order-confirmation');
+      } else {
+        Alert.alert('Order Placement Failed', response.error || 'An error occurred while placing your order.');
+      }
+    } catch (error) {
+      console.error("Order placement error:", error);
+      Alert.alert('Order Placement Error', 'An unexpected error occurred. Please try again.');
+    } finally {
+      setPlacingOrder(false);
+    }
   };
 
   return (

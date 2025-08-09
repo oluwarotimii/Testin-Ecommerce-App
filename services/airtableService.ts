@@ -37,8 +37,8 @@ class AirtableService {
 
   constructor() {
     // TODO: Replace with your actual Airtable credentials
-    this.baseUrl = 'https://api.airtable.com/v0/YOUR_BASE_ID';
-    this.apiKey = 'YOUR_API_KEY';
+    this.baseUrl = 'https://api.airtable.com/v0/YOUR_AIRTABLE_BASE_ID';
+    this.apiKey = 'YOUR_AIRTABLE_API_KEY';
   }
 
   private async makeRequest(endpoint: string, options: RequestInit = {}) {

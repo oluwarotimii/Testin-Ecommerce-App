@@ -2,10 +2,11 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, TextInput,
 import { Search, Filter, Grid3x3 as Grid3X3, List, Star, Heart } from 'lucide-react-native';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'expo-router';
-import apiService from '@/services/apiService';
+import { useAuth } from '@/context/AuthContext';
 
 export default function ProductsScreen() {
   const router = useRouter();
+  const { apiService } = useAuth();
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [searchQuery, setSearchQuery] = useState('');
   const [products, setProducts] = useState<any[]>([]);
@@ -14,9 +15,10 @@ export default function ProductsScreen() {
 
   useEffect(() => {
     const fetchProducts = async () => {
+      if (!apiService) return; // Ensure apiService is available
       try {
         setLoading(true);
-        const response = await apiService.get('products');
+        const response = await apiService.get('index.php?route=api/mobile/products');
         if (response.success) {
           setProducts(response.data);
         } else {
@@ -30,7 +32,7 @@ export default function ProductsScreen() {
     };
 
     fetchProducts();
-  }, []);
+  }, [apiService]);
 
   const filteredProducts = products.filter(product =>
     product.name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -45,7 +47,7 @@ export default function ProductsScreen() {
           onPress={() => router.push(`/product/${product.product_id}`)}
         >
           <View style={styles.imageContainer}>
-            <Image source={{ uri: product.thumb }} style={styles.productImage} />
+            <Image source={{ uri: product.image }} style={styles.productImage} />
             {product.special && (
               <View style={styles.discountBadge}>
                 <Text style={styles.discountText}>-{Math.round(((product.price - product.special) / product.price) * 100)}%</Text>
@@ -86,7 +88,7 @@ export default function ProductsScreen() {
           onPress={() => router.push(`/product/${product.product_id}`)}
         >
           <View style={styles.listImageContainer}>
-            <Image source={{ uri: product.thumb }} style={styles.listImage} />
+            <Image source={{ uri: product.image }} style={styles.listImage} />
             {product.special && (
               <View style={styles.listDiscountBadge}>
                 <Text style={styles.discountText}>-{Math.round(((product.price - product.special) / product.price) * 100)}%</Text>
@@ -111,7 +113,7 @@ export default function ProductsScreen() {
               <Text style={styles.outOfStock}>Out of Stock</Text>
             )}
           </View>
-          <TouchableOpacity style={styles.listWishlistButton}>
+          <TouchableOpacity style={styles.listWishlistButton} onPress={() => console.log('Add/Remove from Wishlist', product.product_id)}>
             <Heart size={20} color="#8E8E93" />
           </TouchableOpacity>
         </TouchableOpacity>

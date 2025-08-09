@@ -1,58 +1,75 @@
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
 import { Minus, Plus, Trash2, ShoppingBag } from 'lucide-react-native';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'expo-router';
+import { useAuth } from '@/context/AuthContext';
 
 export default function CartScreen() {
   const router = useRouter();
-  const [cartItems, setCartItems] = useState([
-    {
-      id: 1,
-      name: 'iPhone 15 Pro',
-      price: 999,
-      quantity: 1,
-      image: 'https://images.pexels.com/photos/788946/pexels-photo-788946.jpeg?auto=compress&cs=tinysrgb&w=400',
-      color: 'Natural Titanium',
-      storage: '128GB'
-    },
-    {
-      id: 2,
-      name: 'AirPods Pro',
-      price: 249,
-      quantity: 2,
-      image: 'https://images.pexels.com/photos/3780681/pexels-photo-3780681.jpeg?auto=compress&cs=tinysrgb&w=400',
-      color: 'White',
-      storage: null
-    },
-    {
-      id: 3,
-      name: 'MacBook Air',
-      price: 1299,
-      quantity: 1,
-      image: 'https://images.pexels.com/photos/205421/pexels-photo-205421.jpeg?auto=compress&cs=tinysrgb&w=400',
-      color: 'Space Gray',
-      storage: '256GB'
-    },
-  ]);
+  const { apiService } = useAuth();
+  const [cartItems, setCartItems] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const updateQuantity = (id: number, change: number) => {
-    setCartItems(items =>
-      items.map(item =>
-        item.id === id
-          ? { ...item, quantity: Math.max(0, item.quantity + change) }
-          : item
-      ).filter(item => item.quantity > 0)
-    );
+  const fetchCartContents = async () => {
+    try {
+      setLoading(true);
+      const response = await apiService.getCartContents();
+      if (response && response.products) {
+        setCartItems(response.products);
+      } else {
+        setCartItems([]);
+      }
+    } catch (error) {
+      console.error("Failed to fetch cart contents:", error);
+      setCartItems([]);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const removeItem = (id: number) => {
-    setCartItems(items => items.filter(item => item.id !== id));
+  useEffect(() => {
+    fetchCartContents();
+  }, []);
+
+  const updateQuantity = async (key: string, change: number) => {
+    const currentItem = cartItems.find(item => item.key === key);
+    if (!currentItem) return;
+
+    const newQuantity = currentItem.quantity + change;
+
+    try {
+      if (newQuantity > 0) {
+        await apiService.updateCart(key, newQuantity);
+      } else {
+        await apiService.removeFromCart(key);
+      }
+      fetchCartContents(); // Re-fetch cart to update UI
+    } catch (error) {
+      console.error("Failed to update cart quantity:", error);
+    }
   };
 
-  const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  const removeItem = async (key: string) => {
+    try {
+      await apiService.removeFromCart(key);
+      fetchCartContents(); // Re-fetch cart to update UI
+    } catch (error) {
+      console.error("Failed to remove item from cart:", error);
+    }
+  };
+
+  const subtotal = cartItems.reduce((sum, item) => sum + (parseFloat(item.price.replace(/[^0-9.-]+/g," ")) * item.quantity), 0);
   const shipping = subtotal > 50 ? 0 : 9.99;
   const tax = subtotal * 0.08;
   const total = subtotal + shipping + tax;
+
+  if (loading) {
+    return (
+      <View style={styles.emptyContainer}>
+        <Text>Loading cart...</Text>
+      </View>
+    );
+  }
 
   if (cartItems.length === 0) {
     return (
@@ -81,34 +98,35 @@ export default function CartScreen() {
       {/* Cart Items */}
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {cartItems.map((item) => (
-          <View key={item.id} style={styles.cartItem}>
+          <View key={item.key} style={styles.cartItem}>
             <Image source={{ uri: item.image }} style={styles.itemImage} />
             <View style={styles.itemDetails}>
               <Text style={styles.itemName}>{item.name}</Text>
               <View style={styles.itemSpecs}>
-                <Text style={styles.specText}>{item.color}</Text>
-                {item.storage && <Text style={styles.specText}>• {item.storage}</Text>}
+                {/* OpenCart API might not return color/storage directly in cart items */}
+                {/* <Text style={styles.specText}>{item.color}</Text>
+                {item.storage && <Text style={styles.specText}>• {item.storage}</Text>} */}
               </View>
               <Text style={styles.itemPrice}>${item.price}</Text>
             </View>
             <View style={styles.itemActions}>
               <TouchableOpacity 
                 style={styles.removeButton}
-                onPress={() => removeItem(item.id)}
+                onPress={() => removeItem(item.key)}
               >
                 <Trash2 size={16} color="#FF3B30" />
               </TouchableOpacity>
               <View style={styles.quantityContainer}>
                 <TouchableOpacity 
                   style={styles.quantityButton}
-                  onPress={() => updateQuantity(item.id, -1)}
+                  onPress={() => updateQuantity(item.key, -1)}
                 >
                   <Minus size={16} color="#007AFF" />
                 </TouchableOpacity>
                 <Text style={styles.quantity}>{item.quantity}</Text>
                 <TouchableOpacity 
                   style={styles.quantityButton}
-                  onPress={() => updateQuantity(item.id, 1)}
+                  onPress={() => updateQuantity(item.key, 1)}
                 >
                   <Plus size={16} color="#007AFF" />
                 </TouchableOpacity>
@@ -127,7 +145,7 @@ export default function CartScreen() {
         <View style={styles.summaryRow}>
           <Text style={styles.summaryLabel}>Shipping</Text>
           <Text style={styles.summaryValue}>
-            {shipping === 0 ? 'Free' : `$${shipping.toFixed(2)}`}
+            {shipping === 0 ? 'Free' : `${shipping.toFixed(2)}`}
           </Text>
         </View>
         <View style={styles.summaryRow}>

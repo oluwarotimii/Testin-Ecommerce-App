@@ -11,7 +11,6 @@ export default function WelcomeScreen() {
         <View style={styles.iconContainer}>
           <ShoppingBag size={80} color="#007AFF" />
         </View>
-        <Text style={styles.title}>Welcome to OpenCart</Text>
         <Text style={styles.title}>Welcome to Techin</Text>
         <Text style={styles.subtitle}>
           Discover cutting-edge technology and enjoy seamless shopping experience

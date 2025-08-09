@@ -119,8 +119,8 @@ export default function RegisterScreen() {
           </TouchableOpacity>
         </View>
 
-        <TouchableOpacity style={styles.registerButton} onPress={handleRegister}>
-          <Text style={styles.registerButtonText}>Create Account</Text>
+        <TouchableOpacity style={styles.registerButton} onPress={handleRegister} disabled={loading}>
+          <Text style={styles.registerButtonText}>{loading ? 'Registering...' : 'Create Account'}</Text>
         </TouchableOpacity>
       </View>
 

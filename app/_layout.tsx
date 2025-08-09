@@ -4,6 +4,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useFrameworkReady } from '@/hooks/useFrameworkReady';
 import notificationService from '@/services/notificationService';
 import updateService from '@/services/updateService';
+import { AuthProvider } from '@/context/AuthContext';
 
 export default function RootLayout() {
   useFrameworkReady();
@@ -24,11 +25,11 @@ export default function RootLayout() {
   }, []);
 
   return (
-    <>
+    <AuthProvider>
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="+not-found" />
       </Stack>
       <StatusBar style="auto" />
-    </>
+    </AuthProvider>
   );
 }

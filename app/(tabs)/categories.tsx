@@ -220,4 +220,13 @@ const styles = StyleSheet.create({
     fontSize: 20,
     color: '#8E8E93',
   },
+  loadingIndicator: {
+    marginTop: 50,
+  },
+  noCategoriesText: {
+    textAlign: 'center',
+    color: '#8E8E93',
+    marginTop: 20,
+    fontSize: 16,
+  },
 });

@@ -1,77 +1,71 @@
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Dimensions } from 'react-native';
 import { ArrowLeft, Heart, Share, Star, Plus, Minus, ShoppingCart } from 'lucide-react-native';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter, useLocalSearchParams } from 'expo-router';
+import { useAuth } from '@/context/AuthContext';
 
 const { width } = Dimensions.get('window');
 
 export default function ProductDetailScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams();
+  const { apiService } = useAuth();
   const [quantity, setQuantity] = useState(1);
   const [selectedImage, setSelectedImage] = useState(0);
   const [isFavorite, setIsFavorite] = useState(false);
 
-  // Mock product data - in real app, fetch based on id
-  const product = {
-    id: 1,
-    name: 'iPhone 15 Pro Max',
-    price: 1199,
-    originalPrice: 1299,
-    rating: 4.8,
-    reviews: 1250,
-    images: [
-      'https://images.pexels.com/photos/788946/pexels-photo-788946.jpeg?auto=compress&cs=tinysrgb&w=800',
-      'https://images.pexels.com/photos/1334597/pexels-photo-1334597.jpeg?auto=compress&cs=tinysrgb&w=800',
-      'https://images.pexels.com/photos/205421/pexels-photo-205421.jpeg?auto=compress&cs=tinysrgb&w=800',
-    ],
-    description: 'The iPhone 15 Pro Max features a titanium design, A17 Pro chip, and advanced camera system. Experience the ultimate iPhone with incredible performance and battery life.',
-    features: [
-      'A17 Pro chip with 6-core GPU',
-      'Pro camera system with 48MP main camera',
-      'Titanium design with textured matte glass back',
-      'Up to 29 hours video playback',
-      'Action Button for quick access',
-      'USB-C connector'
-    ],
-    specifications: {
-      'Display': '6.7-inch Super Retina XDR',
-      'Chip': 'A17 Pro',
-      'Storage': '128GB, 256GB, 512GB, 1TB',
-      'Camera': '48MP Main, 12MP Ultra Wide, 12MP Telephoto',
-      'Battery': 'Up to 29 hours video playback',
-      'Colors': 'Natural Titanium, Blue Titanium, White Titanium, Black Titanium'
-    },
-    inStock: true,
-    stockCount: 15,
-    category: 'Electronics',
-    brand: 'Apple'
-  };
+  const [product, setProduct] = useState<any>(null);
+  const [relatedProducts, setRelatedProducts] = useState<any[]>([]);
 
-  const relatedProducts = [
-    {
-      id: 2,
-      name: 'AirPods Pro',
-      price: 249,
-      image: 'https://images.pexels.com/photos/3780681/pexels-photo-3780681.jpeg?auto=compress&cs=tinysrgb&w=400',
-      rating: 4.7
-    },
-    {
-      id: 3,
-      name: 'iPhone Case',
-      price: 49,
-      image: 'https://images.pexels.com/photos/1334597/pexels-photo-1334597.jpeg?auto=compress&cs=tinysrgb&w=400',
-      rating: 4.5
-    },
-  ];
+  useEffect(() => {
+    if (id) {
+      // Fetch product details
+      // Replace with actual API call to your OpenCart backend
+      // For now, simulating a fetch
+      const fetchProduct = async () => {
+        try {
+          const fetchedProduct = await apiService.getProduct(Number(id));
+          if (fetchedProduct.success) {
+            setProduct(fetchedProduct.data);
+            // Assuming related products are part of the product data or fetched separately
+            // setRelatedProducts(fetchedProduct.data.relatedProducts || []);
+          } else {
+            console.error("Failed to fetch product:", fetchedProduct.error);
+            setProduct(null);
+          }
+        } catch (error) {
+          console.error("Error fetching product:", error);
+          setProduct(null);
+        }
+      };
+      fetchProduct();
+    }
+  }, [id]);
+
+  if (!product) {
+    return (
+      <View style={styles.loadingContainer}>
+        <Text>Loading product details...</Text>
+      </View>
+    );
+  }
 
   const updateQuantity = (change: number) => {
     setQuantity(Math.max(1, Math.min(product.stockCount, quantity + change)));
   };
 
-  const addToCart = () => {
-    // TODO: Implement add to cart logic
-    console.log(`Added ${quantity} of product ${id} to cart`);
+  const addToCart = async () => {
+    try {
+      const response = await apiService.addToCart(Number(id), quantity);
+      if (response.success) {
+        Alert.alert('Success', `Added ${quantity} of ${product.name} to cart!`);
+      } else {
+        Alert.alert('Error', response.error || 'Failed to add to cart.');
+      }
+    } catch (error) {
+      console.error("Add to cart error:", error);
+      Alert.alert('Error', 'An unexpected error occurred while adding to cart.');
+    }
   };
 
   return (
@@ -511,5 +505,10 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });

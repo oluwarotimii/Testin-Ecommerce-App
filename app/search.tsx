@@ -125,51 +125,12 @@ export default function SearchScreen() {
                 ))}
               </View>
             )}
-
-            {/* Trending Searches */}
-            <View style={styles.section}>
-              <View style={styles.sectionHeader}>
-                <Text style={styles.sectionTitle}>Trending</Text>
-                <TrendingUp size={16} color="#007AFF" />
-              </View>
-              {trendingSearches.map((search, index) => (
-                <TouchableOpacity 
-                  key={index} 
-                  style={styles.searchItem}
-                  onPress={() => {
-                    setSearchQuery(search);
-                    handleSearch(search);
-                  }}
-                >
-                  <TrendingUp size={16} color="#FF6B6B" />
-                  <Text style={styles.searchItemText}>{search}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
           </>
-        ) : searchQuery.length > 0 && searchQuery.length < 3 ? (
-          /* Search Suggestions */
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Suggestions</Text>
-            {searchSuggestions
-              .filter(suggestion => 
-                suggestion.toLowerCase().includes(searchQuery.toLowerCase())
-              )
-              .map((suggestion, index) => (
-                <TouchableOpacity 
-                  key={index} 
-                  style={styles.searchItem}
-                  onPress={() => {
-                    setSearchQuery(suggestion);
-                    handleSearch(suggestion);
-                  }}
-                >
-                  <Search size={16} color="#8E8E93" />
-                  <Text style={styles.searchItemText}>{suggestion}</Text>
-                </TouchableOpacity>
-              ))}
-          </View>
-        ) : (
+        ) : loading ? (
+          <ActivityIndicator size="large" color="#007AFF" style={styles.loadingIndicator} />
+        ) : error ? (
+          <Text style={styles.errorText}>Error: {error}</Text>
+        ) : searchResults.length > 0 ? (
           /* Search Results */
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>
@@ -177,11 +138,11 @@ export default function SearchScreen() {
             </Text>
             {searchResults.map((product) => (
               <TouchableOpacity 
-                key={product.id} 
+                key={product.product_id} 
                 style={styles.resultItem}
-                onPress={() => router.push(`/product/${product.id}`)}
+                onPress={() => router.push(`/product/${product.product_id}`)}
               >
-                <Image source={{ uri: product.image }} style={styles.resultImage} />
+                <Image source={{ uri: product.thumb }} style={styles.resultImage} />
                 <View style={styles.resultInfo}>
                   <Text style={styles.resultName} numberOfLines={2}>{product.name}</Text>
                   <Text style={styles.resultCategory}>{product.category}</Text>
@@ -194,6 +155,8 @@ export default function SearchScreen() {
               </TouchableOpacity>
             ))}
           </View>
+        ) : (
+          <Text style={styles.noResultsText}>No products found for "{searchQuery}".</Text>
         )}
       </ScrollView>
     </View>
@@ -314,5 +277,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     color: '#007AFF',
+  },
+  noResultsText: {
+    textAlign: 'center',
+    color: '#8E8E93',
+    marginTop: 20,
+    fontSize: 16,
   },
 });

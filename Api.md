@@ -364,3 +364,6 @@ Retrieves the user's address book.
 
 ```bash
 curl --cookie "OCSESSID=your_session_token" http://localhost/testin/index.php?route=api/mobile/address_book
+
+
+# patKUC0MLzgqiznkS.a1adfc49f63f7b7c618f0ecf7a7ed70007d4996302bf8bf8a116c37f4cfe4ce2 token

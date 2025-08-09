@@ -61,6 +61,14 @@ export default function WishlistScreen() {
     console.log(`Added product ${id} to cart`);
   };
 
+  if (loading) {
+    return (
+      <View style={styles.emptyContainer}>
+        <Text>Loading wishlist...</Text>
+      </View>
+    );
+  }
+
   if (wishlistItems.length === 0) {
     return (
       <View style={styles.emptyContainer}>

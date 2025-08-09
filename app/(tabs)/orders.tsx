@@ -1,44 +1,34 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { Package, Clock, CircleCheck as CheckCircle, Circle as XCircle, Truck } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
+import { useState, useEffect } from 'react';
+import { useAuth } from '@/context/AuthContext';
 
 export default function OrdersScreen() {
   const router = useRouter();
+  const { apiService } = useAuth();
+  const [orders, setOrders] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const orders = [
-    {
-      id: 'ORD-001',
-      date: '2024-01-15',
-      status: 'delivered',
-      total: 1547.99,
-      items: 3,
-      trackingNumber: 'TRK123456789'
-    },
-    {
-      id: 'ORD-002',
-      date: '2024-01-12',
-      status: 'shipped',
-      total: 249.99,
-      items: 1,
-      trackingNumber: 'TRK987654321'
-    },
-    {
-      id: 'ORD-003',
-      date: '2024-01-10',
-      status: 'processing',
-      total: 899.99,
-      items: 2,
-      trackingNumber: null
-    },
-    {
-      id: 'ORD-004',
-      date: '2024-01-08',
-      status: 'cancelled',
-      total: 199.99,
-      items: 1,
-      trackingNumber: null
-    },
-  ];
+  useEffect(() => {
+    const fetchOrders = async () => {
+      try {
+        setLoading(true);
+        const response = await apiService.getOrders();
+        if (response.success) {
+          setOrders(response.orders);
+        } else {
+          console.error('Failed to fetch orders:', response.error);
+        }
+      } catch (error) {
+        console.error('Error fetching orders:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchOrders();
+  }, [apiService]);
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -74,6 +64,14 @@ export default function OrdersScreen() {
     return status.charAt(0).toUpperCase() + status.slice(1);
   };
 
+  if (loading) {
+    return (
+      <View style={styles.emptyContainer}>
+        <Text>Loading orders...</Text>
+      </View>
+    );
+  }
+
   if (orders.length === 0) {
     return (
       <View style={styles.emptyContainer}>
@@ -102,14 +100,14 @@ export default function OrdersScreen() {
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {orders.map((order) => (
           <TouchableOpacity 
-            key={order.id} 
+            key={order.order_id} 
             style={styles.orderCard}
-            onPress={() => router.push(`/order/${order.id}`)}
+            onPress={() => router.push(`/order/${order.order_id}`)}
           >
             <View style={styles.orderHeader}>
               <View style={styles.orderInfo}>
-                <Text style={styles.orderId}>{order.id}</Text>
-                <Text style={styles.orderDate}>{new Date(order.date).toLocaleDateString()}</Text>
+                <Text style={styles.orderId}>Order ID: {order.order_id}</Text>
+                <Text style={styles.orderDate}>{new Date(order.date_added).toLocaleDateString()}</Text>
               </View>
               <View style={[styles.statusBadge, { backgroundColor: getStatusColor(order.status) + '20' }]}>
                 {getStatusIcon(order.status)}
@@ -121,35 +119,22 @@ export default function OrdersScreen() {
 
             <View style={styles.orderDetails}>
               <View style={styles.orderMeta}>
-                <Text style={styles.itemCount}>{order.items} item{order.items > 1 ? 's' : ''}</Text>
-                <Text style={styles.orderTotal}>${order.total.toFixed(2)}</Text>
+                <Text style={styles.itemCount}>{order.products ? order.products.length : 0} item{order.products && order.products.length > 1 ? 's' : ''}</Text>
+                <Text style={styles.orderTotal}>${parseFloat(order.total).toFixed(2)}</Text>
               </View>
               
-              {order.trackingNumber && (
+              {/* Tracking number is not directly available in /orders API response, would need /order_info */}
+              {/* {order.trackingNumber && (
                 <View style={styles.trackingInfo}>
                   <Text style={styles.trackingLabel}>Tracking: </Text>
                   <Text style={styles.trackingNumber}>{order.trackingNumber}</Text>
                 </View>
-              )}
+              )} */}
             </View>
 
             <View style={styles.orderActions}>
-              {order.status === 'delivered' && (
-                <TouchableOpacity style={styles.actionButton}>
-                  <Text style={styles.actionButtonText}>Reorder</Text>
-                </TouchableOpacity>
-              )}
-              {order.status === 'shipped' && (
-                <TouchableOpacity style={styles.actionButton}>
-                  <Text style={styles.actionButtonText}>Track Package</Text>
-                </TouchableOpacity>
-              )}
-              {order.status === 'processing' && (
-                <TouchableOpacity style={[styles.actionButton, styles.cancelButton]}>
-                  <Text style={[styles.actionButtonText, styles.cancelButtonText]}>Cancel Order</Text>
-                </TouchableOpacity>
-              )}
-              <TouchableOpacity style={styles.viewButton}>
+              {/* Action buttons would need more complex logic based on API capabilities */}
+              <TouchableOpacity style={styles.viewButton} onPress={() => router.push(`/order/${order.order_id}`)}>
                 <Text style={styles.viewButtonText}>View Details</Text>
               </TouchableOpacity>
             </View>

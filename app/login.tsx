@@ -7,13 +7,23 @@ import { useThemeColors } from '@/hooks/useColorScheme';
 export default function LoginScreen() {
   const router = useRouter();
   const colors = useThemeColors();
+  const { login, loadingAuth } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
 
-  const handleLogin = () => {
-    // TODO: Implement login logic
-    router.push('/(tabs)');
+  const handleLogin = async () => {
+    try {
+      const success = await login(email, password);
+      if (success) {
+        router.push('/(tabs)');
+      } else {
+        Alert.alert('Login Failed', 'Invalid credentials or an error occurred.');
+      }
+    } catch (error) {
+      console.error("Login error:", error);
+      Alert.alert('Login Error', 'An unexpected error occurred. Please try again.');
+    }
   };
 
   return (
@@ -70,8 +80,8 @@ export default function LoginScreen() {
           <Text style={[styles.forgotPasswordText, { color: colors.primary }]}>Forgot Password?</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={[styles.loginButton, { backgroundColor: colors.primary }]} onPress={handleLogin}>
-          <Text style={[styles.loginButtonText, { color: colors.white }]}>Sign In</Text>
+        <TouchableOpacity style={[styles.loginButton, { backgroundColor: colors.primary }]} onPress={handleLogin} disabled={loadingAuth}>
+          <Text style={[styles.loginButtonText, { color: colors.white }]}>{loadingAuth ? 'Signing In...' : 'Sign In'}</Text>
         </TouchableOpacity>
 
         <View style={styles.divider}>
