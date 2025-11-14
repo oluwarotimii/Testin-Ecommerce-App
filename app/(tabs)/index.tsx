@@ -62,10 +62,21 @@ export default function HomeScreen() {
     fetchCategories();
   }, [fetchProducts, fetchCategories, productLimit]);
 
+  const handleRefresh = useCallback(() => {
+    fetchProducts(productLimit);
+    fetchCategories();
+  }, [fetchProducts, fetchCategories, productLimit]);
+
   const handleSeeAllProducts = () => {
     setProductLimit(100); // Increase limit to 100
     router.push('/products'); // Navigate to the full products page
   };
+
+  const handleCarouselItemPress = useCallback((item: any) => {
+    console.log('Carousel item pressed:', item);
+    // Example: Navigate to a product detail page
+    router.push(`/product/${item.id}`); 
+  }, [router]);
 
   return (
     <ScrollView style={[styles.container, { backgroundColor: colors.background }]} showsVerticalScrollIndicator={false}>

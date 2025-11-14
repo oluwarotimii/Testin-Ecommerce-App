@@ -5,7 +5,7 @@ class ApiService {
   private sessionToken: string | null;
 
   constructor(sessionToken: string | null = null) {
-    this.baseUrl = 'http://localhost/testin/';
+    this.baseUrl = 'http://localhost/techin/';
     this.sessionToken = sessionToken;
   }
 
