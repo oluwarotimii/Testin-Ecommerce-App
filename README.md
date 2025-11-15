@@ -417,6 +417,30 @@ Retrieves the logged-in user's account details.
 curl --cookie "OCSESSID=your_session_token" http://localhost/testin/index.php?route=api/mobile/account
 ```
 
+## Test Account Details
+
+For testing the application, you can use the following dummy account credentials:
+
+### Login Test Credentials:
+- **Email:** `test@example.com`
+- **Password:** `password123`
+
+Alternatively, you can register a new account with:
+- **First Name:** `Test`
+- **Last Name:** `User`
+- **Email:** Any valid email (e.g., `newtest@example.com`)
+- **Phone:** Any valid phone number (e.g., `1234567890`)
+- **Password:** `password123`
+
+### Demo Features:
+- Browse through the product catalog
+- Add items to cart and wishlist
+- View order history
+- Switch between light and dark modes
+- Access all app sections (home, categories, cart, orders, account)
+
+The dummy API service simulates realistic responses for all user interactions such as adding to cart, placing orders, etc.
+
 ### 2. Update Account Details
 
 Updates the logged-in user's account details.

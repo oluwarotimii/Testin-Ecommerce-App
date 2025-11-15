@@ -1,12 +1,12 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert } from 'react-native';
 import { useState } from 'react';
 import { useRouter } from 'expo-router';
-import { useTheme } from '@/context/ThemeContext';
+import { useAuth } from '@/context/AuthContext';
 import { MaterialIcons, FontAwesome, Ionicons } from '@expo/vector-icons';
-import apiService from '@/services/apiService';
 
 export default function CheckoutScreen() {
   const router = useRouter();
+  const { apiService } = useAuth();
   const [addresses, setAddresses] = useState<any[]>([]);
   const [paymentMethods, setPaymentMethods] = useState<any[]>([]);
   const [shippingMethods, setShippingMethods] = useState<any[]>([]);
@@ -94,7 +94,9 @@ export default function CheckoutScreen() {
     try {
       const response = await apiService.createOrder();
       if (response.success) {
-        router.push('/order-confirmation');
+        Alert.alert('Order Placed Successfully', 'Your order has been placed successfully!', [
+          { text: 'OK', onPress: () => router.push('/(tabs)/orders') }
+        ]);
       } else {
         Alert.alert('Order Placement Failed', response.error || 'An error occurred while placing your order.');
       }
@@ -212,7 +214,7 @@ export default function CheckoutScreen() {
                 </View>
                 <View style={styles.shippingPrice}>
                   <Text style={styles.priceText}>
-                    {shipping.price === 0 ? 'Free' : `$${shipping.price.toFixed(2)}`}
+                    {shipping.price === 0 ? 'Free' : `₦${shipping.price.toFixed(2)}`}
                   </Text>
                   {selectedShipping === index && (
                     <Ionicons name="checkmark" size={20} color="#007AFF" />
@@ -245,29 +247,29 @@ export default function CheckoutScreen() {
           <View style={styles.summaryCard}>
             <View style={styles.summaryRow}>
               <Text style={styles.summaryLabel}>Subtotal</Text>
-              <Text style={styles.summaryValue}>${orderSummary.subtotal.toFixed(2)}</Text>
+              <Text style={styles.summaryValue}>₦{orderSummary.subtotal.toFixed(2)}</Text>
             </View>
             <View style={styles.summaryRow}>
               <Text style={styles.summaryLabel}>Shipping</Text>
               <Text style={styles.summaryValue}>
-                {orderSummary.shipping === 0 ? 'Free' : `$${orderSummary.shipping.toFixed(2)}`}
+                {orderSummary.shipping === 0 ? 'Free' : `₦${orderSummary.shipping.toFixed(2)}`}
               </Text>
             </View>
             <View style={styles.summaryRow}>
               <Text style={styles.summaryLabel}>Tax</Text>
-              <Text style={styles.summaryValue}>${orderSummary.tax.toFixed(2)}</Text>
+              <Text style={styles.summaryValue}>₦{orderSummary.tax.toFixed(2)}</Text>
             </View>
             {orderSummary.discount > 0 && (
               <View style={styles.summaryRow}>
                 <Text style={styles.summaryLabel}>Discount</Text>
                 <Text style={[styles.summaryValue, styles.discountValue]}>
-                  -${orderSummary.discount.toFixed(2)}
+                  -₦{orderSummary.discount.toFixed(2)}
                 </Text>
               </View>
             )}
             <View style={[styles.summaryRow, styles.totalRow]}>
               <Text style={styles.totalLabel}>Total</Text>
-              <Text style={styles.totalValue}>${orderSummary.total.toFixed(2)}</Text>
+              <Text style={styles.totalValue}>₦{orderSummary.total.toFixed(2)}</Text>
             </View>
           </View>
         </View>
@@ -276,7 +278,7 @@ export default function CheckoutScreen() {
       {/* Place Order Button */}
       <View style={styles.bottomBar}>
         <TouchableOpacity style={styles.placeOrderButton} onPress={handlePlaceOrder}>
-          <Text style={styles.placeOrderText}>Place Order - ${orderSummary.total.toFixed(2)}</Text>
+          <Text style={styles.placeOrderText}>Place Order - ₦{orderSummary.total.toFixed(2)}</Text>
         </TouchableOpacity>
       </View>
     </View>

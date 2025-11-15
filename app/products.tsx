@@ -37,29 +37,46 @@ export default function ProductsScreen() {
   const renderGridView = () => (
     <View style={styles.gridContainer}>
       {filteredProducts.map((product) => (
-        <TouchableOpacity 
-          key={product.id} 
-          style={styles.gridItem}
-          onPress={() => router.push(`/product/${product.id}`)}
-        >
-          <View style={styles.imageContainer}>
+        <View style={styles.gridItem}>
+          <TouchableOpacity
+            style={styles.productCard}
+            onPress={() => router.push(`/product/${product.id}`)}
+          >
             <Image source={{ uri: product.image }} style={styles.productImage} />
-            <TouchableOpacity style={styles.wishlistButton}>
-              <Ionicons name="heart-outline" size={16} color="#8E8E93" />
-            </TouchableOpacity>
-          </View>
-          <View style={styles.productInfo}>
-            <Text style={styles.productName} numberOfLines={2}>{product.title}</Text>
-            <View style={styles.ratingContainer}>
-              <Ionicons name="star" size={12} color="#FFD700" />
-              <Text style={styles.ratingText}>{product.rating ? product.rating.rate : 0}</Text>
-              <Text style={styles.reviewsText}>({product.rating ? product.rating.count : 0})</Text>
+            {/* Bottom overlay with blur/opacity */}
+            <View style={[styles.productOverlay, { backgroundColor: '#F2F2F7CC' }]}>
+              <View style={styles.productTextContainer}>
+                <Text style={[styles.productName, { color: '#1D1D1F' }]} numberOfLines={2}>{product.title}</Text>
+                <Text style={[styles.productPrice, { color: '#007AFF' }]}>{`₦${product.price.toFixed(2)}`}</Text>
+              </View>
+              <View style={styles.productActions}>
+                <TouchableOpacity
+                  style={[styles.addToCartButton, { backgroundColor: '#007AFF' }]}
+                  onPress={(e) => {
+                    e.stopPropagation(); // Prevent triggering the product detail navigation
+                    // Add to cart logic here later if needed
+                  }}
+                >
+                  <Ionicons name="cart" size={18} color="#FFFFFF" />
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.wishlistButton}
+                  onPress={async (e) => {
+                    e.stopPropagation(); // Prevent triggering the product detail navigation
+                    try {
+                      const result = await apiService.addToWishlist(product.id);
+                      console.log('Added to wishlist:', result);
+                    } catch (error) {
+                      console.error('Wishlist error:', error);
+                    }
+                  }}
+                >
+                  <Ionicons name="heart-outline" size={16} color="#1D1D1F" />
+                </TouchableOpacity>
+              </View>
             </View>
-            <View style={styles.priceContainer}>
-              <Text style={styles.price}>{`$${product.price}`}</Text>
-            </View>
-          </View>
-        </TouchableOpacity>
+          </TouchableOpacity>
+        </View>
       ))}
     </View>
   );
@@ -77,19 +94,28 @@ export default function ProductsScreen() {
           </View>
           <View style={styles.listProductInfo}>
             <Text style={styles.listProductName} numberOfLines={2}>{product.title}</Text>
-            <Text style={styles.categoryText}>{product.category}</Text>
+            <Text style={styles.categoryText} numberOfLines={1}>{product.category?.replace('-', ' ')}</Text>
             <View style={styles.ratingContainer}>
-              <Star size={12} color="#FFD700" fill="#FFD700" />
+              <Ionicons name="star" size={12} color="#FFD700" />
               <Text style={styles.ratingText}>{product.rating ? product.rating.rate : 0}</Text>
               <Text style={styles.reviewsText}>({product.rating ? product.rating.count : 0})</Text>
             </View>
             <View style={styles.priceContainer}>
-              <Text style={styles.price}>{`$${product.price}`}</Text>
+              <Text style={styles.price}>{`₦${product.price.toFixed(2)}`}</Text>
             </View>
           </View>
-          <TouchableOpacity style={styles.listWishlistButton} onPress={() => console.log('Add/Remove from Wishlist', product.id)}>
-            <Ionicons name="heart-outline" size={20} color="#8E8E93" />
-          </TouchableOpacity>
+          <View style={styles.listProductActions}>
+            <TouchableOpacity style={styles.listWishlistButton} onPress={async () => {
+              try {
+                const result = await apiService.addToWishlist(product.id);
+                console.log('Added to wishlist:', result);
+              } catch (error) {
+                console.error('Wishlist error:', error);
+              }
+            }}>
+              <Ionicons name="heart-outline" size={20} color="#8E8E93" />
+            </TouchableOpacity>
+          </View>
         </TouchableOpacity>
       ))}
     </View>
@@ -173,9 +199,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
     paddingTop: 60,
-    paddingBottom: 20,
+    paddingBottom: 16,
   },
   title: {
     fontSize: 28,
@@ -207,7 +233,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#F2F2F7',
-    marginHorizontal: 20,
+    marginHorizontal: 16,
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderRadius: 12,
@@ -220,7 +246,7 @@ const styles = StyleSheet.create({
     color: '#1D1D1F',
   },
   resultsContainer: {
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
     marginBottom: 16,
   },
   resultsText: {
@@ -231,13 +257,13 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingBottom: 100,
+    paddingBottom: 120, // Increased to account for elevated tab bar
   },
   gridContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    paddingHorizontal: 20,
-    gap: 16,
+    paddingHorizontal: 16,
+    gap: 12,
   },
   gridItem: {
     width: '47%',
@@ -363,6 +389,12 @@ const styles = StyleSheet.create({
     color: '#8E8E93',
     marginBottom: 6,
   },
+  listProductActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
   listWishlistButton: {
     padding: 12,
     alignItems: 'center',
@@ -382,5 +414,55 @@ const styles = StyleSheet.create({
     color: '#8E8E93',
     marginTop: 20,
     fontSize: 16,
+  },
+  productCard: {
+    width: '100%',
+    height: 140,
+    borderRadius: 12,
+    overflow: 'hidden',
+    position: 'relative',
+  },
+  productImage: {
+    width: '100%',
+    height: '100%',
+    backgroundColor: '#E5E5EA',
+  },
+  productOverlay: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 12,
+  },
+  productTextContainer: {
+    flex: 1,
+  },
+  productActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginLeft: 8,
+  },
+  addToCartButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 8,
+  },
+  wishlistButton: {
+    padding: 4,
+  },
+  productName: {
+    fontSize: 14,
+    fontWeight: '500',
+    marginBottom: 4,
+  },
+  productPrice: {
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });

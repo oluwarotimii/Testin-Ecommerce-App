@@ -1,64 +1,61 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
-import { useState } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Alert } from 'react-native';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'expo-router';
+import { useAuth } from '@/context/AuthContext';
+import { useCart } from '@/context/CartContext';
 import { MaterialIcons, FontAwesome, Ionicons } from '@expo/vector-icons';
 
 export default function WishlistScreen() {
   const router = useRouter();
-  const [wishlistItems, setWishlistItems] = useState([
-    {
-      id: 1,
-      name: 'iPhone 15 Pro Max',
-      price: 1199,
-      originalPrice: 1299,
-      rating: 4.8,
-      reviews: 1250,
-      image: 'https://images.pexels.com/photos/788946/pexels-photo-788946.jpeg?auto=compress&cs=tinysrgb&w=400',
-      inStock: true,
-      discount: 8
-    },
-    {
-      id: 2,
-      name: 'MacBook Air M3',
-      price: 1299,
-      originalPrice: null,
-      rating: 4.9,
-      reviews: 890,
-      image: 'https://images.pexels.com/photos/205421/pexels-photo-205421.jpeg?auto=compress&cs=tinysrgb&w=400',
-      inStock: true,
-      discount: null
-    },
-    {
-      id: 3,
-      name: 'AirPods Pro 2nd Gen',
-      price: 249,
-      originalPrice: 279,
-      rating: 4.7,
-      reviews: 567,
-      image: 'https://images.pexels.com/photos/3780681/pexels-photo-3780681.jpeg?auto=compress&cs=tinysrgb&w=400',
-      inStock: false,
-      discount: 11
-    },
-    {
-      id: 4,
-      name: 'Apple Watch Series 9',
-      price: 399,
-      originalPrice: 429,
-      rating: 4.6,
-      reviews: 789,
-      image: 'https://images.pexels.com/photos/437037/pexels-photo-437037.jpeg?auto=compress&cs=tinysrgb&w=400',
-      inStock: true,
-      discount: 7
-    },
-  ]);
+  const { apiService } = useAuth();
+  const { setCartCount } = useCart();
+  const [wishlistItems, setWishlistItems] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const removeFromWishlist = (id: number) => {
-    setWishlistItems(items => items.filter(item => item.id !== id));
+  useEffect(() => {
+    const fetchWishlist = async () => {
+      try {
+        setLoading(true);
+        const items = await apiService.getWishlist();
+        setWishlistItems(items);
+      } catch (error) {
+        console.error("Error fetching wishlist:", error);
+        // If there's an error, we can start with an empty array
+        setWishlistItems([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchWishlist();
+  }, [apiService]);
+
+  const removeFromWishlist = async (id: number) => {
+    try {
+      const result = await apiService.removeFromWishlist(id);
+      setWishlistItems(items => items.filter(item => item.id !== id));
+      console.log('Removed from wishlist:', result);
+    } catch (error) {
+      console.error('Remove from wishlist error:', error);
+      Alert.alert("Error", "Failed to remove item from wishlist. Please try again.");
+    }
   };
 
-  const addToCart = (id: number) => {
-    // TODO: Implement add to cart logic
-    console.log(`Added product ${id} to cart`);
+  const addToCart = async (id: number) => {
+    try {
+      const result = await apiService.addToCart(id, 1); // Add 1 quantity
+      console.log('Added to cart:', result);
+      Alert.alert("Success", "Item added to cart!");
+
+      // Update cart count
+      setCartCount(prevCount => prevCount + 1);
+
+      // Optionally remove from wishlist after adding to cart
+      removeFromWishlist(id);
+    } catch (error) {
+      console.error('Add to cart error:', error);
+      Alert.alert("Error", "Failed to add item to cart. Please try again.");
+    }
   };
 
   if (loading) {
@@ -89,7 +86,12 @@ export default function WishlistScreen() {
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.title}>Wishlist</Text>
+        <View style={styles.headerLeft}>
+          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+            <Ionicons name="arrow-back" size={24} color="#1D1D1F" />
+          </TouchableOpacity>
+          <Text style={styles.title}>Wishlist</Text>
+        </View>
         <Text style={styles.itemCount}>{wishlistItems.length} items</Text>
       </View>
 
@@ -120,9 +122,9 @@ export default function WishlistScreen() {
                 </View>
                 
                 <View style={styles.priceContainer}>
-                  <Text style={styles.price}>${item.price}</Text>
+                  <Text style={styles.price}>₦{item.price.toFixed(2)}</Text>
                   {item.originalPrice && (
-                    <Text style={styles.originalPrice}>${item.originalPrice}</Text>
+                    <Text style={styles.originalPrice}>₦{item.originalPrice.toFixed(2)}</Text>
                   )}
                 </View>
                 
@@ -185,9 +187,19 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
   },
   header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     paddingHorizontal: 20,
     paddingTop: 60,
     paddingBottom: 20,
+  },
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  backButton: {
+    padding: 8,
   },
   title: {
     fontSize: 28,

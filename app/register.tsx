@@ -6,7 +6,7 @@ import { MaterialIcons, FontAwesome, Ionicons } from '@expo/vector-icons';
 
 export default function RegisterScreen() {
   const router = useRouter();
-  const { apiService } = useAuth();
+  const { register, loadingAuth } = useAuth();
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
@@ -26,12 +26,12 @@ export default function RegisterScreen() {
     }
     setLoading(true);
     try {
-      const response = await apiService.register(firstName, lastName, email, phone, password);
-      if (response.id) {
-        Alert.alert('Registration Successful', 'You can now log in.');
-        router.push('/login');
+      const success = await register(firstName, lastName, email, phone, password);
+      if (success) {
+        Alert.alert('Registration Successful', 'Account created successfully!');
+        router.push('/(tabs)');
       } else {
-        Alert.alert('Registration Failed', 'An error occurred.');
+        Alert.alert('Registration Failed', 'An error occurred during registration.');
       }
     } catch (error) {
       console.error("Registration error:", error);

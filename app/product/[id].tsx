@@ -1,7 +1,8 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Dimensions, Alert } from 'react-native';
 import { useState, useEffect } from 'react';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
+import { useCart } from '@/context/CartContext';
 import { MaterialIcons, FontAwesome, Ionicons } from '@expo/vector-icons';
 
 const { width } = Dimensions.get('window');
@@ -10,6 +11,7 @@ export default function ProductDetailScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams();
   const { apiService } = useAuth();
+  const { setCartCount } = useCart();
   const [quantity, setQuantity] = useState(1);
   const [selectedImage, setSelectedImage] = useState(0);
   const [isFavorite, setIsFavorite] = useState(false);
@@ -18,18 +20,28 @@ export default function ProductDetailScreen() {
   const [relatedProducts, setRelatedProducts] = useState<any[]>([]);
 
   useEffect(() => {
+    let isMounted = true; // Flag to prevent state updates on unmounted components
+
     if (id) {
       const fetchProduct = async () => {
         try {
           const fetchedProduct = await apiService.getProduct(Number(id));
-          setProduct(fetchedProduct);
+          if (isMounted) {
+            setProduct(fetchedProduct);
+          }
         } catch (error) {
           console.error("Error fetching product:", error);
-          setProduct(null);
+          if (isMounted) {
+            setProduct(null);
+          }
         }
       };
       fetchProduct();
     }
+
+    return () => {
+      isMounted = false; // Cleanup function to set flag to false
+    };
   }, [id]);
 
   if (!product) {
@@ -45,8 +57,49 @@ export default function ProductDetailScreen() {
   };
 
   const addToCart = async () => {
-    console.log(`Added ${quantity} of ${product.title} to cart!`);
+    try {
+      const result = await apiService.addToCart(product.id, quantity);
+      console.log(`Added ${quantity} of ${product.title} to cart!`, result);
+      Alert.alert("Success", `${quantity} ${product.title}(s) added to cart!`);
+
+      // Update cart count
+      setCartCount(prevCount => prevCount + quantity);
+    } catch (error) {
+      console.error("Add to cart error:", error);
+      Alert.alert("Error", "Failed to add item to cart. Please try again.");
+    }
   };
+
+  const [similarProducts, setSimilarProducts] = useState<any[]>([]);
+
+  useEffect(() => {
+    let isMounted = true; // Flag to prevent state updates on unmounted components
+
+    if (product && product.category) {
+      const fetchSimilarProducts = async () => {
+        try {
+          // Get products from the same category, excluding the current product
+          const categoryProducts = await apiService.getCategory(product.category);
+          const filteredProducts = categoryProducts.filter((p: any) => p.id !== product.id);
+          // Limit to 10 similar products
+          if (isMounted) {
+            setSimilarProducts(filteredProducts.slice(0, 10));
+          }
+        } catch (error) {
+          console.error("Error fetching similar products:", error);
+          if (isMounted) {
+            setSimilarProducts([]);
+          }
+        }
+      };
+
+      fetchSimilarProducts();
+    }
+
+    return () => {
+      isMounted = false; // Cleanup function to set flag to false
+    };
+  }, [product?.id, apiService]); // Changed dependency to product.id to avoid hooks error
 
   return (
     <View style={styles.container}>
@@ -105,7 +158,7 @@ export default function ProductDetailScreen() {
           </View>
 
           <View style={styles.priceContainer}>
-            <Text style={styles.price}>{`$${product.price}`}</Text>
+            <Text style={styles.price}>{`₦${product.price.toFixed(2)}`}</Text>
           </View>
 
           {/* Quantity Selector */}
@@ -136,15 +189,39 @@ export default function ProductDetailScreen() {
         </View>
       </ScrollView>
 
+      {/* Similar Products */}
+      {similarProducts.length > 0 && (
+        <View style={styles.similarProductsSection}>
+          <Text style={styles.similarProductsTitle}>Similar Items</Text>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.similarProductsContainer}
+          >
+            {similarProducts.map((item) => (
+              <TouchableOpacity
+                key={item.id}
+                style={styles.similarProductItem}
+                onPress={() => router.push(`/product/${item.id}`)}
+              >
+                <Image source={{ uri: item.image }} style={styles.similarProductImage} />
+                <Text style={styles.similarProductName} numberOfLines={2}>{item.title}</Text>
+                <Text style={styles.similarProductPrice}>₦{item.price.toFixed(2)}</Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </View>
+      )}
+
       {/* Add to Cart Button */}
       <View style={styles.bottomBar}>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.addToCartButton}
           onPress={addToCart}
         >
           <Ionicons name="cart" size={20} color="#FFFFFF" />
           <Text style={styles.addToCartText}>
-            {`Add to Cart - $${(product.price * quantity).toFixed(2)}`}
+            {`Add to Cart - ₦${(product.price * quantity).toFixed(2)}`}
           </Text>
         </TouchableOpacity>
       </View>
@@ -396,6 +473,46 @@ const styles = StyleSheet.create({
     paddingBottom: 32,
     borderTopWidth: 1,
     borderTopColor: '#F2F2F7',
+  },
+  similarProductsSection: {
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 10,
+  },
+  similarProductsTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#1D1D1F',
+    marginBottom: 16,
+  },
+  similarProductsContainer: {
+    gap: 16,
+    paddingBottom: 10,
+  },
+  similarProductItem: {
+    width: 120,
+    backgroundColor: '#F2F2F7',
+    borderRadius: 12,
+    padding: 12,
+  },
+  similarProductImage: {
+    width: '100%',
+    height: 100,
+    borderRadius: 8,
+    backgroundColor: '#E5E5EA',
+    marginBottom: 8,
+  },
+  similarProductName: {
+    fontSize: 12,
+    fontWeight: '500',
+    color: '#1D1D1F',
+    marginBottom: 4,
+    height: 36,
+  },
+  similarProductPrice: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#007AFF',
   },
   addToCartButton: {
     backgroundColor: '#007AFF',

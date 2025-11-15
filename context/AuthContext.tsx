@@ -1,14 +1,15 @@
 import React, { createContext, useState, useEffect, useContext, useMemo } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import ApiService from '@/services/apiService';
+import DummyApiService from '@/services/dummyApiService';
 
 interface AuthContextType {
   sessionToken: string | null;
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<boolean>;
+  register: (firstname: string, lastname: string, email: string, telephone: string, password: string) => Promise<boolean>;
   signOut: () => Promise<void>;
   loadingAuth: boolean;
-  apiService: ApiService;
+  apiService: DummyApiService;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -18,7 +19,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loadingAuth, setLoadingAuth] = useState(true);
 
-  const apiService = useMemo(() => new ApiService(sessionToken), [sessionToken]);
+  const apiService = useMemo(() => new DummyApiService(sessionToken), [sessionToken]);
 
   useEffect(() => {
     const loadSession = async () => {
@@ -60,6 +61,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const register = async (firstname: string, lastname: string, email: string, telephone: string, password: string): Promise<boolean> => {
+    try {
+      const response = await apiService.register(firstname, lastname, email, telephone, password);
+      if (response.token) {
+        const token = response.token;
+        await AsyncStorage.setItem('sessionToken', token);
+        setSessionToken(token);
+        setIsAuthenticated(true);
+        return true;
+      } else {
+        console.error("Registration failed:", response);
+        return false;
+      }
+    } catch (error) {
+      console.error("Registration API error:", error);
+      return false;
+    }
+  };
+
   const signOut = async () => {
     try {
       await AsyncStorage.removeItem('sessionToken');
@@ -71,7 +91,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <AuthContext.Provider value={{ sessionToken, isAuthenticated, login, signOut, loadingAuth, apiService }}>
+    <AuthContext.Provider value={{ sessionToken, isAuthenticated, login, register, signOut, loadingAuth, apiService }}>
       {children}
     </AuthContext.Provider>
   );

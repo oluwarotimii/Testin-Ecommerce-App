@@ -2,14 +2,17 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Activi
 import { useState, useEffect } from 'react';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
+import { useThemeColors } from '@/hooks/useColorScheme';
 import { MaterialIcons, FontAwesome, Ionicons } from '@expo/vector-icons';
 
 export default function CategoriesScreen() {
   const router = useRouter();
+  const colors = useThemeColors();
   const { apiService } = useAuth();
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -18,7 +21,7 @@ export default function CategoriesScreen() {
         const response = await apiService.getCategories();
         const formattedCategories = response.map((category: string) => ({
           id: category,
-          name: category,
+          name: category.replace('-', ' '),
           color: `#${Math.floor(Math.random()*16777215).toString(16)}`,
         }));
         setCategories(formattedCategories);
@@ -32,15 +35,19 @@ export default function CategoriesScreen() {
     fetchCategories();
   }, []);
 
+  const filteredCategories = categories.filter(category =>
+    category.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   const renderGridView = () => (
     <View style={styles.gridContainer}>
-      {categories.map((category) => (
-        <TouchableOpacity 
-          key={category.id} 
+      {filteredCategories.map((category) => (
+        <TouchableOpacity
+          key={category.id}
           style={[styles.gridItem, { backgroundColor: category.color + '20' }]}
           onPress={() => router.push(`/products?category=${category.id}`)}
         >
-          <Text style={styles.categoryNameGrid}>{category.name}</Text>
+          <Text style={[styles.categoryNameGrid, { color: colors.text }]} numberOfLines={2}>{category.name}</Text>
         </TouchableOpacity>
       ))}
     </View>
@@ -48,60 +55,67 @@ export default function CategoriesScreen() {
 
   const renderListView = () => (
     <View style={styles.listContainer}>
-      {categories.map((category) => (
-        <TouchableOpacity 
-          key={category.id} 
-          style={styles.listItem}
+      {filteredCategories.map((category) => (
+        <TouchableOpacity
+          key={category.id}
+          style={[styles.listItem, { borderBottomColor: colors.border }]}
           onPress={() => router.push(`/products?category=${category.id}`)}
         >
           <View style={styles.categoryInfo}>
-            <Text style={styles.categoryNameList}>{category.name}</Text>
+            <Text style={[styles.categoryNameList, { color: colors.text }]} numberOfLines={1}>{category.name}</Text>
           </View>
-          <Text style={styles.arrow}>›</Text>
+          <Text style={[styles.arrow, { color: colors.textSecondary }]}>›</Text>
         </TouchableOpacity>
       ))}
     </View>
   );
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.title}>Categories</Text>
+        <View style={styles.headerLeft}>
+          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+            <Ionicons name="arrow-back" size={24} color={colors.text} />
+          </TouchableOpacity>
+          <Text style={[styles.title, { color: colors.text, marginLeft: 10 }]}>Categories</Text>
+        </View>
         <View style={styles.viewToggle}>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={[styles.toggleButton, viewMode === 'grid' && styles.activeToggle]}
             onPress={() => setViewMode('grid')}
           >
-            <Ionicons name="grid" size={20} color={viewMode === 'grid' ? '#FFFFFF' : '#8E8E93'} />
+            <Ionicons name="grid" size={20} color={viewMode === 'grid' ? colors.white : colors.textSecondary} />
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.toggleButton, viewMode === 'list' && styles.activeToggle]}
             onPress={() => setViewMode('list')}
           >
-            <Ionicons name="list" size={20} color={viewMode === 'list' ? '#FFFFFF' : '#8E8E93'} />
+            <Ionicons name="list" size={20} color={viewMode === 'list' ? colors.white : colors.textSecondary} />
           </TouchableOpacity>
         </View>
       </View>
 
       {/* Search Bar */}
       <View style={styles.searchContainer}>
-        <Ionicons name="search" size={20} color="#8E8E93" />
+        <Ionicons name="search" size={20} color={colors.textSecondary} />
         <TextInput
-          style={styles.searchInput}
+          style={[styles.searchInput, { color: colors.text }]}
           placeholder="Search categories..."
-          placeholderTextColor="#8E8E93"
+          placeholderTextColor={colors.textSecondary}
+          value={searchQuery}
+          onChangeText={setSearchQuery}
         />
       </View>
 
       {/* Categories */}
-      <ScrollView 
-        style={styles.content} 
+      <ScrollView
+        style={styles.content}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
         {loading ? (
-          <ActivityIndicator size="large" color="#007AFF" style={styles.loadingIndicator} />
+          <ActivityIndicator size="large" color={colors.primary} style={styles.loadingIndicator} />
         ) : (
           viewMode === 'grid' ? renderGridView() : renderListView()
         )}
@@ -113,7 +127,6 @@ export default function CategoriesScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
   },
   header: {
     flexDirection: 'row',
@@ -122,6 +135,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 60,
     paddingBottom: 20,
+  },
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  backButton: {
+    padding: 8,
   },
   title: {
     fontSize: 28,

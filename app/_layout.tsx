@@ -6,6 +6,7 @@ import notificationService from '@/services/notificationService';
 import updateService from '@/services/updateService';
 import { AuthProvider } from '@/context/AuthContext';
 import { ThemeProvider } from '@/context/ThemeContext';
+import { CartProvider } from '@/context/CartContext';
 
 export default function RootLayout() {
   useFrameworkReady();
@@ -28,10 +29,12 @@ export default function RootLayout() {
   return (
     <ThemeProvider>
       <AuthProvider>
-        <Stack screenOptions={{ headerShown: false }}>
-          <Stack.Screen name="+not-found" />
-        </Stack>
-        <StatusBar style="auto" />
+        <CartProvider>
+          <Stack screenOptions={{ headerShown: false }}>
+            <Stack.Screen name="+not-found" />
+          </Stack>
+          <StatusBar style="auto" />
+        </CartProvider>
       </AuthProvider>
     </ThemeProvider>
   );

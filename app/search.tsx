@@ -1,60 +1,64 @@
-import { View, Text, StyleSheet, TextInput, ScrollView, TouchableOpacity, Image } from 'react-native';
-import { useState } from 'react';
+import { View, Text, StyleSheet, TextInput, ScrollView, TouchableOpacity, Image, ActivityIndicator } from 'react-native';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'expo-router';
+import { useAuth } from '@/context/AuthContext';
+import { useThemeColors } from '@/hooks/useColorScheme';
 import { MaterialIcons, FontAwesome, Ionicons } from '@expo/vector-icons';
 
 export default function SearchScreen() {
   const router = useRouter();
+  const colors = useThemeColors();
+  const { apiService } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
-  const [recentSearches, setRecentSearches] = useState([
-    'iPhone 15',
-    'MacBook Air',
-    'AirPods Pro',
-    'iPad',
-  ]);
+  const [recentSearches, setRecentSearches] = useState<string[]>([]);
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const trendingSearches = [
-    'iPhone 15 Pro',
-    'MacBook Air M3',
-    'AirPods Pro 2',
-    'Apple Watch Series 9',
-    'iPad Pro',
-  ];
+  // Load recent searches from storage (for now, using static data)
+  useEffect(() => {
+    setRecentSearches([
+      'iPhone',
+      'MacBook',
+      'AirPods',
+      'iPad',
+    ]);
+  }, []);
 
-  const searchSuggestions = [
-    'iPhone 15 Pro Max',
-    'iPhone 15 Pro',
-    'iPhone 15',
-    'iPhone 14 Pro',
-  ];
+  // Search as user types with debounce
+  useEffect(() => {
+    const debounceTimer = setTimeout(() => {
+      if (searchQuery.trim()) {
+        performSearch(searchQuery.trim());
+      } else {
+        setSearchResults([]);
+      }
+    }, 300); // 300ms debounce
 
-  const searchResults = [
-    {
-      id: 1,
-      name: 'iPhone 15 Pro Max',
-      price: 1199,
-      rating: 4.8,
-      image: 'https://images.pexels.com/photos/788946/pexels-photo-788946.jpeg?auto=compress&cs=tinysrgb&w=400',
-      category: 'Electronics'
-    },
-    {
-      id: 2,
-      name: 'iPhone 15 Pro',
-      price: 999,
-      rating: 4.8,
-      image: 'https://images.pexels.com/photos/1334597/pexels-photo-1334597.jpeg?auto=compress&cs=tinysrgb&w=400',
-      category: 'Electronics'
-    },
-  ];
+    return () => clearTimeout(debounceTimer);
+  }, [searchQuery]);
+
+  const performSearch = async (query: string) => {
+    try {
+      setLoading(true);
+      setError(null);
+      const results = await apiService.searchProducts(query);
+      setSearchResults(results);
+    } catch (err: any) {
+      setError(err.message || 'An error occurred during search');
+      setSearchResults([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleSearch = (query: string) => {
     if (query.trim()) {
       // Add to recent searches if not already there
       if (!recentSearches.includes(query)) {
-        setRecentSearches([query, ...recentSearches.slice(0, 4)]);
+        const newRecentSearches = [query, ...recentSearches.slice(0, 4)];
+        setRecentSearches(newRecentSearches);
       }
-      // TODO: Perform actual search
-      console.log('Searching for:', query);
     }
   };
 
@@ -67,15 +71,15 @@ export default function SearchScreen() {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Search Header */}
       <View style={styles.searchHeader}>
-        <View style={styles.searchContainer}>
-          <Ionicons name="search" size={20} color="#8E8E93" />
+        <View style={[styles.searchContainer, { backgroundColor: colors.surface }]}>
+          <Ionicons name="search" size={20} color={colors.textSecondary} />
           <TextInput
-            style={styles.searchInput}
+            style={[styles.searchInput, { color: colors.text }]}
             placeholder="Search products..."
-            placeholderTextColor="#8E8E93"
+            placeholderTextColor={colors.textSecondary}
             value={searchQuery}
             onChangeText={setSearchQuery}
             onSubmitEditing={() => handleSearch(searchQuery)}
@@ -83,12 +87,12 @@ export default function SearchScreen() {
           />
           {searchQuery.length > 0 && (
             <TouchableOpacity onPress={() => setSearchQuery('')}>
-              <Ionicons name="close" size={20} color="#8E8E93" />
+              <Ionicons name="close" size={20} color={colors.textSecondary} />
             </TouchableOpacity>
           )}
         </View>
         <TouchableOpacity onPress={() => router.back()}>
-          <Text style={styles.cancelButton}>Cancel</Text>
+          <Text style={[styles.cancelButton, { color: colors.primary }]}>Cancel</Text>
         </TouchableOpacity>
       </View>
 
@@ -99,27 +103,27 @@ export default function SearchScreen() {
             {recentSearches.length > 0 && (
               <View style={styles.section}>
                 <View style={styles.sectionHeader}>
-                  <Text style={styles.sectionTitle}>Recent Searches</Text>
+                  <Text style={[styles.sectionTitle, { color: colors.text }]}>Recent Searches</Text>
                   <TouchableOpacity onPress={clearAllRecentSearches}>
-                    <Text style={styles.clearButton}>Clear All</Text>
+                    <Text style={[styles.clearButton, { color: colors.primary }]}>Clear All</Text>
                   </TouchableOpacity>
                 </View>
                 {recentSearches.map((search, index) => (
-                  <TouchableOpacity 
-                    key={index} 
+                  <TouchableOpacity
+                    key={index}
                     style={styles.searchItem}
                     onPress={() => {
                       setSearchQuery(search);
                       handleSearch(search);
                     }}
                   >
-                    <Ionicons name="time" size={16} color="#8E8E93" />
-                    <Text style={styles.searchItemText}>{search}</Text>
-                    <TouchableOpacity 
+                    <Ionicons name="time" size={16} color={colors.textSecondary} />
+                    <Text style={[styles.searchItemText, { color: colors.text }]}>{search}</Text>
+                    <TouchableOpacity
                       onPress={() => removeRecentSearch(search)}
                       style={styles.removeButton}
                     >
-                      <Ionicons name="close" size={16} color="#8E8E93" />
+                      <Ionicons name="close" size={16} color={colors.textSecondary} />
                     </TouchableOpacity>
                   </TouchableOpacity>
                 ))}
@@ -127,36 +131,36 @@ export default function SearchScreen() {
             )}
           </>
         ) : loading ? (
-          <ActivityIndicator size="large" color="#007AFF" style={styles.loadingIndicator} />
+          <ActivityIndicator size="large" color={colors.primary} style={styles.loadingIndicator} />
         ) : error ? (
-          <Text style={styles.errorText}>Error: {error}</Text>
+          <Text style={[styles.errorText, { color: colors.error }]}>Error: {error}</Text>
         ) : searchResults.length > 0 ? (
           /* Search Results */
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>
               {searchResults.length} results for "{searchQuery}"
             </Text>
             {searchResults.map((product) => (
-              <TouchableOpacity 
-                key={product.product_id} 
-                style={styles.resultItem}
-                onPress={() => router.push(`/product/${product.product_id}`)}
+              <TouchableOpacity
+                key={product.id}
+                style={[styles.resultItem, { borderBottomColor: colors.border }]}
+                onPress={() => router.push(`/product/${product.id}`)}
               >
-                <Image source={{ uri: product.thumb }} style={styles.resultImage} />
+                <Image source={{ uri: product.image }} style={styles.resultImage} />
                 <View style={styles.resultInfo}>
-                  <Text style={styles.resultName} numberOfLines={2}>{product.name}</Text>
-                  <Text style={styles.resultCategory}>{product.category}</Text>
+                  <Text style={[styles.resultName, { color: colors.text }]} numberOfLines={2}>{product.title}</Text>
+                  <Text style={[styles.resultCategory, { color: colors.textSecondary }]}>{product.category?.replace('-', ' ')}</Text>
                   <View style={styles.resultRating}>
                     <Ionicons name="star" size={12} color="#FFD700" />
-                    <Text style={styles.ratingText}>{product.rating}</Text>
+                    <Text style={[styles.ratingText, { color: colors.text }]}>{product.rating ? product.rating.rate : 0}</Text>
                   </View>
-                  <Text style={styles.resultPrice}>${product.price}</Text>
+                  <Text style={[styles.resultPrice, { color: colors.primary }]}>{`₦${product.price.toFixed(2)}`}</Text>
                 </View>
               </TouchableOpacity>
             ))}
           </View>
         ) : (
-          <Text style={styles.noResultsText}>No products found for "{searchQuery}".</Text>
+          <Text style={[styles.noResultsText, { color: colors.textSecondary }]}>No products found for "{searchQuery}".</Text>
         )}
       </ScrollView>
     </View>

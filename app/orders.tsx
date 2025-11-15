@@ -2,10 +2,12 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator
 import { useRouter } from 'expo-router';
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
+import { useThemeColors } from '@/hooks/useColorScheme';
 import { MaterialIcons, FontAwesome, Ionicons } from '@expo/vector-icons';
 
 export default function OrdersScreen() {
   const router = useRouter();
+  const colors = useThemeColors();
   const { apiService } = useAuth();
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -66,48 +68,48 @@ export default function OrdersScreen() {
 
   if (loading) {
     return (
-      <View style={styles.emptyContainer}>
-        <Text>Loading orders...</Text>
+      <View style={[styles.emptyContainer, { backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center' }]}>
+        <Text style={{ color: colors.text }}>Loading orders...</Text>
       </View>
     );
   }
 
   if (orders.length === 0) {
     return (
-      <View style={styles.emptyContainer}>
-        <Ionicons name="cube-outline" size={80} color="#8E8E93" />
-        <Text style={styles.emptyTitle}>No orders yet</Text>
-        <Text style={styles.emptySubtitle}>Your order history will appear here</Text>
-        <TouchableOpacity 
-          style={styles.shopButton}
+      <View style={[styles.emptyContainer, { backgroundColor: colors.background }]}>
+        <Ionicons name="cube-outline" size={80} color={colors.textSecondary} />
+        <Text style={[styles.emptyTitle, { color: colors.text }]}>No orders yet</Text>
+        <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>Your order history will appear here</Text>
+        <TouchableOpacity
+          style={[styles.shopButton, { backgroundColor: colors.primary }]}
           onPress={() => router.push('/(tabs)')}
         >
-          <Text style={styles.shopButtonText}>Start Shopping</Text>
+          <Text style={[styles.shopButtonText, { color: colors.white }]}>Start Shopping</Text>
         </TouchableOpacity>
       </View>
     );
   }
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.title}>Order History</Text>
-        <Text style={styles.subtitle}>{orders.length} orders</Text>
+        <Text style={[styles.title, { color: colors.text }]}>Order History</Text>
+        <Text style={[styles.subtitle, { color: colors.textSecondary }]}>{orders.length} orders</Text>
       </View>
 
       {/* Orders List */}
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView style={[styles.content, { backgroundColor: colors.background }]} showsVerticalScrollIndicator={false}>
         {orders.map((order) => (
           <TouchableOpacity 
             key={order.order_id} 
             style={styles.orderCard}
             onPress={() => router.push(`/order/${order.order_id}`)}
           >
-            <View style={styles.orderHeader}>
+            <View style={[styles.orderHeader, { borderBottomColor: colors.border }]}>
               <View style={styles.orderInfo}>
-                <Text style={styles.orderId}>Order ID: {order.order_id}</Text>
-                <Text style={styles.orderDate}>{new Date(order.date_added).toLocaleDateString()}</Text>
+                <Text style={[styles.orderId, { color: colors.text }]}>Order ID: {order.order_id}</Text>
+                <Text style={[styles.orderDate, { color: colors.textSecondary }]}>{new Date(order.date_added).toLocaleDateString()}</Text>
               </View>
               <View style={[styles.statusBadge, { backgroundColor: getStatusColor(order.status) + '20' }]}>
                 {getStatusIcon(order.status)}
@@ -119,8 +121,8 @@ export default function OrdersScreen() {
 
             <View style={styles.orderDetails}>
               <View style={styles.orderMeta}>
-                <Text style={styles.itemCount}>{order.products ? order.products.length : 0} item{order.products && order.products.length > 1 ? 's' : ''}</Text>
-                <Text style={styles.orderTotal}>${parseFloat(order.total).toFixed(2)}</Text>
+                <Text style={[styles.itemCount, { color: colors.textSecondary }]}>{order.products ? order.products.length : 0} item{order.products && order.products.length > 1 ? 's' : ''}</Text>
+                <Text style={[styles.orderTotal, { color: colors.text }]}>₦{parseFloat(order.total).toFixed(2)}</Text>
               </View>
               
               {/* Tracking number is not directly available in /orders API response, would need /order_info */}
