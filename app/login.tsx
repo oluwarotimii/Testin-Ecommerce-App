@@ -1,8 +1,8 @@
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView } from 'react-native';
 import { useState } from 'react';
 import { useRouter } from 'expo-router';
-import { Mail, Lock, Eye, EyeOff, ArrowLeft } from 'lucide-react-native';
 import { useThemeColors } from '@/hooks/useColorScheme';
+import { MaterialIcons, FontAwesome, Ionicons } from '@expo/vector-icons';
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -28,11 +28,11 @@ export default function LoginScreen() {
 
   return (
     <ScrollView style={[styles.container, { backgroundColor: colors.background }]} contentContainerStyle={styles.contentContainer}>
-      <TouchableOpacity 
+      <TouchableOpacity
         style={styles.backButton}
         onPress={() => router.back()}
       >
-        <ArrowLeft size={24} color={colors.primary} />
+        <Ionicons name="arrow-back" size={24} color={colors.primary} />
       </TouchableOpacity>
 
       <View style={styles.header}>
@@ -42,7 +42,7 @@ export default function LoginScreen() {
 
       <View style={styles.form}>
         <View style={[styles.inputContainer, { backgroundColor: colors.surface }]}>
-          <Mail size={20} color={colors.textSecondary} style={styles.inputIcon} />
+          <Ionicons name="mail" size={20} color={colors.textSecondary} style={styles.inputIcon} />
           <TextInput
             style={[styles.input, { color: colors.text }]}
             placeholder="Email"
@@ -55,7 +55,7 @@ export default function LoginScreen() {
         </View>
 
         <View style={[styles.inputContainer, { backgroundColor: colors.surface }]}>
-          <Lock size={20} color={colors.textSecondary} style={styles.inputIcon} />
+          <Ionicons name="lock-closed" size={20} color={colors.textSecondary} style={styles.inputIcon} />
           <TextInput
             style={[styles.input, { color: colors.text }]}
             placeholder="Password"
@@ -64,14 +64,14 @@ export default function LoginScreen() {
             onChangeText={setPassword}
             secureTextEntry={!showPassword}
           />
-          <TouchableOpacity 
+          <TouchableOpacity
             onPress={() => setShowPassword(!showPassword)}
             style={styles.eyeIcon}
           >
             {showPassword ? (
-              <EyeOff size={20} color={colors.textSecondary} />
+              <Ionicons name="eye-off" size={20} color={colors.textSecondary} />
             ) : (
-              <Eye size={20} color={colors.textSecondary} />
+              <Ionicons name="eye" size={20} color={colors.textSecondary} />
             )}
           </TouchableOpacity>
         </View>

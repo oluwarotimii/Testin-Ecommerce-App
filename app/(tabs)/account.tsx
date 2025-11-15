@@ -1,10 +1,10 @@
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch, ActivityIndicator } from 'react-native';
-import { User, Settings, Heart, MapPin, CreditCard, Bell, CircleHelp as HelpCircle, LogOut, ChevronRight, Moon, Download, UserRoundX } from 'lucide-react-native';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'expo-router';
 import updateService from '@/services/updateService';
 import { useThemeColors } from '@/hooks/useColorScheme';
 import { useAuth } from '@/context/AuthContext';
+import { MaterialIcons, FontAwesome, Ionicons } from '@expo/vector-icons';
 
 export default function AccountScreen() {
   const router = useRouter();
@@ -21,13 +21,8 @@ export default function AccountScreen() {
       if (isAuthenticated) {
         try {
           setLoading(true);
-          const response = await apiService.getAccountDetails();
-          if (response.success) {
-            setUserDetails(response.account);
-          } else {
-            console.error('Failed to fetch account details:', response.error);
-            setUserDetails(null);
-          }
+          const response = await apiService.getAccountDetails(1);
+          setUserDetails(response);
         } catch (error) {
           console.error('Error fetching account details:', error);
           setUserDetails(null);
@@ -47,25 +42,25 @@ export default function AccountScreen() {
     {
       id: 'profile',
       title: 'Edit Profile',
-      icon: User,
+      icon: () => <Ionicons name="person" size={20} color={colors.primary} />,
       onPress: () => router.push('/profile'),
     },
     {
       id: 'addresses',
       title: 'Shipping Addresses',
-      icon: MapPin,
+      icon: () => <Ionicons name="location" size={20} color={colors.primary} />,
       onPress: () => router.push('/addresses'),
     },
     {
       id: 'payment',
       title: 'Payment Methods',
-      icon: CreditCard,
+      icon: () => <Ionicons name="card" size={20} color={colors.primary} />,
       onPress: () => router.push('/payment-methods'),
     },
     {
       id: 'wishlist',
       title: 'Wishlist',
-      icon: Heart,
+      icon: () => <Ionicons name="heart" size={20} color={colors.primary} />,
       onPress: () => router.push('/wishlist'),
     },
   ];
@@ -74,7 +69,7 @@ export default function AccountScreen() {
     {
       id: 'notifications',
       title: 'Push Notifications',
-      icon: Bell,
+      icon: () => <Ionicons name="notifications" size={20} color={colors.primary} />,
       type: 'switch',
       value: notifications,
       onToggle: setNotifications,
@@ -82,7 +77,7 @@ export default function AccountScreen() {
     {
       id: 'darkmode',
       title: 'Dark Mode',
-      icon: Moon,
+      icon: () => <Ionicons name="moon" size={20} color={colors.primary} />,
       type: 'switch',
       value: darkMode,
       onToggle: setDarkMode,
@@ -90,14 +85,14 @@ export default function AccountScreen() {
     {
       id: 'settings',
       title: 'App Settings',
-      icon: Settings,
+      icon: () => <Ionicons name="settings" size={20} color={colors.primary} />,
       type: 'navigation',
       onPress: () => router.push('/settings'),
     },
     {
       id: 'updates',
       title: 'Check for Updates',
-      icon: Download,
+      icon: () => <Ionicons name="download" size={20} color={colors.primary} />,
       type: 'navigation',
       onPress: () => updateService.forceCheckForUpdates(),
     },
@@ -107,7 +102,7 @@ export default function AccountScreen() {
     {
       id: 'help',
       title: 'Help & Support',
-      icon: HelpCircle,
+      icon: () => <Ionicons name="help-circle" size={20} color={colors.primary} />,
       onPress: () => router.push('/help'),
     },
   ];
@@ -121,11 +116,11 @@ export default function AccountScreen() {
     <TouchableOpacity key={item.id} style={styles.menuItem} onPress={item.onPress}>
       <View style={styles.menuItemLeft}>
         <View style={[styles.iconContainer, { backgroundColor: colors.surface }]}>
-          <item.icon size={20} color={colors.primary} />
+          {item.icon()}
         </View>
         <Text style={[styles.menuItemText, { color: colors.text }]}>{item.title}</Text>
       </View>
-      <ChevronRight size={20} color={colors.textSecondary} />
+      <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
     </TouchableOpacity>
   );
 
@@ -133,7 +128,7 @@ export default function AccountScreen() {
     <View key={item.id} style={styles.menuItem}>
       <View style={styles.menuItemLeft}>
         <View style={[styles.iconContainer, { backgroundColor: colors.surface }]}>
-          <item.icon size={20} color={colors.primary} />
+          {item.icon()}
         </View>
         <Text style={[styles.menuItemText, { color: colors.text }]}>{item.title}</Text>
       </View>
@@ -146,7 +141,7 @@ export default function AccountScreen() {
         />
       ) : (
         <TouchableOpacity onPress={item.onPress}>
-          <ChevronRight size={20} color={colors.textSecondary} />
+          <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
         </TouchableOpacity>
       )}
     </View>
@@ -167,14 +162,11 @@ export default function AccountScreen() {
           <View style={[styles.profileSection, { backgroundColor: colors.surface }]}>
             <View style={styles.profileInfo}>
               <View style={[styles.avatar, { backgroundColor: colors.primary }]}>
-                <Text style={[styles.avatarText, { color: colors.white }]}>{userDetails.firstname ? userDetails.firstname.charAt(0) : ''}{userDetails.lastname ? userDetails.lastname.charAt(0) : ''}</Text>
+                <Text style={[styles.avatarText, { color: colors.white }]}>{userDetails.name.firstname ? userDetails.name.firstname.charAt(0) : ''}{userDetails.name.lastname ? userDetails.name.lastname.charAt(0) : ''}</Text>
               </View>
               <View style={styles.userDetails}>
-                <Text style={[styles.userName, { color: colors.text }]}>{userDetails.firstname} {userDetails.lastname}</Text>
+                <Text style={[styles.userName, { color: colors.text }]}>{userDetails.name.firstname} {userDetails.name.lastname}</Text>
                 <Text style={[styles.userEmail, { color: colors.textSecondary }]}>{userDetails.email}</Text>
-                {userDetails.date_added && (
-                  <Text style={[styles.memberSince, { color: colors.textSecondary }]}>Member since {new Date(userDetails.date_added).toLocaleDateString('en-US', { year: 'numeric', month: 'short' })}</Text>
-                )}
               </View>
             </View>
             <TouchableOpacity style={[styles.editButton, { backgroundColor: colors.primary }]} onPress={() => router.push('/profile')}>
@@ -209,14 +201,14 @@ export default function AccountScreen() {
           {/* Logout */}
           <View style={styles.section}>
             <TouchableOpacity style={[styles.logoutButton, { backgroundColor: colors.surface }]} onPress={handleLogout}>
-              <LogOut size={20} color={colors.error} />
+              <Ionicons name="log-out" size={20} color={colors.error} />
               <Text style={[styles.logoutText, { color: colors.error }]}>Sign Out</Text>
             </TouchableOpacity>
           </View>
         </>
       ) : (
         <View style={[styles.emptyContainer, { backgroundColor: colors.background }]}>
-          <UserRoundX size={80} color={colors.textSecondary} style={styles.emptyIcon} />
+          <Ionicons name="person-circle-outline" size={80} color={colors.textSecondary} style={styles.emptyIcon} />
           <Text style={[styles.emptyTitle, { color: colors.text }]}>You are not logged in.</Text>
           <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>Please log in or create an account to view your profile, orders, and more.</Text>
           <TouchableOpacity 

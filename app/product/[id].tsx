@@ -1,8 +1,8 @@
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Dimensions } from 'react-native';
-import { ArrowLeft, Heart, Share, Star, Plus, Minus, ShoppingCart } from 'lucide-react-native';
 import { useState, useEffect } from 'react';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
+import { MaterialIcons, FontAwesome, Ionicons } from '@expo/vector-icons';
 
 const { width } = Dimensions.get('window');
 
@@ -19,20 +19,10 @@ export default function ProductDetailScreen() {
 
   useEffect(() => {
     if (id) {
-      // Fetch product details
-      // Replace with actual API call to your OpenCart backend
-      // For now, simulating a fetch
       const fetchProduct = async () => {
         try {
           const fetchedProduct = await apiService.getProduct(Number(id));
-          if (fetchedProduct.success) {
-            setProduct(fetchedProduct.data);
-            // Assuming related products are part of the product data or fetched separately
-            // setRelatedProducts(fetchedProduct.data.relatedProducts || []);
-          } else {
-            console.error("Failed to fetch product:", fetchedProduct.error);
-            setProduct(null);
-          }
+          setProduct(fetchedProduct);
         } catch (error) {
           console.error("Error fetching product:", error);
           setProduct(null);
@@ -51,21 +41,11 @@ export default function ProductDetailScreen() {
   }
 
   const updateQuantity = (change: number) => {
-    setQuantity(Math.max(1, Math.min(product.stockCount, quantity + change)));
+    setQuantity(Math.max(1, quantity + change));
   };
 
   const addToCart = async () => {
-    try {
-      const response = await apiService.addToCart(Number(id), quantity);
-      if (response.success) {
-        Alert.alert('Success', `Added ${quantity} of ${product.name} to cart!`);
-      } else {
-        Alert.alert('Error', response.error || 'Failed to add to cart.');
-      }
-    } catch (error) {
-      console.error("Add to cart error:", error);
-      Alert.alert('Error', 'An unexpected error occurred while adding to cart.');
-    }
+    console.log(`Added ${quantity} of ${product.title} to cart!`);
   };
 
   return (
@@ -73,20 +53,20 @@ export default function ProductDetailScreen() {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.headerButton}>
-          <ArrowLeft size={24} color="#1D1D1F" />
+          <Ionicons name="arrow-back" size={24} color="#1D1D1F" />
         </TouchableOpacity>
         <View style={styles.headerActions}>
           <TouchableOpacity style={styles.headerButton}>
-            <Share size={24} color="#1D1D1F" />
+            <Ionicons name="share" size={24} color="#1D1D1F" />
           </TouchableOpacity>
           <TouchableOpacity 
             style={styles.headerButton}
             onPress={() => setIsFavorite(!isFavorite)}
           >
-            <Heart 
-              size={24} 
-              color={isFavorite ? "#FF3B30" : "#1D1D1F"} 
-              fill={isFavorite ? "#FF3B30" : "none"}
+            <Ionicons
+              name={isFavorite ? "heart" : "heart-outline"}
+              size={24}
+              color={isFavorite ? "#FF3B30" : "#1D1D1F"}
             />
           </TouchableOpacity>
         </View>
@@ -104,55 +84,28 @@ export default function ProductDetailScreen() {
               setSelectedImage(index);
             }}
           >
-            {product.images.map((image, index) => (
-              <Image key={index} source={{ uri: image }} style={styles.productImage} />
-            ))}
+            <Image source={{ uri: product.image }} style={styles.productImage} />
           </ScrollView>
-          <View style={styles.imageIndicators}>
-            {product.images.map((_, index) => (
-              <View 
-                key={index} 
-                style={[
-                  styles.indicator, 
-                  selectedImage === index && styles.activeIndicator
-                ]} 
-              />
-            ))}
-          </View>
         </View>
 
         {/* Product Info */}
         <View style={styles.productInfo}>
           <View style={styles.brandCategory}>
-            <Text style={styles.brand}>{product.brand}</Text>
             <Text style={styles.category}>{product.category}</Text>
           </View>
           
-          <Text style={styles.productName}>{product.name}</Text>
+          <Text style={styles.productName}>{product.title}</Text>
           
           <View style={styles.ratingContainer}>
             <View style={styles.rating}>
-              <Star size={16} color="#FFD700" fill="#FFD700" />
-              <Text style={styles.ratingText}>{product.rating}</Text>
-              <Text style={styles.reviewsText}>({product.reviews} reviews)</Text>
+              <Ionicons name="star" size={16} color="#FFD700" />
+              <Text style={styles.ratingText}>{product.rating ? product.rating.rate : 0}</Text>
+              <Text style={styles.reviewsText}>({product.rating ? product.rating.count : 0} reviews)</Text>
             </View>
-            <Text style={styles.stockText}>
-              {product.inStock ? `${product.stockCount} in stock` : 'Out of stock'}
-            </Text>
           </View>
 
           <View style={styles.priceContainer}>
-            <Text style={styles.price}>${product.price}</Text>
-            {product.originalPrice && (
-              <Text style={styles.originalPrice}>${product.originalPrice}</Text>
-            )}
-            {product.originalPrice && (
-              <View style={styles.savingsBadge}>
-                <Text style={styles.savingsText}>
-                  Save ${product.originalPrice - product.price}
-                </Text>
-              </View>
-            )}
+            <Text style={styles.price}>{`$${product.price}`}</Text>
           </View>
 
           {/* Quantity Selector */}
@@ -163,14 +116,14 @@ export default function ProductDetailScreen() {
                 style={styles.quantityButton}
                 onPress={() => updateQuantity(-1)}
               >
-                <Minus size={16} color="#007AFF" />
+                <Ionicons name="remove" size={16} color="#007AFF" />
               </TouchableOpacity>
               <Text style={styles.quantity}>{quantity}</Text>
               <TouchableOpacity 
                 style={styles.quantityButton}
                 onPress={() => updateQuantity(1)}
               >
-                <Plus size={16} color="#007AFF" />
+                <Ionicons name="add" size={16} color="#007AFF" />
               </TouchableOpacity>
             </View>
           </View>
@@ -180,63 +133,18 @@ export default function ProductDetailScreen() {
             <Text style={styles.sectionTitle}>Description</Text>
             <Text style={styles.description}>{product.description}</Text>
           </View>
-
-          {/* Features */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Key Features</Text>
-            {product.features.map((feature, index) => (
-              <View key={index} style={styles.featureItem}>
-                <Text style={styles.featureBullet}>•</Text>
-                <Text style={styles.featureText}>{feature}</Text>
-              </View>
-            ))}
-          </View>
-
-          {/* Specifications */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Specifications</Text>
-            {Object.entries(product.specifications).map(([key, value]) => (
-              <View key={key} style={styles.specRow}>
-                <Text style={styles.specKey}>{key}</Text>
-                <Text style={styles.specValue}>{value}</Text>
-              </View>
-            ))}
-          </View>
-
-          {/* Related Products */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>You might also like</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-              {relatedProducts.map((relatedProduct) => (
-                <TouchableOpacity 
-                  key={relatedProduct.id} 
-                  style={styles.relatedProduct}
-                  onPress={() => router.push(`/product/${relatedProduct.id}`)}
-                >
-                  <Image source={{ uri: relatedProduct.image }} style={styles.relatedImage} />
-                  <Text style={styles.relatedName} numberOfLines={2}>{relatedProduct.name}</Text>
-                  <View style={styles.relatedRating}>
-                    <Star size={12} color="#FFD700" fill="#FFD700" />
-                    <Text style={styles.relatedRatingText}>{relatedProduct.rating}</Text>
-                  </View>
-                  <Text style={styles.relatedPrice}>${relatedProduct.price}</Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-          </View>
         </View>
       </ScrollView>
 
       {/* Add to Cart Button */}
       <View style={styles.bottomBar}>
         <TouchableOpacity 
-          style={[styles.addToCartButton, !product.inStock && styles.disabledButton]}
+          style={styles.addToCartButton}
           onPress={addToCart}
-          disabled={!product.inStock}
         >
           <ShoppingCart size={20} color="#FFFFFF" />
           <Text style={styles.addToCartText}>
-            {product.inStock ? `Add to Cart - $${(product.price * quantity).toFixed(2)}` : 'Out of Stock'}
+            {`Add to Cart - $${(product.price * quantity).toFixed(2)}`}
           </Text>
         </TouchableOpacity>
       </View>

@@ -23,7 +23,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     const loadSession = async () => {
       try {
-        const storedToken = await AsyncStorage.getItem('OCSESSID');
+        const storedToken = await AsyncStorage.getItem('sessionToken');
         if (storedToken) {
           setSessionToken(storedToken);
           setIsAuthenticated(true);
@@ -44,14 +44,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
       const response = await apiService.login(email, password);
-      if (response.success && response.session_id) {
-        const token = response.session_id;
-        await AsyncStorage.setItem('OCSESSID', token);
+      if (response.token) {
+        const token = response.token;
+        await AsyncStorage.setItem('sessionToken', token);
         setSessionToken(token);
         setIsAuthenticated(true);
         return true;
       } else {
-        console.error("Login failed:", response.error);
+        console.error("Login failed:", response);
         return false;
       }
     } catch (error) {
@@ -62,8 +62,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signOut = async () => {
     try {
-      await apiService.logout();
-      await AsyncStorage.removeItem('OCSESSID');
+      await AsyncStorage.removeItem('sessionToken');
       setSessionToken(null);
       setIsAuthenticated(false);
     } catch (error) {

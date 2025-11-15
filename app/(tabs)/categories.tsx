@@ -1,24 +1,36 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, ActivityIndicator } from 'react-native';
 import { Search, Grid3x3 as Grid3X3, List } from 'lucide-react-native';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'expo-router';
+import { useAuth } from '@/context/AuthContext';
 
 export default function CategoriesScreen() {
   const router = useRouter();
+  const { apiService } = useAuth();
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [categories, setCategories] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const categories = [
-    { id: 1, name: 'Electronics', icon: '📱', count: 1250, color: '#007AFF' },
-    { id: 2, name: 'Fashion & Clothing', icon: '👕', count: 890, color: '#FF6B6B' },
-    { id: 3, name: 'Home & Garden', icon: '🏠', count: 567, color: '#4ECDC4' },
-    { id: 4, name: 'Sports & Outdoors', icon: '⚽', count: 432, color: '#45B7D1' },
-    { id: 5, name: 'Books & Media', icon: '📚', count: 789, color: '#96CEB4' },
-    { id: 6, name: 'Health & Beauty', icon: '💄', count: 345, color: '#FFEAA7' },
-    { id: 7, name: 'Toys & Games', icon: '🎮', count: 234, color: '#DDA0DD' },
-    { id: 8, name: 'Automotive', icon: '🚗', count: 156, color: '#98D8C8' },
-    { id: 9, name: 'Food & Beverages', icon: '🍕', count: 678, color: '#F7DC6F' },
-    { id: 10, name: 'Office Supplies', icon: '📎', count: 123, color: '#AED6F1' },
-  ];
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        setLoading(true);
+        const response = await apiService.getCategories();
+        const formattedCategories = response.map((category: string) => ({
+          id: category,
+          name: category,
+          color: `#${Math.floor(Math.random()*16777215).toString(16)}`,
+        }));
+        setCategories(formattedCategories);
+      } catch (error) {
+        console.error("Failed to fetch categories:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCategories();
+  }, []);
 
   const renderGridView = () => (
     <View style={styles.gridContainer}>
@@ -28,9 +40,7 @@ export default function CategoriesScreen() {
           style={[styles.gridItem, { backgroundColor: category.color + '20' }]}
           onPress={() => router.push(`/products?category=${category.id}`)}
         >
-          <Text style={styles.categoryIconLarge}>{category.icon}</Text>
           <Text style={styles.categoryNameGrid}>{category.name}</Text>
-          <Text style={styles.categoryCount}>{category.count} items</Text>
         </TouchableOpacity>
       ))}
     </View>
@@ -44,12 +54,8 @@ export default function CategoriesScreen() {
           style={styles.listItem}
           onPress={() => router.push(`/products?category=${category.id}`)}
         >
-          <View style={[styles.iconContainer, { backgroundColor: category.color + '20' }]}>
-            <Text style={styles.categoryIconSmall}>{category.icon}</Text>
-          </View>
           <View style={styles.categoryInfo}>
             <Text style={styles.categoryNameList}>{category.name}</Text>
-            <Text style={styles.categoryCountList}>{category.count} items available</Text>
           </View>
           <Text style={styles.arrow}>›</Text>
         </TouchableOpacity>
@@ -94,11 +100,15 @@ export default function CategoriesScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
-        {viewMode === 'grid' ? renderGridView() : renderListView()}
+        {loading ? (
+          <ActivityIndicator size="large" color="#007AFF" style={styles.loadingIndicator} />
+        ) : (
+          viewMode === 'grid' ? renderGridView() : renderListView()
+        )}
       </ScrollView>
     </View>
-  );
-}
+  )
+};
 
 const styles = StyleSheet.create({
   container: {

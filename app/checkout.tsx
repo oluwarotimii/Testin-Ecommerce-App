@@ -1,7 +1,7 @@
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput } from 'react-native';
-import { ArrowLeft, MapPin, CreditCard, Truck, Check } from 'lucide-react-native';
 import { useState } from 'react';
 import { useRouter } from 'expo-router';
+import { MaterialIcons, FontAwesome, Ionicons } from '@expo/vector-icons';
 
 export default function CheckoutScreen() {
   const router = useRouter();
@@ -109,7 +109,7 @@ export default function CheckoutScreen() {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()}>
-          <ArrowLeft size={24} color="#1D1D1F" />
+          <Ionicons name="arrow-back" size={24} color="#1D1D1F" />
         </TouchableOpacity>
         <Text style={styles.title}>Checkout</Text>
         <View style={{ width: 24 }} />
@@ -119,7 +119,7 @@ export default function CheckoutScreen() {
         {/* Shipping Address */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <MapPin size={20} color="#007AFF" />
+            <Ionicons name="location" size={20} color="#007AFF" />
             <Text style={styles.sectionTitle}>Shipping Address</Text>
           </View>
           {addresses.map((address, index) => (
@@ -141,7 +141,7 @@ export default function CheckoutScreen() {
                   )}
                 </View>
                 {selectedAddress === index && (
-                  <Check size={20} color="#007AFF" />
+                  <Ionicons name="checkmark" size={20} color="#007AFF" />
                 )}
               </View>
             </TouchableOpacity>
@@ -154,7 +154,7 @@ export default function CheckoutScreen() {
         {/* Payment Method */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <CreditCard size={20} color="#007AFF" />
+            <Ionicons name="card" size={20} color="#007AFF" />
             <Text style={styles.sectionTitle}>Payment Method</Text>
           </View>
           {paymentMethods.map((payment, index) => (
@@ -177,7 +177,7 @@ export default function CheckoutScreen() {
                   </View>
                 </View>
                 {selectedPayment === index && (
-                  <Check size={20} color="#007AFF" />
+                  <Ionicons name="checkmark" size={20} color="#007AFF" />
                 )}
               </View>
             </TouchableOpacity>
@@ -190,7 +190,7 @@ export default function CheckoutScreen() {
         {/* Shipping Method */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Truck size={20} color="#007AFF" />
+            <Ionicons name="boat" size={20} color="#007AFF" />
             <Text style={styles.sectionTitle}>Shipping Method</Text>
           </View>
           {shippingMethods.map((shipping, index) => (
@@ -213,7 +213,7 @@ export default function CheckoutScreen() {
                     {shipping.price === 0 ? 'Free' : `$${shipping.price.toFixed(2)}`}
                   </Text>
                   {selectedShipping === index && (
-                    <Check size={20} color="#007AFF" />
+                    <Ionicons name="checkmark" size={20} color="#007AFF" />
                   )}
                 </View>
               </View>

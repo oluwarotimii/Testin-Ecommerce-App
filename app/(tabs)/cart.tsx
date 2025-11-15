@@ -7,21 +7,34 @@ import { useAuth } from '@/context/AuthContext';
 export default function CartScreen() {
   const router = useRouter();
   const { apiService } = useAuth();
-  const [cartItems, setCartItems] = useState<any[]>([]);
+  const [cart, setCart] = useState<any>(null);
+  const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchCartContents = async () => {
     try {
       setLoading(true);
-      const response = await apiService.getCartContents();
-      if (response && response.products) {
-        setCartItems(response.products);
+      const cartResponse = await apiService.get('carts/5'); // Fetch a single cart
+      setCart(cartResponse);
+
+      if (cartResponse && cartResponse.products) {
+        const productPromises = cartResponse.products.map(item =>
+          apiService.getProduct(item.productId)
+        );
+        const productsResponse = await Promise.all(productPromises);
+        
+        const mergedProducts = cartResponse.products.map((cartItem, index) => ({
+          ...productsResponse[index],
+          quantity: cartItem.quantity,
+        }));
+
+        setProducts(mergedProducts);
       } else {
-        setCartItems([]);
+        setProducts([]);
       }
     } catch (error) {
       console.error("Failed to fetch cart contents:", error);
-      setCartItems([]);
+      setProducts([]);
     } finally {
       setLoading(false);
     }
@@ -31,34 +44,7 @@ export default function CartScreen() {
     fetchCartContents();
   }, []);
 
-  const updateQuantity = async (key: string, change: number) => {
-    const currentItem = cartItems.find(item => item.key === key);
-    if (!currentItem) return;
-
-    const newQuantity = currentItem.quantity + change;
-
-    try {
-      if (newQuantity > 0) {
-        await apiService.updateCart(key, newQuantity);
-      } else {
-        await apiService.removeFromCart(key);
-      }
-      fetchCartContents(); // Re-fetch cart to update UI
-    } catch (error) {
-      console.error("Failed to update cart quantity:", error);
-    }
-  };
-
-  const removeItem = async (key: string) => {
-    try {
-      await apiService.removeFromCart(key);
-      fetchCartContents(); // Re-fetch cart to update UI
-    } catch (error) {
-      console.error("Failed to remove item from cart:", error);
-    }
-  };
-
-  const subtotal = cartItems.reduce((sum, item) => sum + (parseFloat(item.price.replace(/[^0-9.-]+/g," ")) * item.quantity), 0);
+  const subtotal = products.reduce((sum, item) => sum + (item.price * item.quantity), 0);
   const shipping = subtotal > 50 ? 0 : 9.99;
   const tax = subtotal * 0.08;
   const total = subtotal + shipping + tax;
@@ -71,7 +57,7 @@ export default function CartScreen() {
     );
   }
 
-  if (cartItems.length === 0) {
+  if (products.length === 0) {
     return (
       <View style={styles.emptyContainer}>
         <ShoppingBag size={80} color="#8E8E93" />
@@ -92,44 +78,21 @@ export default function CartScreen() {
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.title}>Shopping Cart</Text>
-        <Text style={styles.itemCount}>{cartItems.length} items</Text>
+        <Text style={styles.itemCount}>{products.length} items</Text>
       </View>
 
       {/* Cart Items */}
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {cartItems.map((item) => (
-          <View key={item.key} style={styles.cartItem}>
+        {products.map((item) => (
+          <View key={item.id} style={styles.cartItem}>
             <Image source={{ uri: item.image }} style={styles.itemImage} />
             <View style={styles.itemDetails}>
-              <Text style={styles.itemName}>{item.name}</Text>
-              <View style={styles.itemSpecs}>
-                {/* OpenCart API might not return color/storage directly in cart items */}
-                {/* <Text style={styles.specText}>{item.color}</Text>
-                {item.storage && <Text style={styles.specText}>• {item.storage}</Text>} */}
-              </View>
-              <Text style={styles.itemPrice}>${item.price}</Text>
+              <Text style={styles.itemName}>{item.title}</Text>
+              <Text style={styles.itemPrice}>{`$${item.price}`}</Text>
             </View>
             <View style={styles.itemActions}>
-              <TouchableOpacity 
-                style={styles.removeButton}
-                onPress={() => removeItem(item.key)}
-              >
-                <Trash2 size={16} color="#FF3B30" />
-              </TouchableOpacity>
               <View style={styles.quantityContainer}>
-                <TouchableOpacity 
-                  style={styles.quantityButton}
-                  onPress={() => updateQuantity(item.key, -1)}
-                >
-                  <Minus size={16} color="#007AFF" />
-                </TouchableOpacity>
                 <Text style={styles.quantity}>{item.quantity}</Text>
-                <TouchableOpacity 
-                  style={styles.quantityButton}
-                  onPress={() => updateQuantity(item.key, 1)}
-                >
-                  <Plus size={16} color="#007AFF" />
-                </TouchableOpacity>
               </View>
             </View>
           </View>
@@ -145,7 +108,7 @@ export default function CartScreen() {
         <View style={styles.summaryRow}>
           <Text style={styles.summaryLabel}>Shipping</Text>
           <Text style={styles.summaryValue}>
-            {shipping === 0 ? 'Free' : `${shipping.toFixed(2)}`}
+            {shipping === 0 ? 'Free' : `$${shipping.toFixed(2)}`}
           </Text>
         </View>
         <View style={styles.summaryRow}>

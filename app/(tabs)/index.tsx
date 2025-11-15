@@ -1,11 +1,10 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Image, ActivityIndicator } from 'react-native';
-import { Search, Bell, Heart, Star, RefreshCw, Sparkles } from 'lucide-react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Image, ActivityIndicator, RefreshControl } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/context/AuthContext';
-import airtableService from '@/services/airtableService';
 import InstagramCarousel from '@/components/InstagramCarousel';
 import { useThemeColors } from '@/hooks/useColorScheme';
+import { MaterialIcons, FontAwesome, Ionicons } from '@expo/vector-icons';
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -20,18 +19,15 @@ export default function HomeScreen() {
   const [loadingProducts, setLoadingProducts] = useState(true);
   const [errorProducts, setErrorProducts] = useState<string | null>(null);
   const [productLimit, setProductLimit] = useState(20); // Initial limit
+  const [refreshing, setRefreshing] = useState(false);
 
   const fetchProducts = useCallback(async (limit: number) => {
     if (!apiService) return;
     setLoadingProducts(true);
     setErrorProducts(null);
     try {
-      const response = await apiService.get('index.php?route=api/mobile/products', { limit });
-      if (response.success) {
-        setProducts(response.data);
-      } else {
-        setErrorProducts(response.error || 'Failed to fetch products');
-      }
+      const response = await apiService.getProducts({ limit });
+      setProducts(response);
     } catch (err: any) {
       setErrorProducts(err.message || 'An unexpected error occurred');
     } finally {
@@ -45,11 +41,11 @@ export default function HomeScreen() {
     setErrorCategories(null);
     try {
       const response = await apiService.getCategories();
-      if (response.success) {
-        setCategories(response.data);
-      } else {
-        setErrorCategories(response.error || 'Failed to fetch categories');
-      }
+      const formattedCategories = response.map((category: string) => ({
+        category_id: category,
+        name: category,
+      }));
+      setCategories(formattedCategories);
     } catch (err: any) {
       setErrorCategories(err.message || 'An unexpected error occurred');
     } finally {
@@ -60,6 +56,13 @@ export default function HomeScreen() {
   useEffect(() => {
     fetchProducts(productLimit);
     fetchCategories();
+  }, [fetchProducts, fetchCategories, productLimit]);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await fetchProducts(productLimit);
+    await fetchCategories();
+    setRefreshing(false);
   }, [fetchProducts, fetchCategories, productLimit]);
 
   const handleRefresh = useCallback(() => {
@@ -79,7 +82,18 @@ export default function HomeScreen() {
   }, [router]);
 
   return (
-    <ScrollView style={[styles.container, { backgroundColor: colors.background }]} showsVerticalScrollIndicator={false}>
+    <ScrollView
+      style={[styles.container, { backgroundColor: colors.background }]}
+      showsVerticalScrollIndicator={false}
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+          colors={[colors.primary]} // Use theme primary color
+          tintColor={colors.primary} // For iOS
+        />
+      }
+    >
       {/* Header */}
       <View style={[styles.header, { backgroundColor: colors.background }]}>
         <View>
@@ -87,27 +101,27 @@ export default function HomeScreen() {
           <Text style={[styles.username, { color: colors.text }]}>User Name</Text>
         </View>
         <View style={styles.headerIcons}>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.iconButton}
             onPress={handleRefresh}
           >
-            <RefreshCw size={24} color={colors.text} />
+            <Ionicons name="refresh" size={24} color={colors.text} />
           </TouchableOpacity>
           <TouchableOpacity style={styles.iconButton} onPress={() => router.push('/wishlist')}>
-            <Heart size={24} color={colors.text} />
+            <Ionicons name="heart" size={24} color={colors.text} />
           </TouchableOpacity>
           <TouchableOpacity style={styles.iconButton}>
-            <Bell size={24} color={colors.text} />
+            <Ionicons name="notifications" size={24} color={colors.text} />
           </TouchableOpacity>
         </View>
       </View>
 
       {/* Search Bar */}
-      <TouchableOpacity 
+      <TouchableOpacity
         style={[styles.searchContainer, { backgroundColor: colors.surface }]}
         onPress={() => router.push('/search')}
       >
-        <Search size={20} color={colors.textSecondary} />
+        <Ionicons name="search" size={20} color={colors.textSecondary} />
         <Text style={[styles.searchPlaceholder, { color: colors.textSecondary }]}>Search products...</Text>
       </TouchableOpacity>
 
@@ -125,7 +139,7 @@ export default function HomeScreen() {
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
           <View style={styles.sectionTitleContainer}>
-            <Sparkles size={20} color={colors.primary} />
+            <Ionicons name="star" size={20} color={colors.primary} />
             <Text style={[styles.sectionTitle, { color: colors.text }]}>Featured Categories</Text>
           </View>
           <TouchableOpacity onPress={() => router.push('/(tabs)/categories')}>
@@ -177,18 +191,18 @@ export default function HomeScreen() {
           <View style={styles.productsGrid}>
             {products.slice(0, productLimit).map((product) => (
               <TouchableOpacity 
-                key={product.product_id} 
+                key={product.id} 
                 style={[styles.productCard, { backgroundColor: colors.surface }]}
-                onPress={() => router.push(`/product/${product.product_id}`)}
+                onPress={() => router.push(`/product/${product.id}`)}
               >
                 <Image source={{ uri: product.image }} style={styles.productImage} />
                 <View style={styles.productInfo}>
-                  <Text style={[styles.productName, { color: colors.text }]} numberOfLines={2}>{product.name}</Text>
+                  <Text style={[styles.productName, { color: colors.text }]} numberOfLines={2}>{product.title}</Text>
                   <View style={styles.productRating}>
-                    <Star size={12} color="#FFD700" fill="#FFD700" />
-                    <Text style={[styles.ratingText, { color: colors.textSecondary }]}>{product.rating || 0}</Text>
+                    <Ionicons name="star" size={12} color="#FFD700" />
+                    <Text style={[styles.ratingText, { color: colors.textSecondary }]}>{product.rating ? product.rating.rate : 0}</Text>
                   </View>
-                  <Text style={[styles.productPrice, { color: colors.primary }]}>{product.price}</Text>
+                  <Text style={[styles.productPrice, { color: colors.primary }]}>{`$${product.price}`}</Text>
                 </View>
               </TouchableOpacity>
             ))}

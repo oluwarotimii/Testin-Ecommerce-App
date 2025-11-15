@@ -1,6 +1,6 @@
 import { Tabs } from 'expo-router';
-import { Chrome as Home, Grid3x3 as Grid3X3, ShoppingCart, Package, User } from 'lucide-react-native';
 import { useThemeColors } from '@/hooks/useColorScheme';
+import { MaterialIcons, FontAwesome, Ionicons } from '@expo/vector-icons';
 
 export default function TabLayout() {
   const colors = useThemeColors();
@@ -25,7 +25,7 @@ export default function TabLayout() {
         options={{
           title: 'Home',
           tabBarIcon: ({ size, color }) => (
-            <Home size={size} color={color} />
+            <Ionicons name="home" size={size} color={color} />
           ),
         }}
       />
@@ -34,7 +34,7 @@ export default function TabLayout() {
         options={{
           title: 'Categories',
           tabBarIcon: ({ size, color }) => (
-            <Grid3X3 size={size} color={color} />
+            <Ionicons name="grid" size={size} color={color} />
           ),
         }}
       />
@@ -43,7 +43,7 @@ export default function TabLayout() {
         options={{
           title: 'Cart',
           tabBarIcon: ({ size, color }) => (
-            <ShoppingCart size={size} color={color} />
+            <Ionicons name="cart" size={size} color={color} />
           ),
         }}
       />
@@ -52,7 +52,7 @@ export default function TabLayout() {
         options={{
           title: 'Orders',
           tabBarIcon: ({ size, color }) => (
-            <Package size={size} color={color} />
+            <Ionicons name="receipt" size={size} color={color} />
           ),
         }}
       />
@@ -61,7 +61,7 @@ export default function TabLayout() {
         options={{
           title: 'Account',
           tabBarIcon: ({ size, color }) => (
-            <User size={size} color={color} />
+            <Ionicons name="person" size={size} color={color} />
           ),
         }}
       />

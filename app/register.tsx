@@ -1,10 +1,12 @@
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import { useState } from 'react';
 import { useRouter } from 'expo-router';
 import { User, Mail, Lock, Phone, Eye, EyeOff, ArrowLeft } from 'lucide-react-native';
+import { useAuth } from '@/context/AuthContext';
 
 export default function RegisterScreen() {
   const router = useRouter();
+  const { apiService } = useAuth();
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
@@ -13,15 +15,35 @@ export default function RegisterScreen() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const handleRegister = () => {
-    // TODO: Implement registration logic
-    router.push('/(tabs)');
+
+
+  const handleRegister = async () => {
+    if (password !== confirmPassword) {
+      Alert.alert("Passwords don't match");
+      return;
+    }
+    setLoading(true);
+    try {
+      const response = await apiService.register(firstName, lastName, email, phone, password);
+      if (response.id) {
+        Alert.alert('Registration Successful', 'You can now log in.');
+        router.push('/login');
+      } else {
+        Alert.alert('Registration Failed', 'An error occurred.');
+      }
+    } catch (error) {
+      console.error("Registration error:", error);
+      Alert.alert('Registration Error', 'An unexpected error occurred. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
-      <TouchableOpacity 
+      <TouchableOpacity
         style={styles.backButton}
         onPress={() => router.back()}
       >
@@ -86,7 +108,7 @@ export default function RegisterScreen() {
             onChangeText={setPassword}
             secureTextEntry={!showPassword}
           />
-          <TouchableOpacity 
+          <TouchableOpacity
             onPress={() => setShowPassword(!showPassword)}
             style={styles.eyeIcon}
           >
@@ -107,7 +129,7 @@ export default function RegisterScreen() {
             onChangeText={setConfirmPassword}
             secureTextEntry={!showConfirmPassword}
           />
-          <TouchableOpacity 
+          <TouchableOpacity
             onPress={() => setShowConfirmPassword(!showConfirmPassword)}
             style={styles.eyeIcon}
           >
@@ -131,82 +153,83 @@ export default function RegisterScreen() {
         </TouchableOpacity>
       </View>
     </ScrollView>
-  );
-}
+  )
+};
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#FFFFFF',
-  },
-  contentContainer: {
-    paddingHorizontal: 32,
-    paddingTop: 60,
-    paddingBottom: 32,
-  },
-  backButton: {
-    marginBottom: 32,
-  },
-  header: {
-    marginBottom: 40,
-  },
-  title: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: '#1D1D1F',
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: '#8E8E93',
-  },
-  form: {
-    marginBottom: 32,
-  },
-  inputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#F2F2F7',
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    marginBottom: 16,
-    height: 56,
-  },
-  inputIcon: {
-    marginRight: 12,
-  },
-  input: {
-    flex: 1,
-    fontSize: 16,
-    color: '#1D1D1F',
-  },
-  eyeIcon: {
-    padding: 4,
-  },
-  registerButton: {
-    backgroundColor: '#007AFF',
-    paddingVertical: 16,
-    borderRadius: 12,
-    alignItems: 'center',
-    marginTop: 8,
-  },
-  registerButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  footer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  footerText: {
-    color: '#8E8E93',
-    fontSize: 14,
-  },
-  footerLink: {
-    color: '#007AFF',
-    fontSize: 14,
-    fontWeight: '500',
-  },
-});
+
+  const styles = StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: '#FFFFFF',
+    },
+    contentContainer: {
+      paddingHorizontal: 32,
+      paddingTop: 60,
+      paddingBottom: 32,
+    },
+    backButton: {
+      marginBottom: 32,
+    },
+    header: {
+      marginBottom: 40,
+    },
+    title: {
+      fontSize: 32,
+      fontWeight: 'bold',
+      color: '#1D1D1F',
+      marginBottom: 8,
+    },
+    subtitle: {
+      fontSize: 16,
+      color: '#8E8E93',
+    },
+    form: {
+      marginBottom: 32,
+    },
+    inputContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: '#F2F2F7',
+      borderRadius: 12,
+      paddingHorizontal: 16,
+      marginBottom: 16,
+      height: 56,
+    },
+    inputIcon: {
+      marginRight: 12,
+    },
+    input: {
+      flex: 1,
+      fontSize: 16,
+      color: '#1D1D1F',
+    },
+    eyeIcon: {
+      padding: 4,
+    },
+    registerButton: {
+      backgroundColor: '#007AFF',
+      paddingVertical: 16,
+      borderRadius: 12,
+      alignItems: 'center',
+      marginTop: 8,
+    },
+    registerButtonText: {
+      color: '#FFFFFF',
+      fontSize: 16,
+      fontWeight: '600',
+    },
+    footer: {
+      flexDirection: 'row',
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    footerText: {
+      color: '#8E8E93',
+      fontSize: 14,
+    },
+    footerLink: {
+      color: '#007AFF',
+      fontSize: 14,
+      fontWeight: '500',
+    },
+  });

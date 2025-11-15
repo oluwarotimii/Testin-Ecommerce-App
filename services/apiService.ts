@@ -5,7 +5,7 @@ class ApiService {
   private sessionToken: string | null;
 
   constructor(sessionToken: string | null = null) {
-    this.baseUrl = 'http://localhost/techin/';
+    this.baseUrl = 'https://fakestoreapi.com';
     this.sessionToken = sessionToken;
   }
 
@@ -47,27 +47,32 @@ class ApiService {
   }
 
   async post(endpoint: string, body: Record<string, any>) {
-    const formBody = Object.keys(body).map(key => encodeURIComponent(key) + '=' + encodeURIComponent(body[key])).join('&');
     return this.makeRequest(endpoint, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: formBody,
+      body: JSON.stringify(body),
     });
   }
 
   // Authentication
   async login(email: string, password: string) {
-    const response = await this.post('login', { email, password });
-    if (response.success && response.session_id) {
-      this.setSessionToken(response.session_id);
+    const response = await this.post('auth/login', { username: email, password });
+    if (response.token) {
+      this.setSessionToken(response.token);
     }
     return response;
   }
 
   async register(firstname: string, lastname: string, email: string, telephone: string, password: string) {
-    return this.post('register', { firstname, lastname, email, telephone, password });
+    return this.post('users', {
+      email,
+      username: email,
+      password,
+      name: {
+        firstname,
+        lastname
+      },
+      phone: telephone
+    });
   }
 
   async logout() {
@@ -80,7 +85,7 @@ class ApiService {
   }
 
   async getProduct(product_id: number) {
-    return this.get('product', { product_id });
+    return this.get(`products/${product_id}`);
   }
 
   async searchProducts(search: string, page?: number, limit?: number) {
@@ -89,11 +94,11 @@ class ApiService {
 
   // Categories
   async getCategories() {
-    return this.get('categories');
+    return this.get('products/categories');
   }
 
-  async getCategory(category_id: number) {
-    return this.get('category', { category_id });
+  async getCategory(category_name: string) {
+    return this.get(`products/category/${category_name}`);
   }
 
   // Shopping Cart

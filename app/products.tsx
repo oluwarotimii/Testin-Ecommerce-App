@@ -18,12 +18,8 @@ export default function ProductsScreen() {
       if (!apiService) return; // Ensure apiService is available
       try {
         setLoading(true);
-        const response = await apiService.get('index.php?route=api/mobile/products');
-        if (response.success) {
-          setProducts(response.data);
-        } else {
-          setError(response.error || 'Failed to fetch products');
-        }
+        const response = await apiService.getProducts();
+        setProducts(response);
       } catch (err: any) {
         setError(err.message || 'An unexpected error occurred');
       } finally {
@@ -35,44 +31,33 @@ export default function ProductsScreen() {
   }, [apiService]);
 
   const filteredProducts = products.filter(product =>
-    product.name.toLowerCase().includes(searchQuery.toLowerCase())
+    product.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const renderGridView = () => (
     <View style={styles.gridContainer}>
       {filteredProducts.map((product) => (
         <TouchableOpacity 
-          key={product.product_id} 
+          key={product.id} 
           style={styles.gridItem}
-          onPress={() => router.push(`/product/${product.product_id}`)}
+          onPress={() => router.push(`/product/${product.id}`)}
         >
           <View style={styles.imageContainer}>
             <Image source={{ uri: product.image }} style={styles.productImage} />
-            {product.special && (
-              <View style={styles.discountBadge}>
-                <Text style={styles.discountText}>-{Math.round(((product.price - product.special) / product.price) * 100)}%</Text>
-              </View>
-            )}
             <TouchableOpacity style={styles.wishlistButton}>
               <Heart size={16} color="#8E8E93" />
             </TouchableOpacity>
           </View>
           <View style={styles.productInfo}>
-            <Text style={styles.productName} numberOfLines={2}>{product.name}</Text>
+            <Text style={styles.productName} numberOfLines={2}>{product.title}</Text>
             <View style={styles.ratingContainer}>
               <Star size={12} color="#FFD700" fill="#FFD700" />
-              <Text style={styles.ratingText}>{product.rating || 0}</Text>
-              <Text style={styles.reviewsText}>({product.reviews || 0})</Text>
+              <Text style={styles.ratingText}>{product.rating ? product.rating.rate : 0}</Text>
+              <Text style={styles.reviewsText}>({product.rating ? product.rating.count : 0})</Text>
             </View>
             <View style={styles.priceContainer}>
-              <Text style={styles.price}>{product.special ? `${product.special}` : `${product.price}`}</Text>
-              {product.special && (
-                <Text style={styles.originalPrice}>${product.price}</Text>
-              )}
+              <Text style={styles.price}>{`$${product.price}`}</Text>
             </View>
-            {!product.stock_status && (
-              <Text style={styles.outOfStock}>Out of Stock</Text>
-            )}
           </View>
         </TouchableOpacity>
       ))}
@@ -83,37 +68,26 @@ export default function ProductsScreen() {
     <View style={styles.listContainer}>
       {filteredProducts.map((product) => (
         <TouchableOpacity 
-          key={product.product_id} 
+          key={product.id} 
           style={styles.listItem}
-          onPress={() => router.push(`/product/${product.product_id}`)}
+          onPress={() => router.push(`/product/${product.id}`)}
         >
           <View style={styles.listImageContainer}>
             <Image source={{ uri: product.image }} style={styles.listImage} />
-            {product.special && (
-              <View style={styles.listDiscountBadge}>
-                <Text style={styles.discountText}>-{Math.round(((product.price - product.special) / product.price) * 100)}%</Text>
-              </View>
-            )}
           </View>
           <View style={styles.listProductInfo}>
-            <Text style={styles.listProductName} numberOfLines={2}>{product.name}</Text>
+            <Text style={styles.listProductName} numberOfLines={2}>{product.title}</Text>
             <Text style={styles.categoryText}>{product.category}</Text>
             <View style={styles.ratingContainer}>
               <Star size={12} color="#FFD700" fill="#FFD700" />
-              <Text style={styles.ratingText}>{product.rating || 0}</Text>
-              <Text style={styles.reviewsText}>({product.reviews || 0})</Text>
+              <Text style={styles.ratingText}>{product.rating ? product.rating.rate : 0}</Text>
+              <Text style={styles.reviewsText}>({product.rating ? product.rating.count : 0})</Text>
             </View>
             <View style={styles.priceContainer}>
-              <Text style={styles.price}>{product.special ? `${product.special}` : `${product.price}`}</Text>
-              {product.special && (
-                <Text style={styles.originalPrice}>${product.price}</Text>
-              )}
+              <Text style={styles.price}>{`$${product.price}`}</Text>
             </View>
-            {!product.stock_status && (
-              <Text style={styles.outOfStock}>Out of Stock</Text>
-            )}
           </View>
-          <TouchableOpacity style={styles.listWishlistButton} onPress={() => console.log('Add/Remove from Wishlist', product.product_id)}>
+          <TouchableOpacity style={styles.listWishlistButton} onPress={() => console.log('Add/Remove from Wishlist', product.id)}>
             <Heart size={20} color="#8E8E93" />
           </TouchableOpacity>
         </TouchableOpacity>
