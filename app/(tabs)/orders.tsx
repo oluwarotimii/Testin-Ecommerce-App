@@ -1,8 +1,8 @@
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
-import { Package, Clock, CircleCheck as CheckCircle, Circle as XCircle, Truck } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
+import { MaterialIcons, FontAwesome, Ionicons } from '@expo/vector-icons';
 
 export default function OrdersScreen() {
   const router = useRouter();
@@ -33,15 +33,15 @@ export default function OrdersScreen() {
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'delivered':
-        return <CheckCircle size={20} color="#34C759" />;
+        return <Ionicons name="checkmark-circle" size={20} color="#34C759" />;
       case 'shipped':
-        return <Truck size={20} color="#007AFF" />;
+        return <Ionicons name="boat" size={20} color="#007AFF" />;
       case 'processing':
-        return <Clock size={20} color="#FF9500" />;
+        return <Ionicons name="time" size={20} color="#FF9500" />;
       case 'cancelled':
-        return <XCircle size={20} color="#FF3B30" />;
+        return <Ionicons name="close-circle" size={20} color="#FF3B30" />;
       default:
-        return <Package size={20} color="#8E8E93" />;
+        return <Ionicons name="cube" size={20} color="#8E8E93" />;
     }
   };
 
@@ -75,7 +75,7 @@ export default function OrdersScreen() {
   if (orders.length === 0) {
     return (
       <View style={styles.emptyContainer}>
-        <Package size={80} color="#8E8E93" />
+        <Ionicons name="cube-outline" size={80} color="#8E8E93" />
         <Text style={styles.emptyTitle}>No orders yet</Text>
         <Text style={styles.emptySubtitle}>Your order history will appear here</Text>
         <TouchableOpacity 

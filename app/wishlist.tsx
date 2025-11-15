@@ -1,7 +1,7 @@
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
-import { Heart, ShoppingCart, Trash2, Star } from 'lucide-react-native';
 import { useState } from 'react';
 import { useRouter } from 'expo-router';
+import { MaterialIcons, FontAwesome, Ionicons } from '@expo/vector-icons';
 
 export default function WishlistScreen() {
   const router = useRouter();
@@ -72,7 +72,7 @@ export default function WishlistScreen() {
   if (wishlistItems.length === 0) {
     return (
       <View style={styles.emptyContainer}>
-        <Heart size={80} color="#8E8E93" />
+        <Ionicons name="heart-outline" size={80} color="#8E8E93" />
         <Text style={styles.emptyTitle}>Your wishlist is empty</Text>
         <Text style={styles.emptySubtitle}>Save products you love to your wishlist</Text>
         <TouchableOpacity 
@@ -114,7 +114,7 @@ export default function WishlistScreen() {
                 <Text style={styles.itemName} numberOfLines={2}>{item.name}</Text>
                 
                 <View style={styles.ratingContainer}>
-                  <Star size={12} color="#FFD700" fill="#FFD700" />
+                  <Ionicons name="star" size={12} color="#FFD700" />
                   <Text style={styles.ratingText}>{item.rating}</Text>
                   <Text style={styles.reviewsText}>({item.reviews})</Text>
                 </View>
@@ -140,7 +140,7 @@ export default function WishlistScreen() {
                 style={styles.removeButton}
                 onPress={() => removeFromWishlist(item.id)}
               >
-                <Trash2 size={20} color="#FF3B30" />
+                <Ionicons name="trash" size={20} color="#FF3B30" />
               </TouchableOpacity>
               
               <TouchableOpacity 
@@ -151,7 +151,7 @@ export default function WishlistScreen() {
                 onPress={() => addToCart(item.id)}
                 disabled={!item.inStock}
               >
-                <ShoppingCart size={16} color="#FFFFFF" />
+                <Ionicons name="cart" size={16} color="#FFFFFF" />
                 <Text style={styles.addToCartText}>
                   {item.inStock ? 'Add to Cart' : 'Out of Stock'}
                 </Text>
@@ -171,7 +171,7 @@ export default function WishlistScreen() {
               .forEach(item => addToCart(item.id));
           }}
         >
-          <ShoppingCart size={20} color="#FFFFFF" />
+          <Ionicons name="cart" size={20} color="#FFFFFF" />
           <Text style={styles.addAllText}>Add All to Cart</Text>
         </TouchableOpacity>
       </View>

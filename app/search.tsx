@@ -1,7 +1,7 @@
 import { View, Text, StyleSheet, TextInput, ScrollView, TouchableOpacity, Image } from 'react-native';
-import { Search, Clock, X, Star, TrendingUp } from 'lucide-react-native';
 import { useState } from 'react';
 import { useRouter } from 'expo-router';
+import { MaterialIcons, FontAwesome, Ionicons } from '@expo/vector-icons';
 
 export default function SearchScreen() {
   const router = useRouter();
@@ -71,7 +71,7 @@ export default function SearchScreen() {
       {/* Search Header */}
       <View style={styles.searchHeader}>
         <View style={styles.searchContainer}>
-          <Search size={20} color="#8E8E93" />
+          <Ionicons name="search" size={20} color="#8E8E93" />
           <TextInput
             style={styles.searchInput}
             placeholder="Search products..."
@@ -83,7 +83,7 @@ export default function SearchScreen() {
           />
           {searchQuery.length > 0 && (
             <TouchableOpacity onPress={() => setSearchQuery('')}>
-              <X size={20} color="#8E8E93" />
+              <Ionicons name="close" size={20} color="#8E8E93" />
             </TouchableOpacity>
           )}
         </View>
@@ -113,13 +113,13 @@ export default function SearchScreen() {
                       handleSearch(search);
                     }}
                   >
-                    <Clock size={16} color="#8E8E93" />
+                    <Ionicons name="time" size={16} color="#8E8E93" />
                     <Text style={styles.searchItemText}>{search}</Text>
                     <TouchableOpacity 
                       onPress={() => removeRecentSearch(search)}
                       style={styles.removeButton}
                     >
-                      <X size={16} color="#8E8E93" />
+                      <Ionicons name="close" size={16} color="#8E8E93" />
                     </TouchableOpacity>
                   </TouchableOpacity>
                 ))}
@@ -147,7 +147,7 @@ export default function SearchScreen() {
                   <Text style={styles.resultName} numberOfLines={2}>{product.name}</Text>
                   <Text style={styles.resultCategory}>{product.category}</Text>
                   <View style={styles.resultRating}>
-                    <Star size={12} color="#FFD700" fill="#FFD700" />
+                    <Ionicons name="star" size={12} color="#FFD700" />
                     <Text style={styles.ratingText}>{product.rating}</Text>
                   </View>
                   <Text style={styles.resultPrice}>${product.price}</Text>

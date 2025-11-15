@@ -1,8 +1,9 @@
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
-import { Minus, Plus, Trash2, ShoppingBag } from 'lucide-react-native';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
+import { useTheme } from '@/context/ThemeContext';
+import { MaterialIcons, FontAwesome, Ionicons } from '@expo/vector-icons';
 
 export default function CartScreen() {
   const router = useRouter();
@@ -60,7 +61,7 @@ export default function CartScreen() {
   if (products.length === 0) {
     return (
       <View style={styles.emptyContainer}>
-        <ShoppingBag size={80} color="#8E8E93" />
+        <Ionicons name="cart-outline" size={80} color="#8E8E93" />
         <Text style={styles.emptyTitle}>Your cart is empty</Text>
         <Text style={styles.emptySubtitle}>Add some products to get started</Text>
         <TouchableOpacity 

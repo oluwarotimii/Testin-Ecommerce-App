@@ -1,6 +1,6 @@
 import { View, Text, StyleSheet, TouchableOpacity, Animated } from 'react-native';
-import { X, Info, TriangleAlert as AlertTriangle, CircleCheck as CheckCircle, CircleAlert as AlertCircle } from 'lucide-react-native';
 import { useState, useEffect, useRef } from 'react';
+import { MaterialIcons, FontAwesome, Ionicons } from '@expo/vector-icons';
 
 interface NotificationBannerProps {
   id: string;
@@ -73,15 +73,15 @@ export default function NotificationBanner({
   const getIcon = () => {
     switch (type) {
       case 'info':
-        return <Info size={20} color="#007AFF" />;
+        return <Ionicons name="information-circle" size={20} color="#007AFF" />;
       case 'warning':
-        return <AlertTriangle size={20} color="#FF9500" />;
+        return <Ionicons name="alert-circle" size={20} color="#FF9500" />;
       case 'success':
-        return <CheckCircle size={20} color="#34C759" />;
+        return <Ionicons name="checkmark-circle" size={20} color="#34C759" />;
       case 'error':
-        return <AlertCircle size={20} color="#FF3B30" />;
+        return <Ionicons name="close-circle" size={20} color="#FF3B30" />;
       default:
-        return <Info size={20} color="#007AFF" />;
+        return <Ionicons name="information-circle" size={20} color="#007AFF" />;
     }
   };
 
@@ -143,7 +143,7 @@ export default function NotificationBanner({
         </View>
       </TouchableOpacity>
       <TouchableOpacity style={styles.dismissButton} onPress={handleDismiss}>
-        <X size={18} color="#8E8E93" />
+        <Ionicons name="close" size={18} color="#8E8E93" />
       </TouchableOpacity>
     </Animated.View>
   );

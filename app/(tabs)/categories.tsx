@@ -1,8 +1,8 @@
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, ActivityIndicator } from 'react-native';
-import { Search, Grid3x3 as Grid3X3, List } from 'lucide-react-native';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
+import { MaterialIcons, FontAwesome, Ionicons } from '@expo/vector-icons';
 
 export default function CategoriesScreen() {
   const router = useRouter();
@@ -73,20 +73,20 @@ export default function CategoriesScreen() {
             style={[styles.toggleButton, viewMode === 'grid' && styles.activeToggle]}
             onPress={() => setViewMode('grid')}
           >
-            <Grid3X3 size={20} color={viewMode === 'grid' ? '#FFFFFF' : '#8E8E93'} />
+            <Ionicons name="grid" size={20} color={viewMode === 'grid' ? '#FFFFFF' : '#8E8E93'} />
           </TouchableOpacity>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={[styles.toggleButton, viewMode === 'list' && styles.activeToggle]}
             onPress={() => setViewMode('list')}
           >
-            <List size={20} color={viewMode === 'list' ? '#FFFFFF' : '#8E8E93'} />
+            <Ionicons name="list" size={20} color={viewMode === 'list' ? '#FFFFFF' : '#8E8E93'} />
           </TouchableOpacity>
         </View>
       </View>
 
       {/* Search Bar */}
       <View style={styles.searchContainer}>
-        <Search size={20} color="#8E8E93" />
+        <Ionicons name="search" size={20} color="#8E8E93" />
         <TextInput
           style={styles.searchInput}
           placeholder="Search categories..."

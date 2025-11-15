@@ -1,8 +1,8 @@
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import { useState } from 'react';
 import { useRouter } from 'expo-router';
-import { User, Mail, Lock, Phone, Eye, EyeOff, ArrowLeft } from 'lucide-react-native';
 import { useAuth } from '@/context/AuthContext';
+import { MaterialIcons, FontAwesome, Ionicons } from '@expo/vector-icons';
 
 export default function RegisterScreen() {
   const router = useRouter();
@@ -47,7 +47,7 @@ export default function RegisterScreen() {
         style={styles.backButton}
         onPress={() => router.back()}
       >
-        <ArrowLeft size={24} color="#007AFF" />
+        <Ionicons name="arrow-back" size={24} color="#007AFF" />
       </TouchableOpacity>
 
       <View style={styles.header}>
@@ -57,7 +57,7 @@ export default function RegisterScreen() {
 
       <View style={styles.form}>
         <View style={styles.inputContainer}>
-          <User size={20} color="#8E8E93" style={styles.inputIcon} />
+          <Ionicons name="person-outline" size={20} color="#8E8E93" style={styles.inputIcon} />
           <TextInput
             style={styles.input}
             placeholder="First Name"
@@ -67,7 +67,7 @@ export default function RegisterScreen() {
         </View>
 
         <View style={styles.inputContainer}>
-          <User size={20} color="#8E8E93" style={styles.inputIcon} />
+          <Ionicons name="person-outline" size={20} color="#8E8E93" style={styles.inputIcon} />
           <TextInput
             style={styles.input}
             placeholder="Last Name"
@@ -77,7 +77,7 @@ export default function RegisterScreen() {
         </View>
 
         <View style={styles.inputContainer}>
-          <Mail size={20} color="#8E8E93" style={styles.inputIcon} />
+          <Ionicons name="mail-outline" size={20} color="#8E8E93" style={styles.inputIcon} />
           <TextInput
             style={styles.input}
             placeholder="Email"
@@ -89,7 +89,7 @@ export default function RegisterScreen() {
         </View>
 
         <View style={styles.inputContainer}>
-          <Phone size={20} color="#8E8E93" style={styles.inputIcon} />
+          <Ionicons name="call-outline" size={20} color="#8E8E93" style={styles.inputIcon} />
           <TextInput
             style={styles.input}
             placeholder="Phone Number"
@@ -100,7 +100,7 @@ export default function RegisterScreen() {
         </View>
 
         <View style={styles.inputContainer}>
-          <Lock size={20} color="#8E8E93" style={styles.inputIcon} />
+          <Ionicons name="lock-closed-outline" size={20} color="#8E8E93" style={styles.inputIcon} />
           <TextInput
             style={styles.input}
             placeholder="Password"
@@ -113,15 +113,15 @@ export default function RegisterScreen() {
             style={styles.eyeIcon}
           >
             {showPassword ? (
-              <EyeOff size={20} color="#8E8E93" />
+              <Ionicons name="eye-off-outline" size={20} color="#8E8E93" />
             ) : (
-              <Eye size={20} color="#8E8E93" />
+              <Ionicons name="eye-outline" size={20} color="#8E8E93" />
             )}
           </TouchableOpacity>
         </View>
 
         <View style={styles.inputContainer}>
-          <Lock size={20} color="#8E8E93" style={styles.inputIcon} />
+          <Ionicons name="lock-closed-outline" size={20} color="#8E8E93" style={styles.inputIcon} />
           <TextInput
             style={styles.input}
             placeholder="Confirm Password"
@@ -134,9 +134,9 @@ export default function RegisterScreen() {
             style={styles.eyeIcon}
           >
             {showConfirmPassword ? (
-              <EyeOff size={20} color="#8E8E93" />
+              <Ionicons name="eye-off-outline" size={20} color="#8E8E93" />
             ) : (
-              <Eye size={20} color="#8E8E93" />
+              <Ionicons name="eye-outline" size={20} color="#8E8E93" />
             )}
           </TouchableOpacity>
         </View>

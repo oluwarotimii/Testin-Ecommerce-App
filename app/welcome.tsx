@@ -1,6 +1,6 @@
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
-import { ShoppingBag, User, UserPlus } from 'lucide-react-native';
+import { MaterialIcons, FontAwesome, Ionicons } from '@expo/vector-icons';
 
 export default function WelcomeScreen() {
   const router = useRouter();
@@ -9,7 +9,7 @@ export default function WelcomeScreen() {
     <View style={styles.container}>
       <View style={styles.header}>
         <View style={styles.iconContainer}>
-          <ShoppingBag size={80} color="#007AFF" />
+          <Ionicons name="cart" size={80} color="#007AFF" />
         </View>
         <Text style={styles.title}>Welcome to Techin</Text>
         <Text style={styles.subtitle}>
@@ -22,7 +22,7 @@ export default function WelcomeScreen() {
           style={styles.primaryButton}
           onPress={() => router.push('/login')}
         >
-          <User size={20} color="#FFFFFF" />
+          <Ionicons name="person" size={20} color="#FFFFFF" />
           <Text style={styles.primaryButtonText}>Login</Text>
         </TouchableOpacity>
 
@@ -30,7 +30,7 @@ export default function WelcomeScreen() {
           style={styles.secondaryButton}
           onPress={() => router.push('/register')}
         >
-          <UserPlus size={20} color="#007AFF" />
+          <Ionicons name="person-add" size={20} color="#007AFF" />
           <Text style={styles.secondaryButtonText}>Register</Text>
         </TouchableOpacity>
 

@@ -1,8 +1,8 @@
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, TextInput, ActivityIndicator } from 'react-native';
-import { Search, Filter, Grid3x3 as Grid3X3, List, Star, Heart } from 'lucide-react-native';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
+import { MaterialIcons, FontAwesome, Ionicons } from '@expo/vector-icons';
 
 export default function ProductsScreen() {
   const router = useRouter();
@@ -45,13 +45,13 @@ export default function ProductsScreen() {
           <View style={styles.imageContainer}>
             <Image source={{ uri: product.image }} style={styles.productImage} />
             <TouchableOpacity style={styles.wishlistButton}>
-              <Heart size={16} color="#8E8E93" />
+              <Ionicons name="heart-outline" size={16} color="#8E8E93" />
             </TouchableOpacity>
           </View>
           <View style={styles.productInfo}>
             <Text style={styles.productName} numberOfLines={2}>{product.title}</Text>
             <View style={styles.ratingContainer}>
-              <Star size={12} color="#FFD700" fill="#FFD700" />
+              <Ionicons name="star" size={12} color="#FFD700" />
               <Text style={styles.ratingText}>{product.rating ? product.rating.rate : 0}</Text>
               <Text style={styles.reviewsText}>({product.rating ? product.rating.count : 0})</Text>
             </View>
@@ -88,7 +88,7 @@ export default function ProductsScreen() {
             </View>
           </View>
           <TouchableOpacity style={styles.listWishlistButton} onPress={() => console.log('Add/Remove from Wishlist', product.id)}>
-            <Heart size={20} color="#8E8E93" />
+            <Ionicons name="heart-outline" size={20} color="#8E8E93" />
           </TouchableOpacity>
         </TouchableOpacity>
       ))}
@@ -102,20 +102,20 @@ export default function ProductsScreen() {
         <Text style={styles.title}>Products</Text>
         <View style={styles.headerActions}>
           <TouchableOpacity style={styles.filterButton}>
-            <Filter size={20} color="#007AFF" />
+            <Ionicons name="filter" size={20} color="#007AFF" />
           </TouchableOpacity>
           <View style={styles.viewToggle}>
             <TouchableOpacity 
               style={[styles.toggleButton, viewMode === 'grid' && styles.activeToggle]}
               onPress={() => setViewMode('grid')}
             >
-              <Grid3X3 size={16} color={viewMode === 'grid' ? '#FFFFFF' : '#8E8E93'} />
+              <Ionicons name="grid" size={16} color={viewMode === 'grid' ? '#FFFFFF' : '#8E8E93'} />
             </TouchableOpacity>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={[styles.toggleButton, viewMode === 'list' && styles.activeToggle]}
               onPress={() => setViewMode('list')}
             >
-              <List size={16} color={viewMode === 'list' ? '#FFFFFF' : '#8E8E93'} />
+              <Ionicons name="list" size={16} color={viewMode === 'list' ? '#FFFFFF' : '#8E8E93'} />
             </TouchableOpacity>
           </View>
         </View>
@@ -123,7 +123,7 @@ export default function ProductsScreen() {
 
       {/* Search Bar */}
       <View style={styles.searchContainer}>
-        <Search size={20} color="#8E8E93" />
+        <Ionicons name="search" size={20} color="#8E8E93" />
         <TextInput
           style={styles.searchInput}
           placeholder="Search products..."

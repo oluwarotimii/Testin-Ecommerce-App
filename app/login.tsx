@@ -2,6 +2,7 @@ import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView } from 
 import { useState } from 'react';
 import { useRouter } from 'expo-router';
 import { useThemeColors } from '@/hooks/useColorScheme';
+import { useTheme } from '@/context/ThemeContext';
 import { MaterialIcons, FontAwesome, Ionicons } from '@expo/vector-icons';
 
 export default function LoginScreen() {

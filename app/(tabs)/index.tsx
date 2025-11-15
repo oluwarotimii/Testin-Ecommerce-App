@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import InstagramCarousel from '@/components/InstagramCarousel';
 import { useThemeColors } from '@/hooks/useColorScheme';
+import { useTheme } from '@/context/ThemeContext';
 import { MaterialIcons, FontAwesome, Ionicons } from '@expo/vector-icons';
 
 export default function HomeScreen() {

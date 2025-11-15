@@ -142,7 +142,7 @@ export default function ProductDetailScreen() {
           style={styles.addToCartButton}
           onPress={addToCart}
         >
-          <ShoppingCart size={20} color="#FFFFFF" />
+          <Ionicons name="cart" size={20} color="#FFFFFF" />
           <Text style={styles.addToCartText}>
             {`Add to Cart - $${(product.price * quantity).toFixed(2)}`}
           </Text>

@@ -4,14 +4,20 @@ import { useRouter } from 'expo-router';
 import updateService from '@/services/updateService';
 import { useThemeColors } from '@/hooks/useColorScheme';
 import { useAuth } from '@/context/AuthContext';
+import { useTheme } from '@/context/ThemeContext';
 import { MaterialIcons, FontAwesome, Ionicons } from '@expo/vector-icons';
 
 export default function AccountScreen() {
   const router = useRouter();
   const colors = useThemeColors();
+  const { colorScheme, toggleColorScheme, setColorScheme } = useTheme();
   const { isAuthenticated, apiService, signOut, loadingAuth } = useAuth();
   console.log('isAuthenticated:', isAuthenticated, 'loadingAuth:', loadingAuth);
-  const [darkMode, setDarkMode] = useState(false);
+  const [darkMode, setDarkMode] = useState(colorScheme === 'dark');
+
+  useEffect(() => {
+    setDarkMode(colorScheme === 'dark');
+  }, [colorScheme]);
   const [notifications, setNotifications] = useState(true);
   const [userDetails, setUserDetails] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -80,7 +86,11 @@ export default function AccountScreen() {
       icon: () => <Ionicons name="moon" size={20} color={colors.primary} />,
       type: 'switch',
       value: darkMode,
-      onToggle: setDarkMode,
+      onToggle: () => {
+        const newScheme = darkMode ? 'light' : 'dark';
+        setColorScheme(newScheme);
+        setDarkMode(!darkMode);
+      },
     },
     {
       id: 'settings',
