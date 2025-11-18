@@ -12,10 +12,10 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [cartCount, setCartCount] = useState(0);
   const { apiService, isAuthenticated } = useAuth();
 
-  // Load cart count when user authenticates
+  // Load cart count from API when service is available
   useEffect(() => {
     const loadCartCount = async () => {
-      if (isAuthenticated && apiService) {
+      if (apiService) {
         try {
           const cartResponse = await apiService.getCartContents();
           if (cartResponse && cartResponse.products) {
@@ -27,12 +27,12 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           setCartCount(0);
         }
       } else {
-        setCartCount(0); // Reset cart count when user logs out
+        setCartCount(0);
       }
     };
 
     loadCartCount();
-  }, [isAuthenticated, apiService]);
+  }, [apiService]);
 
   return (
     <CartContext.Provider value={{ cartCount, setCartCount }}>

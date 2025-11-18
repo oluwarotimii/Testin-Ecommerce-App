@@ -6,6 +6,8 @@ import InstagramCarousel from '@/components/InstagramCarousel';
 import { useThemeColors } from '@/hooks/useColorScheme';
 import { useTheme } from '@/context/ThemeContext';
 import { MaterialIcons, FontAwesome, Ionicons } from '@expo/vector-icons';
+import SkeletonLoader from '@/components/SkeletonLoader';
+import SkeletonProductItem from '@/components/SkeletonProductItem';
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -155,13 +157,13 @@ export default function HomeScreen() {
       </View>
 
       {/* Search Bar */}
-      <TouchableOpacity
+      {/* <TouchableOpacity
         style={[styles.searchContainer, { backgroundColor: colors.surface }]}
         onPress={() => router.push('/search')}
       >
         <Ionicons name="search" size={20} color={colors.textSecondary} />
         <Text style={[styles.searchPlaceholder, { color: colors.textSecondary }]}>Search products...</Text>
-      </TouchableOpacity>
+      </TouchableOpacity> */}
 
       {/* Carousel */}
       <InstagramCarousel
@@ -173,7 +175,7 @@ export default function HomeScreen() {
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
           <View style={styles.sectionTitleContainer}>
-            <Ionicons name="star" size={20} color={colors.primary} />
+            {/* <Ionicons name="star" size={20} color={colors.primary} /> */}
             <Text style={[styles.sectionTitle, { color: colors.text }]}>Featured Categories</Text>
           </View>
           <TouchableOpacity onPress={() => router.push('/categories')}>
@@ -182,7 +184,11 @@ export default function HomeScreen() {
         </View>
         <View style={styles.categoriesContainer}>
           {loadingCategories ? (
-            <ActivityIndicator size="small" color={colors.primary} />
+            <View style={styles.categoriesRow}>
+              <SkeletonLoader width="30%" height={80} borderRadius={12} style={styles.skeletonCategoryItem} />
+              <SkeletonLoader width="30%" height={80} borderRadius={12} style={styles.skeletonCategoryItem} />
+              <SkeletonLoader width="30%" height={80} borderRadius={12} style={styles.skeletonCategoryItem} />
+            </View>
           ) : errorCategories ? (
             <Text style={[styles.errorText, { color: colors.error }]}>Error loading categories: {errorCategories}</Text>
           ) : categories.length === 0 ? (
@@ -236,7 +242,12 @@ export default function HomeScreen() {
           </TouchableOpacity>
         </View>
         {loadingProducts ? (
-          <ActivityIndicator size="large" color={colors.primary} style={styles.loadingIndicator} />
+          <View style={styles.productsGrid}>
+            <SkeletonProductItem viewMode="grid" />
+            <SkeletonProductItem viewMode="grid" />
+            <SkeletonProductItem viewMode="grid" />
+            <SkeletonProductItem viewMode="grid" />
+          </View>
         ) : errorProducts ? (
           <Text style={[styles.errorText, { color: colors.error }]}>Error loading products: {errorProducts}</Text>
         ) : products.length === 0 ? (
@@ -460,5 +471,8 @@ const styles = StyleSheet.create({
   loadingIndicator: {
     marginTop: 20,
     marginBottom: 20,
+  },
+  skeletonCategoryItem: {
+    marginHorizontal: 2,
   },
 });

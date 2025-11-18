@@ -609,7 +609,7 @@ class DummyApiService {
   }
 
   async addToCart(product_id: number, quantity: number = 1) {
-    const product = dummyProducts.find(p => p.id === product_id);
+    const product = dummyElectronicsProducts.find(p => p.id === product_id);
     if (!product) {
       throw new Error("Product not found");
     }
@@ -660,7 +660,7 @@ class DummyApiService {
   }
 
   async addToWishlist(product_id: number) {
-    const product = dummyProducts.find(p => p.id === product_id);
+    const product = dummyElectronicsProducts.find(p => p.id === product_id);
     if (!product) {
       throw new Error("Product not found");
     }
@@ -723,7 +723,7 @@ class DummyApiService {
 
     // Clear cart after order
     cartItems = [];
-    
+
     // Add to dummy orders
     dummyOrders.push(newOrder);
 
@@ -741,7 +741,7 @@ class DummyApiService {
   }
 
   async getOrderInfo(order_id: number) {
-    const order = dummyOrders.find(o => o.id === order_id) || 
+    const order = dummyOrders.find(o => o.id === order_id) ||
                   dummyOrders.find(o => o.order_id === `ORD${String(order_id).padStart(3, '0')}`);
     return order || { error: "Order not found" };
   }
@@ -758,7 +758,7 @@ class DummyApiService {
     if (!this.isUserLoggedIn) {
       throw new Error("User not authenticated");
     }
-    
+
     Object.assign(dummyUser, details);
     return dummyUser;
   }

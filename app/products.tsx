@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
 import { MaterialIcons, FontAwesome, Ionicons } from '@expo/vector-icons';
+import SkeletonProductItem from '@/components/SkeletonProductItem';
 
 export default function ProductsScreen() {
   const router = useRouter();
@@ -171,13 +172,32 @@ export default function ProductsScreen() {
       </View>
 
       {/* Products */}
-      <ScrollView 
-        style={styles.content} 
+      <ScrollView
+        style={styles.content}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
         {loading ? (
-          <ActivityIndicator size="large" color="#007AFF" style={styles.loadingIndicator} />
+          <View style={styles.gridContainer}>
+            {viewMode === 'grid' ? (
+              <>
+                <SkeletonProductItem viewMode="grid" />
+                <SkeletonProductItem viewMode="grid" />
+                <SkeletonProductItem viewMode="grid" />
+                <SkeletonProductItem viewMode="grid" />
+                <SkeletonProductItem viewMode="grid" />
+                <SkeletonProductItem viewMode="grid" />
+              </>
+            ) : (
+              <>
+                <SkeletonProductItem viewMode="list" />
+                <SkeletonProductItem viewMode="list" />
+                <SkeletonProductItem viewMode="list" />
+                <SkeletonProductItem viewMode="list" />
+                <SkeletonProductItem viewMode="list" />
+              </>
+            )}
+          </View>
         ) : error ? (
           <Text style={styles.errorText}>Error loading products: {error}</Text>
         ) : filteredProducts.length === 0 ? (

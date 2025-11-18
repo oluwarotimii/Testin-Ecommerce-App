@@ -14,16 +14,9 @@ export default function RootLayout() {
   useEffect(() => {
     // Initialize notifications
     notificationService.initialize();
-    
-    // Set up notification listeners
-    const listeners = notificationService.setupNotificationListeners();
-    
+
     // Check for updates on app start
     updateService.checkForUpdates();
-    
-    return () => {
-      notificationService.cleanup(listeners);
-    };
   }, []);
 
   return (

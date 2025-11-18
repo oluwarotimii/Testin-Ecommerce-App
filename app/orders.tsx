@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useThemeColors } from '@/hooks/useColorScheme';
 import { MaterialIcons, FontAwesome, Ionicons } from '@expo/vector-icons';
+import SkeletonOrderItem from '@/components/SkeletonOrderItem';
+import SkeletonLoader from '@/components/SkeletonLoader';
 
 export default function OrdersScreen() {
   const router = useRouter();
@@ -68,8 +70,19 @@ export default function OrdersScreen() {
 
   if (loading) {
     return (
-      <View style={[styles.emptyContainer, { backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center' }]}>
-        <Text style={{ color: colors.text }}>Loading orders...</Text>
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
+        {/* Header */}
+        <View style={styles.header}>
+          <Text style={[styles.title, { color: colors.text }]}>Order History</Text>
+          <SkeletonLoader width={80} height={16} />
+        </View>
+
+        {/* Orders List */}
+        <ScrollView style={[styles.content, { backgroundColor: colors.background }]} showsVerticalScrollIndicator={false}>
+          <SkeletonOrderItem />
+          <SkeletonOrderItem />
+          <SkeletonOrderItem />
+        </ScrollView>
       </View>
     );
   }

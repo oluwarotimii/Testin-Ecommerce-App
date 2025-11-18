@@ -14,10 +14,11 @@ export default function ProductDetailScreen() {
   const { setCartCount } = useCart();
   const [quantity, setQuantity] = useState(1);
   const [selectedImage, setSelectedImage] = useState(0);
-  const [isFavorite, setIsFavorite] = useState(false);
+  const [isInWishlist, setIsInWishlist] = useState(false);
 
   const [product, setProduct] = useState<any>(null);
   const [relatedProducts, setRelatedProducts] = useState<any[]>([]);
+  const [similarProducts, setSimilarProducts] = useState<any[]>([]);
 
   useEffect(() => {
     let isMounted = true; // Flag to prevent state updates on unmounted components
@@ -44,39 +45,31 @@ export default function ProductDetailScreen() {
     };
   }, [id]);
 
-  if (!product) {
-    return (
-      <View style={styles.loadingContainer}>
-        <Text>Loading product details...</Text>
-      </View>
-    );
-  }
-
-  const updateQuantity = (change: number) => {
-    setQuantity(Math.max(1, quantity + change));
-  };
-
-  const addToCart = async () => {
-    try {
-      const result = await apiService.addToCart(product.id, quantity);
-      console.log(`Added ${quantity} of ${product.title} to cart!`, result);
-      Alert.alert("Success", `${quantity} ${product.title}(s) added to cart!`);
-
-      // Update cart count
-      setCartCount(prevCount => prevCount + quantity);
-    } catch (error) {
-      console.error("Add to cart error:", error);
-      Alert.alert("Error", "Failed to add item to cart. Please try again.");
-    }
-  };
-
-  const [similarProducts, setSimilarProducts] = useState<any[]>([]);
-
+  // Check if product is in wishlist when product loads
   useEffect(() => {
+    const checkWishlistStatus = async () => {
+      if (product?.id) {
+        try {
+          const wishlist = await apiService.getWishlist();
+          const isInWishlist = wishlist.some((item: any) => item.id === product.id);
+          setIsInWishlist(isInWishlist);
+        } catch (error) {
+          console.error("Error checking wishlist status:", error);
+        }
+      }
+    };
+
+    checkWishlistStatus();
+  }, [product?.id, apiService]);
+
+  // Fetch similar products useEffect - must be defined before conditional return
+  useEffect(() => {
+    if (!product?.id) return; // Early return if no product ID available
+
     let isMounted = true; // Flag to prevent state updates on unmounted components
 
-    if (product && product.category) {
-      const fetchSimilarProducts = async () => {
+    const fetchSimilarProducts = async () => {
+      if (product && product.category) {
         try {
           // Get products from the same category, excluding the current product
           const categoryProducts = await apiService.getCategory(product.category);
@@ -91,15 +84,81 @@ export default function ProductDetailScreen() {
             setSimilarProducts([]);
           }
         }
-      };
+      }
+    };
 
-      fetchSimilarProducts();
-    }
+    fetchSimilarProducts();
 
     return () => {
       isMounted = false; // Cleanup function to set flag to false
     };
-  }, [product?.id, apiService]); // Changed dependency to product.id to avoid hooks error
+  }, [product?.id, apiService]);
+
+  if (!product) {
+    return (
+      <View style={styles.loadingContainer}>
+        <Text>Loading product details...</Text>
+      </View>
+    );
+  }
+
+  const updateQuantity = (change: number) => {
+    setQuantity(Math.max(1, quantity + change));
+  };
+
+  const toggleWishlist = async () => {
+    try {
+      if (isInWishlist) {
+        await apiService.removeFromWishlist(product.id);
+        setIsInWishlist(false);
+        Alert.alert("Success", "Product removed from wishlist!");
+      } else {
+        await apiService.addToWishlist(product.id);
+        setIsInWishlist(true);
+        Alert.alert("Success", "Product added to wishlist!");
+      }
+    } catch (error) {
+      console.error("Wishlist error:", error);
+      Alert.alert("Error", "Failed to update wishlist. Please try again.");
+    }
+  };
+
+  const addToCart = async () => {
+    try {
+      const result = await apiService.addToCart(product.id, quantity);
+      console.log(`Added ${quantity} of ${product.title} to cart!`, result);
+      Alert.alert("Success", `${quantity} ${product.title}(s) added to cart!`);
+
+      // Update cart count by fetching the current cart contents
+      try {
+        const cartResponse = await apiService.getCartContents();
+        if (cartResponse && cartResponse.products) {
+          const newCartCount = cartResponse.products.reduce((total: any, item: any) => total + item.quantity, 0);
+          setCartCount(newCartCount);
+        }
+      } catch (countError) {
+        console.error("Error updating cart count:", countError);
+        // Fallback: increment by the quantity added
+        setCartCount(prevCount => prevCount + quantity);
+      }
+    } catch (error) {
+      console.error("Add to cart error:", error);
+      Alert.alert("Error", "Failed to add item to cart. Please try again.");
+    }
+  };
+
+  const buyNow = async () => {
+    try {
+      // First, add the product to cart temporarily
+      await apiService.addToCart(product.id, quantity);
+
+      // Then navigate to checkout
+      router.push('/checkout');
+    } catch (error) {
+      console.error("Buy now error:", error);
+      Alert.alert("Error", "Failed to process purchase. Please try again.");
+    }
+  }; // Changed dependency to product.id to avoid hooks error
 
   return (
     <View style={styles.container}>
@@ -112,25 +171,30 @@ export default function ProductDetailScreen() {
           <TouchableOpacity style={styles.headerButton}>
             <Ionicons name="share" size={24} color="#1D1D1F" />
           </TouchableOpacity>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.headerButton}
-            onPress={() => setIsFavorite(!isFavorite)}
+            onPress={toggleWishlist}
           >
             <Ionicons
-              name={isFavorite ? "heart" : "heart-outline"}
+              name={isInWishlist ? "heart" : "heart-outline"}
               size={24}
-              color={isFavorite ? "#FF3B30" : "#1D1D1F"}
+              color={isInWishlist ? "#FF3B30" : "#1D1D1F"}
             />
           </TouchableOpacity>
         </View>
       </View>
 
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+      {/* Product Content with Similar Products at the end */}
+      <ScrollView
+        style={styles.content}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent} // Add padding to ensure buttons are accessible
+      >
         {/* Image Gallery */}
         <View style={styles.imageGallery}>
-          <ScrollView 
-            horizontal 
-            pagingEnabled 
+          <ScrollView
+            horizontal
+            pagingEnabled
             showsHorizontalScrollIndicator={false}
             onMomentumScrollEnd={(e) => {
               const index = Math.round(e.nativeEvent.contentOffset.x / width);
@@ -139,6 +203,14 @@ export default function ProductDetailScreen() {
           >
             <Image source={{ uri: product.image }} style={styles.productImage} />
           </ScrollView>
+          {/* Wishlist button at the top of the image */}
+          <TouchableOpacity style={styles.wishlistTopButton} onPress={toggleWishlist}>
+            <Ionicons
+              name={isInWishlist ? "heart" : "heart-outline"}
+              size={24}
+              color={isInWishlist ? "#FF3B30" : "#FFFFFF"}
+            />
+          </TouchableOpacity>
         </View>
 
         {/* Product Info */}
@@ -146,9 +218,9 @@ export default function ProductDetailScreen() {
           <View style={styles.brandCategory}>
             <Text style={styles.category}>{product.category}</Text>
           </View>
-          
+
           <Text style={styles.productName}>{product.title}</Text>
-          
+
           <View style={styles.ratingContainer}>
             <View style={styles.rating}>
               <Ionicons name="star" size={16} color="#FFD700" />
@@ -165,14 +237,14 @@ export default function ProductDetailScreen() {
           <View style={styles.quantitySection}>
             <Text style={styles.sectionTitle}>Quantity</Text>
             <View style={styles.quantityContainer}>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.quantityButton}
                 onPress={() => updateQuantity(-1)}
               >
                 <Ionicons name="remove" size={16} color="#007AFF" />
               </TouchableOpacity>
               <Text style={styles.quantity}>{quantity}</Text>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.quantityButton}
                 onPress={() => updateQuantity(1)}
               >
@@ -187,41 +259,47 @@ export default function ProductDetailScreen() {
             <Text style={styles.description}>{product.description}</Text>
           </View>
         </View>
+
+        {/* Similar Products - now within the scroll view but at the end */}
+        {similarProducts.length > 0 && (
+          <View style={styles.similarProductsSection}>
+            <Text style={styles.similarProductsTitle}>Similar Items</Text>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.similarProductsContainer}
+            >
+              {similarProducts.map((item) => (
+                <TouchableOpacity
+                  key={item.id}
+                  style={styles.similarProductItem}
+                  onPress={() => router.push(`/product/${item.id}`)}
+                >
+                  <Image source={{ uri: item.image }} style={styles.similarProductImage} />
+                  <Text style={styles.similarProductName} numberOfLines={2}>{item.title}</Text>
+                  <Text style={styles.similarProductPrice}>₦{item.price.toFixed(2)}</Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        )}
       </ScrollView>
 
-      {/* Similar Products */}
-      {similarProducts.length > 0 && (
-        <View style={styles.similarProductsSection}>
-          <Text style={styles.similarProductsTitle}>Similar Items</Text>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.similarProductsContainer}
-          >
-            {similarProducts.map((item) => (
-              <TouchableOpacity
-                key={item.id}
-                style={styles.similarProductItem}
-                onPress={() => router.push(`/product/${item.id}`)}
-              >
-                <Image source={{ uri: item.image }} style={styles.similarProductImage} />
-                <Text style={styles.similarProductName} numberOfLines={2}>{item.title}</Text>
-                <Text style={styles.similarProductPrice}>₦{item.price.toFixed(2)}</Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-        </View>
-      )}
-
-      {/* Add to Cart Button */}
+      {/* Bottom Bar with Buy Now and Add to Cart Buttons - Fixed at bottom */}
       <View style={styles.bottomBar}>
         <TouchableOpacity
-          style={styles.addToCartButton}
+          style={[styles.buyNowButton, styles.bottomButton]}
+          onPress={buyNow}
+        >
+          <Text style={styles.buyNowText}>Buy Now</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.addToCartButton, styles.bottomButton]}
           onPress={addToCart}
         >
           <Ionicons name="cart" size={20} color="#FFFFFF" />
           <Text style={styles.addToCartText}>
-            {`Add to Cart - ₦${(product.price * quantity).toFixed(2)}`}
+            Add to Cart
           </Text>
         </TouchableOpacity>
       </View>
@@ -256,6 +334,9 @@ const styles = StyleSheet.create({
   },
   imageGallery: {
     position: 'relative',
+  },
+  scrollContent: {
+    paddingBottom: 120, // Ensure content doesn't hide behind fixed bottom bar
   },
   productImage: {
     width: width,
@@ -473,11 +554,13 @@ const styles = StyleSheet.create({
     paddingBottom: 32,
     borderTopWidth: 1,
     borderTopColor: '#F2F2F7',
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   similarProductsSection: {
     paddingHorizontal: 20,
     paddingTop: 20,
-    paddingBottom: 10,
+    paddingBottom: 32, // Increased padding to ensure space at the bottom
   },
   similarProductsTitle: {
     fontSize: 18,
@@ -520,8 +603,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 16,
+    paddingHorizontal: 20,
     borderRadius: 12,
     gap: 8,
+    flex: 1,
+    elevation: 3,
+    shadowColor: '#007AFF',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
   },
   disabledButton: {
     backgroundColor: '#8E8E93',
@@ -535,5 +625,44 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  bottomButton: {
+    flex: 1,
+    marginHorizontal: 8,
+    borderRadius: 12,
+    paddingVertical: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+  },
+  buyNowButton: {
+    backgroundColor: '#FF9500',
+    flex: 1,
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    elevation: 3,
+    shadowColor: '#FF9500',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+  },
+  buyNowText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  wishlistTopButton: {
+    position: 'absolute',
+    top: 20,
+    right: 20,
+    backgroundColor: 'rgba(0,0,0,0.3)',
+    borderRadius: 20,
+    padding: 8,
+    zIndex: 1,
   },
 });

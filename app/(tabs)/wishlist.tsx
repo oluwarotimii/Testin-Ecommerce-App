@@ -4,6 +4,8 @@ import { useRouter } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
 import { useThemeColors } from '@/hooks/useColorScheme';
 import { Ionicons } from '@expo/vector-icons';
+import SkeletonProductItem from '@/components/SkeletonProductItem';
+import SkeletonLoader from '@/components/SkeletonLoader';
 
 export default function WishlistScreen() {
   const router = useRouter();
@@ -50,7 +52,23 @@ export default function WishlistScreen() {
   if (loading) {
     return (
       <View style={[styles.container, { backgroundColor: colors.background }]}>
-        <ActivityIndicator size="large" color={colors.primary} style={styles.loadingIndicator} />
+        {/* Header */}
+        <View style={styles.header}>
+          <Text style={[styles.title, { color: colors.text }]}>My Wishlist</Text>
+          <SkeletonLoader width={60} height={16} />
+        </View>
+
+        {/* Wishlist Items */}
+        <ScrollView
+          style={styles.content}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.scrollContent}
+        >
+          <SkeletonProductItem viewMode="list" />
+          <SkeletonProductItem viewMode="list" />
+          <SkeletonProductItem viewMode="list" />
+          <SkeletonProductItem viewMode="list" />
+        </ScrollView>
       </View>
     );
   }

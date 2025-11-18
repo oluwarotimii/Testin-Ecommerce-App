@@ -1,27 +1,34 @@
 import { View, Text, StyleSheet, Image, ActivityIndicator } from 'react-native';
 import { useEffect } from 'react';
 import { useRouter } from 'expo-router';
+import { useAuth } from '@/context/AuthContext';
 
 export default function SplashScreen() {
   const router = useRouter();
+  const { apiService, isAuthenticated, loadingAuth } = useAuth();
 
   useEffect(() => {
     const checkSessionAndNavigate = async () => {
-      try {
-        const response = await apiService.getAccountDetails();
-        if (response.success) {
-          router.replace('/(tabs)'); // User is logged in, go to main app
-        } else {
-          router.replace('/welcome'); // No valid session, go to welcome/login
-        }
-      } catch (error) {
-        console.error("Splash screen session check failed:", error);
-        router.replace('/welcome'); // Error, assume no session and go to welcome
+      // Wait for auth to be loaded
+      if (loadingAuth) {
+        // Wait a bit more to ensure auth is loaded
+        setTimeout(() => {
+          checkSessionAndNavigate();
+        }, 100);
+        return;
+      }
+
+      if (isAuthenticated) {
+        // User is authenticated, go to main app
+        router.replace('/(tabs)');
+      } else {
+        // No valid session, go to welcome/login
+        router.replace('/welcome');
       }
     };
 
     checkSessionAndNavigate();
-  }, []);
+  }, [isAuthenticated, loadingAuth]);
 
   return (
     <View style={styles.container}>
@@ -31,7 +38,7 @@ export default function SplashScreen() {
         </View>
         <Text style={styles.tagline}>Your Tech Shopping Destination</Text>
       </View>
-      
+
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#007AFF" />
         <Text style={styles.loadingText}>Loading...</Text>

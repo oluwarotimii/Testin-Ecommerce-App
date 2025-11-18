@@ -5,6 +5,8 @@ import { useAuth } from '@/context/AuthContext';
 import { useCart } from '@/context/CartContext';
 import { useThemeColors } from '@/hooks/useColorScheme';
 import { MaterialIcons, FontAwesome, Ionicons } from '@expo/vector-icons';
+import SkeletonCartItem from '@/components/SkeletonCartItem';
+import SkeletonLoader from '@/components/SkeletonLoader';
 
 export default function CartScreen() {
   const router = useRouter();
@@ -61,8 +63,33 @@ export default function CartScreen() {
 
   if (loading) {
     return (
-      <View style={[styles.emptyContainer, { backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center' }]}>
-        <Text style={{ color: colors.text }}>Loading cart...</Text>
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
+        {/* Header */}
+        <View style={styles.header}>
+          <View style={styles.headerLeft}>
+            <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+              <Ionicons name="arrow-back" size={24} color={colors.text} />
+            </TouchableOpacity>
+            <Text style={[styles.title, { color: colors.text, marginLeft: 10 }]}>Shopping Cart</Text>
+          </View>
+          <SkeletonLoader width={60} height={16} />
+        </View>
+
+        {/* Cart Items */}
+        <ScrollView style={[styles.content, { backgroundColor: colors.background }]} showsVerticalScrollIndicator={false}>
+          <SkeletonCartItem />
+          <SkeletonCartItem />
+          <SkeletonCartItem />
+        </ScrollView>
+
+        {/* Order Summary */}
+        <View style={[styles.summary, { backgroundColor: colors.surface }]}>
+          <SkeletonLoader width="100%" height={20} marginBottom={12} />
+          <SkeletonLoader width="100%" height={20} marginBottom={12} />
+          <SkeletonLoader width="100%" height={20} marginBottom={12} />
+          <SkeletonLoader width="100%" height={30} marginBottom={20} />
+          <SkeletonLoader width="100%" height={50} borderRadius={12} />
+        </View>
       </View>
     );
   }

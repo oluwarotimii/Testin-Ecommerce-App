@@ -1,5 +1,5 @@
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert } from 'react-native';
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
 import { MaterialIcons, FontAwesome, Ionicons } from '@expo/vector-icons';
@@ -18,18 +18,35 @@ export default function CheckoutScreen() {
   const [loadingCart, setLoadingCart] = useState(true);
   const [placingOrder, setPlacingOrder] = useState(false);
 
+  // Additional state for selections and promo code
+  const [selectedAddress, setSelectedAddress] = useState(0);
+  const [selectedPayment, setSelectedPayment] = useState(0);
+  const [selectedShipping, setSelectedShipping] = useState(0);
+  const [promoCode, setPromoCode] = useState('');
+  const [orderSummary, setOrderSummary] = useState({
+    subtotal: 0,
+    shipping: 0,
+    tax: 0,
+    discount: 0,
+    total: 0
+  });
+
   const fetchCheckoutData = useCallback(async () => {
     try {
       setLoadingAddresses(true);
       const addressResponse = await apiService.getAddressBook();
-      if (addressResponse.success && addressResponse.addresses) {
+      if (addressResponse?.success && addressResponse?.addresses) {
         setAddresses(addressResponse.addresses);
         if (addressResponse.addresses.length > 0) {
           setSelectedAddress(0);
         }
+      } else {
+        // Handle case where API returns different structure
+        setAddresses([]);
       }
     } catch (error) {
       console.error("Failed to fetch addresses:", error);
+      setAddresses([]);
     } finally {
       setLoadingAddresses(false);
     }
@@ -37,14 +54,18 @@ export default function CheckoutScreen() {
     try {
       setLoadingPaymentMethods(true);
       const paymentResponse = await apiService.getPaymentMethods();
-      if (paymentResponse.success && paymentResponse.payment_methods) {
+      if (paymentResponse?.success && paymentResponse?.payment_methods) {
         setPaymentMethods(paymentResponse.payment_methods);
         if (paymentResponse.payment_methods.length > 0) {
           setSelectedPayment(0);
         }
+      } else {
+        // Handle case where API returns different structure
+        setPaymentMethods([]);
       }
     } catch (error) {
       console.error("Failed to fetch payment methods:", error);
+      setPaymentMethods([]);
     } finally {
       setLoadingPaymentMethods(false);
     }
@@ -52,14 +73,18 @@ export default function CheckoutScreen() {
     try {
       setLoadingShippingMethods(true);
       const shippingResponse = await apiService.getShippingMethods();
-      if (shippingResponse.success && shippingResponse.shipping_methods) {
+      if (shippingResponse?.success && shippingResponse?.shipping_methods) {
         setShippingMethods(shippingResponse.shipping_methods);
         if (shippingResponse.shipping_methods.length > 0) {
           setSelectedShipping(0);
         }
+      } else {
+        // Handle case where API returns different structure
+        setShippingMethods([]);
       }
     } catch (error) {
       console.error("Failed to fetch shipping methods:", error);
+      setShippingMethods([]);
     } finally {
       setLoadingShippingMethods(false);
     }
@@ -67,27 +92,52 @@ export default function CheckoutScreen() {
     try {
       setLoadingCart(true);
       const cartResponse = await apiService.getCartContents();
-      if (cartResponse.success && cartResponse.products) {
-        setCartItems(cartResponse.products);
+      if (cartResponse?.success && cartResponse?.products) {
+        // Transform the cart products to ensure proper price/quantity
+        const transformedProducts = cartResponse.products.map((item: any) => ({
+          ...item,
+          price: typeof item.price === 'string' ? parseFloat(item.price) : (typeof item.price === 'number' ? item.price : 0),
+          quantity: typeof item.quantity === 'string' ? parseInt(item.quantity) : (typeof item.quantity === 'number' ? item.quantity : 1),
+          id: item.productId || item.id
+        }));
+        setCartItems(transformedProducts);
+      } else {
+        // Handle case where API returns different structure
+        setCartItems([]);
       }
     } catch (error) {
       console.error("Failed to fetch cart contents:", error);
+      setCartItems([]);
     } finally {
       setLoadingCart(false);
     }
-  }, []);
+  }, [apiService]);
 
   useEffect(() => {
     fetchCheckoutData();
   }, [fetchCheckoutData]);
 
-  const selectedShippingMethod = shippingMethods[selectedShipping];
+  useEffect(() => {
+    // Update order summary when cart items or selections change
+    const selectedShippingMethod = shippingMethods[selectedShipping];
+    const subtotal = cartItems.reduce((sum, item) => {
+      const itemPrice = typeof item.price === 'number' ? item.price : parseFloat(item.price) || 0;
+      const itemQuantity = typeof item.quantity === 'number' ? item.quantity : parseInt(item.quantity) || 1;
+      return sum + (itemPrice * itemQuantity);
+    }, 0);
+    const shippingCost = selectedShippingMethod ? (typeof selectedShippingMethod.price === 'number' ? selectedShippingMethod.price : parseFloat(selectedShippingMethod.price) || 0) : 0;
+    const tax = subtotal * 0.08; // Assuming a fixed 8% tax for now
+    const discount = promoCode ? subtotal * 0.1 : 0; // Implement promo code logic later
+    const total = subtotal + shippingCost + tax - discount;
 
-  const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-  const shippingCost = selectedShippingMethod ? selectedShippingMethod.price : 0;
-  const tax = subtotal * 0.08; // Assuming a fixed 8% tax for now
-  const discount = 0; // Implement promo code logic later
-  const total = subtotal + shippingCost + tax - discount;
+    setOrderSummary({
+      subtotal,
+      shipping: shippingCost,
+      tax,
+      discount,
+      total
+    });
+  }, [cartItems, shippingMethods, selectedShipping, promoCode]);
 
   const handlePlaceOrder = async () => {
     setPlacingOrder(true);
