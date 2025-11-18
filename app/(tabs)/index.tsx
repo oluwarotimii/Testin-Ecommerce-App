@@ -263,12 +263,8 @@ export default function HomeScreen() {
                 onPress={() => router.push(`/product/${product.id}`)}
               >
                 <Image source={{ uri: product.image }} style={styles.productImage} />
-                {/* Bottom overlay with blur/opacity */}
-                <View style={[styles.productOverlay, { backgroundColor: `${colors.surface}CC` }]}>
-                  <View style={styles.productTextContainer}>
-                    <Text style={[styles.productName, { color: colors.text }]} numberOfLines={2}>{product.title}</Text>
-                    <Text style={[styles.productPrice, { color: colors.primary }]}>{`₦${product.price.toFixed(2)}`}</Text>
-                  </View>
+                {/* Actions overlay on image */}
+                <View style={styles.productActionsOverlay}>
                   <TouchableOpacity
                     style={[styles.addToCartButton, { backgroundColor: colors.primary }]}
                     onPress={async (e) => {
@@ -294,6 +290,11 @@ export default function HomeScreen() {
                   >
                     <Ionicons name="cart" size={18} color={colors.white} />
                   </TouchableOpacity>
+                </View>
+                {/* Product details below image */}
+                <View style={styles.productDetails}>
+                  <Text style={[styles.productName, { color: colors.text }]} numberOfLines={2}>{product.title}</Text>
+                  <Text style={[styles.productPrice, { color: colors.primary }]}>{`₦${product.price.toFixed(2)}`}</Text>
                 </View>
               </TouchableOpacity>
             ))}
@@ -418,22 +419,24 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     overflow: 'hidden',
     position: 'relative',
-    height: 160, // Set fixed height for consistency
+    height: 200, // Increased height to accommodate image + text
   },
   productImage: {
     width: '100%',
-    height: '100%',
+    height: 120, // Fixed height for image to prevent width stretching
     backgroundColor: '#E5E5EA',
   },
-  productOverlay: {
+  productActionsOverlay: {
     position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: 12,
+    top: 8,
+    right: 8,
+    zIndex: 1,
+  },
+  productDetails: {
+    padding: 8,
+    paddingTop: 4,
+    position: 'relative',
+    top: 0, // Adjust as needed
   },
   productTextContainer: {
     flex: 1,

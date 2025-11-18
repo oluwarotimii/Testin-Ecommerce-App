@@ -190,16 +190,18 @@ export default function CartScreen() {
         ))}
       </ScrollView>
 
-      {/* Compact Order Summary */}
-      <View style={[styles.compactSummary, { backgroundColor: colors.surface, borderTopColor: colors.border }]}>
-        <View>
-          <Text style={[styles.totalLabel, { color: colors.text }]}>Total: <Text style={[styles.totalValue, { color: colors.text }]}>₦{total.toFixed(2)}</Text></Text>
+      {/* Order Summary */}
+      <View style={[styles.summary, { backgroundColor: colors.surface }]}>
+        <View style={styles.summaryRow}>
+          <Text style={[styles.totalLabel, { color: colors.text }]}>Total</Text>
+          <Text style={[styles.totalValue, { color: colors.text }]}>₦{total.toFixed(2)}</Text>
         </View>
+
         <TouchableOpacity
           style={[styles.checkoutButton, { backgroundColor: colors.primary }]}
           onPress={() => router.push('/checkout')}
         >
-          <Text style={[styles.checkoutButtonText, { color: colors.white }]}>Checkout</Text>
+          <Text style={[styles.checkoutButtonText, { color: colors.white }]}>Proceed to Checkout</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -313,22 +315,10 @@ const styles = StyleSheet.create({
   summaryRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 12,
-  },
-  summaryLabel: {
-    fontSize: 16,
-    color: '#1D1D1F',
-  },
-  summaryValue: {
-    fontSize: 16,
-    color: '#1D1D1F',
-  },
-  totalRow: {
+    marginBottom: 20,
+    paddingTop: 12,
     borderTopWidth: 1,
     borderTopColor: '#E5E5EA',
-    paddingTop: 12,
-    marginTop: 8,
-    marginBottom: 20,
   },
   totalLabel: {
     fontSize: 18,
@@ -379,26 +369,6 @@ const styles = StyleSheet.create({
   shopButtonText: {
     color: '#FFFFFF',
     fontSize: 16,
-    fontWeight: '600',
-  },
-  compactSummary: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    borderTopWidth: 1,
-  },
-  checkoutButton: {
-    backgroundColor: '#007AFF',
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderRadius: 12,
-    marginLeft: 10,
-  },
-  checkoutButtonText: {
-    color: '#FFFFFF',
-    fontSize: 14,
     fontWeight: '600',
   },
 });

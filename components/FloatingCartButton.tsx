@@ -2,14 +2,18 @@ import React from 'react';
 import { TouchableOpacity, Text, View, StyleSheet, Animated } from 'react-native';
 import { useCart } from '@/context/CartContext';
 import { useThemeColors } from '@/hooks/useColorScheme';
-import { useRouter } from 'expo-router';
+import { useRouter, usePathname } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 
 const FloatingCartButton: React.FC = () => {
   const { cartCount } = useCart();
   const colors = useThemeColors();
   const router = useRouter();
+  const pathname = usePathname();
   const animatedValue = new Animated.Value(0);
+
+  // Hide the button when on the cart page
+  const isOnCartPage = pathname === '/(tabs)/cart' || pathname === '/cart';
 
   // Animate the button when cart count changes
   React.useEffect(() => {
@@ -40,15 +44,15 @@ const FloatingCartButton: React.FC = () => {
     outputRange: [0, 0, 1],
   });
 
-  if (cartCount === 0) {
+  if (cartCount === 0 || isOnCartPage) {
     return null;
   }
 
   return (
-    <Animated.View 
+    <Animated.View
       style={[
         styles.container,
-        { 
+        {
           transform: [{ scale }],
           opacity,
         }

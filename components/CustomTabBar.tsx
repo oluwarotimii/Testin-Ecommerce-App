@@ -53,46 +53,26 @@ const CustomTabBar: React.FC<CustomTabBarProps> = ({ state, descriptors, navigat
     const label = options.title || name;
     const iconName = getIconName(name, focused);
 
-    // Special handling for the cart tab
-    if (name === 'cart') {
-      return (
-        <TouchableOpacity
-          key={index}
-          style={[styles.centerTab, { backgroundColor: colors.background }]}
-          onPress={() => navigation.navigate(name)}
-        >
-          <View style={styles.cartIconContainer}>
-            <Ionicons 
-              name={iconName} 
-              size={24} 
-              color={focused ? activeTintColor : inactiveTintColor} 
-            />
-            {cartCount > 0 && (
-              <View style={styles.cartBadge}>
-                <Text style={styles.cartBadgeText}>
-                  {cartCount > 99 ? '99+' : cartCount}
-                </Text>
-              </View>
-            )}
-          </View>
-          <Text style={[styles.centerTabLabel, { color: focused ? activeTintColor : inactiveTintColor }]}>
-            {label}
-          </Text>
-        </TouchableOpacity>
-      );
-    }
-
     return (
       <TouchableOpacity
         key={index}
         style={styles.tab}
         onPress={() => navigation.navigate(name)}
       >
-        <Ionicons 
-          name={iconName} 
-          size={24} 
-          color={focused ? activeTintColor : inactiveTintColor} 
-        />
+        <View style={styles.cartIconContainer}>
+          <Ionicons
+            name={iconName}
+            size={24}
+            color={focused ? activeTintColor : inactiveTintColor}
+          />
+          {name === 'cart' && cartCount > 0 && (
+            <View style={styles.cartBadge}>
+              <Text style={styles.cartBadgeText}>
+                {cartCount > 99 ? '99+' : cartCount}
+              </Text>
+            </View>
+          )}
+        </View>
         <Text style={[styles.tabLabel, { color: focused ? activeTintColor : inactiveTintColor }]}>
           {label}
         </Text>
@@ -102,12 +82,7 @@ const CustomTabBar: React.FC<CustomTabBarProps> = ({ state, descriptors, navigat
 
   return (
     <View style={[styles.container, { backgroundColor: tabBarBackgroundColor, borderTopColor: isDark ? '#424245' : '#C7C7CC' }]}>
-      {state.routes.slice(0, 2).map((route: any, index: number) => renderTab(route, index))}
-      
-      {/* Center tab - Cart (elevated) */}
-      {renderTab(state.routes[2], 2)}
-      
-      {state.routes.slice(3).map((route: any, index: number) => renderTab(route, index + 3))}
+      {state.routes.map((route: any, index: number) => renderTab(route, index))}
     </View>
   );
 };
@@ -131,27 +106,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 8,
-  },
-  centerTab: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 8,
-    width: 70,
-    height: 70,
-    borderRadius: 35,
-    top: -20,
-    position: 'absolute',
-    left: (width / 2) - 35,
-    zIndex: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 5,
-    elevation: 8,
-  },
-  centerTabLabel: {
-    fontSize: 12,
-    marginTop: 4,
   },
   tabLabel: {
     fontSize: 12,

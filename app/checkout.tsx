@@ -339,6 +339,25 @@ export default function CheckoutScreen() {
         </View>
       </ScrollView>
 
+      {/* Cart Items */}
+      {cartItems.length > 0 && (
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Your Order</Text>
+          {cartItems.map((item) => (
+            <View key={item.id} style={styles.cartItem}>
+              <Image source={{ uri: item.image }} style={styles.cartItemImage} />
+              <View style={styles.cartItemDetails}>
+                <Text style={styles.cartItemName} numberOfLines={2}>{item.title}</Text>
+                <Text style={styles.cartItemPrice}>{`₦${(typeof item.price === 'number' ? item.price : parseFloat(item.price)).toFixed(2)} x ${item.quantity || 1}`}</Text>
+              </View>
+              <Text style={styles.cartItemTotal}>
+                {`₦${((typeof item.price === 'number' ? item.price : parseFloat(item.price)) * (item.quantity || 1)).toFixed(2)}`}
+              </Text>
+            </View>
+          ))}
+        </View>
+      )}
+
       {/* Recommended Products */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>You May Also Like</Text>
@@ -609,5 +628,39 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     gap: 12,
     justifyContent: 'space-between',
+  },
+  cartItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    backgroundColor: '#F2F2F7',
+    borderRadius: 12,
+    marginBottom: 12,
+  },
+  cartItemImage: {
+    width: 60,
+    height: 60,
+    borderRadius: 8,
+    backgroundColor: '#E5E5EA',
+  },
+  cartItemDetails: {
+    flex: 1,
+    marginLeft: 12,
+    justifyContent: 'center',
+  },
+  cartItemName: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#1D1D1F',
+    marginBottom: 4,
+  },
+  cartItemPrice: {
+    fontSize: 14,
+    color: '#8E8E93',
+  },
+  cartItemTotal: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#1D1D1F',
   },
 });

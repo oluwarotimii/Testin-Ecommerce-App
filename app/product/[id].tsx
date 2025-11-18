@@ -16,6 +16,7 @@ export default function ProductDetailScreen() {
   const [quantity, setQuantity] = useState(1);
   const [selectedImage, setSelectedImage] = useState(0);
   const [isInWishlist, setIsInWishlist] = useState(false);
+  const [showFullscreenImage, setShowFullscreenImage] = useState(false);
 
   const [product, setProduct] = useState<any>(null);
   const [relatedProducts, setRelatedProducts] = useState<any[]>([]);
@@ -163,26 +164,11 @@ export default function ProductDetailScreen() {
 
   return (
     <View style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
+      {/* Header with minimal back button only */}
+      <View style={styles.headerMinimal}>
         <TouchableOpacity onPress={() => router.back()} style={styles.headerButton}>
-          <Ionicons name="arrow-back" size={24} color="#1D1D1F" />
+          <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
         </TouchableOpacity>
-        <View style={styles.headerActions}>
-          <TouchableOpacity style={styles.headerButton}>
-            <Ionicons name="share" size={24} color="#1D1D1F" />
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.headerButton}
-            onPress={toggleWishlist}
-          >
-            <Ionicons
-              name={isInWishlist ? "heart" : "heart-outline"}
-              size={24}
-              color={isInWishlist ? "#FF3B30" : "#1D1D1F"}
-            />
-          </TouchableOpacity>
-        </View>
       </View>
 
       {/* Product Content with Similar Products at the end */}
@@ -202,7 +188,12 @@ export default function ProductDetailScreen() {
               setSelectedImage(index);
             }}
           >
-            <Image source={{ uri: product.image }} style={styles.productImage} />
+            <TouchableOpacity
+              onPress={() => setShowFullscreenImage(true)}
+              activeOpacity={0.9}
+            >
+              <Image source={{ uri: product.image }} style={styles.productImage} />
+            </TouchableOpacity>
           </ScrollView>
           {/* Wishlist button at the top of the image */}
           <TouchableOpacity style={styles.wishlistTopButton} onPress={toggleWishlist}>
@@ -304,7 +295,29 @@ export default function ProductDetailScreen() {
           </Text>
         </TouchableOpacity>
       </View>
-      <DraggableCartIcon onPress={() => router.push('/(tabs)/cart')} visible={true} />
+
+      {/* Fullscreen Image Overlay */}
+      {showFullscreenImage && (
+        <View style={styles.fullscreenOverlay}>
+          <TouchableOpacity
+            style={styles.overlayCloseButton}
+            onPress={() => setShowFullscreenImage(false)}
+          >
+            <Ionicons name="close" size={30} color="#FFFFFF" />
+          </TouchableOpacity>
+          <View style={styles.fullscreenImageContainer}>
+            <TouchableOpacity
+              onPress={() => setShowFullscreenImage(false)}
+            >
+              <Image
+                source={{ uri: product?.image }}
+                style={styles.fullscreenImage}
+                resizeMode="contain"
+              />
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
     </View>
   );
 }
@@ -324,6 +337,17 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     zIndex: 1,
   },
+  headerMinimal: {
+    flexDirection: 'row',
+    paddingHorizontal: 20,
+    paddingTop: 60,
+    paddingBottom: 16,
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 5,
+  },
   headerButton: {
     padding: 8,
   },
@@ -340,9 +364,17 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingBottom: 120, // Ensure content doesn't hide behind fixed bottom bar
   },
+  imageGallery: {
+    position: 'relative',
+    marginTop: 20, // Reduced margin to prevent excessive spacing
+    marginBottom: 20, // Add margin to separate from product info below
+  },
   productImage: {
-    width: width,
-    height: width * 0.8,
+    width: width * 0.9, // Reduced width to add some padding on sides
+    maxWidth: 400, // Limit max width for tablets
+    maxHeight: 300, // Limit maximum height to prevent excessive tallness
+    height: Math.min(width * 0.72, 300), // Reduced multiplier and use the smaller of calculated height or max height
+    alignSelf: 'center', // Center the image
     backgroundColor: '#F2F2F7',
   },
   imageIndicators: {
@@ -608,7 +640,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     borderRadius: 12,
     gap: 8,
-    flex: 1,
+    maxWidth: 250, // Limit max width on larger screens
+    alignSelf: 'stretch', // Stretch to container width but with max limit
     elevation: 3,
     shadowColor: '#007AFF',
     shadowOffset: { width: 0, height: 2 },
@@ -640,6 +673,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 3,
+    maxWidth: 250, // Limit max width on larger screens
   },
   buyNowButton: {
     backgroundColor: '#FF9500',
@@ -647,6 +681,7 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     paddingHorizontal: 20,
     borderRadius: 12,
+    maxWidth: 250, // Limit max width on larger screens
     elevation: 3,
     shadowColor: '#FF9500',
     shadowOffset: { width: 0, height: 2 },
@@ -666,5 +701,35 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     padding: 8,
     zIndex: 1,
+  },
+  fullscreenOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: '#000',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 100,
+  },
+  fullscreenImageContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: '100%',
+    height: '100%',
+  },
+  fullscreenImage: {
+    width: '100%',
+    height: '100%',
+    flex: 1,
+  },
+  overlayCloseButton: {
+    position: 'absolute',
+    top: 60,
+    right: 20,
+    zIndex: 101,
+    padding: 10,
   },
 });
