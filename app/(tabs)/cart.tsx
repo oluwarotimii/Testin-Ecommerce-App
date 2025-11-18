@@ -190,32 +190,16 @@ export default function CartScreen() {
         ))}
       </ScrollView>
 
-      {/* Order Summary */}
-      <View style={[styles.summary, { backgroundColor: colors.surface }]}>
-        <View style={styles.summaryRow}>
-          <Text style={[styles.summaryLabel, { color: colors.text }]}>Subtotal</Text>
-          <Text style={[styles.summaryValue, { color: colors.text }]}>{`₦${subtotal.toFixed(2)}`}</Text>
+      {/* Compact Order Summary */}
+      <View style={[styles.compactSummary, { backgroundColor: colors.surface, borderTopColor: colors.border }]}>
+        <View>
+          <Text style={[styles.totalLabel, { color: colors.text }]}>Total: <Text style={[styles.totalValue, { color: colors.text }]}>₦{total.toFixed(2)}</Text></Text>
         </View>
-        <View style={styles.summaryRow}>
-          <Text style={[styles.summaryLabel, { color: colors.text }]}>Shipping</Text>
-          <Text style={[styles.summaryValue, { color: colors.text }]}>
-            {shipping === 0 ? 'Free' : `₦${shipping.toFixed(2)}`}
-          </Text>
-        </View>
-        <View style={styles.summaryRow}>
-          <Text style={[styles.summaryLabel, { color: colors.text }]}>Tax</Text>
-          <Text style={[styles.summaryValue, { color: colors.text }]}>₦{tax.toFixed(2)}</Text>
-        </View>
-        <View style={[styles.summaryRow, styles.totalRow, { borderTopColor: colors.border }]}>
-          <Text style={[styles.totalLabel, { color: colors.text }]}>Total</Text>
-          <Text style={[styles.totalValue, { color: colors.text }]}>₦{total.toFixed(2)}</Text>
-        </View>
-
         <TouchableOpacity
           style={[styles.checkoutButton, { backgroundColor: colors.primary }]}
           onPress={() => router.push('/checkout')}
         >
-          <Text style={[styles.checkoutButtonText, { color: colors.white }]}>Proceed to Checkout</Text>
+          <Text style={[styles.checkoutButtonText, { color: colors.white }]}>Checkout</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -395,6 +379,26 @@ const styles = StyleSheet.create({
   shopButtonText: {
     color: '#FFFFFF',
     fontSize: 16,
+    fontWeight: '600',
+  },
+  compactSummary: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderTopWidth: 1,
+  },
+  checkoutButton: {
+    backgroundColor: '#007AFF',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 12,
+    marginLeft: 10,
+  },
+  checkoutButtonText: {
+    color: '#FFFFFF',
+    fontSize: 14,
     fontWeight: '600',
   },
 });

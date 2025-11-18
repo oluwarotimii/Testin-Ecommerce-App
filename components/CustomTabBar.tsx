@@ -18,7 +18,16 @@ const CustomTabBar: React.FC<CustomTabBarProps> = ({ state, descriptors, navigat
   const colors = useThemeColors();
   const { colorScheme } = useTheme();
   const { cartCount } = useCart();
-  
+
+  // Check if we're on the cart screen
+  const currentRoute = state.routes[state.index]?.name;
+  const hideTabBar = currentRoute === 'cart';
+
+  // If we need to hide the tab bar, return null
+  if (hideTabBar) {
+    return null;
+  }
+
   const isDark = colorScheme === 'dark';
   const tabBarBackgroundColor = isDark ? '#1C1C1E' : '#FFFFFF';
   const activeTintColor = isDark ? '#0A84FF' : '#007AFF';
