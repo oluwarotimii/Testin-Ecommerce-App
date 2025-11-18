@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
 import { MaterialIcons, FontAwesome, Ionicons } from '@expo/vector-icons';
+import ProductGridItem from '@/components/ProductGridItem';
 
 export default function CheckoutScreen() {
   const router = useRouter();
@@ -318,12 +319,43 @@ export default function CheckoutScreen() {
               </View>
             )}
             <View style={[styles.summaryRow, styles.totalRow]}>
-              <Text style={styles.totalLabel}>Total</Text>
-              <Text style={styles.totalValue}>₦{orderSummary.total.toFixed(2)}</Text>
+              <View style={styles.totalContainer}>
+                <Text style={styles.totalLabel}>Total</Text>
+                {orderSummary.discount > 0 && (
+                  <View style={styles.discountRow}>
+                    <Text style={styles.originalPrice}>₦{orderSummary.subtotal.toFixed(2)}</Text>
+                    <Text style={styles.totalValue}>₦{orderSummary.total.toFixed(2)}</Text>
+                  </View>
+                )}
+                {orderSummary.discount === 0 && (
+                  <Text style={styles.totalValue}>₦{orderSummary.total.toFixed(2)}</Text>
+                )}
+              </View>
+              <TouchableOpacity style={styles.checkoutButton}>
+                <Text style={styles.checkoutButtonText}>Checkout</Text>
+              </TouchableOpacity>
             </View>
           </View>
         </View>
       </ScrollView>
+
+      {/* Recommended Products */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>You May Also Like</Text>
+        <View style={styles.gridContainer}>
+          {cartItems.slice(0, 4).map((item) => (
+            <ProductGridItem
+              key={item.id}
+              product={item}
+              onPress={() => router.push(`/product/${item.id}`)}
+              onAddToCart={() => {
+                // Add to cart functionality would go here
+                console.log('Add to cart:', item.id);
+              }}
+            />
+          ))}
+        </View>
+      </View>
 
       {/* Place Order Button */}
       <View style={styles.bottomBar}>
@@ -526,6 +558,21 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#1D1D1F',
   },
+  originalPrice: {
+    fontSize: 16,
+    color: '#8E8E93',
+    textDecorationLine: 'line-through',
+    marginBottom: 4,
+  },
+  totalContainer: {
+    flex: 1,
+    marginRight: 10,
+  },
+  discountRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 4,
+  },
   bottomBar: {
     backgroundColor: '#FFFFFF',
     paddingHorizontal: 20,
@@ -540,9 +587,27 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     alignItems: 'center',
   },
+  checkoutButton: {
+    backgroundColor: '#007AFF',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 12,
+    justifyContent: 'center',
+  },
+  checkoutButtonText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '600',
+  },
   placeOrderText: {
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
+  },
+  gridContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+    justifyContent: 'space-between',
   },
 });

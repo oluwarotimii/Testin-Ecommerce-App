@@ -7,12 +7,14 @@ import { useThemeColors } from '@/hooks/useColorScheme';
 import { MaterialIcons, FontAwesome, Ionicons } from '@expo/vector-icons';
 import SkeletonCartItem from '@/components/SkeletonCartItem';
 import SkeletonLoader from '@/components/SkeletonLoader';
+import { useIsFocused } from '@react-navigation/native';
 
 export default function CartScreen() {
   const router = useRouter();
   const colors = useThemeColors();
   const { apiService } = useAuth();
   const { setCartCount } = useCart();
+  const isFocused = useIsFocused();
   const [cart, setCart] = useState<any>(null);
   const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -51,6 +53,12 @@ export default function CartScreen() {
   }, []);
 
   useEffect(() => {
+    if (isFocused) {
+      fetchCartContents();
+    }
+  }, [isFocused]);
+
+  useEffect(() => {
     // Update cart count whenever products change
     const totalQuantity = products.reduce((total, item) => total + (item.quantity || 1), 0);
     setCartCount(totalQuantity);
@@ -87,7 +95,7 @@ export default function CartScreen() {
           <SkeletonLoader width="100%" height={20} marginBottom={12} />
           <SkeletonLoader width="100%" height={20} marginBottom={12} />
           <SkeletonLoader width="100%" height={20} marginBottom={12} />
-          <SkeletonLoader width="100%" height={30} marginBottom={20} />
+          <SkeletonLoader width="100%" height={20} marginBottom={20} />
           <SkeletonLoader width="100%" height={50} borderRadius={12} />
         </View>
       </View>
@@ -202,7 +210,7 @@ export default function CartScreen() {
           <Text style={[styles.totalLabel, { color: colors.text }]}>Total</Text>
           <Text style={[styles.totalValue, { color: colors.text }]}>₦{total.toFixed(2)}</Text>
         </View>
-        
+
         <TouchableOpacity
           style={[styles.checkoutButton, { backgroundColor: colors.primary }]}
           onPress={() => router.push('/checkout')}

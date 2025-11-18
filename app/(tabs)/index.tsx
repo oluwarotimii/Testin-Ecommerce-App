@@ -2,6 +2,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Image,
 import { useRouter } from 'expo-router';
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/context/AuthContext';
+import { useCart } from '@/context/CartContext';
 import InstagramCarousel from '@/components/InstagramCarousel';
 import { useThemeColors } from '@/hooks/useColorScheme';
 import { useTheme } from '@/context/ThemeContext';
@@ -13,6 +14,7 @@ export default function HomeScreen() {
   const router = useRouter();
   const colors = useThemeColors();
   const { apiService } = useAuth();
+  const { setCartCount } = useCart();
   const [loadingCarousel, setLoadingCarousel] = useState(false);
   const [carouselItems, setCarouselItems] = useState([
     {
@@ -269,9 +271,25 @@ export default function HomeScreen() {
                   </View>
                   <TouchableOpacity
                     style={[styles.addToCartButton, { backgroundColor: colors.primary }]}
-                    onPress={(e) => {
+                    onPress={async (e) => {
                       e.stopPropagation(); // Prevent triggering the product detail navigation
-                      // Add to cart logic here later if needed
+                      try {
+                        // Add to cart logic
+                        await apiService.addToCart(product.id, 1);
+
+                        // Update cart count by fetching the current cart contents
+                        try {
+                          const cartResponse = await apiService.getCartContents();
+                          if (cartResponse && cartResponse.products) {
+                            const newCartCount = cartResponse.products.reduce((total: any, item: any) => total + item.quantity, 0);
+                            setCartCount(newCartCount);
+                          }
+                        } catch (countError) {
+                          console.error("Error updating cart count:", countError);
+                        }
+                      } catch (error) {
+                        console.error('Add to cart error:', error);
+                      }
                     }}
                   >
                     <Ionicons name="cart" size={18} color={colors.white} />

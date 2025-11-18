@@ -4,6 +4,7 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
 import { useCart } from '@/context/CartContext';
 import { MaterialIcons, FontAwesome, Ionicons } from '@expo/vector-icons';
+import DraggableCartIcon from '@/components/DraggableCartIcon';
 
 const { width } = Dimensions.get('window');
 
@@ -303,6 +304,7 @@ export default function ProductDetailScreen() {
           </Text>
         </TouchableOpacity>
       </View>
+      <DraggableCartIcon onPress={() => router.push('/(tabs)/cart')} visible={true} />
     </View>
   );
 }

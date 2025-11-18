@@ -2,12 +2,14 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, TextInput,
 import { useState, useEffect } from 'react';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
+import { useCart } from '@/context/CartContext';
 import { MaterialIcons, FontAwesome, Ionicons } from '@expo/vector-icons';
 import SkeletonProductItem from '@/components/SkeletonProductItem';
 
 export default function ProductsScreen() {
   const router = useRouter();
   const { apiService } = useAuth();
+  const { setCartCount } = useCart();
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [searchQuery, setSearchQuery] = useState('');
   const [products, setProducts] = useState<any[]>([]);
@@ -53,9 +55,25 @@ export default function ProductsScreen() {
               <View style={styles.productActions}>
                 <TouchableOpacity
                   style={[styles.addToCartButton, { backgroundColor: '#007AFF' }]}
-                  onPress={(e) => {
+                  onPress={async (e) => {
                     e.stopPropagation(); // Prevent triggering the product detail navigation
-                    // Add to cart logic here later if needed
+                    try {
+                      // Add to cart logic
+                      await apiService.addToCart(product.id, 1);
+
+                      // Update cart count by fetching the current cart contents
+                      try {
+                        const cartResponse = await apiService.getCartContents();
+                        if (cartResponse && cartResponse.products) {
+                          const newCartCount = cartResponse.products.reduce((total: any, item: any) => total + item.quantity, 0);
+                          setCartCount(newCartCount);
+                        }
+                      } catch (countError) {
+                        console.error("Error updating cart count:", countError);
+                      }
+                    } catch (error) {
+                      console.error('Add to cart error:', error);
+                    }
                   }}
                 >
                   <Ionicons name="cart" size={18} color="#FFFFFF" />
@@ -126,13 +144,18 @@ export default function ProductsScreen() {
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.title}>Products</Text>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+          <Ionicons name="arrow-back" size={24} color="#1D1D1F" />
+        </TouchableOpacity>
+        <View style={styles.headerCenter}>
+          <Text style={styles.title}>Products</Text>
+        </View>
         <View style={styles.headerActions}>
           <TouchableOpacity style={styles.filterButton}>
             <Ionicons name="filter" size={20} color="#007AFF" />
           </TouchableOpacity>
           <View style={styles.viewToggle}>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={[styles.toggleButton, viewMode === 'grid' && styles.activeToggle]}
               onPress={() => setViewMode('grid')}
             >
@@ -222,6 +245,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 60,
     paddingBottom: 16,
+  },
+  backButton: {
+    padding: 8,
+  },
+  headerCenter: {
+    flex: 1,
+    alignItems: 'center',
   },
   title: {
     fontSize: 28,
