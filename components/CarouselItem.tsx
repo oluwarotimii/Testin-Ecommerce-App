@@ -1,6 +1,7 @@
-import { View, Text, StyleSheet, TouchableOpacity, Image, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useThemeColors } from '@/hooks/useColorScheme';
+import SafeImage from './SafeImage';
 
 const { width } = Dimensions.get('window');
 const ITEM_WIDTH = width - 40;
@@ -21,14 +22,14 @@ export default function CarouselItem({ item, onPress }: CarouselItemProps) {
   const colors = useThemeColors();
 
   return (
-    <TouchableOpacity 
-      style={[styles.container, { width: ITEM_WIDTH }]} 
+    <TouchableOpacity
+      style={[styles.container, { width: ITEM_WIDTH }]}
       onPress={onPress}
       activeOpacity={0.9}
     >
       <View style={styles.imageContainer}>
         {item.imageUrl ? (
-          <Image source={{ uri: item.imageUrl }} style={styles.image} />
+          <SafeImage source={{ uri: item.imageUrl }} style={styles.image} />
         ) : (
           <View style={[styles.placeholderImage, { backgroundColor: colors.surface }]} />
         )}
@@ -37,7 +38,7 @@ export default function CarouselItem({ item, onPress }: CarouselItemProps) {
           style={styles.gradient}
         />
       </View>
-      
+
       <View style={styles.content}>
         <Text style={[styles.title, { color: colors.white }]} numberOfLines={2}>
           {item.title}

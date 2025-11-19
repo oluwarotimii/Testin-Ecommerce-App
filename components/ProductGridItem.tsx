@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import SafeImage from './SafeImage';
 import { Ionicons } from '@expo/vector-icons';
 
 interface ProductGridItemProps {
@@ -15,7 +16,7 @@ const ProductGridItem: React.FC<ProductGridItemProps> = ({ product, onPress, onA
         style={styles.productCard}
         onPress={onPress}
       >
-        <Image source={{ uri: product.image }} style={styles.productImage} />
+        <SafeImage source={{ uri: product.image }} style={styles.productImage} />
         {/* Bottom overlay with blur/opacity */}
         <View style={[styles.productOverlay, { backgroundColor: '#F2F2F7CC' }]}>
           <View style={styles.productTextContainer}>

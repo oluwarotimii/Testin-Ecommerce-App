@@ -1,4 +1,5 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Image, ActivityIndicator, RefreshControl } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, ActivityIndicator, RefreshControl } from 'react-native';
+import SafeImage from '@/components/SafeImage';
 import { useRouter } from 'expo-router';
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/context/AuthContext';
@@ -262,7 +263,7 @@ export default function HomeScreen() {
                 style={styles.productCard}
                 onPress={() => router.push(`/product/${product.id}`)}
               >
-                <Image source={{ uri: product.image }} style={styles.productImage} />
+                <SafeImage source={{ uri: product.image }} style={styles.productImage} />
                 {/* Actions overlay on image */}
                 <View style={styles.productActionsOverlay}>
                   <TouchableOpacity
@@ -428,15 +429,16 @@ const styles = StyleSheet.create({
   },
   productActionsOverlay: {
     position: 'absolute',
-    top: 8,
+    bottom: 8,
     right: 8,
     zIndex: 1,
   },
   productDetails: {
     padding: 8,
     paddingTop: 4,
+    paddingRight: 48,
     position: 'relative',
-    top: 0, // Adjust as needed
+    top: 0, 
   },
   productTextContainer: {
     flex: 1,
