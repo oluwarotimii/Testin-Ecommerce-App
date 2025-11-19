@@ -1,182 +1,139 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, ActivityIndicator } from 'react-native';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
-import { useCart } from '@/context/CartContext';
-import { MaterialIcons, FontAwesome, Ionicons } from '@expo/vector-icons';
+import { useThemeColors } from '@/hooks/useColorScheme';
+import { Ionicons } from '@expo/vector-icons';
+import SkeletonProductItem from '@/components/SkeletonProductItem';
+import SkeletonLoader from '@/components/SkeletonLoader';
 
 export default function WishlistScreen() {
   const router = useRouter();
+  const colors = useThemeColors();
   const { apiService } = useAuth();
-  const { setCartCount } = useCart();
-  const [wishlistItems, setWishlistItems] = useState<any[]>([]);
+  const [wishlist, setWishlist] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchWishlist = async () => {
       try {
         setLoading(true);
-        const items = await apiService.getWishlist();
-        setWishlistItems(items);
+        const response = await apiService.getWishlist();
+        setWishlist(response);
       } catch (error) {
-        console.error("Error fetching wishlist:", error);
-        // If there's an error, we can start with an empty array
-        setWishlistItems([]);
+        console.error("Failed to fetch wishlist:", error);
       } finally {
         setLoading(false);
       }
     };
 
     fetchWishlist();
-  }, [apiService]);
+  }, []);
 
-  const removeFromWishlist = async (id: number) => {
+  const removeFromWishlist = async (productId: number) => {
     try {
-      const result = await apiService.removeFromWishlist(id);
-      setWishlistItems(items => items.filter(item => item.id !== id));
-      console.log('Removed from wishlist:', result);
+      await apiService.removeFromWishlist(productId);
+      setWishlist(wishlist.filter(item => item.id !== productId));
     } catch (error) {
-      console.error('Remove from wishlist error:', error);
-      Alert.alert("Error", "Failed to remove item from wishlist. Please try again.");
+      console.error("Failed to remove from wishlist:", error);
     }
   };
 
-  const addToCart = async (id: number) => {
+  const addToCart = async (product: any) => {
     try {
-      const result = await apiService.addToCart(id, 1); // Add 1 quantity
-      console.log('Added to cart:', result);
-      Alert.alert("Success", "Item added to cart!");
-
-      // Update cart count
-      setCartCount(prevCount => prevCount + 1);
-
-      // Optionally remove from wishlist after adding to cart
-      removeFromWishlist(id);
+      await apiService.addToCart(product.id, 1);
+      removeFromWishlist(product.id);
     } catch (error) {
-      console.error('Add to cart error:', error);
-      Alert.alert("Error", "Failed to add item to cart. Please try again.");
+      console.error("Failed to add to cart:", error);
     }
   };
 
   if (loading) {
     return (
-      <View style={styles.emptyContainer}>
-        <Text>Loading wishlist...</Text>
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
+        <View style={styles.header}>
+          <Text style={[styles.title, { color: colors.text }]}>My Wishlist</Text>
+          <SkeletonLoader width={60} height={16} />
+        </View>
+
+        <ScrollView
+          style={styles.content}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.scrollContent}
+        >
+          <SkeletonProductItem viewMode="list" />
+          <SkeletonProductItem viewMode="list" />
+          <SkeletonProductItem viewMode="list" />
+          <SkeletonProductItem viewMode="list" />
+        </ScrollView>
       </View>
     );
   }
 
-  if (wishlistItems.length === 0) {
+  if (wishlist.length === 0) {
     return (
-      <View style={styles.emptyContainer}>
-        <Ionicons name="heart-outline" size={80} color="#8E8E93" />
-        <Text style={styles.emptyTitle}>Your wishlist is empty</Text>
-        <Text style={styles.emptySubtitle}>Save products you love to your wishlist</Text>
-        <TouchableOpacity 
-          style={styles.shopButton}
-          onPress={() => router.push('/(tabs)')}
-        >
-          <Text style={styles.shopButtonText}>Start Shopping</Text>
-        </TouchableOpacity>
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
+        <View style={styles.emptyContainer}>
+          <Ionicons name="heart-outline" size={80} color={colors.textSecondary} />
+          <Text style={[styles.emptyTitle, { color: colors.text }]}>Your wishlist is empty</Text>
+          <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>Add items to your wishlist to see them here</Text>
+          <TouchableOpacity
+            style={[styles.browseButton, { backgroundColor: colors.primary }]}
+            onPress={() => router.push('/(tabs)')}
+          >
+            <Text style={[styles.browseButtonText, { color: colors.white }]}>Browse Products</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     );
   }
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Header */}
       <View style={styles.header}>
-        <View style={styles.headerLeft}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={24} color="#1D1D1F" />
-          </TouchableOpacity>
-          <Text style={styles.title}>Wishlist</Text>
-        </View>
-        <Text style={styles.itemCount}>{wishlistItems.length} items</Text>
+        <Text style={[styles.title, { color: colors.text }]}>My Wishlist</Text>
+        <Text style={[styles.itemCount, { color: colors.textSecondary }]}>{wishlist.length} items</Text>
       </View>
 
       {/* Wishlist Items */}
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {wishlistItems.map((item) => (
-          <View key={item.id} style={styles.wishlistItem}>
-            <TouchableOpacity 
-              style={styles.itemContent}
+      <ScrollView
+        style={styles.content}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
+      >
+        {wishlist.map((item) => (
+          <View key={item.id} style={[styles.wishlistItem, { backgroundColor: colors.surface }]}>
+            <TouchableOpacity
+              style={styles.productImageContainer}
               onPress={() => router.push(`/product/${item.id}`)}
             >
-              <View style={styles.imageContainer}>
-                <Image source={{ uri: item.image }} style={styles.itemImage} />
-                {item.discount && (
-                  <View style={styles.discountBadge}>
-                    <Text style={styles.discountText}>-{item.discount}%</Text>
-                  </View>
-                )}
-              </View>
-              
-              <View style={styles.itemDetails}>
-                <Text style={styles.itemName} numberOfLines={2}>{item.name}</Text>
-                
-                <View style={styles.ratingContainer}>
-                  <Ionicons name="star" size={12} color="#FFD700" />
-                  <Text style={styles.ratingText}>{item.rating}</Text>
-                  <Text style={styles.reviewsText}>({item.reviews})</Text>
-                </View>
-                
-                <View style={styles.priceContainer}>
-                  <Text style={styles.price}>₦{item.price.toFixed(2)}</Text>
-                  {item.originalPrice && (
-                    <Text style={styles.originalPrice}>₦{item.originalPrice.toFixed(2)}</Text>
-                  )}
-                </View>
-                
-                <Text style={[
-                  styles.stockStatus, 
-                  { color: item.inStock ? '#34C759' : '#FF3B30' }
-                ]}>
-                  {item.inStock ? 'In Stock' : 'Out of Stock'}
-                </Text>
-              </View>
+              <Image source={{ uri: item.image }} style={styles.productImage} />
             </TouchableOpacity>
-
-            <View style={styles.itemActions}>
+            <View style={styles.productInfo}>
+              <Text style={[styles.productName, { color: colors.text }]} numberOfLines={2}>{item.title}</Text>
+              <View style={styles.priceRow}>
+                <Text style={[styles.originalPrice, { color: colors.textSecondary }]}>{`₦${(item.price * 1.3).toFixed(2)}`}</Text>
+                <Text style={[styles.productPrice, { color: colors.primary }]}>{`₦${item.price.toFixed(2)}`}</Text>
+              </View>
+            </View>
+            <View style={styles.actions}>
               <TouchableOpacity 
-                style={styles.removeButton}
+                style={[styles.addToCartButton, { backgroundColor: colors.primary }]}
+                onPress={() => addToCart(item)}
+              >
+                <Ionicons name="cart" size={20} color={colors.white} />
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.removeButton, { backgroundColor: colors.surface }]}
                 onPress={() => removeFromWishlist(item.id)}
               >
-                <Ionicons name="trash" size={20} color="#FF3B30" />
-              </TouchableOpacity>
-              
-              <TouchableOpacity 
-                style={[
-                  styles.addToCartButton, 
-                  !item.inStock && styles.disabledButton
-                ]}
-                onPress={() => addToCart(item.id)}
-                disabled={!item.inStock}
-              >
-                <Ionicons name="cart" size={16} color="#FFFFFF" />
-                <Text style={styles.addToCartText}>
-                  {item.inStock ? 'Add to Cart' : 'Out of Stock'}
-                </Text>
+                <Ionicons name="trash" size={20} color={colors.error} />
               </TouchableOpacity>
             </View>
           </View>
         ))}
       </ScrollView>
-
-      {/* Bottom Actions */}
-      <View style={styles.bottomActions}>
-        <TouchableOpacity 
-          style={styles.addAllButton}
-          onPress={() => {
-            wishlistItems
-              .filter(item => item.inStock)
-              .forEach(item => addToCart(item.id));
-          }}
-        >
-          <Ionicons name="cart" size={20} color="#FFFFFF" />
-          <Text style={styles.addAllText}>Add All to Cart</Text>
-        </TouchableOpacity>
-      </View>
     </View>
   );
 }
@@ -184,7 +141,6 @@ export default function WishlistScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
   },
   header: {
     flexDirection: 'row',
@@ -194,188 +150,109 @@ const styles = StyleSheet.create({
     paddingTop: 60,
     paddingBottom: 20,
   },
-  headerLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  backButton: {
-    padding: 8,
-  },
   title: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#1D1D1F',
   },
   itemCount: {
     fontSize: 14,
-    color: '#8E8E93',
-    marginTop: 4,
   },
   content: {
     flex: 1,
     paddingHorizontal: 20,
   },
+  scrollContent: {
+    paddingBottom: 100,
+  },
   wishlistItem: {
-    backgroundColor: '#F2F2F7',
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 16,
-  },
-  itemContent: {
     flexDirection: 'row',
-    marginBottom: 16,
-  },
-  imageContainer: {
-    position: 'relative',
-  },
-  itemImage: {
-    width: 100,
-    height: 100,
+    alignItems: 'center',
+    paddingVertical: 16,
+    paddingHorizontal: 12,
     borderRadius: 12,
+    marginBottom: 12,
+  },
+  productImageContainer: {
+    marginRight: 16,
+  },
+  productImage: {
+    width: 80,
+    height: 80,
+    borderRadius: 8,
     backgroundColor: '#E5E5EA',
   },
-  discountBadge: {
-    position: 'absolute',
-    top: 6,
-    left: 6,
-    backgroundColor: '#FF3B30',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 4,
-  },
-  discountText: {
-    color: '#FFFFFF',
-    fontSize: 10,
-    fontWeight: 'bold',
-  },
-  itemDetails: {
+  productInfo: {
     flex: 1,
-    marginLeft: 16,
-    justifyContent: 'space-between',
+    marginRight: 12,
   },
-  itemName: {
+  productName: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#1D1D1F',
-    marginBottom: 6,
-  },
-  ratingContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 6,
-  },
-  ratingText: {
-    fontSize: 12,
-    color: '#1D1D1F',
-    marginLeft: 4,
     fontWeight: '500',
+    marginBottom: 8,
   },
-  reviewsText: {
-    fontSize: 12,
-    color: '#8E8E93',
-    marginLeft: 2,
-  },
-  priceContainer: {
+  priceRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    marginBottom: 6,
-  },
-  price: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#007AFF',
   },
   originalPrice: {
-    fontSize: 14,
-    color: '#8E8E93',
+    fontSize: 12,
     textDecorationLine: 'line-through',
   },
-  stockStatus: {
-    fontSize: 12,
-    fontWeight: '500',
+  productPrice: {
+    fontSize: 16,
+    fontWeight: 'bold',
   },
-  itemActions: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  actions: {
+    flexDirection: 'column',
     alignItems: 'center',
-  },
-  removeButton: {
-    padding: 12,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#FF3B30',
-  },
-  addToCartButton: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#007AFF',
-    paddingVertical: 12,
-    borderRadius: 12,
-    marginLeft: 12,
-    gap: 6,
-  },
-  disabledButton: {
-    backgroundColor: '#8E8E93',
-  },
-  addToCartText: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  bottomActions: {
-    backgroundColor: '#FFFFFF',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    paddingBottom: 32,
-    borderTopWidth: 1,
-    borderTopColor: '#F2F2F7',
-  },
-  addAllButton: {
-    backgroundColor: '#007AFF',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 16,
-    borderRadius: 12,
     gap: 8,
   },
-  addAllText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
+  addToCartButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  removeButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   emptyContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 40,
+    paddingHorizontal: 20,
   },
   emptyTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#1D1D1F',
     marginTop: 24,
     marginBottom: 8,
+    textAlign: 'center',
   },
   emptySubtitle: {
     fontSize: 16,
-    color: '#8E8E93',
     textAlign: 'center',
     marginBottom: 32,
+    lineHeight: 24,
   },
-  shopButton: {
-    backgroundColor: '#007AFF',
+  browseButton: {
     paddingHorizontal: 32,
     paddingVertical: 16,
     borderRadius: 12,
   },
-  shopButtonText: {
-    color: '#FFFFFF',
+  browseButtonText: {
     fontSize: 16,
     fontWeight: '600',
+  },
+  loadingIndicator: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });

@@ -1,12 +1,14 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert, Image } from 'react-native';
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
+import { useThemeColors } from '@/hooks/useColorScheme';
 import { MaterialIcons, FontAwesome, Ionicons } from '@expo/vector-icons';
 import ProductGridItem from '@/components/ProductGridItem';
 
 export default function CheckoutScreen() {
   const router = useRouter();
+  const colors = useThemeColors();
   const { apiService } = useAuth();
   const [addresses, setAddresses] = useState<any[]>([]);
   const [paymentMethods, setPaymentMethods] = useState<any[]>([]);
@@ -164,9 +166,9 @@ export default function CheckoutScreen() {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={24} color="#1D1D1F" />
+          <Ionicons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
-        <Text style={styles.title}>Checkout</Text>
+        <Text style={[styles.title, { color: colors.text }]}>Checkout</Text>
         <View style={{ width: 24 }} />
       </View>
 
@@ -174,12 +176,12 @@ export default function CheckoutScreen() {
         {/* Shipping Address */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Ionicons name="location" size={20} color="#007AFF" />
-            <Text style={styles.sectionTitle}>Shipping Address</Text>
+            <Ionicons name="location" size={20} color={colors.primary} />
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>Shipping Address</Text>
           </View>
           {addresses.map((address, index) => (
-            <TouchableOpacity 
-              key={address.id} 
+            <TouchableOpacity
+              key={address.id}
               style={[
                 styles.optionCard,
                 selectedAddress === index && styles.selectedCard
@@ -196,7 +198,7 @@ export default function CheckoutScreen() {
                   )}
                 </View>
                 {selectedAddress === index && (
-                  <Ionicons name="checkmark" size={20} color="#007AFF" />
+                  <Ionicons name="checkmark" size={20} color={colors.primary} />
                 )}
               </View>
             </TouchableOpacity>
@@ -209,12 +211,12 @@ export default function CheckoutScreen() {
         {/* Payment Method */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Ionicons name="card" size={20} color="#007AFF" />
-            <Text style={styles.sectionTitle}>Payment Method</Text>
+            <Ionicons name="card" size={20} color={colors.primary} />
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>Payment Method</Text>
           </View>
           {paymentMethods.map((payment, index) => (
-            <TouchableOpacity 
-              key={payment.id} 
+            <TouchableOpacity
+              key={payment.id}
               style={[
                 styles.optionCard,
                 selectedPayment === index && styles.selectedCard
@@ -232,7 +234,7 @@ export default function CheckoutScreen() {
                   </View>
                 </View>
                 {selectedPayment === index && (
-                  <Ionicons name="checkmark" size={20} color="#007AFF" />
+                  <Ionicons name="checkmark" size={20} color={colors.primary} />
                 )}
               </View>
             </TouchableOpacity>
@@ -245,12 +247,12 @@ export default function CheckoutScreen() {
         {/* Shipping Method */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Ionicons name="boat" size={20} color="#007AFF" />
-            <Text style={styles.sectionTitle}>Shipping Method</Text>
+            <Ionicons name="boat" size={20} color={colors.primary} />
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>Shipping Method</Text>
           </View>
           {shippingMethods.map((shipping, index) => (
-            <TouchableOpacity 
-              key={shipping.id} 
+            <TouchableOpacity
+              key={shipping.id}
               style={[
                 styles.optionCard,
                 selectedShipping === index && styles.selectedCard
@@ -268,7 +270,7 @@ export default function CheckoutScreen() {
                     {shipping.price === 0 ? 'Free' : `₦${shipping.price.toFixed(2)}`}
                   </Text>
                   {selectedShipping === index && (
-                    <Ionicons name="checkmark" size={20} color="#007AFF" />
+                    <Ionicons name="checkmark" size={20} color={colors.primary} />
                   )}
                 </View>
               </View>
@@ -286,8 +288,8 @@ export default function CheckoutScreen() {
               value={promoCode}
               onChangeText={setPromoCode}
             />
-            <TouchableOpacity style={styles.applyButton}>
-              <Text style={styles.applyButtonText}>Apply</Text>
+            <TouchableOpacity style={[styles.applyButton, { backgroundColor: colors.primary }]}>
+              <Text style={[styles.applyButtonText, { color: colors.white }]}>Apply</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -331,8 +333,8 @@ export default function CheckoutScreen() {
                   <Text style={styles.totalValue}>₦{orderSummary.total.toFixed(2)}</Text>
                 )}
               </View>
-              <TouchableOpacity style={styles.checkoutButton}>
-                <Text style={styles.checkoutButtonText}>Checkout</Text>
+              <TouchableOpacity style={[styles.checkoutButton, { backgroundColor: colors.primary }]}>
+                <Text style={[styles.checkoutButtonText, { color: colors.white }]}>Checkout</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -342,15 +344,15 @@ export default function CheckoutScreen() {
       {/* Cart Items */}
       {cartItems.length > 0 && (
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Your Order</Text>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>Your Order</Text>
           {cartItems.map((item) => (
-            <View key={item.id} style={styles.cartItem}>
+            <View key={item.id} style={[styles.cartItem, { backgroundColor: colors.surface }]}>
               <Image source={{ uri: item.image }} style={styles.cartItemImage} />
               <View style={styles.cartItemDetails}>
-                <Text style={styles.cartItemName} numberOfLines={2}>{item.title}</Text>
-                <Text style={styles.cartItemPrice}>{`₦${(typeof item.price === 'number' ? item.price : parseFloat(item.price)).toFixed(2)} x ${item.quantity || 1}`}</Text>
+                <Text style={[styles.cartItemName, { color: colors.text }]} numberOfLines={2}>{item.title}</Text>
+                <Text style={[styles.cartItemPrice, { color: colors.textSecondary }]}>{`₦${(typeof item.price === 'number' ? item.price : parseFloat(item.price)).toFixed(2)} x ${item.quantity || 1}`}</Text>
               </View>
-              <Text style={styles.cartItemTotal}>
+              <Text style={[styles.cartItemTotal, { color: colors.text }]}>
                 {`₦${((typeof item.price === 'number' ? item.price : parseFloat(item.price)) * (item.quantity || 1)).toFixed(2)}`}
               </Text>
             </View>
@@ -377,9 +379,9 @@ export default function CheckoutScreen() {
       </View>
 
       {/* Place Order Button */}
-      <View style={styles.bottomBar}>
-        <TouchableOpacity style={styles.placeOrderButton} onPress={handlePlaceOrder}>
-          <Text style={styles.placeOrderText}>Place Order - ₦{orderSummary.total.toFixed(2)}</Text>
+      <View style={[styles.bottomBar, { backgroundColor: colors.background, borderTopColor: colors.border }]}>
+        <TouchableOpacity style={[styles.placeOrderButton, { backgroundColor: colors.primary }]} onPress={handlePlaceOrder}>
+          <Text style={[styles.placeOrderText, { color: colors.white }]}>Place Order - ₦{orderSummary.total.toFixed(2)}</Text>
         </TouchableOpacity>
       </View>
     </View>

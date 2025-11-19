@@ -27,12 +27,19 @@ export default function TabLayout() {
           title: 'Home',
         }}
       />
+
       <Tabs.Screen
+        name="categories"
+        options={{
+          title: 'Categories',
+        }}
+      />
+      {/* <Tabs.Screen
         name="wishlist"
         options={{
           title: 'Wishlist',
         }}
-      />
+      /> */}
       <Tabs.Screen
         name="cart"
         options={{
@@ -45,12 +52,7 @@ export default function TabLayout() {
           title: 'Account',
         }}
       />
-      <Tabs.Screen
-        name="Catgories"
-        options={{
-          title: 'Catgories',
-        }}
-      />
+
     </Tabs>
   );
 }

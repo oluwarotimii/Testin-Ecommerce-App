@@ -1,5 +1,5 @@
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, TextInput, ActivityIndicator } from 'react-native';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
 import { useCart } from '@/context/CartContext';
@@ -7,6 +7,7 @@ import { MaterialIcons, FontAwesome, Ionicons } from '@expo/vector-icons';
 import SkeletonProductItem from '@/components/SkeletonProductItem';
 import { useThemeColors } from '@/hooks/useColorScheme';
 import SafeImage from '@/components/SafeImage';
+import FilterModal, { FilterOptions } from '@/components/FilterModal';
 
 export default function ProductsScreen() {
   const router = useRouter();
@@ -18,6 +19,12 @@ export default function ProductsScreen() {
   const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showFilterModal, setShowFilterModal] = useState(false);
+  const [filters, setFilters] = useState<FilterOptions>({
+    minPrice: 0,
+    maxPrice: 1000,
+    sortBy: 'newest',
+  });
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -36,9 +43,45 @@ export default function ProductsScreen() {
     fetchProducts();
   }, [apiService]);
 
-  const filteredProducts = products.filter(product =>
-    product.title.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredProducts = useMemo(() => {
+    let filtered = products.filter(product =>
+      product.title.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
+    // Apply price filter
+    filtered = filtered.filter(product => 
+      product.price >= filters.minPrice && product.price <= filters.maxPrice
+    );
+
+    // Apply rating filter
+    if (filters.rating && filters.rating > 0) {
+      filtered = filtered.filter(product => 
+        product.rating && product.rating.rate >= filters.rating!
+      );
+    }
+
+    // Apply sorting
+    switch (filters.sortBy) {
+      case 'price-asc':
+        filtered.sort((a, b) => a.price - b.price);
+        break;
+      case 'price-desc':
+        filtered.sort((a, b) => b.price - a.price);
+        break;
+      case 'rating':
+        filtered.sort((a, b) => (b.rating?.rate || 0) - (a.rating?.rate || 0));
+        break;
+      case 'name':
+        filtered.sort((a, b) => a.title.localeCompare(b.title));
+        break;
+      case 'newest':
+      default:
+        filtered.sort((a, b) => b.id - a.id);
+        break;
+    }
+
+    return filtered;
+  }, [products, searchQuery, filters]);
 
   const renderGridView = () => (
     <View style={styles.gridContainer}>
@@ -80,7 +123,10 @@ export default function ProductsScreen() {
           {/* Product details below image */}
           <View style={styles.productDetails}>
             <Text style={[styles.productName, { color: colors.text }]} numberOfLines={2}>{product.title}</Text>
-            <Text style={[styles.productPrice, { color: colors.primary }]}>{`₦${product.price.toFixed(2)}`}</Text>
+            <View style={styles.priceRow}>
+              <Text style={[styles.originalPrice, { color: colors.textSecondary }]}>{`₦${(product.price * 1.3).toFixed(2)}`}</Text>
+              <Text style={[styles.productPrice, { color: colors.primary }]}>{`₦${product.price.toFixed(2)}`}</Text>
+            </View>
           </View>
         </TouchableOpacity>
       ))}
@@ -107,6 +153,7 @@ export default function ProductsScreen() {
               <Text style={[styles.reviewsText, { color: colors.textSecondary }]}>({product.rating ? product.rating.count : 0})</Text>
             </View>
             <View style={styles.priceContainer}>
+              <Text style={[styles.originalPrice, { color: colors.textSecondary }]}>{`₦${(product.price * 1.3).toFixed(2)}`}</Text>
               <Text style={[styles.price, { color: colors.primary }]}>{`₦${product.price.toFixed(2)}`}</Text>
             </View>
           </View>
@@ -162,7 +209,7 @@ export default function ProductsScreen() {
           <Text style={[styles.title, { color: colors.text }]}>Products</Text>
         </View>
         <View style={styles.headerActions}>
-          <TouchableOpacity style={styles.filterButton}>
+          <TouchableOpacity style={styles.filterButton} onPress={() => setShowFilterModal(true)}>
             <Ionicons name="filter" size={20} color={colors.primary} />
           </TouchableOpacity>
           <View style={[styles.viewToggle, { backgroundColor: colors.surface }]}>
@@ -240,6 +287,15 @@ export default function ProductsScreen() {
           viewMode === 'grid' ? renderGridView() : renderListView()
         )}
       </ScrollView>
+
+      {/* Filter Modal */}
+      <FilterModal
+        visible={showFilterModal}
+        onClose={() => setShowFilterModal(false)}
+        onApply={(newFilters) => setFilters(newFilters)}
+        currentFilters={filters}
+        maxPriceLimit={1000}
+      />
     </View>
   );
 }
@@ -346,6 +402,15 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '500',
     marginBottom: 4,
+  },
+  priceRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  originalPrice: {
+    fontSize: 12,
+    textDecorationLine: 'line-through',
   },
   productPrice: {
     fontSize: 16,

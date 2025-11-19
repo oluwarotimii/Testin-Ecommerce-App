@@ -312,7 +312,10 @@ export default function HomeScreen() {
                 {/* Product details below image */}
                 <View style={styles.productDetails}>
                   <Text style={[styles.productName, { color: colors.text }]} numberOfLines={2}>{product.title}</Text>
-                  <Text style={[styles.productPrice, { color: colors.primary }]}>{`₦${product.price.toFixed(2)}`}</Text>
+                  <View style={styles.priceContainer}>
+                    <Text style={[styles.originalPrice, { color: colors.textSecondary }]}>{`₦${(product.price * 1.3).toFixed(2)}`}</Text>
+                    <Text style={[styles.productPrice, { color: colors.primary }]}>{`₦${product.price.toFixed(2)}`}</Text>
+                  </View>
                 </View>
               </TouchableOpacity>
             ))}
@@ -399,7 +402,10 @@ export default function HomeScreen() {
                 {/* Product details below image */}
                 <View style={styles.productDetails}>
                   <Text style={[styles.productName, { color: colors.text }]} numberOfLines={2}>{product.title}</Text>
-                  <Text style={[styles.productPrice, { color: colors.primary }]}>{`₦${product.price.toFixed(2)}`}</Text>
+                  <View style={styles.priceContainer}>
+                    <Text style={[styles.originalPrice, { color: colors.textSecondary }]}>{`₦${(product.price * 1.3).toFixed(2)}`}</Text>
+                    <Text style={[styles.productPrice, { color: colors.primary }]}>{`₦${product.price.toFixed(2)}`}</Text>
+                  </View>
                 </View>
               </TouchableOpacity>
             ))}
@@ -559,6 +565,15 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '500',
     marginBottom: 4,
+  },
+  priceContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  originalPrice: {
+    fontSize: 12,
+    textDecorationLine: 'line-through',
   },
   productPrice: {
     fontSize: 16,

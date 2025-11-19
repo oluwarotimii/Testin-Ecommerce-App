@@ -9,24 +9,51 @@ import { MaterialIcons, FontAwesome, Ionicons } from '@expo/vector-icons';
 const getCategoryIcon = (categoryName: string): string => {
   const name = categoryName.toLowerCase();
   
+  // Electronics & Tech
   if (name.includes('electron') || name.includes('tech')) return 'hardware-chip';
+  if (name.includes('phone') || name.includes('mobile')) return 'phone-portrait';
+  if (name.includes('laptop') || name.includes('computer')) return 'laptop';
+  if (name.includes('tablet')) return 'tablet-landscape';
+  if (name.includes('monitor') || name.includes('display')) return 'desktop';
+  
+  // Audio & Video
+  if (name.includes('audio') && name.includes('recorder')) return 'mic';
+  if (name.includes('headphone') || name.includes('audio')) return 'headset';
+  if (name.includes('camera') && name.includes('accessor')) return 'camera-outline';
+  if (name.includes('camera')) return 'camera';
+  if (name.includes('gimbal')) return 'videocam';
+  
+  // Cables
+  if (name.includes('hdmi')) return 'swap-horizontal';
+  if (name.includes('vga')) return 'git-compare';
+  
+  // Power & Storage
+  if (name.includes('power') && name.includes('surge')) return 'flash';
+  if (name.includes('ups')) return 'battery-charging';
+  if (name.includes('storage') && name.includes('device')) return 'server';
+  if (name.includes('storage')) return 'save';
+  
+  // Input Devices
+  if (name.includes('keyboard') || name.includes('mouse')) return 'keypad';
+  
+  // Wearables
+  if (name.includes('smartwatch')) return 'watch';
+  if (name.includes('watch') || name.includes('wearable')) return 'watch';
+  
+  // Fashion
   if (name.includes('jewelery') || name.includes('jewelry')) return 'diamond';
   if (name.includes('men') && name.includes('clothing')) return 'shirt';
   if (name.includes('women') && name.includes('clothing')) return 'woman';
-  if (name.includes('phone') || name.includes('mobile')) return 'phone-portrait';
-  if (name.includes('laptop') || name.includes('computer')) return 'laptop';
-  if (name.includes('headphone') || name.includes('audio')) return 'headset';
-  if (name.includes('gaming') || name.includes('game')) return 'game-controller';
-  if (name.includes('tablet')) return 'tablet-landscape';
-  if (name.includes('watch') || name.includes('wearable')) return 'watch';
-  if (name.includes('home')) return 'home';
-  if (name.includes('storage')) return 'save';
-  if (name.includes('monitor') || name.includes('display')) return 'desktop';
-  if (name.includes('camera')) return 'camera';
   if (name.includes('accessory') || name.includes('accessories')) return 'bag-handle';
+  
+  // Gaming
+  if (name.includes('gaming') || name.includes('game')) return 'game-controller';
+  if (name.includes('toy')) return 'game-controller';
+  
+  // Other
+  if (name.includes('home')) return 'home';
   if (name.includes('book')) return 'book';
   if (name.includes('sport')) return 'football';
-  if (name.includes('toy')) return 'game-controller';
   if (name.includes('beauty') || name.includes('cosmetic')) return 'sparkles';
   
   return 'grid'; // Default fallback icon

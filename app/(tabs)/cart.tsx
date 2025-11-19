@@ -230,11 +230,9 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#1D1D1F',
   },
   itemCount: {
     fontSize: 14,
-    color: '#8E8E93',
     marginTop: 4,
   },
   content: {
@@ -245,7 +243,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     paddingVertical: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#F2F2F7',
   },
   itemImage: {
     width: 80,
@@ -261,7 +258,6 @@ const styles = StyleSheet.create({
   itemName: {
     fontSize: 16,
     fontWeight: '500',
-    color: '#1D1D1F',
   },
   itemSpecs: {
     flexDirection: 'row',
@@ -269,13 +265,11 @@ const styles = StyleSheet.create({
   },
   specText: {
     fontSize: 14,
-    color: '#8E8E93',
     marginRight: 8,
   },
   itemPrice: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#007AFF',
   },
   itemActions: {
     alignItems: 'flex-end',
@@ -287,7 +281,6 @@ const styles = StyleSheet.create({
   quantityContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F2F2F7',
     borderRadius: 8,
     padding: 4,
   },
@@ -296,19 +289,16 @@ const styles = StyleSheet.create({
     height: 32,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#FFFFFF',
     borderRadius: 6,
   },
   quantity: {
     fontSize: 16,
     fontWeight: '500',
-    color: '#1D1D1F',
     marginHorizontal: 16,
     minWidth: 20,
     textAlign: 'center',
   },
   summary: {
-    backgroundColor: '#F2F2F7',
     padding: 20,
     paddingBottom: 40,
   },
@@ -323,21 +313,17 @@ const styles = StyleSheet.create({
   totalLabel: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#1D1D1F',
   },
   totalValue: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#1D1D1F',
   },
   checkoutButton: {
-    backgroundColor: '#007AFF',
     paddingVertical: 16,
     borderRadius: 12,
     alignItems: 'center',
   },
   checkoutButtonText: {
-    color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
   },
@@ -350,24 +336,20 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#1D1D1F',
     marginTop: 24,
     marginBottom: 8,
   },
   emptySubtitle: {
     fontSize: 16,
-    color: '#8E8E93',
     textAlign: 'center',
     marginBottom: 32,
   },
   shopButton: {
-    backgroundColor: '#007AFF',
     paddingHorizontal: 32,
     paddingVertical: 16,
     borderRadius: 12,
   },
   shopButtonText: {
-    color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
   },

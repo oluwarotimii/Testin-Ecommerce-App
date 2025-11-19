@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Alert } from 'react-native';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Alert, Image } from 'react-native';
 import { useState } from 'react';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
@@ -38,6 +38,9 @@ export default function LoginScreen() {
       </TouchableOpacity>
 
       <View style={styles.header}>
+        <View style={styles.iconContainer}>
+          <Image source={require('@/assets/images/icon.png')} style={styles.appIcon} />
+        </View>
         <Text style={[styles.title, { color: colors.text }]}>Welcome Back</Text>
         <Text style={[styles.subtitle, { color: colors.textSecondary }]}>Sign in to your account</Text>
       </View>
@@ -130,6 +133,15 @@ const styles = StyleSheet.create({
     fontSize: 32,
     fontWeight: 'bold',
     marginBottom: 8,
+  },
+  iconContainer: {
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  appIcon: {
+    width: 80,
+    height: 80,
+    borderRadius: 20,
   },
   subtitle: {
     fontSize: 16,
