@@ -264,6 +264,23 @@ export default function HomeScreen() {
                 onPress={() => router.push(`/product/${product.id}`)}
               >
                 <SafeImage source={{ uri: product.image }} style={styles.productImage} />
+                {/* Wishlist button - top right */}
+                <View style={styles.wishlistOverlay}>
+                  <TouchableOpacity
+                    style={[styles.wishlistButton, { backgroundColor: colors.surface }]}
+                    onPress={async (e) => {
+                      e.stopPropagation();
+                      try {
+                        await apiService.addToWishlist(product.id);
+                        console.log('Added to wishlist:', product.id);
+                      } catch (error) {
+                        console.error('Wishlist error:', error);
+                      }
+                    }}
+                  >
+                    <Ionicons name="heart-outline" size={16} color={colors.text} />
+                  </TouchableOpacity>
+                </View>
                 {/* Actions overlay on image */}
                 <View style={styles.productActionsOverlay}>
                   <TouchableOpacity
@@ -304,6 +321,88 @@ export default function HomeScreen() {
                 <ActivityIndicator size="small" color={colors.primary} />
               </View>
             )}
+          </View>
+        )}
+      </View>
+
+      {/* Trending Items */}
+      <View style={styles.section}>
+        <View style={styles.sectionHeader}>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>Trending Items</Text>
+          <TouchableOpacity onPress={() => router.push('/products')}>
+            <Text style={[styles.seeAll, { color: colors.primary }]}>See All</Text>
+          </TouchableOpacity>
+        </View>
+        {loadingProducts ? (
+          <View style={styles.productsGrid}>
+            <SkeletonProductItem viewMode="grid" />
+            <SkeletonProductItem viewMode="grid" />
+            <SkeletonProductItem viewMode="grid" />
+            <SkeletonProductItem viewMode="grid" />
+          </View>
+        ) : errorProducts ? (
+          <Text style={[styles.errorText, { color: colors.error }]}>Error loading products: {errorProducts}</Text>
+        ) : products.length === 0 ? (
+          <Text style={[styles.noProductsText, { color: colors.textSecondary }]}>No products found.</Text>
+        ) : (
+          <View style={styles.productsGrid}>
+            {products.map((product) => (
+              <TouchableOpacity
+                key={product.id}
+                style={styles.productCard}
+                onPress={() => router.push(`/product/${product.id}`)}
+              >
+                <SafeImage source={{ uri: product.image }} style={styles.productImage} />
+                {/* Wishlist button - top right */}
+                <View style={styles.wishlistOverlay}>
+                  <TouchableOpacity
+                    style={[styles.wishlistButton, { backgroundColor: colors.surface }]}
+                    onPress={async (e) => {
+                      e.stopPropagation();
+                      try {
+                        await apiService.addToWishlist(product.id);
+                        console.log('Added to wishlist:', product.id);
+                      } catch (error) {
+                        console.error('Wishlist error:', error);
+                      }
+                    }}
+                  >
+                    <Ionicons name="heart-outline" size={16} color={colors.text} />
+                  </TouchableOpacity>
+                </View>
+                {/* Actions overlay on image */}
+                <View style={styles.productActionsOverlay}>
+                  <TouchableOpacity
+                    style={[styles.addToCartButton, { backgroundColor: colors.primary }]}
+                    onPress={async (e) => {
+                      e.stopPropagation();
+                      try {
+                        await apiService.addToCart(product.id, 1);
+
+                        try {
+                          const cartResponse = await apiService.getCartContents();
+                          if (cartResponse && cartResponse.products) {
+                            const newCartCount = cartResponse.products.reduce((total: any, item: any) => total + item.quantity, 0);
+                            setCartCount(newCartCount);
+                          }
+                        } catch (countError) {
+                          console.error("Error updating cart count:", countError);
+                        }
+                      } catch (error) {
+                        console.error('Add to cart error:', error);
+                      }
+                    }}
+                  >
+                    <Ionicons name="cart" size={18} color={colors.white} />
+                  </TouchableOpacity>
+                </View>
+                {/* Product details below image */}
+                <View style={styles.productDetails}>
+                  <Text style={[styles.productName, { color: colors.text }]} numberOfLines={2}>{product.title}</Text>
+                  <Text style={[styles.productPrice, { color: colors.primary }]}>{`₦${product.price.toFixed(2)}`}</Text>
+                </View>
+              </TouchableOpacity>
+            ))}
           </View>
         )}
       </View>
@@ -427,6 +526,19 @@ const styles = StyleSheet.create({
     height: 120, // Fixed height for image to prevent width stretching
     backgroundColor: '#E5E5EA',
   },
+  wishlistOverlay: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    zIndex: 2,
+  },
+  wishlistButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   productActionsOverlay: {
     position: 'absolute',
     bottom: 8,
@@ -497,5 +609,15 @@ const styles = StyleSheet.create({
   },
   skeletonCategoryItem: {
     marginHorizontal: 2,
+  },
+  errorText: {
+    textAlign: 'center',
+    marginTop: 20,
+    fontSize: 16,
+  },
+  noProductsText: {
+    textAlign: 'center',
+    marginTop: 20,
+    fontSize: 16,
   },
 });

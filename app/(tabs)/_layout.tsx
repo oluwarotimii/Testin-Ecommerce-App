@@ -46,9 +46,9 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="devtools"
+        name="Catgories"
         options={{
-          title: 'Dev Tools',
+          title: 'Catgories',
         }}
       />
     </Tabs>

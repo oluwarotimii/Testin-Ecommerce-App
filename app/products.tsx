@@ -5,11 +5,14 @@ import { useAuth } from '@/context/AuthContext';
 import { useCart } from '@/context/CartContext';
 import { MaterialIcons, FontAwesome, Ionicons } from '@expo/vector-icons';
 import SkeletonProductItem from '@/components/SkeletonProductItem';
+import { useThemeColors } from '@/hooks/useColorScheme';
+import SafeImage from '@/components/SafeImage';
 
 export default function ProductsScreen() {
   const router = useRouter();
   const { apiService } = useAuth();
   const { setCartCount } = useCart();
+  const colors = useThemeColors();
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [searchQuery, setSearchQuery] = useState('');
   const [products, setProducts] = useState<any[]>([]);
@@ -40,63 +43,46 @@ export default function ProductsScreen() {
   const renderGridView = () => (
     <View style={styles.gridContainer}>
       {filteredProducts.map((product) => (
-        <View style={styles.gridItem}>
-          <TouchableOpacity
-            style={styles.productCard}
-            onPress={() => router.push(`/product/${product.id}`)}
-          >
-            <Image source={{ uri: product.image }} style={styles.productImage} />
-            {/* Actions overlay */}
-            <View style={styles.productActionsOverlay}>
-              <View style={styles.productActions}>
-                <TouchableOpacity
-                  style={[styles.addToCartButton, { backgroundColor: '#007AFF' }]}
-                  onPress={async (e) => {
-                    e.stopPropagation(); // Prevent triggering the product detail navigation
-                    try {
-                      // Add to cart logic
-                      await apiService.addToCart(product.id, 1);
+        <TouchableOpacity
+          key={product.id}
+          style={styles.productCard}
+          onPress={() => router.push(`/product/${product.id}`)}
+        >
+          <SafeImage source={{ uri: product.image }} style={styles.productImage} />
+          {/* Actions overlay on image */}
+          <View style={styles.productActionsOverlay}>
+            <TouchableOpacity
+              style={[styles.addToCartButton, { backgroundColor: colors.primary }]}
+              onPress={async (e) => {
+                e.stopPropagation(); // Prevent triggering the product detail navigation
+                try {
+                  // Add to cart logic
+                  await apiService.addToCart(product.id, 1);
 
-                      // Update cart count by fetching the current cart contents
-                      try {
-                        const cartResponse = await apiService.getCartContents();
-                        if (cartResponse && cartResponse.products) {
-                          const newCartCount = cartResponse.products.reduce((total: any, item: any) => total + item.quantity, 0);
-                          setCartCount(newCartCount);
-                        }
-                      } catch (countError) {
-                        console.error("Error updating cart count:", countError);
-                      }
-                    } catch (error) {
-                      console.error('Add to cart error:', error);
+                  // Update cart count by fetching the current cart contents
+                  try {
+                    const cartResponse = await apiService.getCartContents();
+                    if (cartResponse && cartResponse.products) {
+                      const newCartCount = cartResponse.products.reduce((total: any, item: any) => total + item.quantity, 0);
+                      setCartCount(newCartCount);
                     }
-                  }}
-                >
-                  <Ionicons name="cart" size={18} color="#FFFFFF" />
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.wishlistButton}
-                  onPress={async (e) => {
-                    e.stopPropagation(); // Prevent triggering the product detail navigation
-                    try {
-                      const result = await apiService.addToWishlist(product.id);
-                      console.log('Added to wishlist:', result);
-                    } catch (error) {
-                      console.error('Wishlist error:', error);
-                    }
-                  }}
-                >
-                  <Ionicons name="heart-outline" size={16} color="#1D1D1F" />
-                </TouchableOpacity>
-              </View>
-            </View>
-          </TouchableOpacity>
+                  } catch (countError) {
+                    console.error("Error updating cart count:", countError);
+                  }
+                } catch (error) {
+                  console.error('Add to cart error:', error);
+                }
+              }}
+            >
+              <Ionicons name="cart" size={18} color={colors.white} />
+            </TouchableOpacity>
+          </View>
           {/* Product details below image */}
           <View style={styles.productDetails}>
-            <Text style={[styles.productName, { color: '#1D1D1F' }]} numberOfLines={2}>{product.title}</Text>
-            <Text style={[styles.productPrice, { color: '#007AFF' }]}>{`₦${product.price.toFixed(2)}`}</Text>
+            <Text style={[styles.productName, { color: colors.text }]} numberOfLines={2}>{product.title}</Text>
+            <Text style={[styles.productPrice, { color: colors.primary }]}>{`₦${product.price.toFixed(2)}`}</Text>
           </View>
-        </View>
+        </TouchableOpacity>
       ))}
     </View>
   );
@@ -106,26 +92,50 @@ export default function ProductsScreen() {
       {filteredProducts.map((product) => (
         <TouchableOpacity 
           key={product.id} 
-          style={styles.listItem}
+          style={[styles.listItem, { backgroundColor: colors.surface }]}
           onPress={() => router.push(`/product/${product.id}`)}
         >
           <View style={styles.listImageContainer}>
-            <Image source={{ uri: product.image }} style={styles.listImage} />
+            <SafeImage source={{ uri: product.image }} style={styles.listImage} />
           </View>
           <View style={styles.listProductInfo}>
-            <Text style={styles.listProductName} numberOfLines={2}>{product.title}</Text>
-            <Text style={styles.categoryText} numberOfLines={1}>{product.category?.replace('-', ' ')}</Text>
+            <Text style={[styles.listProductName, { color: colors.text }]} numberOfLines={2}>{product.title}</Text>
+            <Text style={[styles.categoryText, { color: colors.textSecondary }]} numberOfLines={1}>{product.category?.replace('-', ' ')}</Text>
             <View style={styles.ratingContainer}>
               <Ionicons name="star" size={12} color="#FFD700" />
-              <Text style={styles.ratingText}>{product.rating ? product.rating.rate : 0}</Text>
-              <Text style={styles.reviewsText}>({product.rating ? product.rating.count : 0})</Text>
+              <Text style={[styles.ratingText, { color: colors.text }]}>{product.rating ? product.rating.rate : 0}</Text>
+              <Text style={[styles.reviewsText, { color: colors.textSecondary }]}>({product.rating ? product.rating.count : 0})</Text>
             </View>
             <View style={styles.priceContainer}>
-              <Text style={styles.price}>{`₦${product.price.toFixed(2)}`}</Text>
+              <Text style={[styles.price, { color: colors.primary }]}>{`₦${product.price.toFixed(2)}`}</Text>
             </View>
           </View>
           <View style={styles.listProductActions}>
-            <TouchableOpacity style={styles.listWishlistButton} onPress={async () => {
+            <TouchableOpacity 
+              style={[styles.listCartButton, { backgroundColor: colors.primary }]} 
+              onPress={async (e) => {
+                e.stopPropagation();
+                try {
+                  await apiService.addToCart(product.id, 1);
+                  
+                  try {
+                    const cartResponse = await apiService.getCartContents();
+                    if (cartResponse && cartResponse.products) {
+                      const newCartCount = cartResponse.products.reduce((total: any, item: any) => total + item.quantity, 0);
+                      setCartCount(newCartCount);
+                    }
+                  } catch (countError) {
+                    console.error("Error updating cart count:", countError);
+                  }
+                } catch (error) {
+                  console.error('Add to cart error:', error);
+                }
+              }}
+            >
+              <Ionicons name="cart" size={20} color={colors.white} />
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.listWishlistButton} onPress={async (e) => {
+              e.stopPropagation();
               try {
                 const result = await apiService.addToWishlist(product.id);
                 console.log('Added to wishlist:', result);
@@ -133,7 +143,7 @@ export default function ProductsScreen() {
                 console.error('Wishlist error:', error);
               }
             }}>
-              <Ionicons name="heart-outline" size={20} color="#8E8E93" />
+              <Ionicons name="heart-outline" size={20} color={colors.textSecondary} />
             </TouchableOpacity>
           </View>
         </TouchableOpacity>
@@ -142,43 +152,43 @@ export default function ProductsScreen() {
   );
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { backgroundColor: colors.background }]}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color="#1D1D1F" />
+          <Ionicons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
         <View style={styles.headerCenter}>
-          <Text style={styles.title}>Products</Text>
+          <Text style={[styles.title, { color: colors.text }]}>Products</Text>
         </View>
         <View style={styles.headerActions}>
           <TouchableOpacity style={styles.filterButton}>
-            <Ionicons name="filter" size={20} color="#007AFF" />
+            <Ionicons name="filter" size={20} color={colors.primary} />
           </TouchableOpacity>
-          <View style={styles.viewToggle}>
+          <View style={[styles.viewToggle, { backgroundColor: colors.surface }]}>
             <TouchableOpacity
-              style={[styles.toggleButton, viewMode === 'grid' && styles.activeToggle]}
+              style={[styles.toggleButton, viewMode === 'grid' && { backgroundColor: colors.primary }]}
               onPress={() => setViewMode('grid')}
             >
-              <Ionicons name="grid" size={16} color={viewMode === 'grid' ? '#FFFFFF' : '#8E8E93'} />
+              <Ionicons name="grid" size={16} color={viewMode === 'grid' ? colors.white : colors.textSecondary} />
             </TouchableOpacity>
             <TouchableOpacity
-              style={[styles.toggleButton, viewMode === 'list' && styles.activeToggle]}
+              style={[styles.toggleButton, viewMode === 'list' && { backgroundColor: colors.primary }]}
               onPress={() => setViewMode('list')}
             >
-              <Ionicons name="list" size={16} color={viewMode === 'list' ? '#FFFFFF' : '#8E8E93'} />
+              <Ionicons name="list" size={16} color={viewMode === 'list' ? colors.white : colors.textSecondary} />
             </TouchableOpacity>
           </View>
         </View>
       </View>
 
       {/* Search Bar */}
-      <View style={styles.searchContainer}>
-        <Ionicons name="search" size={20} color="#8E8E93" />
+      <View style={[styles.searchContainer, { backgroundColor: colors.surface }]}>
+        <Ionicons name="search" size={20} color={colors.textSecondary} />
         <TextInput
-          style={styles.searchInput}
+          style={[styles.searchInput, { color: colors.text }]}
           placeholder="Search products..."
-          placeholderTextColor="#8E8E93"
+          placeholderTextColor={colors.textSecondary}
           value={searchQuery}
           onChangeText={setSearchQuery}
         />
@@ -187,11 +197,11 @@ export default function ProductsScreen() {
       {/* Results Count */}
       <View style={styles.resultsContainer}>
         {loading ? (
-          <ActivityIndicator size="small" color="#007AFF" />
+          <ActivityIndicator size="small" color={colors.primary} />
         ) : error ? (
-          <Text style={styles.errorText}>Error: {error}</Text>
+          <Text style={[styles.errorText, { color: colors.error }]}>Error: {error}</Text>
         ) : (
-          <Text style={styles.resultsText}>{filteredProducts.length} products found</Text>
+          <Text style={[styles.resultsText, { color: colors.textSecondary }]}>{filteredProducts.length} products found</Text>
         )}
       </View>
 
@@ -223,9 +233,9 @@ export default function ProductsScreen() {
             )}
           </View>
         ) : error ? (
-          <Text style={styles.errorText}>Error loading products: {error}</Text>
+          <Text style={[styles.errorText, { color: colors.error }]}>Error loading products: {error}</Text>
         ) : filteredProducts.length === 0 ? (
-          <Text style={styles.noProductsText}>No products found.</Text>
+          <Text style={[styles.noProductsText, { color: colors.textSecondary }]}>No products found.</Text>
         ) : (
           viewMode === 'grid' ? renderGridView() : renderListView()
         )}
@@ -237,7 +247,6 @@ export default function ProductsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
   },
   header: {
     flexDirection: 'row',
@@ -257,7 +266,6 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#1D1D1F',
   },
   headerActions: {
     flexDirection: 'row',
@@ -269,7 +277,6 @@ const styles = StyleSheet.create({
   },
   viewToggle: {
     flexDirection: 'row',
-    backgroundColor: '#F2F2F7',
     borderRadius: 8,
     padding: 2,
   },
@@ -277,13 +284,9 @@ const styles = StyleSheet.create({
     padding: 8,
     borderRadius: 6,
   },
-  activeToggle: {
-    backgroundColor: '#007AFF',
-  },
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F2F2F7',
     marginHorizontal: 16,
     paddingHorizontal: 16,
     paddingVertical: 12,
@@ -294,7 +297,6 @@ const styles = StyleSheet.create({
     flex: 1,
     marginLeft: 12,
     fontSize: 16,
-    color: '#1D1D1F',
   },
   resultsContainer: {
     paddingHorizontal: 16,
@@ -302,13 +304,12 @@ const styles = StyleSheet.create({
   },
   resultsText: {
     fontSize: 14,
-    color: '#8E8E93',
   },
   content: {
     flex: 1,
   },
   scrollContent: {
-    paddingBottom: 120, // Increased to account for elevated tab bar
+    paddingBottom: 120,
   },
   gridContainer: {
     flexDirection: 'row',
@@ -316,94 +317,53 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     gap: 12,
   },
-  gridItem: {
+  productCard: {
     width: '47%',
-    backgroundColor: '#F2F2F7',
     borderRadius: 12,
     overflow: 'hidden',
-  },
-  imageContainer: {
     position: 'relative',
+    height: 200,
   },
   productImage: {
     width: '100%',
-    height: 140,
+    height: 120,
     backgroundColor: '#E5E5EA',
   },
-  discountBadge: {
+  productActionsOverlay: {
     position: 'absolute',
-    top: 8,
-    left: 8,
-    backgroundColor: '#FF3B30',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 4,
-  },
-  discountText: {
-    color: '#FFFFFF',
-    fontSize: 10,
-    fontWeight: 'bold',
-  },
-  wishlistButton: {
-    position: 'absolute',
-    top: 8,
+    bottom: 8,
     right: 8,
-    backgroundColor: '#FFFFFF',
-    padding: 6,
-    borderRadius: 12,
+    zIndex: 1,
   },
-  productInfo: {
-    padding: 12,
+  productDetails: {
+    padding: 8,
+    paddingTop: 4,
+    paddingRight: 48,
+    position: 'relative',
+    top: 0,
   },
   productName: {
     fontSize: 14,
     fontWeight: '500',
-    color: '#1D1D1F',
     marginBottom: 4,
   },
-  ratingContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 6,
-  },
-  ratingText: {
-    fontSize: 12,
-    color: '#1D1D1F',
-    marginLeft: 4,
-    fontWeight: '500',
-  },
-  reviewsText: {
-    fontSize: 12,
-    color: '#8E8E93',
-    marginLeft: 2,
-  },
-  priceContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  price: {
+  productPrice: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#007AFF',
   },
-  originalPrice: {
-    fontSize: 12,
-    color: '#8E8E93',
-    textDecorationLine: 'line-through',
-  },
-  outOfStock: {
-    fontSize: 12,
-    color: '#FF3B30',
-    fontWeight: '500',
-    marginTop: 4,
+  addToCartButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: 8,
   },
   listContainer: {
     paddingHorizontal: 20,
   },
   listItem: {
     flexDirection: 'row',
-    backgroundColor: '#F2F2F7',
     borderRadius: 12,
     marginBottom: 12,
     overflow: 'hidden',
@@ -416,15 +376,6 @@ const styles = StyleSheet.create({
     height: 100,
     backgroundColor: '#E5E5EA',
   },
-  listDiscountBadge: {
-    position: 'absolute',
-    top: 6,
-    left: 6,
-    backgroundColor: '#FF3B30',
-    paddingHorizontal: 4,
-    paddingVertical: 2,
-    borderRadius: 4,
-  },
   listProductInfo: {
     flex: 1,
     padding: 12,
@@ -432,98 +383,61 @@ const styles = StyleSheet.create({
   listProductName: {
     fontSize: 16,
     fontWeight: '500',
-    color: '#1D1D1F',
     marginBottom: 4,
   },
   categoryText: {
     fontSize: 12,
-    color: '#8E8E93',
     marginBottom: 6,
   },
-  listProductActions: {
+  ratingContainer: {
     flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 6,
+  },
+  ratingText: {
+    fontSize: 12,
+    marginLeft: 4,
+    fontWeight: '500',
+  },
+  reviewsText: {
+    fontSize: 12,
+    marginLeft: 2,
+  },
+  priceContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  price: {
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  listProductActions: {
+    flexDirection: 'column',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
+  },
+  listCartButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   listWishlistButton: {
     padding: 12,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  loadingIndicator: {
-    marginTop: 50,
-  },
   errorText: {
     textAlign: 'center',
-    color: 'red',
     marginTop: 20,
     fontSize: 16,
   },
   noProductsText: {
     textAlign: 'center',
-    color: '#8E8E93',
     marginTop: 20,
     fontSize: 16,
-  },
-  gridItem: {
-    width: '47%',
-    backgroundColor: '#F2F2F7',
-    borderRadius: 12,
-    overflow: 'hidden',
-    height: 200, // Increased total height to accommodate image + text
-  },
-  productCard: {
-    width: '100%',
-    height: 140, // Height for image area
-    borderRadius: 12,
-    overflow: 'hidden',
-    position: 'relative',
-  },
-  productImage: {
-    width: '100%',
-    height: 100, // Fixed height for image
-    backgroundColor: '#E5E5EA',
-  },
-  productActionsOverlay: {
-    position: 'absolute',
-    top: 8,
-    right: 8,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'flex-end',
-    zIndex: 1,
-  },
-  productDetails: {
-    padding: 8,
-    paddingTop: 4,
-  },
-  productTextContainer: {
-    flex: 1,
-  },
-  productActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginLeft: 8,
-  },
-  addToCartButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 8,
-  },
-  wishlistButton: {
-    padding: 4,
-  },
-  productName: {
-    fontSize: 14,
-    fontWeight: '500',
-    marginBottom: 2,
-  },
-  productPrice: {
-    fontSize: 16,
-    fontWeight: 'bold',
   },
 });

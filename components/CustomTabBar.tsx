@@ -38,7 +38,7 @@ const CustomTabBar: React.FC<CustomTabBarProps> = ({ state, descriptors, navigat
     wishlist: 'heart',
     cart: 'cart',
     account: 'person',
-    devtools: 'construct'
+    categories: 'menu'
   };
 
   const getIconName = (routeName: string, focused: boolean) => {

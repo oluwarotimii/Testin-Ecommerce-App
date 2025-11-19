@@ -4,6 +4,7 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
 import { useCart } from '@/context/CartContext';
 import { MaterialIcons, FontAwesome, Ionicons } from '@expo/vector-icons';
+import { useThemeColors } from '@/hooks/useColorScheme';
 
 const { width } = Dimensions.get('window');
 
@@ -12,6 +13,7 @@ export default function ProductDetailScreen() {
   const { id } = useLocalSearchParams();
   const { apiService } = useAuth();
   const { setCartCount } = useCart();
+  const colors = useThemeColors();
   const [quantity, setQuantity] = useState(1);
   const [selectedImage, setSelectedImage] = useState(0);
   const [isInWishlist, setIsInWishlist] = useState(false);
@@ -96,8 +98,8 @@ export default function ProductDetailScreen() {
 
   if (!product) {
     return (
-      <View style={styles.loadingContainer}>
-        <Text>Loading product details...</Text>
+      <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
+        <Text style={{ color: colors.text }}>Loading product details...</Text>
       </View>
     );
   }
@@ -161,18 +163,18 @@ export default function ProductDetailScreen() {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { backgroundColor: colors.surface }]}>
         <TouchableOpacity onPress={() => router.back()} style={styles.headerButton}>
-          <Ionicons name="chevron-back" size={24} color="#333" />
+          <Ionicons name="chevron-back" size={24} color={colors.text} />
         </TouchableOpacity>
         <View style={styles.headerActions}>
           <TouchableOpacity style={styles.headerButton} onPress={toggleWishlist}>
             <Ionicons
               name={isInWishlist ? "heart" : "heart-outline"}
               size={24}
-              color={isInWishlist ? "#FF3B30" : "#333"}
+              color={isInWishlist ? colors.error : colors.text}
             />
           </TouchableOpacity>
         </View>
@@ -184,59 +186,59 @@ export default function ProductDetailScreen() {
         contentContainerStyle={styles.scrollContent}
       >
         {/* Product Image */}
-        <View style={styles.imageContainer}>
+        <View style={[styles.imageContainer, { backgroundColor: colors.surface }]}>
           <TouchableOpacity
             onPress={() => setShowFullscreenImage(true)}
             activeOpacity={0.9}
           >
-            <Image source={{ uri: product.image }} style={styles.productImage} />
+            <Image source={{ uri: product.image }} style={[styles.productImage, { backgroundColor: colors.background }]} />
           </TouchableOpacity>
         </View>
 
         {/* Product Info */}
-        <View style={styles.productInfoContainer}>
+        <View style={[styles.productInfoContainer, { backgroundColor: colors.surface }]}>
           {/* Category and Title */}
           <View style={styles.titleSection}>
-            <Text style={styles.category}>{product.category}</Text>
-            <Text style={styles.productName}>{product.title}</Text>
+            <Text style={[styles.category, { color: colors.textSecondary }]}>{product.category}</Text>
+            <Text style={[styles.productName, { color: colors.text }]}>{product.title}</Text>
           </View>
 
           {/* Rating */}
           <View style={styles.ratingSection}>
             <View style={styles.rating}>
               <Ionicons name="star" size={16} color="#FFD700" />
-              <Text style={styles.ratingText}>{product.rating ? product.rating.rate : 0}</Text>
-              <Text style={styles.reviewsText}>({product.rating ? product.rating.count : 0} reviews)</Text>
+              <Text style={[styles.ratingText, { color: colors.text }]}>{product.rating ? product.rating.rate : 0}</Text>
+              <Text style={[styles.reviewsText, { color: colors.textSecondary }]}>({product.rating ? product.rating.count : 0} reviews)</Text>
             </View>
           </View>
 
           {/* Price */}
           <View style={styles.priceSection}>
-            <Text style={styles.currentPrice}>₦{product.price.toFixed(2)}</Text>
+            <Text style={[styles.currentPrice, { color: colors.primary }]}>₦{product.price.toFixed(2)}</Text>
           </View>
 
           {/* Description */}
           <View style={styles.descriptionSection}>
-            <Text style={styles.sectionTitle}>Description</Text>
-            <Text style={styles.description}>{product.description}</Text>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>Description</Text>
+            <Text style={[styles.description, { color: colors.textSecondary }]}>{product.description}</Text>
           </View>
 
           {/* Quantity Selector */}
           <View style={styles.quantitySection}>
-            <Text style={styles.sectionTitle}>Quantity</Text>
-            <View style={styles.quantityContainer}>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>Quantity</Text>
+            <View style={[styles.quantityContainer, { backgroundColor: colors.background }]}>
               <TouchableOpacity
                 style={styles.quantityButton}
                 onPress={() => updateQuantity(-1)}
               >
-                <Ionicons name="remove" size={16} color="#007AFF" />
+                <Ionicons name="remove" size={16} color={colors.primary} />
               </TouchableOpacity>
-              <Text style={styles.quantity}>{quantity}</Text>
+              <Text style={[styles.quantity, { color: colors.text }]}>{quantity}</Text>
               <TouchableOpacity
                 style={styles.quantityButton}
                 onPress={() => updateQuantity(1)}
               >
-                <Ionicons name="add" size={16} color="#007AFF" />
+                <Ionicons name="add" size={16} color={colors.primary} />
               </TouchableOpacity>
             </View>
           </View>
@@ -244,11 +246,11 @@ export default function ProductDetailScreen() {
 
         {/* Similar Products */}
         {similarProducts.length > 0 && (
-          <View style={styles.similarProductsSection}>
+          <View style={[styles.similarProductsSection, { backgroundColor: colors.surface }]}>
             <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Similar Items</Text>
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>Similar Items</Text>
               <TouchableOpacity onPress={() => router.push('/category/' + product.category)}>
-                <Text style={styles.viewAllText}>View All</Text>
+                <Text style={[styles.viewAllText, { color: colors.primary }]}>View All</Text>
               </TouchableOpacity>
             </View>
             <ScrollView
@@ -259,12 +261,12 @@ export default function ProductDetailScreen() {
               {similarProducts.map((item) => (
                 <TouchableOpacity
                   key={item.id}
-                  style={styles.similarProductItem}
+                  style={[styles.similarProductItem, { backgroundColor: colors.background }]}
                   onPress={() => router.push(`/product/${item.id}`)}
                 >
-                  <Image source={{ uri: item.image }} style={styles.similarProductImage} />
-                  <Text style={styles.similarProductName} numberOfLines={2}>{item.title}</Text>
-                  <Text style={styles.similarProductPrice}>₦{item.price.toFixed(2)}</Text>
+                  <Image source={{ uri: item.image }} style={[styles.similarProductImage, { backgroundColor: colors.surface }]} />
+                  <Text style={[styles.similarProductName, { color: colors.text }]} numberOfLines={2}>{item.title}</Text>
+                  <Text style={[styles.similarProductPrice, { color: colors.primary }]}>₦{item.price.toFixed(2)}</Text>
                 </TouchableOpacity>
               ))}
             </ScrollView>
@@ -273,19 +275,19 @@ export default function ProductDetailScreen() {
       </ScrollView>
 
       {/* Bottom Action Bar */}
-      <View style={styles.actionBar}>
+      <View style={[styles.actionBar, { backgroundColor: colors.surface, borderTopColor: colors.border }]}>
         <TouchableOpacity
-          style={styles.actionButton}
+          style={[styles.actionButton, { backgroundColor: colors.warning }]}
           onPress={buyNow}
         >
-          <Text style={styles.actionButtonText}>Buy Now</Text>
+          <Text style={[styles.actionButtonText, { color: colors.white }]}>Buy Now</Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={styles.cartButton}
+          style={[styles.cartButton, { backgroundColor: colors.primary }]}
           onPress={addToCart}
         >
-          <Ionicons name="cart" size={20} color="#FFFFFF" />
-          <Text style={styles.actionButtonText}>Add to Cart</Text>
+          <Ionicons name="cart" size={20} color={colors.white} />
+          <Text style={[styles.actionButtonText, { color: colors.white }]}>Add to Cart</Text>
         </TouchableOpacity>
       </View>
 
@@ -318,7 +320,6 @@ export default function ProductDetailScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8F9FA',
   },
   header: {
     flexDirection: 'row',
@@ -327,7 +328,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 60,
     paddingBottom: 10,
-    backgroundColor: '#FFFFFF',
     zIndex: 10,
   },
   headerButton: {
@@ -344,7 +344,6 @@ const styles = StyleSheet.create({
     paddingBottom: 120,
   },
   imageContainer: {
-    backgroundColor: '#FFFFFF',
     padding: 20,
     alignItems: 'center',
   },
@@ -354,11 +353,9 @@ const styles = StyleSheet.create({
     maxWidth: 350,
     maxHeight: 350,
     resizeMode: 'contain',
-    backgroundColor: '#F8F9FA',
     borderRadius: 12,
   },
   productInfoContainer: {
-    backgroundColor: '#FFFFFF',
     marginTop: 10,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
@@ -369,14 +366,12 @@ const styles = StyleSheet.create({
   },
   category: {
     fontSize: 14,
-    color: '#8E8E93',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
   productName: {
     fontSize: 24,
     fontWeight: '700',
-    color: '#1D1D1F',
     marginTop: 5,
   },
   ratingSection: {
@@ -391,12 +386,10 @@ const styles = StyleSheet.create({
   ratingText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#1D1D1F',
     marginLeft: 5,
   },
   reviewsText: {
     fontSize: 14,
-    color: '#8E8E93',
     marginLeft: 8,
   },
   priceSection: {
@@ -406,7 +399,6 @@ const styles = StyleSheet.create({
   currentPrice: {
     fontSize: 28,
     fontWeight: '800',
-    color: '#007AFF',
   },
   descriptionSection: {
     marginBottom: 25,
@@ -414,12 +406,10 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#1D1D1F',
     marginBottom: 10,
   },
   description: {
     fontSize: 16,
-    color: '#4A4A4A',
     lineHeight: 24,
   },
   quantitySection: {
@@ -428,7 +418,6 @@ const styles = StyleSheet.create({
   quantityContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F8F9FA',
     borderRadius: 12,
     padding: 5,
     alignSelf: 'flex-start',
@@ -443,13 +432,11 @@ const styles = StyleSheet.create({
   quantity: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#1D1D1F',
     marginHorizontal: 20,
     minWidth: 30,
     textAlign: 'center',
   },
   similarProductsSection: {
-    backgroundColor: '#FFFFFF',
     paddingTop: 20,
     paddingBottom: 120,
     marginTop: 10,
@@ -462,7 +449,6 @@ const styles = StyleSheet.create({
     marginBottom: 15,
   },
   viewAllText: {
-    color: '#007AFF',
     fontSize: 16,
     fontWeight: '600',
   },
@@ -472,7 +458,6 @@ const styles = StyleSheet.create({
   },
   similarProductItem: {
     width: 140,
-    backgroundColor: '#F8F9FA',
     borderRadius: 12,
     padding: 12,
     marginRight: 10,
@@ -481,38 +466,32 @@ const styles = StyleSheet.create({
     width: '100%',
     height: 120,
     borderRadius: 8,
-    backgroundColor: '#E9ECEF',
     marginBottom: 10,
     resizeMode: 'contain',
   },
   similarProductName: {
     fontSize: 14,
     fontWeight: '500',
-    color: '#1D1D1F',
     marginBottom: 5,
     height: 36,
   },
   similarProductPrice: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#007AFF',
   },
   actionBar: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: '#FFFFFF',
     flexDirection: 'row',
     paddingHorizontal: 20,
     paddingVertical: 15,
     borderTopWidth: 1,
-    borderTopColor: '#E9ECEF',
     gap: 15,
   },
   actionButton: {
     flex: 1,
-    backgroundColor: '#FF9500',
     paddingVertical: 16,
     borderRadius: 12,
     alignItems: 'center',
@@ -520,7 +499,6 @@ const styles = StyleSheet.create({
   },
   cartButton: {
     flex: 1,
-    backgroundColor: '#007AFF',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -529,7 +507,6 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   actionButtonText: {
-    color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
   },
@@ -537,7 +514,6 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#F8F9FA',
   },
   fullscreenOverlay: {
     position: 'absolute',

@@ -5,6 +5,33 @@ import { useAuth } from '@/context/AuthContext';
 import { useThemeColors } from '@/hooks/useColorScheme';
 import { MaterialIcons, FontAwesome, Ionicons } from '@expo/vector-icons';
 
+// Function to get icon for category
+const getCategoryIcon = (categoryName: string): string => {
+  const name = categoryName.toLowerCase();
+  
+  if (name.includes('electron') || name.includes('tech')) return 'hardware-chip';
+  if (name.includes('jewelery') || name.includes('jewelry')) return 'diamond';
+  if (name.includes('men') && name.includes('clothing')) return 'shirt';
+  if (name.includes('women') && name.includes('clothing')) return 'woman';
+  if (name.includes('phone') || name.includes('mobile')) return 'phone-portrait';
+  if (name.includes('laptop') || name.includes('computer')) return 'laptop';
+  if (name.includes('headphone') || name.includes('audio')) return 'headset';
+  if (name.includes('gaming') || name.includes('game')) return 'game-controller';
+  if (name.includes('tablet')) return 'tablet-landscape';
+  if (name.includes('watch') || name.includes('wearable')) return 'watch';
+  if (name.includes('home')) return 'home';
+  if (name.includes('storage')) return 'save';
+  if (name.includes('monitor') || name.includes('display')) return 'desktop';
+  if (name.includes('camera')) return 'camera';
+  if (name.includes('accessory') || name.includes('accessories')) return 'bag-handle';
+  if (name.includes('book')) return 'book';
+  if (name.includes('sport')) return 'football';
+  if (name.includes('toy')) return 'game-controller';
+  if (name.includes('beauty') || name.includes('cosmetic')) return 'sparkles';
+  
+  return 'grid'; // Default fallback icon
+};
+
 export default function CategoriesScreen() {
   const router = useRouter();
   const colors = useThemeColors();
@@ -21,8 +48,8 @@ export default function CategoriesScreen() {
         const response = await apiService.getCategories();
         const formattedCategories = response.map((category: string) => ({
           id: category,
-          name: category.replace('-', ' '),
-          color: `#${Math.floor(Math.random()*16777215).toString(16)}`,
+          name: category.replace(/-/g, ' '),
+          icon: getCategoryIcon(category),
         }));
         setCategories(formattedCategories);
       } catch (error) {
@@ -44,10 +71,15 @@ export default function CategoriesScreen() {
       {filteredCategories.map((category) => (
         <TouchableOpacity
           key={category.id}
-          style={[styles.gridItem, { backgroundColor: category.color + '20' }]}
+          style={[styles.gridItem, { backgroundColor: colors.surface }]}
           onPress={() => router.push(`/products?category=${category.id}`)}
         >
-          <Text style={[styles.categoryNameGrid, { color: colors.text }]} numberOfLines={2}>{category.name}</Text>
+          <View style={[styles.iconCircle, { backgroundColor: colors.primaryLight }]}>
+            <Ionicons name={category.icon as any} size={32} color={colors.primary} />
+          </View>
+          <Text style={[styles.categoryNameGrid, { color: colors.text }]} numberOfLines={2}>
+            {category.name}
+          </Text>
         </TouchableOpacity>
       ))}
     </View>
@@ -61,10 +93,15 @@ export default function CategoriesScreen() {
           style={[styles.listItem, { borderBottomColor: colors.border }]}
           onPress={() => router.push(`/products?category=${category.id}`)}
         >
-          <View style={styles.categoryInfo}>
-            <Text style={[styles.categoryNameList, { color: colors.text }]} numberOfLines={1}>{category.name}</Text>
+          <View style={[styles.iconContainer, { backgroundColor: colors.surface }]}>
+            <Ionicons name={category.icon as any} size={24} color={colors.primary} />
           </View>
-          <Text style={[styles.arrow, { color: colors.textSecondary }]}>›</Text>
+          <View style={styles.categoryInfo}>
+            <Text style={[styles.categoryNameList, { color: colors.text }]} numberOfLines={1}>
+              {category.name}
+            </Text>
+          </View>
+          <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
         </TouchableOpacity>
       ))}
     </View>
@@ -80,15 +117,15 @@ export default function CategoriesScreen() {
           </TouchableOpacity>
           <Text style={[styles.title, { color: colors.text, marginLeft: 10 }]}>Categories</Text>
         </View>
-        <View style={styles.viewToggle}>
+        <View style={[styles.viewToggle, { backgroundColor: colors.surface }]}>
           <TouchableOpacity
-            style={[styles.toggleButton, viewMode === 'grid' && styles.activeToggle]}
+            style={[styles.toggleButton, viewMode === 'grid' && { backgroundColor: colors.primary }]}
             onPress={() => setViewMode('grid')}
           >
             <Ionicons name="grid" size={20} color={viewMode === 'grid' ? colors.white : colors.textSecondary} />
           </TouchableOpacity>
           <TouchableOpacity
-            style={[styles.toggleButton, viewMode === 'list' && styles.activeToggle]}
+            style={[styles.toggleButton, viewMode === 'list' && { backgroundColor: colors.primary }]}
             onPress={() => setViewMode('list')}
           >
             <Ionicons name="list" size={20} color={viewMode === 'list' ? colors.white : colors.textSecondary} />
@@ -97,7 +134,7 @@ export default function CategoriesScreen() {
       </View>
 
       {/* Search Bar */}
-      <View style={styles.searchContainer}>
+      <View style={[styles.searchContainer, { backgroundColor: colors.surface }]}>
         <Ionicons name="search" size={20} color={colors.textSecondary} />
         <TextInput
           style={[styles.searchInput, { color: colors.text }]}
@@ -116,6 +153,8 @@ export default function CategoriesScreen() {
       >
         {loading ? (
           <ActivityIndicator size="large" color={colors.primary} style={styles.loadingIndicator} />
+        ) : filteredCategories.length === 0 ? (
+          <Text style={[styles.noCategoriesText, { color: colors.textSecondary }]}>No categories found</Text>
         ) : (
           viewMode === 'grid' ? renderGridView() : renderListView()
         )}
@@ -146,11 +185,9 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#1D1D1F',
   },
   viewToggle: {
     flexDirection: 'row',
-    backgroundColor: '#F2F2F7',
     borderRadius: 8,
     padding: 2,
   },
@@ -158,13 +195,9 @@ const styles = StyleSheet.create({
     padding: 8,
     borderRadius: 6,
   },
-  activeToggle: {
-    backgroundColor: '#007AFF',
-  },
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F2F2F7',
     marginHorizontal: 20,
     paddingHorizontal: 16,
     paddingVertical: 12,
@@ -175,7 +208,6 @@ const styles = StyleSheet.create({
     flex: 1,
     marginLeft: 12,
     fontSize: 16,
-    color: '#1D1D1F',
   },
   content: {
     flex: 1,
@@ -197,20 +229,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  categoryIconLarge: {
-    fontSize: 40,
+  iconCircle: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
     marginBottom: 12,
   },
   categoryNameGrid: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#1D1D1F',
     textAlign: 'center',
-    marginBottom: 4,
-  },
-  categoryCount: {
-    fontSize: 12,
-    color: '#8E8E93',
   },
   listContainer: {
     paddingHorizontal: 20,
@@ -220,7 +250,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#F2F2F7',
   },
   iconContainer: {
     width: 48,
@@ -230,32 +259,18 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginRight: 16,
   },
-  categoryIconSmall: {
-    fontSize: 24,
-  },
   categoryInfo: {
     flex: 1,
   },
   categoryNameList: {
     fontSize: 16,
     fontWeight: '500',
-    color: '#1D1D1F',
-    marginBottom: 2,
-  },
-  categoryCountList: {
-    fontSize: 14,
-    color: '#8E8E93',
-  },
-  arrow: {
-    fontSize: 20,
-    color: '#8E8E93',
   },
   loadingIndicator: {
     marginTop: 50,
   },
   noCategoriesText: {
     textAlign: 'center',
-    color: '#8E8E93',
     marginTop: 20,
     fontSize: 16,
   },
