@@ -4,7 +4,6 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
 import { useCart } from '@/context/CartContext';
 import { MaterialIcons, FontAwesome, Ionicons } from '@expo/vector-icons';
-import DraggableCartIcon from '@/components/DraggableCartIcon';
 
 const { width } = Dimensions.get('window');
 
@@ -19,7 +18,6 @@ export default function ProductDetailScreen() {
   const [showFullscreenImage, setShowFullscreenImage] = useState(false);
 
   const [product, setProduct] = useState<any>(null);
-  const [relatedProducts, setRelatedProducts] = useState<any[]>([]);
   const [similarProducts, setSimilarProducts] = useState<any[]>([]);
 
   useEffect(() => {
@@ -160,60 +158,51 @@ export default function ProductDetailScreen() {
       console.error("Buy now error:", error);
       Alert.alert("Error", "Failed to process purchase. Please try again.");
     }
-  }; // Changed dependency to product.id to avoid hooks error
+  };
 
   return (
     <View style={styles.container}>
-      {/* Header with minimal back button only */}
-      <View style={styles.headerMinimal}>
+      {/* Header */}
+      <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.headerButton}>
-          <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
+          <Ionicons name="chevron-back" size={24} color="#333" />
         </TouchableOpacity>
-      </View>
-
-      {/* Product Content with Similar Products at the end */}
-      <ScrollView
-        style={styles.content}
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent} // Add padding to ensure buttons are accessible
-      >
-        {/* Image Gallery */}
-        <View style={styles.imageGallery}>
-          <ScrollView
-            horizontal
-            pagingEnabled
-            showsHorizontalScrollIndicator={false}
-            onMomentumScrollEnd={(e) => {
-              const index = Math.round(e.nativeEvent.contentOffset.x / width);
-              setSelectedImage(index);
-            }}
-          >
-            <TouchableOpacity
-              onPress={() => setShowFullscreenImage(true)}
-              activeOpacity={0.9}
-            >
-              <Image source={{ uri: product.image }} style={styles.productImage} />
-            </TouchableOpacity>
-          </ScrollView>
-          {/* Wishlist button at the top of the image */}
-          <TouchableOpacity style={styles.wishlistTopButton} onPress={toggleWishlist}>
+        <View style={styles.headerActions}>
+          <TouchableOpacity style={styles.headerButton} onPress={toggleWishlist}>
             <Ionicons
               name={isInWishlist ? "heart" : "heart-outline"}
               size={24}
-              color={isInWishlist ? "#FF3B30" : "#FFFFFF"}
+              color={isInWishlist ? "#FF3B30" : "#333"}
             />
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      <ScrollView
+        style={styles.content}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
+      >
+        {/* Product Image */}
+        <View style={styles.imageContainer}>
+          <TouchableOpacity
+            onPress={() => setShowFullscreenImage(true)}
+            activeOpacity={0.9}
+          >
+            <Image source={{ uri: product.image }} style={styles.productImage} />
           </TouchableOpacity>
         </View>
 
         {/* Product Info */}
-        <View style={styles.productInfo}>
-          <View style={styles.brandCategory}>
+        <View style={styles.productInfoContainer}>
+          {/* Category and Title */}
+          <View style={styles.titleSection}>
             <Text style={styles.category}>{product.category}</Text>
+            <Text style={styles.productName}>{product.title}</Text>
           </View>
 
-          <Text style={styles.productName}>{product.title}</Text>
-
-          <View style={styles.ratingContainer}>
+          {/* Rating */}
+          <View style={styles.ratingSection}>
             <View style={styles.rating}>
               <Ionicons name="star" size={16} color="#FFD700" />
               <Text style={styles.ratingText}>{product.rating ? product.rating.rate : 0}</Text>
@@ -221,8 +210,15 @@ export default function ProductDetailScreen() {
             </View>
           </View>
 
-          <View style={styles.priceContainer}>
-            <Text style={styles.price}>{`₦${product.price.toFixed(2)}`}</Text>
+          {/* Price */}
+          <View style={styles.priceSection}>
+            <Text style={styles.currentPrice}>₦{product.price.toFixed(2)}</Text>
+          </View>
+
+          {/* Description */}
+          <View style={styles.descriptionSection}>
+            <Text style={styles.sectionTitle}>Description</Text>
+            <Text style={styles.description}>{product.description}</Text>
           </View>
 
           {/* Quantity Selector */}
@@ -244,18 +240,17 @@ export default function ProductDetailScreen() {
               </TouchableOpacity>
             </View>
           </View>
-
-          {/* Description */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Description</Text>
-            <Text style={styles.description}>{product.description}</Text>
-          </View>
         </View>
 
-        {/* Similar Products - now within the scroll view but at the end */}
+        {/* Similar Products */}
         {similarProducts.length > 0 && (
           <View style={styles.similarProductsSection}>
-            <Text style={styles.similarProductsTitle}>Similar Items</Text>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Similar Items</Text>
+              <TouchableOpacity onPress={() => router.push('/category/' + product.category)}>
+                <Text style={styles.viewAllText}>View All</Text>
+              </TouchableOpacity>
+            </View>
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
@@ -277,22 +272,20 @@ export default function ProductDetailScreen() {
         )}
       </ScrollView>
 
-      {/* Bottom Bar with Buy Now and Add to Cart Buttons - Fixed at bottom */}
-      <View style={styles.bottomBar}>
+      {/* Bottom Action Bar */}
+      <View style={styles.actionBar}>
         <TouchableOpacity
-          style={[styles.buyNowButton, styles.bottomButton]}
+          style={styles.actionButton}
           onPress={buyNow}
         >
-          <Text style={styles.buyNowText}>Buy Now</Text>
+          <Text style={styles.actionButtonText}>Buy Now</Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={[styles.addToCartButton, styles.bottomButton]}
+          style={styles.cartButton}
           onPress={addToCart}
         >
           <Ionicons name="cart" size={20} color="#FFFFFF" />
-          <Text style={styles.addToCartText}>
-            Add to Cart
-          </Text>
+          <Text style={styles.actionButtonText}>Add to Cart</Text>
         </TouchableOpacity>
       </View>
 
@@ -325,7 +318,7 @@ export default function ProductDetailScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#F8F9FA',
   },
   header: {
     flexDirection: 'row',
@@ -333,325 +326,209 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingTop: 60,
-    paddingBottom: 16,
+    paddingBottom: 10,
     backgroundColor: '#FFFFFF',
-    zIndex: 1,
-  },
-  headerMinimal: {
-    flexDirection: 'row',
-    paddingHorizontal: 20,
-    paddingTop: 60,
-    paddingBottom: 16,
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    zIndex: 5,
+    zIndex: 10,
   },
   headerButton: {
     padding: 8,
   },
   headerActions: {
     flexDirection: 'row',
-    gap: 8,
+    gap: 16,
   },
   content: {
     flex: 1,
   },
-  imageGallery: {
-    position: 'relative',
-  },
   scrollContent: {
-    paddingBottom: 120, // Ensure content doesn't hide behind fixed bottom bar
+    paddingBottom: 120,
   },
-  imageGallery: {
-    position: 'relative',
-    marginTop: 20, // Reduced margin to prevent excessive spacing
-    marginBottom: 20, // Add margin to separate from product info below
+  imageContainer: {
+    backgroundColor: '#FFFFFF',
+    padding: 20,
+    alignItems: 'center',
   },
   productImage: {
-    width: width * 0.9, // Reduced width to add some padding on sides
-    maxWidth: 400, // Limit max width for tablets
-    maxHeight: 300, // Limit maximum height to prevent excessive tallness
-    height: Math.min(width * 0.72, 300), // Reduced multiplier and use the smaller of calculated height or max height
-    alignSelf: 'center', // Center the image
-    backgroundColor: '#F2F2F7',
+    width: width * 0.85,
+    height: width * 0.85,
+    maxWidth: 350,
+    maxHeight: 350,
+    resizeMode: 'contain',
+    backgroundColor: '#F8F9FA',
+    borderRadius: 12,
   },
-  imageIndicators: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    paddingVertical: 16,
-    gap: 8,
-  },
-  indicator: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#E5E5EA',
-  },
-  activeIndicator: {
-    backgroundColor: '#007AFF',
-  },
-  productInfo: {
+  productInfoContainer: {
+    backgroundColor: '#FFFFFF',
+    marginTop: 10,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
     padding: 20,
   },
-  brandCategory: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 8,
-  },
-  brand: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#007AFF',
+  titleSection: {
+    marginBottom: 15,
   },
   category: {
     fontSize: 14,
     color: '#8E8E93',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   productName: {
     fontSize: 24,
-    fontWeight: 'bold',
+    fontWeight: '700',
     color: '#1D1D1F',
-    marginBottom: 12,
+    marginTop: 5,
   },
-  ratingContainer: {
+  ratingSection: {
+    marginBottom: 15,
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 16,
   },
   rating: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   ratingText: {
-    fontSize: 14,
-    fontWeight: '500',
+    fontSize: 16,
+    fontWeight: '600',
     color: '#1D1D1F',
-    marginLeft: 4,
+    marginLeft: 5,
   },
   reviewsText: {
     fontSize: 14,
     color: '#8E8E93',
-    marginLeft: 4,
+    marginLeft: 8,
   },
-  stockText: {
-    fontSize: 14,
-    color: '#34C759',
-    fontWeight: '500',
+  priceSection: {
+    marginBottom: 20,
+    marginTop: 10,
   },
-  priceContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 24,
-    gap: 12,
-  },
-  price: {
+  currentPrice: {
     fontSize: 28,
-    fontWeight: 'bold',
+    fontWeight: '800',
     color: '#007AFF',
   },
-  originalPrice: {
-    fontSize: 18,
-    color: '#8E8E93',
-    textDecorationLine: 'line-through',
-  },
-  savingsBadge: {
-    backgroundColor: '#34C759',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
-  },
-  savingsText: {
-    color: '#FFFFFF',
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  quantitySection: {
-    marginBottom: 32,
+  descriptionSection: {
+    marginBottom: 25,
   },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: '700',
     color: '#1D1D1F',
-    marginBottom: 12,
+    marginBottom: 10,
+  },
+  description: {
+    fontSize: 16,
+    color: '#4A4A4A',
+    lineHeight: 24,
+  },
+  quantitySection: {
+    marginBottom: 30,
   },
   quantityContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F2F2F7',
+    backgroundColor: '#F8F9FA',
     borderRadius: 12,
-    padding: 4,
+    padding: 5,
     alignSelf: 'flex-start',
   },
   quantityButton: {
-    width: 40,
-    height: 40,
+    width: 44,
+    height: 44,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#FFFFFF',
     borderRadius: 8,
   },
   quantity: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: '600',
     color: '#1D1D1F',
     marginHorizontal: 20,
     minWidth: 30,
     textAlign: 'center',
   },
-  section: {
-    marginBottom: 32,
+  similarProductsSection: {
+    backgroundColor: '#FFFFFF',
+    paddingTop: 20,
+    paddingBottom: 120,
+    marginTop: 10,
   },
-  description: {
-    fontSize: 16,
-    color: '#1D1D1F',
-    lineHeight: 24,
-  },
-  featureItem: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    marginBottom: 8,
-  },
-  featureBullet: {
-    fontSize: 16,
-    color: '#007AFF',
-    marginRight: 8,
-    marginTop: 2,
-  },
-  featureText: {
-    fontSize: 16,
-    color: '#1D1D1F',
-    flex: 1,
-    lineHeight: 22,
-  },
-  specRow: {
+  sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F2F2F7',
-  },
-  specKey: {
-    fontSize: 16,
-    color: '#8E8E93',
-    flex: 1,
-  },
-  specValue: {
-    fontSize: 16,
-    color: '#1D1D1F',
-    flex: 2,
-    textAlign: 'right',
-  },
-  relatedProduct: {
-    width: 140,
-    marginRight: 16,
-    backgroundColor: '#F2F2F7',
-    borderRadius: 12,
-    overflow: 'hidden',
-  },
-  relatedImage: {
-    width: '100%',
-    height: 100,
-    backgroundColor: '#E5E5EA',
-  },
-  relatedName: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#1D1D1F',
-    padding: 8,
-    paddingBottom: 4,
-  },
-  relatedRating: {
-    flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 8,
-    paddingBottom: 4,
+    paddingHorizontal: 20,
+    marginBottom: 15,
   },
-  relatedRatingText: {
-    fontSize: 12,
-    color: '#1D1D1F',
-    marginLeft: 4,
-  },
-  relatedPrice: {
-    fontSize: 14,
-    fontWeight: 'bold',
+  viewAllText: {
     color: '#007AFF',
-    paddingHorizontal: 8,
-    paddingBottom: 8,
-  },
-  bottomBar: {
-    backgroundColor: '#FFFFFF',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    paddingBottom: 32,
-    borderTopWidth: 1,
-    borderTopColor: '#F2F2F7',
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  similarProductsSection: {
-    paddingHorizontal: 20,
-    paddingTop: 20,
-    paddingBottom: 32, // Increased padding to ensure space at the bottom
-  },
-  similarProductsTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#1D1D1F',
-    marginBottom: 16,
+    fontSize: 16,
+    fontWeight: '600',
   },
   similarProductsContainer: {
+    paddingHorizontal: 20,
     gap: 16,
-    paddingBottom: 10,
   },
   similarProductItem: {
-    width: 120,
-    backgroundColor: '#F2F2F7',
+    width: 140,
+    backgroundColor: '#F8F9FA',
     borderRadius: 12,
     padding: 12,
+    marginRight: 10,
   },
   similarProductImage: {
     width: '100%',
-    height: 100,
+    height: 120,
     borderRadius: 8,
-    backgroundColor: '#E5E5EA',
-    marginBottom: 8,
+    backgroundColor: '#E9ECEF',
+    marginBottom: 10,
+    resizeMode: 'contain',
   },
   similarProductName: {
-    fontSize: 12,
+    fontSize: 14,
     fontWeight: '500',
     color: '#1D1D1F',
-    marginBottom: 4,
+    marginBottom: 5,
     height: 36,
   },
   similarProductPrice: {
-    fontSize: 14,
-    fontWeight: 'bold',
+    fontSize: 16,
+    fontWeight: '700',
     color: '#007AFF',
   },
-  addToCartButton: {
+  actionBar: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: '#FFFFFF',
+    flexDirection: 'row',
+    paddingHorizontal: 20,
+    paddingVertical: 15,
+    borderTopWidth: 1,
+    borderTopColor: '#E9ECEF',
+    gap: 15,
+  },
+  actionButton: {
+    flex: 1,
+    backgroundColor: '#FF9500',
+    paddingVertical: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cartButton: {
+    flex: 1,
     backgroundColor: '#007AFF',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 16,
-    paddingHorizontal: 20,
     borderRadius: 12,
     gap: 8,
-    maxWidth: 250, // Limit max width on larger screens
-    alignSelf: 'stretch', // Stretch to container width but with max limit
-    elevation: 3,
-    shadowColor: '#007AFF',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
   },
-  disabledButton: {
-    backgroundColor: '#8E8E93',
-  },
-  addToCartText: {
+  actionButtonText: {
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
@@ -660,47 +537,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  bottomButton: {
-    flex: 1,
-    marginHorizontal: 8,
-    borderRadius: 12,
-    paddingVertical: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-    elevation: 3,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 3,
-    maxWidth: 250, // Limit max width on larger screens
-  },
-  buyNowButton: {
-    backgroundColor: '#FF9500',
-    flex: 1,
-    paddingVertical: 16,
-    paddingHorizontal: 20,
-    borderRadius: 12,
-    maxWidth: 250, // Limit max width on larger screens
-    elevation: 3,
-    shadowColor: '#FF9500',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-  },
-  buyNowText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  wishlistTopButton: {
-    position: 'absolute',
-    top: 20,
-    right: 20,
-    backgroundColor: 'rgba(0,0,0,0.3)',
-    borderRadius: 20,
-    padding: 8,
-    zIndex: 1,
+    backgroundColor: '#F8F9FA',
   },
   fullscreenOverlay: {
     position: 'absolute',
