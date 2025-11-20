@@ -114,7 +114,7 @@ export default function WishlistScreen() {
               <Text style={[styles.productName, { color: colors.text }]} numberOfLines={2}>{item.title}</Text>
               <View style={styles.priceRow}>
                 <Text style={[styles.originalPrice, { color: colors.textSecondary }]}>{`₦${(item.price * 1.3).toFixed(2)}`}</Text>
-                <Text style={[styles.productPrice, { color: 'red' }]}>{`₦${item.price.toFixed(2)}`}</Text>
+                <Text style={[styles.productPrice, { color: '#ff6b6b' }]}>{`₦${item.price.toFixed(2)}`}</Text>
               </View>
             </View>
             <View style={styles.actions}>
@@ -200,7 +200,7 @@ const styles = StyleSheet.create({
     textDecorationLine: 'line-through',
   },
   productPrice: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: 'bold',
   },
   actions: {

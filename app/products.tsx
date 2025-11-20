@@ -184,7 +184,7 @@ export default function ProductsScreen() {
             <Text style={[styles.productName, { color: colors.text }]} numberOfLines={2}>{product.title}</Text>
             <View style={styles.priceRow}>
               <Text style={[styles.originalPrice, { color: colors.textSecondary }]}>{`₦${(product.price * 1.3).toFixed(2)}`}</Text>
-              <Text style={[styles.productPrice, { color: 'red' }]}>{`₦${product.price.toFixed(2)}`}</Text>
+              <Text style={[styles.productPrice, { color: '#ff6b6b' }]}>{`₦${product.price.toFixed(2)}`}</Text>
             </View>
           </View>
         </TouchableOpacity>
@@ -213,7 +213,7 @@ export default function ProductsScreen() {
             </View>
             <View style={styles.priceContainer}>
               <Text style={[styles.originalPrice, { color: colors.textSecondary }]}>{`₦${(product.price * 1.3).toFixed(2)}`}</Text>
-              <Text style={[styles.price, { color: 'red' }]}>{`₦${product.price.toFixed(2)}`}</Text>
+              <Text style={[styles.price, { color: '#ff6b6b' }]}>{`₦${product.price.toFixed(2)}`}</Text>
             </View>
           </View>
           <View style={styles.listProductActions}>
@@ -486,7 +486,7 @@ const styles = StyleSheet.create({
     textDecorationLine: 'line-through',
   },
   productPrice: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: 'bold',
   },
   addToCartButton: {
@@ -546,7 +546,7 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   price: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: 'bold',
   },
   listProductActions: {

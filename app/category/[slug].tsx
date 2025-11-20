@@ -206,7 +206,7 @@ export default function CategoryScreen() {
                                         <Text style={[styles.originalPrice, { color: colors.textSecondary }]}>
                                             {`₦${(product.price * 1.3).toFixed(2)}`}
                                         </Text>
-                                        <Text style={[styles.productPrice, { color: 'red' }]}>
+                                        <Text style={[styles.productPrice, { color: '#ff6b6b' }]}>
                                             {`₦${product.price.toFixed(2)}`}
                                         </Text>
                                     </View>
@@ -354,7 +354,7 @@ const styles = StyleSheet.create({
         textDecorationLine: 'line-through',
     },
     productPrice: {
-        fontSize: 16,
+        fontSize: 18,
         fontWeight: 'bold',
     },
     ratingRow: {
