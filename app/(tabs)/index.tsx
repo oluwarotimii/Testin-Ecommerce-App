@@ -17,7 +17,7 @@ export default function HomeScreen() {
   const { apiService } = useAuth();
   const { setCartCount } = useCart();
   const [loadingCarousel, setLoadingCarousel] = useState(false);
-  const [carouselItems, setCarouselItems] = useState([
+  const [carouselItems, setCarouselItems] = useState<any[]>([
     {
       id: '1',
       title: 'Premium Tech Collection',
@@ -118,7 +118,7 @@ export default function HomeScreen() {
   const handleCarouselItemPress = useCallback((item: any) => {
     console.log('Carousel item pressed:', item);
     // Example: Navigate to a product detail page
-    router.push(`/product/${item.id}`); 
+    router.push(`/product/${item.id}`);
   }, [router]);
 
   return (
@@ -556,7 +556,7 @@ const styles = StyleSheet.create({
     paddingTop: 4,
     paddingRight: 48,
     position: 'relative',
-    top: 0, 
+    top: 0,
   },
   productTextContainer: {
     flex: 1,

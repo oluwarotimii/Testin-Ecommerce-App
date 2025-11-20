@@ -572,7 +572,7 @@ class DummyApiService {
 
   async getProduct(product_id: number) {
     return dummyElectronicsProducts.find(product => product.id === product_id) ||
-           { error: "Product not found" };
+      { error: "Product not found" };
   }
 
   async searchProducts(search: string, page?: number, limit?: number) {
@@ -601,6 +601,7 @@ class DummyApiService {
     return {
       success: true,
       products: cartItems.map(item => ({
+        ...item,
         productId: item.id,
         quantity: item.quantity
       })),
@@ -742,7 +743,7 @@ class DummyApiService {
 
   async getOrderInfo(order_id: number) {
     const order = dummyOrders.find(o => o.id === order_id) ||
-                  dummyOrders.find(o => o.order_id === `ORD${String(order_id).padStart(3, '0')}`);
+      dummyOrders.find(o => o.order_id === `ORD${String(order_id).padStart(3, '0')}`);
     return order || { error: "Order not found" };
   }
 

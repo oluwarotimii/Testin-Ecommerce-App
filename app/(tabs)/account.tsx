@@ -115,6 +115,13 @@ export default function AccountScreen() {
       type: 'navigation',
       onPress: () => updateService.forceCheckForUpdates(),
     },
+    {
+      id: 'devtools',
+      title: 'Developer Tools',
+      icon: () => <Ionicons name="code-slash" size={20} color={colors.primary} />,
+      type: 'navigation',
+      onPress: () => router.push('/devtools'),
+    },
   ];
 
   const supportItems = [

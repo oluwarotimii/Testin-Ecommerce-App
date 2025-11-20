@@ -238,7 +238,7 @@ export default function OrderDetailsScreen() {
       {/* Action Buttons */}
       <View style={styles.actionButtons}>
         <TouchableOpacity style={[styles.button, styles.outlineButton, { borderColor: colors.border }]}>
-          <Text style={[styles.outlineButtonText, { color: colors.text }]}>Contact Seller</Text>
+          <Text style={[styles.outlineButtonText, { color: colors.text }]}>Contact Support</Text>
         </TouchableOpacity>
         <TouchableOpacity style={[styles.button, { backgroundColor: colors.primary }]}>
           <Text style={[styles.buttonText, { color: colors.white }]}>Track Order</Text>

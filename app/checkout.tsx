@@ -38,13 +38,12 @@ export default function CheckoutScreen() {
     try {
       setLoadingAddresses(true);
       const addressResponse = await apiService.getAddressBook();
-      if (addressResponse?.success && addressResponse?.addresses) {
-        setAddresses(addressResponse.addresses);
-        if (addressResponse.addresses.length > 0) {
+      if (Array.isArray(addressResponse)) {
+        setAddresses(addressResponse);
+        if (addressResponse.length > 0) {
           setSelectedAddress(0);
         }
       } else {
-        // Handle case where API returns different structure
         setAddresses([]);
       }
     } catch (error) {
@@ -57,13 +56,12 @@ export default function CheckoutScreen() {
     try {
       setLoadingPaymentMethods(true);
       const paymentResponse = await apiService.getPaymentMethods();
-      if (paymentResponse?.success && paymentResponse?.payment_methods) {
-        setPaymentMethods(paymentResponse.payment_methods);
-        if (paymentResponse.payment_methods.length > 0) {
+      if (Array.isArray(paymentResponse)) {
+        setPaymentMethods(paymentResponse);
+        if (paymentResponse.length > 0) {
           setSelectedPayment(0);
         }
       } else {
-        // Handle case where API returns different structure
         setPaymentMethods([]);
       }
     } catch (error) {
@@ -76,13 +74,12 @@ export default function CheckoutScreen() {
     try {
       setLoadingShippingMethods(true);
       const shippingResponse = await apiService.getShippingMethods();
-      if (shippingResponse?.success && shippingResponse?.shipping_methods) {
-        setShippingMethods(shippingResponse.shipping_methods);
-        if (shippingResponse.shipping_methods.length > 0) {
+      if (Array.isArray(shippingResponse)) {
+        setShippingMethods(shippingResponse);
+        if (shippingResponse.length > 0) {
           setSelectedShipping(0);
         }
       } else {
-        // Handle case where API returns different structure
         setShippingMethods([]);
       }
     } catch (error) {
@@ -96,7 +93,6 @@ export default function CheckoutScreen() {
       setLoadingCart(true);
       const cartResponse = await apiService.getCartContents();
       if (cartResponse?.success && cartResponse?.products) {
-        // Transform the cart products to ensure proper price/quantity
         const transformedProducts = cartResponse.products.map((item: any) => ({
           ...item,
           price: typeof item.price === 'string' ? parseFloat(item.price) : (typeof item.price === 'number' ? item.price : 0),
@@ -105,7 +101,6 @@ export default function CheckoutScreen() {
         }));
         setCartItems(transformedProducts);
       } else {
-        // Handle case where API returns different structure
         setCartItems([]);
       }
     } catch (error) {
@@ -121,7 +116,6 @@ export default function CheckoutScreen() {
   }, [fetchCheckoutData]);
 
   useEffect(() => {
-    // Update order summary when cart items or selections change
     const selectedShippingMethod = shippingMethods[selectedShipping];
     const subtotal = cartItems.reduce((sum, item) => {
       const itemPrice = typeof item.price === 'number' ? item.price : parseFloat(item.price) || 0;
@@ -129,8 +123,8 @@ export default function CheckoutScreen() {
       return sum + (itemPrice * itemQuantity);
     }, 0);
     const shippingCost = selectedShippingMethod ? (typeof selectedShippingMethod.price === 'number' ? selectedShippingMethod.price : parseFloat(selectedShippingMethod.price) || 0) : 0;
-    const tax = subtotal * 0.08; // Assuming a fixed 8% tax for now
-    const discount = promoCode ? subtotal * 0.1 : 0; // Implement promo code logic later
+    const tax = subtotal * 0.08;
+    const discount = promoCode ? subtotal * 0.1 : 0;
     const total = subtotal + shippingCost + tax - discount;
 
     setOrderSummary({
@@ -162,17 +156,40 @@ export default function CheckoutScreen() {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
           <Ionicons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
         <Text style={[styles.title, { color: colors.text }]}>Checkout</Text>
-        <View style={{ width: 24 }} />
+        <View style={{ width: 40 }} />
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+
+        {/* Cart Items (Your Order) - Moved to top and styled like Cart */}
+        {cartItems.length > 0 && (
+          <View style={styles.section}>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>Your Order</Text>
+            <View style={[styles.itemsContainer, { backgroundColor: colors.surface }]}>
+              {cartItems.map((item, index) => (
+                <View key={item.id} style={[styles.cartItem, { borderBottomColor: colors.border, borderBottomWidth: index === cartItems.length - 1 ? 0 : 1 }]}>
+                  <Image source={{ uri: item.image }} style={styles.itemImage} />
+                  <View style={styles.itemDetails}>
+                    <Text style={[styles.itemName, { color: colors.text }]} numberOfLines={2}>{item.title}</Text>
+                    <Text style={[styles.itemPrice, { color: colors.primary }]}>{`₦${(typeof item.price === 'number' ? item.price : parseFloat(item.price)).toFixed(2)}`}</Text>
+                    <Text style={[styles.itemQuantity, { color: colors.textSecondary }]}>Qty: {item.quantity || 1}</Text>
+                  </View>
+                  <Text style={[styles.itemTotal, { color: colors.text }]}>
+                    {`₦${((typeof item.price === 'number' ? item.price : parseFloat(item.price)) * (item.quantity || 1)).toFixed(2)}`}
+                  </Text>
+                </View>
+              ))}
+            </View>
+          </View>
+        )}
+
         {/* Shipping Address */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
@@ -184,27 +201,28 @@ export default function CheckoutScreen() {
               key={address.id}
               style={[
                 styles.optionCard,
-                selectedAddress === index && styles.selectedCard
+                { backgroundColor: colors.surface, borderColor: 'transparent' },
+                selectedAddress === index && { borderColor: colors.primary, backgroundColor: colors.primary + '10' }
               ]}
               onPress={() => setSelectedAddress(index)}
             >
               <View style={styles.optionContent}>
                 <View style={styles.addressInfo}>
-                  <Text style={styles.addressName}>{address.name}</Text>
-                  <Text style={styles.addressText}>{address.address}</Text>
-                  <Text style={styles.addressText}>{address.city}</Text>
+                  <Text style={[styles.addressName, { color: colors.text }]}>{address.name}</Text>
+                  <Text style={[styles.addressText, { color: colors.textSecondary }]}>{address.address}</Text>
+                  <Text style={[styles.addressText, { color: colors.textSecondary }]}>{address.city}</Text>
                   {address.isDefault && (
-                    <Text style={styles.defaultBadge}>Default</Text>
+                    <Text style={[styles.defaultBadge, { color: colors.primary }]}>Default</Text>
                   )}
                 </View>
                 {selectedAddress === index && (
-                  <Ionicons name="checkmark" size={20} color={colors.primary} />
+                  <Ionicons name="checkmark-circle" size={24} color={colors.primary} />
                 )}
               </View>
             </TouchableOpacity>
           ))}
-          <TouchableOpacity style={styles.addButton}>
-            <Text style={styles.addButtonText}>+ Add New Address</Text>
+          <TouchableOpacity style={[styles.addButton, { borderColor: colors.primary }]}>
+            <Text style={[styles.addButtonText, { color: colors.primary }]}>+ Add New Address</Text>
           </TouchableOpacity>
         </View>
 
@@ -219,7 +237,8 @@ export default function CheckoutScreen() {
               key={payment.id}
               style={[
                 styles.optionCard,
-                selectedPayment === index && styles.selectedCard
+                { backgroundColor: colors.surface, borderColor: 'transparent' },
+                selectedPayment === index && { borderColor: colors.primary, backgroundColor: colors.primary + '10' }
               ]}
               onPress={() => setSelectedPayment(index)}
             >
@@ -227,20 +246,20 @@ export default function CheckoutScreen() {
                 <View style={styles.paymentInfo}>
                   <Text style={styles.paymentIcon}>{payment.icon}</Text>
                   <View>
-                    <Text style={styles.paymentName}>{payment.name}</Text>
+                    <Text style={[styles.paymentName, { color: colors.text }]}>{payment.name}</Text>
                     {payment.isDefault && (
-                      <Text style={styles.defaultBadge}>Default</Text>
+                      <Text style={[styles.defaultBadge, { color: colors.primary }]}>Default</Text>
                     )}
                   </View>
                 </View>
                 {selectedPayment === index && (
-                  <Ionicons name="checkmark" size={20} color={colors.primary} />
+                  <Ionicons name="checkmark-circle" size={24} color={colors.primary} />
                 )}
               </View>
             </TouchableOpacity>
           ))}
-          <TouchableOpacity style={styles.addButton}>
-            <Text style={styles.addButtonText}>+ Add New Payment Method</Text>
+          <TouchableOpacity style={[styles.addButton, { borderColor: colors.primary }]}>
+            <Text style={[styles.addButtonText, { color: colors.primary }]}>+ Add New Payment Method</Text>
           </TouchableOpacity>
         </View>
 
@@ -255,22 +274,23 @@ export default function CheckoutScreen() {
               key={shipping.id}
               style={[
                 styles.optionCard,
-                selectedShipping === index && styles.selectedCard
+                { backgroundColor: colors.surface, borderColor: 'transparent' },
+                selectedShipping === index && { borderColor: colors.primary, backgroundColor: colors.primary + '10' }
               ]}
               onPress={() => setSelectedShipping(index)}
             >
               <View style={styles.optionContent}>
                 <View style={styles.shippingInfo}>
-                  <Text style={styles.shippingName}>{shipping.name}</Text>
-                  <Text style={styles.shippingTime}>{shipping.time}</Text>
-                  <Text style={styles.shippingDescription}>{shipping.description}</Text>
+                  <Text style={[styles.shippingName, { color: colors.text }]}>{shipping.name}</Text>
+                  <Text style={[styles.shippingTime, { color: colors.textSecondary }]}>{shipping.time}</Text>
+                  <Text style={[styles.shippingDescription, { color: colors.textSecondary }]}>{shipping.description}</Text>
                 </View>
                 <View style={styles.shippingPrice}>
-                  <Text style={styles.priceText}>
+                  <Text style={[styles.priceText, { color: colors.primary }]}>
                     {shipping.price === 0 ? 'Free' : `₦${shipping.price.toFixed(2)}`}
                   </Text>
                   {selectedShipping === index && (
-                    <Ionicons name="checkmark" size={20} color={colors.primary} />
+                    <Ionicons name="checkmark-circle" size={24} color={colors.primary} />
                   )}
                 </View>
               </View>
@@ -280,11 +300,12 @@ export default function CheckoutScreen() {
 
         {/* Promo Code */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Promo Code</Text>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>Promo Code</Text>
           <View style={styles.promoContainer}>
             <TextInput
-              style={styles.promoInput}
+              style={[styles.promoInput, { backgroundColor: colors.surface, color: colors.text }]}
               placeholder="Enter promo code"
+              placeholderTextColor={colors.textSecondary}
               value={promoCode}
               onChangeText={setPromoCode}
             />
@@ -295,88 +316,38 @@ export default function CheckoutScreen() {
         </View>
 
         {/* Order Summary */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Order Summary</Text>
-          <View style={styles.summaryCard}>
+        <View style={[styles.section, { marginBottom: 100 }]}>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>Order Summary</Text>
+          <View style={[styles.summaryCard, { backgroundColor: colors.surface }]}>
             <View style={styles.summaryRow}>
-              <Text style={styles.summaryLabel}>Subtotal</Text>
-              <Text style={styles.summaryValue}>₦{orderSummary.subtotal.toFixed(2)}</Text>
+              <Text style={[styles.summaryLabel, { color: colors.text }]}>Subtotal</Text>
+              <Text style={[styles.summaryValue, { color: colors.text }]}>₦{orderSummary.subtotal.toFixed(2)}</Text>
             </View>
             <View style={styles.summaryRow}>
-              <Text style={styles.summaryLabel}>Shipping</Text>
-              <Text style={styles.summaryValue}>
+              <Text style={[styles.summaryLabel, { color: colors.text }]}>Shipping</Text>
+              <Text style={[styles.summaryValue, { color: colors.text }]}>
                 {orderSummary.shipping === 0 ? 'Free' : `₦${orderSummary.shipping.toFixed(2)}`}
               </Text>
             </View>
             <View style={styles.summaryRow}>
-              <Text style={styles.summaryLabel}>Tax</Text>
-              <Text style={styles.summaryValue}>₦{orderSummary.tax.toFixed(2)}</Text>
+              <Text style={[styles.summaryLabel, { color: colors.text }]}>Tax</Text>
+              <Text style={[styles.summaryValue, { color: colors.text }]}>₦{orderSummary.tax.toFixed(2)}</Text>
             </View>
             {orderSummary.discount > 0 && (
               <View style={styles.summaryRow}>
-                <Text style={styles.summaryLabel}>Discount</Text>
+                <Text style={[styles.summaryLabel, { color: colors.text }]}>Discount</Text>
                 <Text style={[styles.summaryValue, styles.discountValue]}>
                   -₦{orderSummary.discount.toFixed(2)}
                 </Text>
               </View>
             )}
-            <View style={[styles.summaryRow, styles.totalRow]}>
-              <View style={styles.totalContainer}>
-                <Text style={styles.totalLabel}>Total</Text>
-                {orderSummary.discount > 0 && (
-                  <View style={styles.discountRow}>
-                    <Text style={styles.originalPrice}>₦{orderSummary.subtotal.toFixed(2)}</Text>
-                    <Text style={styles.totalValue}>₦{orderSummary.total.toFixed(2)}</Text>
-                  </View>
-                )}
-                {orderSummary.discount === 0 && (
-                  <Text style={styles.totalValue}>₦{orderSummary.total.toFixed(2)}</Text>
-                )}
-              </View>
-              <TouchableOpacity style={[styles.checkoutButton, { backgroundColor: colors.primary }]}>
-                <Text style={[styles.checkoutButtonText, { color: colors.white }]}>Checkout</Text>
-              </TouchableOpacity>
+            <View style={[styles.totalRow, { borderTopColor: colors.border }]}>
+              <Text style={[styles.totalLabel, { color: colors.text }]}>Total</Text>
+              <Text style={[styles.totalValue, { color: colors.text }]}>₦{orderSummary.total.toFixed(2)}</Text>
             </View>
           </View>
         </View>
       </ScrollView>
-
-      {/* Cart Items */}
-      {cartItems.length > 0 && (
-        <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>Your Order</Text>
-          {cartItems.map((item) => (
-            <View key={item.id} style={[styles.cartItem, { backgroundColor: colors.surface }]}>
-              <Image source={{ uri: item.image }} style={styles.cartItemImage} />
-              <View style={styles.cartItemDetails}>
-                <Text style={[styles.cartItemName, { color: colors.text }]} numberOfLines={2}>{item.title}</Text>
-                <Text style={[styles.cartItemPrice, { color: colors.textSecondary }]}>{`₦${(typeof item.price === 'number' ? item.price : parseFloat(item.price)).toFixed(2)} x ${item.quantity || 1}`}</Text>
-              </View>
-              <Text style={[styles.cartItemTotal, { color: colors.text }]}>
-                {`₦${((typeof item.price === 'number' ? item.price : parseFloat(item.price)) * (item.quantity || 1)).toFixed(2)}`}
-              </Text>
-            </View>
-          ))}
-        </View>
-      )}
-
-      {/* Recommended Products */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>You May Also Like</Text>
-        <View style={styles.gridContainer}>
-          {cartItems.slice(0, 4).map((item) => (
-            <ProductGridItem
-              key={item.id}
-              product={item}
-              onPress={() => router.push(`/product/${item.id}`)}
-              onAddToCart={() => {
-                // Add to cart functionality would go here
-                console.log('Add to cart:', item.id);
-              }}
-            />
-          ))}
-        </View>
-      </View>
 
       {/* Place Order Button */}
       <View style={[styles.bottomBar, { backgroundColor: colors.background, borderTopColor: colors.border }]}>
@@ -391,7 +362,6 @@ export default function CheckoutScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
   },
   header: {
     flexDirection: 'row',
@@ -401,17 +371,20 @@ const styles = StyleSheet.create({
     paddingTop: 60,
     paddingBottom: 20,
   },
+  backButton: {
+    padding: 8,
+    marginLeft: -8,
+  },
   title: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#1D1D1F',
   },
   content: {
     flex: 1,
     paddingHorizontal: 20,
   },
   section: {
-    marginBottom: 32,
+    marginBottom: 24,
   },
   sectionHeader: {
     flexDirection: 'row',
@@ -422,19 +395,51 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#1D1D1F',
+    marginBottom: 12,
+  },
+  itemsContainer: {
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
+  cartItem: {
+    flexDirection: 'row',
+    padding: 16,
+    alignItems: 'center',
+  },
+  itemImage: {
+    width: 60,
+    height: 60,
+    borderRadius: 8,
+    backgroundColor: '#F2F2F7',
+  },
+  itemDetails: {
+    flex: 1,
+    marginLeft: 12,
+    justifyContent: 'center',
+  },
+  itemName: {
+    fontSize: 14,
+    fontWeight: '500',
+    marginBottom: 4,
+  },
+  itemPrice: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  itemQuantity: {
+    fontSize: 12,
+    marginTop: 2,
+  },
+  itemTotal: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginLeft: 8,
   },
   optionCard: {
-    backgroundColor: '#F2F2F7',
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
     borderWidth: 2,
-    borderColor: 'transparent',
-  },
-  selectedCard: {
-    borderColor: '#007AFF',
-    backgroundColor: '#007AFF10',
   },
   optionContent: {
     flexDirection: 'row',
@@ -447,17 +452,14 @@ const styles = StyleSheet.create({
   addressName: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#1D1D1F',
     marginBottom: 4,
   },
   addressText: {
     fontSize: 14,
-    color: '#8E8E93',
     marginBottom: 2,
   },
   defaultBadge: {
     fontSize: 12,
-    color: '#007AFF',
     fontWeight: '500',
     marginTop: 4,
   },
@@ -473,7 +475,6 @@ const styles = StyleSheet.create({
   paymentName: {
     fontSize: 16,
     fontWeight: '500',
-    color: '#1D1D1F',
   },
   shippingInfo: {
     flex: 1,
@@ -481,17 +482,14 @@ const styles = StyleSheet.create({
   shippingName: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#1D1D1F',
     marginBottom: 2,
   },
   shippingTime: {
     fontSize: 14,
-    color: '#8E8E93',
     marginBottom: 2,
   },
   shippingDescription: {
     fontSize: 12,
-    color: '#8E8E93',
   },
   shippingPrice: {
     alignItems: 'flex-end',
@@ -499,20 +497,16 @@ const styles = StyleSheet.create({
   priceText: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#007AFF',
     marginBottom: 4,
   },
   addButton: {
-    backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#007AFF',
     borderStyle: 'dashed',
     borderRadius: 12,
     padding: 16,
     alignItems: 'center',
   },
   addButtonText: {
-    color: '#007AFF',
     fontSize: 16,
     fontWeight: '500',
   },
@@ -522,27 +516,22 @@ const styles = StyleSheet.create({
   },
   promoInput: {
     flex: 1,
-    backgroundColor: '#F2F2F7',
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 12,
     fontSize: 16,
-    color: '#1D1D1F',
   },
   applyButton: {
-    backgroundColor: '#007AFF',
     paddingHorizontal: 20,
     paddingVertical: 12,
     borderRadius: 12,
     justifyContent: 'center',
   },
   applyButtonText: {
-    color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
   },
   summaryCard: {
-    backgroundColor: '#F2F2F7',
     borderRadius: 12,
     padding: 16,
   },
@@ -553,116 +542,41 @@ const styles = StyleSheet.create({
   },
   summaryLabel: {
     fontSize: 16,
-    color: '#1D1D1F',
   },
   summaryValue: {
     fontSize: 16,
-    color: '#1D1D1F',
   },
   discountValue: {
     color: '#34C759',
   },
   totalRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     borderTopWidth: 1,
-    borderTopColor: '#E5E5EA',
     paddingTop: 12,
     marginTop: 8,
-    marginBottom: 0,
   },
   totalLabel: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#1D1D1F',
   },
   totalValue: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#1D1D1F',
-  },
-  originalPrice: {
-    fontSize: 16,
-    color: '#8E8E93',
-    textDecorationLine: 'line-through',
-    marginBottom: 4,
-  },
-  totalContainer: {
-    flex: 1,
-    marginRight: 10,
-  },
-  discountRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 4,
   },
   bottomBar: {
-    backgroundColor: '#FFFFFF',
     paddingHorizontal: 20,
     paddingVertical: 16,
     paddingBottom: 32,
     borderTopWidth: 1,
-    borderTopColor: '#F2F2F7',
   },
   placeOrderButton: {
-    backgroundColor: '#007AFF',
     paddingVertical: 16,
     borderRadius: 12,
     alignItems: 'center',
   },
-  checkoutButton: {
-    backgroundColor: '#007AFF',
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderRadius: 12,
-    justifyContent: 'center',
-  },
-  checkoutButtonText: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: '600',
-  },
   placeOrderText: {
-    color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
-  },
-  gridContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
-    justifyContent: 'space-between',
-  },
-  cartItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 12,
-    backgroundColor: '#F2F2F7',
-    borderRadius: 12,
-    marginBottom: 12,
-  },
-  cartItemImage: {
-    width: 60,
-    height: 60,
-    borderRadius: 8,
-    backgroundColor: '#E5E5EA',
-  },
-  cartItemDetails: {
-    flex: 1,
-    marginLeft: 12,
-    justifyContent: 'center',
-  },
-  cartItemName: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#1D1D1F',
-    marginBottom: 4,
-  },
-  cartItemPrice: {
-    fontSize: 14,
-    color: '#8E8E93',
-  },
-  cartItemTotal: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#1D1D1F',
   },
 });

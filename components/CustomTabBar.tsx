@@ -29,19 +29,21 @@ const CustomTabBar: React.FC<CustomTabBarProps> = ({ state, descriptors, navigat
   }
 
   const isDark = colorScheme === 'dark';
-  const tabBarBackgroundColor = isDark ? '#1C1C1E' : '#FFFFFF';
-  const activeTintColor = isDark ? '#0A84FF' : '#007AFF';
-  const inactiveTintColor = isDark ? '#8E8E93' : '#8E8E93';
+  const tabBarBackgroundColor = isDark ? '#1C1C1E' : '#FFFFFF'; // Keeping this for now as surface might be too plain, but let's check if we should use colors.surface
+  // Actually, let's use the theme colors for better consistency if available, but hardcoded is fine for specific design control.
+  // However, for floating tab bar, we want it to pop.
+  const activeTintColor = colors.primary;
+  const inactiveTintColor = colors.textSecondary;
 
   const tabIcons = {
     index: 'home',
     categories: 'menu',
     cart: 'cart',
     account: 'person',
-  
+
   };
 
-  const getIconName = (routeName: string, focused: boolean) => {
+  const getIconName = (routeName: string, focused: boolean): any => {
     const baseIcon = tabIcons[routeName as keyof typeof tabIcons] || 'help';
     return focused ? baseIcon : `${baseIcon}-outline`;
   };
@@ -90,15 +92,21 @@ const CustomTabBar: React.FC<CustomTabBarProps> = ({ state, descriptors, navigat
 const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
-    height: 80,
-    alignItems: 'flex-end',
+    height: 60,
+    alignItems: 'center',
+    justifyContent: 'space-around',
+    position: 'absolute',
+    bottom: 20,
+    left: 20,
+    right: 20,
+    borderRadius: 30,
     paddingHorizontal: 10,
-    paddingBottom: 10,
-    borderTopWidth: 1,
+    paddingBottom: 0,
+    borderTopWidth: 0,
     elevation: 10,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.1,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
     shadowRadius: 8,
   },
   tab: {
@@ -108,16 +116,17 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   tabLabel: {
-    fontSize: 12,
-    marginTop: 4,
+    fontSize: 10,
+    marginTop: 2,
+    fontWeight: '600',
   },
   cartIconContainer: {
     position: 'relative',
   },
   cartBadge: {
     position: 'absolute',
-    top: -5,
-    right: -5,
+    top: -8,
+    right: -8,
     backgroundColor: '#FF3B30',
     borderRadius: 10,
     minWidth: 16,
@@ -125,6 +134,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 4,
+    borderWidth: 1,
+    borderColor: '#FFFFFF',
   },
   cartBadgeText: {
     color: '#FFFFFF',

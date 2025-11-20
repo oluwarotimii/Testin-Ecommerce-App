@@ -16,15 +16,24 @@ export default function DevToolsScreen() {
       { name: 'Login', path: '/login' },
       { name: 'Register', path: '/register' },
       { name: 'Welcome', path: '/welcome' },
+      { name: 'Splash', path: '/splash' },
     ],
     'Main Screens': [
-      { name: 'Home', path: '/(tabs)/' },
+      { name: 'Home', path: '/(tabs)' },
       { name: 'Categories', path: '/(tabs)/categories' },
       { name: 'Products', path: '/products' },
       { name: 'Cart', path: '/(tabs)/cart' },
       { name: 'Wishlist', path: '/wishlist' },
-      { name: 'Orders', path: '/(tabs)/orders' },
       { name: 'Account', path: '/(tabs)/account' },
+    ],
+    'Account Screens': [
+      { name: 'Orders', path: '/orders' },
+      { name: 'Addresses', path: '/addresses' },
+      { name: 'Payment Methods', path: '/payment-methods' },
+      { name: 'Profile', path: '/profile' },
+      { name: 'Settings', path: '/settings' },
+      { name: 'Notifications', path: '/notifications' },
+      { name: 'Help', path: '/help' },
     ],
     'Product Screens': [
       { name: 'Product Detail Page', path: '/product/1' },
@@ -40,7 +49,7 @@ export default function DevToolsScreen() {
   };
 
   const navigateTo = (path: string) => {
-    router.push(path);
+    router.push(path as any);
   };
 
   return (
@@ -108,7 +117,7 @@ export default function DevToolsScreen() {
       <View style={styles.section}>
         <TouchableOpacity
           style={[styles.resetButton, { backgroundColor: colors.error }]}
-          onPress={() => router.push('/(tabs)/')}
+          onPress={() => router.push('/(tabs)')}
         >
           <Text style={styles.resetButtonText}>Go to Home</Text>
         </TouchableOpacity>
