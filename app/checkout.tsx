@@ -175,7 +175,7 @@ export default function CheckoutScreen() {
             <View style={[styles.itemsContainer, { backgroundColor: colors.surface }]}>
               {cartItems.map((item, index) => (
                 <View key={item.id} style={[styles.cartItem, { borderBottomColor: colors.border, borderBottomWidth: index === cartItems.length - 1 ? 0 : 1 }]}>
-                  <Image source={{ uri: item.image }} style={styles.itemImage} />
+                  <Image source={{ uri: item.image }} style={[styles.itemImage, { backgroundColor: colors.surface }]} />
                   <View style={styles.itemDetails}>
                     <Text style={[styles.itemName, { color: colors.text }]} numberOfLines={2}>{item.title}</Text>
                     <Text style={[styles.itemPrice, { color: colors.primary }]}>{`₦${(typeof item.price === 'number' ? item.price : parseFloat(item.price)).toFixed(2)}`}</Text>
@@ -336,7 +336,7 @@ export default function CheckoutScreen() {
             {orderSummary.discount > 0 && (
               <View style={styles.summaryRow}>
                 <Text style={[styles.summaryLabel, { color: colors.text }]}>Discount</Text>
-                <Text style={[styles.summaryValue, styles.discountValue]}>
+                <Text style={[styles.summaryValue, { color: colors.success }]}>
                   -₦{orderSummary.discount.toFixed(2)}
                 </Text>
               </View>
@@ -410,7 +410,6 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     borderRadius: 8,
-    backgroundColor: '#F2F2F7',
   },
   itemDetails: {
     flex: 1,
@@ -546,9 +545,7 @@ const styles = StyleSheet.create({
   summaryValue: {
     fontSize: 16,
   },
-  discountValue: {
-    color: '#34C759',
-  },
+
   totalRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',

@@ -7,7 +7,7 @@ import { Ionicons } from '@expo/vector-icons';
 export default function HelpScreen() {
   const router = useRouter();
   const colors = useThemeColors();
-  
+
   const faqItems = [
     {
       id: '1',
@@ -32,7 +32,7 @@ export default function HelpScreen() {
     {
       id: '5',
       question: 'How do I contact customer support?',
-      answer: 'You can contact customer support via email at support@techin.com or call us at 1-800-TECHIN-1. Our support team is available 24/7.'
+      answer: 'You can contact customer support via email at support@femtech.com or call us at 1-800-FEMTECH. Our support team is available 24/7.'
     }
   ];
 
@@ -41,15 +41,15 @@ export default function HelpScreen() {
       id: 'email',
       title: 'Email Support',
       icon: 'mail',
-      subtitle: 'support@techin.com',
-      onPress: () => Linking.openURL('mailto:support@techin.com')
+      subtitle: 'support@femtech.com',
+      onPress: () => Linking.openURL('mailto:support@femtech.com')
     },
     {
       id: 'phone',
       title: 'Phone Support',
       icon: 'call',
-      subtitle: '1-800-TECHIN-1',
-      onPress: () => Linking.openURL(`tel:${Platform.OS === 'ios' ? '+' : ''}1800TECHIN1`)
+      subtitle: '1-800-FEMTECH',
+      onPress: () => Linking.openURL(`tel:${Platform.OS === 'ios' ? '+' : ''}1800FEMTECH`)
     },
     {
       id: 'livechat',
@@ -84,9 +84,9 @@ export default function HelpScreen() {
           <Text style={[styles.sectionTitle, { color: colors.text }]}>Contact Us</Text>
           <View style={[styles.menuContainer, { backgroundColor: colors.surface }]}>
             {contactOptions.map((item) => (
-              <TouchableOpacity 
-                key={item.id} 
-                style={[styles.menuItem, { borderBottomColor: colors.border }]} 
+              <TouchableOpacity
+                key={item.id}
+                style={[styles.menuItem, { borderBottomColor: colors.border }]}
                 onPress={item.onPress}
               >
                 <View style={styles.menuItemLeft}>
@@ -109,8 +109,8 @@ export default function HelpScreen() {
           <Text style={[styles.sectionTitle, { color: colors.text }]}>Frequently Asked Questions</Text>
           <View style={[styles.faqContainer, { backgroundColor: colors.surface }]}>
             {faqItems.map((faq) => (
-              <TouchableOpacity 
-                key={faq.id} 
+              <TouchableOpacity
+                key={faq.id}
                 style={[styles.faqItem, { borderBottomColor: colors.border }]}
               >
                 <View style={styles.faqHeader}>
@@ -127,8 +127,8 @@ export default function HelpScreen() {
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: colors.text }]}>Additional Resources</Text>
           <View style={[styles.menuContainer, { backgroundColor: colors.surface }]}>
-            <TouchableOpacity 
-              style={[styles.menuItem, { borderBottomColor: colors.border }]} 
+            <TouchableOpacity
+              style={[styles.menuItem, { borderBottomColor: colors.border }]}
               onPress={() => console.log('Returns pressed')}
             >
               <View style={styles.menuItemLeft}>
@@ -139,9 +139,9 @@ export default function HelpScreen() {
               </View>
               <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
             </TouchableOpacity>
-            
-            <TouchableOpacity 
-              style={[styles.menuItem, { borderBottomColor: colors.border }]} 
+
+            <TouchableOpacity
+              style={[styles.menuItem, { borderBottomColor: colors.border }]}
               onPress={() => console.log('Shipping pressed')}
             >
               <View style={styles.menuItemLeft}>
@@ -152,9 +152,9 @@ export default function HelpScreen() {
               </View>
               <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
             </TouchableOpacity>
-            
-            <TouchableOpacity 
-              style={[styles.menuItem, { borderBottomColor: colors.border }]} 
+
+            <TouchableOpacity
+              style={[styles.menuItem, { borderBottomColor: colors.border }]}
               onPress={() => console.log('Warranty pressed')}
             >
               <View style={styles.menuItemLeft}>

@@ -7,9 +7,27 @@ import { useFrameworkReady } from '@/hooks/useFrameworkReady';
 import notificationService from '@/services/notificationService';
 import updateService from '@/services/updateService';
 import { AuthProvider } from '@/context/AuthContext';
-import { ThemeProvider } from '@/context/ThemeContext';
+import { ThemeProvider, useTheme } from '@/context/ThemeContext';
 import { CartProvider } from '@/context/CartContext';
 import FloatingCartButton from '@/components/FloatingCartButton';
+
+function AppContent() {
+  const { colorScheme } = useTheme();
+
+  return (
+    <AuthProvider>
+      <CartProvider>
+        <View style={{ flex: 1 }}>
+          <Stack screenOptions={{ headerShown: false }}>
+            <Stack.Screen name="+not-found" />
+          </Stack>
+          <FloatingCartButton />
+          <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
+        </View>
+      </CartProvider>
+    </AuthProvider>
+  );
+}
 
 export default function RootLayout() {
   useFrameworkReady();
@@ -24,17 +42,7 @@ export default function RootLayout() {
 
   return (
     <ThemeProvider>
-      <AuthProvider>
-        <CartProvider>
-          <View style={{ flex: 1 }}>
-            <Stack screenOptions={{ headerShown: false }}>
-              <Stack.Screen name="+not-found" />
-            </Stack>
-            <FloatingCartButton />
-            <StatusBar style="auto" />
-          </View>
-        </CartProvider>
-      </AuthProvider>
+      <AppContent />
     </ThemeProvider>
   );
 }

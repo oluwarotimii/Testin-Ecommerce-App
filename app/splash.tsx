@@ -2,10 +2,12 @@ import { View, Text, StyleSheet, Image, ActivityIndicator } from 'react-native';
 import { useEffect } from 'react';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
+import { useThemeColors } from '@/hooks/useColorScheme';
 
 export default function SplashScreen() {
   const router = useRouter();
-  const { apiService, isAuthenticated, loadingAuth } = useAuth();
+  const { isAuthenticated, loadingAuth } = useAuth();
+  const colors = useThemeColors();
 
   useEffect(() => {
     const checkSessionAndNavigate = async () => {
@@ -31,17 +33,20 @@ export default function SplashScreen() {
   }, [isAuthenticated, loadingAuth]);
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={styles.logoContainer}>
-        <View style={styles.logoPlaceholder}>
-          <Text style={styles.logoText}>Techin</Text>
-        </View>
-        <Text style={styles.tagline}>Your Tech Shopping Destination</Text>
+        <Image
+          source={require('@/assets/images/icon.png')}
+          style={styles.logo}
+          resizeMode="contain"
+        />
+        <Text style={[styles.appName, { color: colors.text }]}>Femtech</Text>
+        <Text style={[styles.tagline, { color: colors.textSecondary }]}>Your Tech Shopping Destination</Text>
       </View>
 
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#007AFF" />
-        <Text style={styles.loadingText}>Loading...</Text>
+        <ActivityIndicator size="large" color={colors.primary} />
+        <Text style={[styles.loadingText, { color: colors.textSecondary }]}>Loading...</Text>
       </View>
     </View>
   );
@@ -50,7 +55,6 @@ export default function SplashScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 40,
@@ -59,23 +63,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 80,
   },
-  logoPlaceholder: {
+  logo: {
     width: 120,
     height: 120,
-    backgroundColor: '#007AFF',
-    borderRadius: 60,
-    justifyContent: 'center',
-    alignItems: 'center',
     marginBottom: 20,
   },
-  logoText: {
-    color: '#FFFFFF',
-    fontSize: 18,
+  appName: {
+    fontSize: 32,
     fontWeight: 'bold',
+    marginBottom: 8,
   },
   tagline: {
     fontSize: 16,
-    color: '#8E8E93',
     textAlign: 'center',
   },
   loadingContainer: {
@@ -84,6 +83,5 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 16,
     fontSize: 14,
-    color: '#8E8E93',
   },
 });

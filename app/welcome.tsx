@@ -1,44 +1,50 @@
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { useRouter } from 'expo-router';
-import { MaterialIcons, FontAwesome, Ionicons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
+import { useThemeColors } from '@/hooks/useColorScheme';
 
 export default function WelcomeScreen() {
   const router = useRouter();
+  const colors = useThemeColors();
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={styles.header}>
         <View style={styles.iconContainer}>
-          <Ionicons name="cart" size={80} color="#007AFF" />
+          <Image
+            source={require('@/assets/images/icon.png')}
+            style={styles.appIcon}
+            resizeMode="contain"
+          />
         </View>
-        <Text style={styles.title}>Welcome to Techin</Text>
-        <Text style={styles.subtitle}>
+        <Text style={[styles.title, { color: colors.text }]}>Welcome to Femtech</Text>
+        <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
           Discover cutting-edge technology and enjoy seamless shopping experience
         </Text>
       </View>
 
       <View style={styles.buttonContainer}>
-        <TouchableOpacity 
-          style={styles.primaryButton}
+        <TouchableOpacity
+          style={[styles.primaryButton, { backgroundColor: colors.primary }]}
           onPress={() => router.push('/login')}
         >
-          <Ionicons name="person" size={20} color="#FFFFFF" />
-          <Text style={styles.primaryButtonText}>Login</Text>
+          <Ionicons name="person" size={20} color={colors.white} />
+          <Text style={[styles.primaryButtonText, { color: colors.white }]}>Login</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity 
-          style={styles.secondaryButton}
+        <TouchableOpacity
+          style={[styles.secondaryButton, { backgroundColor: colors.surface }]}
           onPress={() => router.push('/register')}
         >
-          <Ionicons name="person-add" size={20} color="#007AFF" />
-          <Text style={styles.secondaryButtonText}>Register</Text>
+          <Ionicons name="person-add" size={20} color={colors.primary} />
+          <Text style={[styles.secondaryButtonText, { color: colors.primary }]}>Register</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.guestButton}
           onPress={() => router.push('/(tabs)')}
         >
-          <Text style={styles.guestButtonText}>Continue as Guest</Text>
+          <Text style={[styles.guestButtonText, { color: colors.textSecondary }]}>Continue as Guest</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -48,7 +54,6 @@ export default function WelcomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
     paddingHorizontal: 32,
     justifyContent: 'center',
   },
@@ -58,17 +63,23 @@ const styles = StyleSheet.create({
   },
   iconContainer: {
     marginBottom: 24,
+    width: 120,
+    height: 120,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  appIcon: {
+    width: '100%',
+    height: '100%',
   },
   title: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#1D1D1F',
     marginBottom: 12,
     textAlign: 'center',
   },
   subtitle: {
     fontSize: 16,
-    color: '#8E8E93',
     textAlign: 'center',
     lineHeight: 24,
   },
@@ -76,7 +87,6 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   primaryButton: {
-    backgroundColor: '#007AFF',
     paddingVertical: 16,
     borderRadius: 12,
     flexDirection: 'row',
@@ -85,12 +95,10 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   primaryButtonText: {
-    color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
   },
   secondaryButton: {
-    backgroundColor: '#F2F2F7',
     paddingVertical: 16,
     borderRadius: 12,
     flexDirection: 'row',
@@ -99,7 +107,6 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   secondaryButtonText: {
-    color: '#007AFF',
     fontSize: 16,
     fontWeight: '600',
   },
@@ -108,7 +115,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   guestButtonText: {
-    color: '#8E8E93',
     fontSize: 16,
     fontWeight: '500',
   },

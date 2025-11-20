@@ -3,9 +3,9 @@ import { useRouter } from 'expo-router';
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useThemeColors } from '@/hooks/useColorScheme';
-import { MaterialIcons, FontAwesome, Ionicons } from '@expo/vector-icons';
-import SkeletonOrderItem from '@/components/SkeletonOrderItem';
+import { Ionicons } from '@expo/vector-icons';
 import SkeletonLoader from '@/components/SkeletonLoader';
+
 
 export default function OrdersScreen() {
   const router = useRouter();
@@ -34,55 +34,31 @@ export default function OrdersScreen() {
     fetchOrders();
   }, [apiService]);
 
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'delivered':
-        return <Ionicons name="checkmark-circle" size={20} color="#34C759" />;
-      case 'shipped':
-        return <Ionicons name="boat" size={20} color="#007AFF" />;
-      case 'processing':
-        return <Ionicons name="time" size={20} color="#FF9500" />;
-      case 'cancelled':
-        return <Ionicons name="close-circle" size={20} color="#FF3B30" />;
-      default:
-        return <Ionicons name="cube" size={20} color="#8E8E93" />;
-    }
-  };
-
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'delivered':
-        return '#34C759';
-      case 'shipped':
-        return '#007AFF';
-      case 'processing':
-        return '#FF9500';
-      case 'cancelled':
-        return '#FF3B30';
-      default:
-        return '#8E8E93';
+      case 'delivered': return colors.success;
+      case 'shipped': return colors.info;
+      case 'processing': return colors.warning;
+      case 'cancelled': return colors.error;
+      default: return colors.textSecondary;
     }
-  };
-
-  const getStatusText = (status: string) => {
-    return status.charAt(0).toUpperCase() + status.slice(1);
   };
 
   if (loading) {
     return (
       <View style={[styles.container, { backgroundColor: colors.background }]}>
-        {/* Header */}
         <View style={styles.header}>
-          <Text style={[styles.title, { color: colors.text }]}>Order History</Text>
-          <SkeletonLoader width={80} height={16} />
+          <Text style={[styles.title, { color: colors.text }]}>My Orders</Text>
         </View>
-
-        {/* Orders List */}
-        <ScrollView style={[styles.content, { backgroundColor: colors.background }]} showsVerticalScrollIndicator={false}>
-          <SkeletonOrderItem />
-          <SkeletonOrderItem />
-          <SkeletonOrderItem />
-        </ScrollView>
+        <View style={styles.content}>
+          {[1, 2, 3].map((i) => (
+            <View key={i} style={[styles.skeletonCard, { backgroundColor: colors.surface }]}>
+              <SkeletonLoader width={100} height={20} marginBottom={10} />
+              <SkeletonLoader width={200} height={16} marginBottom={10} />
+              <SkeletonLoader width={80} height={16} />
+            </View>
+          ))}
+        </View>
       </View>
     );
   }
@@ -90,9 +66,11 @@ export default function OrdersScreen() {
   if (orders.length === 0) {
     return (
       <View style={[styles.emptyContainer, { backgroundColor: colors.background }]}>
-        <Ionicons name="cube-outline" size={80} color={colors.textSecondary} />
+        <Ionicons name="bag-handle-outline" size={80} color={colors.textSecondary} />
         <Text style={[styles.emptyTitle, { color: colors.text }]}>No orders yet</Text>
-        <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>Your order history will appear here</Text>
+        <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>
+          Start shopping to see your orders here.
+        </Text>
         <TouchableOpacity
           style={[styles.shopButton, { backgroundColor: colors.primary }]}
           onPress={() => router.push('/(tabs)')}
@@ -105,53 +83,43 @@ export default function OrdersScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      {/* Header */}
       <View style={styles.header}>
-        <Text style={[styles.title, { color: colors.text }]}>Order History</Text>
-        <Text style={[styles.subtitle, { color: colors.textSecondary }]}>{orders.length} orders</Text>
+        <Text style={[styles.title, { color: colors.text }]}>My Orders</Text>
       </View>
 
-      {/* Orders List */}
-      <ScrollView style={[styles.content, { backgroundColor: colors.background }]} showsVerticalScrollIndicator={false}>
+      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {orders.map((order) => (
-          <TouchableOpacity 
-            key={order.order_id} 
-            style={styles.orderCard}
+          <TouchableOpacity
+            key={order.order_id}
+            style={[styles.orderCard, { backgroundColor: colors.surface }]}
             onPress={() => router.push(`/order/${order.order_id}`)}
           >
-            <View style={[styles.orderHeader, { borderBottomColor: colors.border }]}>
-              <View style={styles.orderInfo}>
-                <Text style={[styles.orderId, { color: colors.text }]}>Order ID: {order.order_id}</Text>
-                <Text style={[styles.orderDate, { color: colors.textSecondary }]}>{new Date(order.date_added).toLocaleDateString()}</Text>
+            <View style={styles.cardHeader}>
+              <View>
+                <Text style={[styles.orderId, { color: colors.text }]}>Order #{order.order_id}</Text>
+                <Text style={[styles.orderDate, { color: colors.textSecondary }]}>
+                  {new Date(order.date_added).toLocaleDateString()}
+                </Text>
               </View>
               <View style={[styles.statusBadge, { backgroundColor: getStatusColor(order.status) + '20' }]}>
-                {getStatusIcon(order.status)}
                 <Text style={[styles.statusText, { color: getStatusColor(order.status) }]}>
-                  {getStatusText(order.status)}
+                  {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
                 </Text>
               </View>
             </View>
 
-            <View style={styles.orderDetails}>
-              <View style={styles.orderMeta}>
-                <Text style={[styles.itemCount, { color: colors.textSecondary }]}>{order.products ? order.products.length : 0} item{order.products && order.products.length > 1 ? 's' : ''}</Text>
-                <Text style={[styles.orderTotal, { color: colors.text }]}>₦{parseFloat(order.total).toFixed(2)}</Text>
-              </View>
-              
-              {/* Tracking number is not directly available in /orders API response, would need /order_info */}
-              {/* {order.trackingNumber && (
-                <View style={styles.trackingInfo}>
-                  <Text style={styles.trackingLabel}>Tracking: </Text>
-                  <Text style={styles.trackingNumber}>{order.trackingNumber}</Text>
-                </View>
-              )} */}
-            </View>
+            <View style={[styles.divider, { backgroundColor: colors.border }]} />
 
-            <View style={styles.orderActions}>
-              {/* Action buttons would need more complex logic based on API capabilities */}
-              <TouchableOpacity style={styles.viewButton} onPress={() => router.push(`/order/${order.order_id}`)}>
-                <Text style={styles.viewButtonText}>View Details</Text>
-              </TouchableOpacity>
+            <View style={styles.cardFooter}>
+              <Text style={[styles.itemCount, { color: colors.textSecondary }]}>
+                {order.products ? order.products.length : 0} items
+              </Text>
+              <View style={styles.totalContainer}>
+                <Text style={[styles.totalLabel, { color: colors.textSecondary }]}>Total: </Text>
+                <Text style={[styles.totalAmount, { color: colors.primary }]}>
+                  ₦{parseFloat(order.total).toFixed(2)}
+                </Text>
+              </View>
             </View>
           </TouchableOpacity>
         ))}
@@ -163,7 +131,6 @@ export default function OrdersScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
   },
   header: {
     paddingHorizontal: 20,
@@ -173,147 +140,95 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#1D1D1F',
-  },
-  subtitle: {
-    fontSize: 14,
-    color: '#8E8E93',
-    marginTop: 4,
   },
   content: {
     flex: 1,
     paddingHorizontal: 20,
   },
   orderCard: {
-    backgroundColor: '#F2F2F7',
     borderRadius: 16,
     padding: 16,
     marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
   },
-  orderHeader: {
+  cardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: 12,
-  },
-  orderInfo: {
-    flex: 1,
   },
   orderId: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#1D1D1F',
+    marginBottom: 4,
   },
   orderDate: {
     fontSize: 14,
-    color: '#8E8E93',
-    marginTop: 2,
   },
   statusBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
-    gap: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
   },
   statusText: {
     fontSize: 12,
     fontWeight: '600',
   },
-  orderDetails: {
-    marginBottom: 16,
+  divider: {
+    height: 1,
+    marginVertical: 12,
   },
-  orderMeta: {
+  cardFooter: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
   },
   itemCount: {
     fontSize: 14,
-    color: '#8E8E93',
   },
-  orderTotal: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#1D1D1F',
-  },
-  trackingInfo: {
+  totalContainer: {
     flexDirection: 'row',
     alignItems: 'center',
   },
-  trackingLabel: {
+  totalLabel: {
     fontSize: 14,
-    color: '#8E8E93',
   },
-  trackingNumber: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#007AFF',
-  },
-  orderActions: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  actionButton: {
-    backgroundColor: '#007AFF',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 8,
-  },
-  actionButtonText: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  cancelButton: {
-    backgroundColor: '#FF3B30',
-  },
-  cancelButtonText: {
-    color: '#FFFFFF',
-  },
-  viewButton: {
-    backgroundColor: '#FFFFFF',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#E5E5EA',
-  },
-  viewButtonText: {
-    color: '#007AFF',
-    fontSize: 14,
-    fontWeight: '500',
+  totalAmount: {
+    fontSize: 16,
+    fontWeight: 'bold',
   },
   emptyContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 40,
+    padding: 40,
   },
   emptyTitle: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: 'bold',
-    color: '#1D1D1F',
-    marginTop: 24,
+    marginTop: 20,
     marginBottom: 8,
   },
   emptySubtitle: {
     fontSize: 16,
-    color: '#8E8E93',
     textAlign: 'center',
     marginBottom: 32,
   },
   shopButton: {
-    backgroundColor: '#007AFF',
     paddingHorizontal: 32,
     paddingVertical: 16,
     borderRadius: 12,
   },
   shopButtonText: {
-    color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
+  },
+  skeletonCard: {
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 16,
   },
 });

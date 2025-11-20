@@ -7,10 +7,10 @@ import { Ionicons } from '@expo/vector-icons';
 
 export default function OrderDetailsScreen() {
   const router = useRouter();
-  const { orderId } = useLocalSearchParams(); // Get order ID from route params
+  const { orderId } = useLocalSearchParams();
   const colors = useThemeColors();
   const { apiService } = useAuth();
-  
+
   const [order, setOrder] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -53,54 +53,30 @@ export default function OrderDetailsScreen() {
   };
 
   useEffect(() => {
-    // In a real implementation, fetch order details from API
-    // const fetchOrderDetails = async () => {
-    //   try {
-    //     setLoading(true);
-    //     const orderData = await apiService.getOrderInfo(Number(orderId));
-    //     setOrder(orderData);
-    //   } catch (err) {
-    //     setError('Failed to load order details');
-    //     console.error('Error fetching order:', err);
-    //   } finally {
-    //     setLoading(false);
-    //   }
-    // };
-    
-    // For now, use mock data
+    // Simulate API call
     setTimeout(() => {
       setOrder(mockOrder);
       setLoading(false);
     }, 500);
-  }, [orderId, apiService]);
+  }, [orderId]);
 
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
-      case 'delivered':
-        return '#34C759';
-      case 'shipped':
-        return '#007AFF';
-      case 'processing':
-        return '#FF9500';
-      case 'cancelled':
-        return '#FF3B30';
-      default:
-        return '#8E8E93';
+      case 'delivered': return colors.success;
+      case 'shipped': return colors.info;
+      case 'processing': return colors.warning;
+      case 'cancelled': return colors.error;
+      default: return colors.textSecondary;
     }
   };
 
   const getStatusIcon = (status: string) => {
     switch (status.toLowerCase()) {
-      case 'delivered':
-        return 'checkmark-circle';
-      case 'shipped':
-        return 'boat';
-      case 'processing':
-        return 'time';
-      case 'cancelled':
-        return 'close-circle';
-      default:
-        return 'cube';
+      case 'delivered': return 'checkmark-circle';
+      case 'shipped': return 'boat';
+      case 'processing': return 'time';
+      case 'cancelled': return 'close-circle';
+      default: return 'cube';
     }
   };
 
@@ -112,25 +88,11 @@ export default function OrderDetailsScreen() {
     );
   }
 
-  if (error) {
-    return (
-      <View style={[styles.container, { backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center' }]}>
-        <Text style={{ color: colors.text }}>Error: {error}</Text>
-        <TouchableOpacity 
-          style={[styles.retryButton, { backgroundColor: colors.primary }]}
-          onPress={() => window.location.reload()}
-        >
-          <Text style={{ color: colors.white }}>Retry</Text>
-        </TouchableOpacity>
-      </View>
-    );
-  }
-
   if (!order) {
     return (
       <View style={[styles.container, { backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center' }]}>
         <Text style={{ color: colors.text }}>Order not found</Text>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={[styles.retryButton, { backgroundColor: colors.primary }]}
           onPress={() => router.back()}
         >
@@ -141,110 +103,118 @@ export default function OrderDetailsScreen() {
   }
 
   return (
-    <ScrollView style={[styles.container, { backgroundColor: colors.background }]} showsVerticalScrollIndicator={false}>
-      {/* Header */}
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={styles.header}>
-        <View style={styles.headerLeft}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={24} color={colors.text} />
-          </TouchableOpacity>
-          <Text style={[styles.title, { color: colors.text }]}>Order Details</Text>
-        </View>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+          <Ionicons name="arrow-back" size={24} color={colors.text} />
+        </TouchableOpacity>
+        <Text style={[styles.title, { color: colors.text }]}>Order Details</Text>
+        <View style={{ width: 40 }} />
       </View>
 
-      {/* Order Status */}
-      <View style={[styles.statusCard, { backgroundColor: colors.surface }]}>
-        <View style={styles.statusHeader}>
-          <View style={styles.statusIconContainer}>
-            <Ionicons name={getStatusIcon(order.status)} size={24} color={getStatusColor(order.status)} />
-          </View>
-          <View style={styles.statusTextContainer}>
-            <Text style={[styles.statusText, { color: getStatusColor(order.status) }]}>{order.status.charAt(0).toUpperCase() + order.status.slice(1)}</Text>
-            <Text style={[styles.statusSubtitle, { color: colors.textSecondary }]}>
-              Order #{order.order_id} • {new Date(order.date).toLocaleDateString()}
-            </Text>
-          </View>
-        </View>
-      </View>
-
-      {/* Order Items */}
-      <View style={styles.section}>
-        <Text style={[styles.sectionTitle, { color: colors.text }]}>Order Items</Text>
-        <View style={styles.itemsContainer}>
-          {order.items.map((item: any) => (
-            <View key={item.id} style={[styles.item, { borderBottomColor: colors.border }]}>
-              <Image source={{ uri: item.image }} style={styles.itemImage} />
-              <View style={styles.itemDetails}>
-                <Text style={[styles.itemName, { color: colors.text }]} numberOfLines={2}>{item.title}</Text>
-                <Text style={[styles.itemPrice, { color: colors.text }]}>₦{item.price.toFixed(2)}</Text>
-                <Text style={[styles.itemQuantity, { color: colors.textSecondary }]}>Qty: {item.quantity}</Text>
-              </View>
-              <Text style={[styles.itemSubtotal, { color: colors.text }]}>₦{(item.price * item.quantity).toFixed(2)}</Text>
+      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        {/* Status Card */}
+        <View style={[styles.card, { backgroundColor: colors.surface }]}>
+          <View style={styles.statusHeader}>
+            <View style={[styles.statusIconContainer, { backgroundColor: getStatusColor(order.status) + '20' }]}>
+              <Ionicons name={getStatusIcon(order.status) as any} size={24} color={getStatusColor(order.status)} />
             </View>
-          ))}
-        </View>
-      </View>
-
-      {/* Order Summary */}
-      <View style={styles.section}>
-        <Text style={[styles.sectionTitle, { color: colors.text }]}>Order Summary</Text>
-        <View style={[styles.summary, { backgroundColor: colors.surface }]}>
-          <View style={styles.summaryRow}>
-            <Text style={[styles.summaryLabel, { color: colors.text }]}>Subtotal</Text>
-            <Text style={[styles.summaryValue, { color: colors.text }]}>₦{order.subtotal.toFixed(2)}</Text>
-          </View>
-          <View style={styles.summaryRow}>
-            <Text style={[styles.summaryLabel, { color: colors.text }]}>Shipping</Text>
-            <Text style={[styles.summaryValue, { color: colors.text }]}>₦{order.shipping.toFixed(2)}</Text>
-          </View>
-          <View style={styles.summaryRow}>
-            <Text style={[styles.summaryLabel, { color: colors.text }]}>Tax</Text>
-            <Text style={[styles.summaryValue, { color: colors.text }]}>₦{order.tax.toFixed(2)}</Text>
-          </View>
-          <View style={[styles.summaryRow, styles.totalRow, { borderTopColor: colors.border }]}>
-            <Text style={[styles.totalLabel, { color: colors.text }]}>Total</Text>
-            <Text style={[styles.totalValue, { color: colors.text }]}>₦{order.total.toFixed(2)}</Text>
+            <View>
+              <Text style={[styles.statusText, { color: getStatusColor(order.status) }]}>
+                {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+              </Text>
+              <Text style={[styles.statusDate, { color: colors.textSecondary }]}>
+                {new Date(order.date).toLocaleDateString()} • {new Date(order.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+              </Text>
+            </View>
           </View>
         </View>
-      </View>
 
-      {/* Shipping Details */}
-      <View style={styles.section}>
-        <Text style={[styles.sectionTitle, { color: colors.text }]}>Shipping Information</Text>
-        <View style={[styles.shippingInfo, { backgroundColor: colors.surface }]}>
-          <View style={styles.detailRow}>
-            <Ionicons name="location" size={16} color={colors.textSecondary} />
-            <Text style={[styles.detailText, { color: colors.text }]}>
-              {order.shipping_address.name},{"\n"}
-              {order.shipping_address.address},{"\n"}
-              {order.shipping_address.city}, {order.shipping_address.state} {order.shipping_address.zip_code},{"\n"}
-              {order.shipping_address.country}
-            </Text>
+        {/* Items */}
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>Items</Text>
+          <View style={[styles.card, { backgroundColor: colors.surface }]}>
+            {order.items.map((item: any, index: number) => (
+              <View key={item.id}>
+                <View style={styles.itemRow}>
+                  <Image source={{ uri: item.image }} style={[styles.itemImage, { backgroundColor: colors.border }]} />
+                  <View style={styles.itemInfo}>
+                    <Text style={[styles.itemTitle, { color: colors.text }]} numberOfLines={2}>{item.title}</Text>
+                    <Text style={[styles.itemMeta, { color: colors.textSecondary }]}>
+                      Qty: {item.quantity}
+                    </Text>
+                  </View>
+                  <Text style={[styles.itemPrice, { color: colors.text }]}>
+                    ₦{(item.price * item.quantity).toFixed(2)}
+                  </Text>
+                </View>
+                {index < order.items.length - 1 && (
+                  <View style={[styles.divider, { backgroundColor: colors.border }]} />
+                )}
+              </View>
+            ))}
           </View>
         </View>
-      </View>
 
-      {/* Payment Method */}
-      <View style={styles.section}>
-        <Text style={[styles.sectionTitle, { color: colors.text }]}>Payment Method</Text>
-        <View style={[styles.paymentInfo, { backgroundColor: colors.surface }]}>
-          <View style={styles.detailRow}>
-            <Ionicons name="card" size={16} color={colors.textSecondary} />
-            <Text style={[styles.detailText, { color: colors.text }]}>{order.payment_method}</Text>
+        {/* Order Summary */}
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>Summary</Text>
+          <View style={[styles.card, { backgroundColor: colors.surface }]}>
+            <View style={styles.summaryRow}>
+              <Text style={[styles.summaryLabel, { color: colors.textSecondary }]}>Subtotal</Text>
+              <Text style={[styles.summaryValue, { color: colors.text }]}>₦{order.subtotal.toFixed(2)}</Text>
+            </View>
+            <View style={styles.summaryRow}>
+              <Text style={[styles.summaryLabel, { color: colors.textSecondary }]}>Shipping</Text>
+              <Text style={[styles.summaryValue, { color: colors.text }]}>₦{order.shipping.toFixed(2)}</Text>
+            </View>
+            <View style={styles.summaryRow}>
+              <Text style={[styles.summaryLabel, { color: colors.textSecondary }]}>Tax</Text>
+              <Text style={[styles.summaryValue, { color: colors.text }]}>₦{order.tax.toFixed(2)}</Text>
+            </View>
+            <View style={[styles.divider, { backgroundColor: colors.border }]} />
+            <View style={styles.summaryRow}>
+              <Text style={[styles.totalLabel, { color: colors.text }]}>Total</Text>
+              <Text style={[styles.totalValue, { color: colors.primary }]}>₦{order.total.toFixed(2)}</Text>
+            </View>
           </View>
         </View>
-      </View>
 
-      {/* Action Buttons */}
-      <View style={styles.actionButtons}>
-        <TouchableOpacity style={[styles.button, styles.outlineButton, { borderColor: colors.border }]}>
-          <Text style={[styles.outlineButtonText, { color: colors.text }]}>Contact Support</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={[styles.button, { backgroundColor: colors.primary }]}>
-          <Text style={[styles.buttonText, { color: colors.white }]}>Track Order</Text>
-        </TouchableOpacity>
-      </View>
-    </ScrollView>
+        {/* Shipping Info */}
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>Shipping Details</Text>
+          <View style={[styles.card, { backgroundColor: colors.surface }]}>
+            <View style={styles.infoRow}>
+              <Ionicons name="location-outline" size={20} color={colors.textSecondary} style={styles.infoIcon} />
+              <View>
+                <Text style={[styles.infoTitle, { color: colors.text }]}>{order.shipping_address.name}</Text>
+                <Text style={[styles.infoText, { color: colors.textSecondary }]}>
+                  {order.shipping_address.address}
+                </Text>
+                <Text style={[styles.infoText, { color: colors.textSecondary }]}>
+                  {order.shipping_address.city}, {order.shipping_address.state} {order.shipping_address.zip_code}
+                </Text>
+                <Text style={[styles.infoText, { color: colors.textSecondary }]}>
+                  {order.shipping_address.country}
+                </Text>
+              </View>
+            </View>
+          </View>
+        </View>
+
+        {/* Actions */}
+        <View style={styles.actionButtons}>
+          <TouchableOpacity style={[styles.outlineButton, { borderColor: colors.border }]}>
+            <Text style={[styles.outlineButtonText, { color: colors.text }]}>Contact Support</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={[styles.primaryButton, { backgroundColor: colors.primary }]}>
+            <Text style={[styles.primaryButtonText, { color: colors.white }]}>Track Order</Text>
+          </TouchableOpacity>
+        </View>
+
+        <View style={{ height: 40 }} />
+      </ScrollView>
+    </View>
   );
 }
 
@@ -254,167 +224,155 @@ const styles = StyleSheet.create({
   },
   header: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: 20,
     paddingTop: 60,
     paddingBottom: 20,
   },
-  headerLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
   backButton: {
-    padding: 8,
-    marginRight: 10,
+    padding: 4,
   },
   title: {
-    fontSize: 28,
+    fontSize: 20,
     fontWeight: 'bold',
   },
-  statusCard: {
-    marginHorizontal: 20,
-    marginBottom: 20,
-    borderRadius: 12,
+  content: {
+    flex: 1,
+    paddingHorizontal: 20,
+  },
+  card: {
+    borderRadius: 16,
     padding: 16,
+    marginBottom: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
   },
   statusHeader: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   statusIconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#F2F2F7',
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 12,
+    marginRight: 16,
   },
-  statusTextContainer: {},
   statusText: {
     fontSize: 18,
     fontWeight: 'bold',
+    marginBottom: 4,
   },
-  statusSubtitle: {
+  statusDate: {
     fontSize: 14,
   },
   section: {
-    marginBottom: 20,
-    marginHorizontal: 20,
+    marginBottom: 8,
   },
   sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
+    fontSize: 16,
+    fontWeight: '600',
     marginBottom: 12,
+    marginLeft: 4,
   },
-  itemsContainer: {
-    backgroundColor: '#F2F2F7',
-    borderRadius: 12,
-    overflow: 'hidden',
-  },
-  item: {
+  itemRow: {
     flexDirection: 'row',
-    padding: 16,
     alignItems: 'center',
-    borderBottomWidth: 1,
+    paddingVertical: 8,
   },
   itemImage: {
-    width: 60,
-    height: 60,
+    width: 50,
+    height: 50,
     borderRadius: 8,
-    backgroundColor: '#E5E5EA',
-    marginRight: 16,
+    marginRight: 12,
   },
-  itemDetails: {
+  itemInfo: {
     flex: 1,
+    marginRight: 12,
   },
-  itemName: {
-    fontSize: 16,
+  itemTitle: {
+    fontSize: 14,
     fontWeight: '500',
     marginBottom: 4,
   },
+  itemMeta: {
+    fontSize: 12,
+  },
   itemPrice: {
     fontSize: 14,
-    fontWeight: '500',
-    marginBottom: 2,
+    fontWeight: '600',
   },
-  itemQuantity: {
-    fontSize: 12,
-    color: '#8E8E93',
-  },
-  itemSubtotal: {
-    fontSize: 14,
-    fontWeight: 'bold',
-  },
-  summary: {
-    borderRadius: 12,
-    padding: 16,
+  divider: {
+    height: 1,
+    marginVertical: 12,
   },
   summaryRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingVertical: 8,
-  },
-  totalRow: {
-    borderTopWidth: 1,
-    paddingTop: 12,
-    marginTop: 8,
-    marginBottom: 0,
+    marginBottom: 8,
   },
   summaryLabel: {
-    fontSize: 16,
+    fontSize: 14,
   },
   summaryValue: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '500',
   },
   totalLabel: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: 'bold',
   },
   totalValue: {
     fontSize: 18,
     fontWeight: 'bold',
   },
-  shippingInfo: {
-    borderRadius: 12,
-    padding: 16,
-  },
-  paymentInfo: {
-    borderRadius: 12,
-    padding: 16,
-  },
-  detailRow: {
+  infoRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
   },
-  detailText: {
+  infoIcon: {
+    marginTop: 2,
+    marginRight: 12,
+  },
+  infoTitle: {
     fontSize: 16,
-    marginLeft: 12,
-    flex: 1,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  infoText: {
+    fontSize: 14,
+    lineHeight: 20,
   },
   actionButtons: {
     flexDirection: 'row',
-    paddingHorizontal: 20,
-    paddingBottom: 34,
     gap: 12,
+    marginTop: 8,
   },
-  button: {
+  outlineButton: {
+    flex: 1,
+    paddingVertical: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  outlineButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  primaryButton: {
     flex: 1,
     paddingVertical: 16,
     borderRadius: 12,
     alignItems: 'center',
+    justifyContent: 'center',
   },
-  outlineButton: {
-    backgroundColor: 'transparent',
-    borderWidth: 1,
-  },
-  buttonText: {
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  outlineButtonText: {
+  primaryButtonText: {
     fontSize: 16,
     fontWeight: '600',
   },

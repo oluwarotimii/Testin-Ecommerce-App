@@ -174,7 +174,7 @@ export default function ProductDetailScreen() {
             <Ionicons
               name={isInWishlist ? "heart" : "heart-outline"}
               size={24}
-              color={isInWishlist ? colors.error : colors.text}
+              color={isInWishlist ? "#FF3B30" : colors.text}
             />
           </TouchableOpacity>
         </View>

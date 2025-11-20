@@ -63,7 +63,7 @@ export default function DevToolsScreen() {
 
       <View style={styles.section}>
         <TouchableOpacity
-          style={styles.themeToggle}
+          style={[styles.themeToggle, { backgroundColor: colors.surface }]}
           onPress={toggleColorScheme}
         >
           <Text style={[styles.themeToggleText, { color: colors.text }]}>
@@ -119,7 +119,7 @@ export default function DevToolsScreen() {
           style={[styles.resetButton, { backgroundColor: colors.error }]}
           onPress={() => router.push('/(tabs)')}
         >
-          <Text style={styles.resetButtonText}>Go to Home</Text>
+          <Text style={[styles.resetButtonText, { color: colors.white }]}>Go to Home</Text>
         </TouchableOpacity>
       </View>
     </ScrollView>
@@ -150,7 +150,6 @@ const styles = StyleSheet.create({
   themeToggle: {
     padding: 16,
     borderRadius: 12,
-    backgroundColor: '#F2F2F7',
     alignItems: 'center',
   },
   themeToggleText: {
@@ -193,7 +192,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   resetButtonText: {
-    color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
   },

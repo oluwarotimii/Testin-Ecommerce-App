@@ -1,5 +1,5 @@
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, TextInput, ActivityIndicator } from 'react-native';
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
 import { useCart } from '@/context/CartContext';
@@ -25,6 +25,17 @@ export default function ProductsScreen() {
     maxPrice: 1000,
     sortBy: 'newest',
   });
+  const [wishlist, setWishlist] = useState<number[]>([]);
+
+  const fetchWishlist = useCallback(async () => {
+    if (!apiService) return;
+    try {
+      const wishlistItems = await apiService.getWishlist();
+      setWishlist(wishlistItems.map((item: any) => item.id));
+    } catch (error) {
+      console.error('Error fetching wishlist:', error);
+    }
+  }, [apiService]);
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -41,7 +52,37 @@ export default function ProductsScreen() {
     };
 
     fetchProducts();
-  }, [apiService]);
+    fetchWishlist();
+  }, [apiService, fetchWishlist]);
+
+  const toggleWishlist = async (productId: number) => {
+    if (!apiService) return;
+    
+    const isInWishlist = wishlist.includes(productId);
+    
+    // Optimistic update
+    if (isInWishlist) {
+      setWishlist(prev => prev.filter(id => id !== productId));
+    } else {
+      setWishlist(prev => [...prev, productId]);
+    }
+
+    try {
+      if (isInWishlist) {
+        await apiService.removeFromWishlist(productId);
+      } else {
+        await apiService.addToWishlist(productId);
+      }
+    } catch (error) {
+      console.error('Wishlist toggle error:', error);
+      // Revert on error
+      if (isInWishlist) {
+        setWishlist(prev => [...prev, productId]);
+      } else {
+        setWishlist(prev => prev.filter(id => id !== productId));
+      }
+    }
+  };
 
   const filteredProducts = useMemo(() => {
     let filtered = products.filter(product =>
@@ -88,10 +129,28 @@ export default function ProductsScreen() {
       {filteredProducts.map((product) => (
         <TouchableOpacity
           key={product.id}
-          style={styles.productCard}
+          style={[styles.productCard, { backgroundColor: colors.surface }]}
           onPress={() => router.push(`/product/${product.id}`)}
         >
-          <SafeImage source={{ uri: product.image }} style={styles.productImage} />
+          <SafeImage source={{ uri: product.image }} style={[styles.productImage, { backgroundColor: colors.background }]} />
+          
+          {/* Wishlist button - top right */}
+          <View style={styles.wishlistOverlay}>
+            <TouchableOpacity
+              style={[styles.wishlistButton, { backgroundColor: colors.surface }]}
+              onPress={(e) => {
+                e.stopPropagation();
+                toggleWishlist(product.id);
+              }}
+            >
+              <Ionicons 
+                name={wishlist.includes(product.id) ? "heart" : "heart-outline"} 
+                size={16} 
+                color={wishlist.includes(product.id) ? "#FF3B30" : colors.text} 
+              />
+            </TouchableOpacity>
+          </View>
+
           {/* Actions overlay on image */}
           <View style={styles.productActionsOverlay}>
             <TouchableOpacity
@@ -125,7 +184,7 @@ export default function ProductsScreen() {
             <Text style={[styles.productName, { color: colors.text }]} numberOfLines={2}>{product.title}</Text>
             <View style={styles.priceRow}>
               <Text style={[styles.originalPrice, { color: colors.textSecondary }]}>{`₦${(product.price * 1.3).toFixed(2)}`}</Text>
-              <Text style={[styles.productPrice, { color: colors.primary }]}>{`₦${product.price.toFixed(2)}`}</Text>
+              <Text style={[styles.productPrice, { color: 'red' }]}>{`₦${product.price.toFixed(2)}`}</Text>
             </View>
           </View>
         </TouchableOpacity>
@@ -142,7 +201,7 @@ export default function ProductsScreen() {
           onPress={() => router.push(`/product/${product.id}`)}
         >
           <View style={styles.listImageContainer}>
-            <SafeImage source={{ uri: product.image }} style={styles.listImage} />
+            <SafeImage source={{ uri: product.image }} style={[styles.listImage, { backgroundColor: colors.background }]} />
           </View>
           <View style={styles.listProductInfo}>
             <Text style={[styles.listProductName, { color: colors.text }]} numberOfLines={2}>{product.title}</Text>
@@ -154,7 +213,7 @@ export default function ProductsScreen() {
             </View>
             <View style={styles.priceContainer}>
               <Text style={[styles.originalPrice, { color: colors.textSecondary }]}>{`₦${(product.price * 1.3).toFixed(2)}`}</Text>
-              <Text style={[styles.price, { color: colors.primary }]}>{`₦${product.price.toFixed(2)}`}</Text>
+              <Text style={[styles.price, { color: 'red' }]}>{`₦${product.price.toFixed(2)}`}</Text>
             </View>
           </View>
           <View style={styles.listProductActions}>
@@ -181,16 +240,18 @@ export default function ProductsScreen() {
             >
               <Ionicons name="cart" size={20} color={colors.white} />
             </TouchableOpacity>
-            <TouchableOpacity style={styles.listWishlistButton} onPress={async (e) => {
-              e.stopPropagation();
-              try {
-                const result = await apiService.addToWishlist(product.id);
-                console.log('Added to wishlist:', result);
-              } catch (error) {
-                console.error('Wishlist error:', error);
-              }
-            }}>
-              <Ionicons name="heart-outline" size={20} color={colors.textSecondary} />
+            <TouchableOpacity 
+              style={styles.listWishlistButton} 
+              onPress={(e) => {
+                e.stopPropagation();
+                toggleWishlist(product.id);
+              }}
+            >
+              <Ionicons 
+                name={wishlist.includes(product.id) ? "heart" : "heart-outline"} 
+                size={20} 
+                color={wishlist.includes(product.id) ? "#FF3B30" : colors.textSecondary} 
+              />
             </TouchableOpacity>
           </View>
         </TouchableOpacity>
@@ -383,7 +444,19 @@ const styles = StyleSheet.create({
   productImage: {
     width: '100%',
     height: 120,
-    backgroundColor: '#E5E5EA',
+  },
+  wishlistOverlay: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    zIndex: 2,
+  },
+  wishlistButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   productActionsOverlay: {
     position: 'absolute',
@@ -439,7 +512,6 @@ const styles = StyleSheet.create({
   listImage: {
     width: 100,
     height: 100,
-    backgroundColor: '#E5E5EA',
   },
   listProductInfo: {
     flex: 1,
