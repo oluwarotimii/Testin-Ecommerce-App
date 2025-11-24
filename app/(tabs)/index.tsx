@@ -46,7 +46,17 @@ export default function HomeScreen() {
     setErrorProducts(null);
     try {
       const response = await apiService.getProducts({ limit });
-      setProducts(response);
+      // Transform WooCommerce API response to match expected format
+      const transformedProducts = response.map((product: any) => ({
+        id: product.id,
+        title: product.name || product.title,
+        image: product.images && product.images[0] ? product.images[0].src : product.image,
+        price: parseFloat(product.price || product.price),
+        original_price: parseFloat(product.regular_price || product.price || 0),
+        description: product.description || '',
+        category: product.categories && product.categories.length > 0 ? product.categories[0].name : 'General',
+      }));
+      setProducts(transformedProducts);
       // Check if we have more products available (assuming the API returns max available)
       setHasMoreProducts(response.length >= limit);
     } catch (err: any) {
@@ -63,7 +73,17 @@ export default function HomeScreen() {
     try {
       const newLimit = productLimit + 20; // Load 20 more products
       const response = await apiService.getProducts({ limit: newLimit });
-      setProducts(response);
+      // Transform WooCommerce API response to match expected format
+      const transformedProducts = response.map((product: any) => ({
+        id: product.id,
+        title: product.name || product.title,
+        image: product.images && product.images[0] ? product.images[0].src : product.image,
+        price: parseFloat(product.price || product.price),
+        original_price: parseFloat(product.regular_price || product.price || 0),
+        description: product.description || '',
+        category: product.categories && product.categories.length > 0 ? product.categories[0].name : 'General',
+      }));
+      setProducts(transformedProducts);
       setHasMoreProducts(response.length >= newLimit);
       setProductLimit(newLimit);
     } catch (err: any) {
