@@ -425,8 +425,8 @@ export default function HomeScreen() {
                 <View style={styles.productDetails}>
                   <Text style={[styles.productName, { color: colors.text }]} numberOfLines={2}>{product.title}</Text>
                   <View style={styles.priceContainer}>
-                    <Text style={[styles.originalPrice, { color: colors.textSecondary }]}>{`₦${(product.price * 1.3).toFixed(2)}`}</Text>
-                    <Text style={[styles.productPrice, { color: '#ff6b6b' }]}>{`₦${product.price.toFixed(2)}`}</Text>
+                    <Text style={[styles.originalPrice, { color: colors.textSecondary }]}>{`₦${(typeof product.price === 'number' ? product.price : parseFloat(product.price || '0')) * 1.3).toFixed(2)}`}</Text>
+                    <Text style={[styles.productPrice, { color: '#ff6b6b' }]}>{`₦${typeof product.price === 'number' ? product.price.toFixed(2) : parseFloat(product.price || '0').toFixed(2)}`}</Text>
                   </View>
                 </View>
               </TouchableOpacity>
@@ -514,8 +514,8 @@ export default function HomeScreen() {
                 <View style={styles.productDetails}>
                   <Text style={[styles.productName, { color: colors.text }]} numberOfLines={2}>{product.title}</Text>
                   <View style={styles.priceContainer}>
-                    <Text style={[styles.originalPrice, { color: colors.textSecondary }]}>{`₦${(product.price * 1.3).toFixed(2)}`}</Text>
-                    <Text style={[styles.productPrice, { color: '#ff6b6b' }]}>{`₦${product.price.toFixed(2)}`}</Text>
+                    <Text style={[styles.originalPrice, { color: colors.textSecondary }]}>{`₦${(typeof product.price === 'number' ? product.price : parseFloat(product.price || '0')) * 1.3).toFixed(2)}`}</Text>
+                    <Text style={[styles.productPrice, { color: '#ff6b6b' }]}>{`₦${typeof product.price === 'number' ? product.price.toFixed(2) : parseFloat(product.price || '0').toFixed(2)}`}</Text>
                   </View>
                 </View>
               </TouchableOpacity>
