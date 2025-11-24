@@ -29,8 +29,27 @@ export default function ProductDetailScreen() {
       const fetchProduct = async () => {
         try {
           const fetchedProduct = await apiService.getProduct(Number(id));
+
+          // Transform WooCommerce API response to match expected format
+          const transformedProduct = {
+            id: fetchedProduct.id,
+            title: fetchedProduct.name || fetchedProduct.title,
+            image: fetchedProduct.images && fetchedProduct.images[0] ? fetchedProduct.images[0].src : fetchedProduct.image,
+            price: parseFloat(fetchedProduct.price || fetchedProduct.price),
+            original_price: parseFloat(fetchedProduct.regular_price || fetchedProduct.price || 0),
+            description: fetchedProduct.description || '',
+            category: fetchedProduct.categories && fetchedProduct.categories.length > 0 ?
+              (fetchedProduct.categories[0].name || fetchedProduct.categories[0].slug) : 'General',
+            category_id: fetchedProduct.categories && fetchedProduct.categories.length > 0 ?
+              fetchedProduct.categories[0].id : null,
+            rating: fetchedProduct.average_rating ? {
+              rate: parseFloat(fetchedProduct.average_rating),
+              count: fetchedProduct.rating_count || 0
+            } : null
+          };
+
           if (isMounted) {
-            setProduct(fetchedProduct);
+            setProduct(transformedProduct);
           }
         } catch (error) {
           console.error("Error fetching product:", error);
@@ -71,11 +90,34 @@ export default function ProductDetailScreen() {
     let isMounted = true; // Flag to prevent state updates on unmounted components
 
     const fetchSimilarProducts = async () => {
-      if (product && product.category) {
+      if (product && product.category_id) {
         try {
-          // Get products from the same category, excluding the current product
-          const categoryProducts = await apiService.getCategory(product.category);
-          const filteredProducts = categoryProducts.filter((p: any) => p.id !== product.id);
+          // Get all products and filter for similar ones based on category
+          const allProducts = await apiService.getProducts();
+
+          // Transform products to expected format
+          const transformedProducts = allProducts.map((p: any) => ({
+            id: p.id,
+            title: p.name || p.title,
+            image: p.images && p.images[0] ? p.images[0].src : p.image,
+            price: parseFloat(p.price || p.price),
+            original_price: parseFloat(p.regular_price || p.price || 0),
+            description: p.description || '',
+            category: p.categories && p.categories.length > 0 ?
+              (p.categories[0].name || p.categories[0].slug) : 'General',
+            category_id: p.categories && p.categories.length > 0 ?
+              p.categories[0].id : null,
+            rating: p.average_rating ? {
+              rate: parseFloat(p.average_rating),
+              count: p.rating_count || 0
+            } : null
+          }));
+
+          // Filter products by same category, excluding the current product
+          const filteredProducts = transformedProducts.filter((p: any) =>
+            p.category_id === product.category_id && p.id !== product.id
+          );
+
           // Limit to 10 similar products
           if (isMounted) {
             setSimilarProducts(filteredProducts.slice(0, 10));
@@ -214,7 +256,7 @@ export default function ProductDetailScreen() {
 
           {/* Price */}
           <View style={styles.priceSection}>
-            <Text style={[styles.currentPrice, { color: colors.primary }]}>₦{product.price.toFixed(2)}</Text>
+            <Text style={[styles.currentPrice, { color: colors.primary }]}>₦{typeof product.price === 'number' ? product.price.toFixed(2) : parseFloat(product.price || '0').toFixed(2)}</Text>
           </View>
 
           {/* Description */}
@@ -266,7 +308,7 @@ export default function ProductDetailScreen() {
                 >
                   <Image source={{ uri: item.image }} style={[styles.similarProductImage, { backgroundColor: colors.surface }]} />
                   <Text style={[styles.similarProductName, { color: colors.text }]} numberOfLines={2}>{item.title}</Text>
-                  <Text style={[styles.similarProductPrice, { color: colors.primary }]}>₦{item.price.toFixed(2)}</Text>
+                  <Text style={[styles.similarProductPrice, { color: colors.primary }]}>₦{typeof item.price === 'number' ? item.price.toFixed(2) : parseFloat(item.price || '0').toFixed(2)}</Text>
                 </TouchableOpacity>
               ))}
             </ScrollView>

@@ -37,10 +37,37 @@ export default function CategoryScreen() {
             try {
                 setLoading(true);
                 setError(null);
+
+                // For WooCommerce, categories are often identified by ID rather than slug
+                // First, try to get all products and filter by category ID or name
                 const allProducts = await apiService.getProducts();
-                const filteredProducts = allProducts.filter(
-                    (product: any) => product.category === slug
+
+                // Transform products to ensure they have the expected format
+                const transformedProducts = allProducts.map((product: any) => ({
+                    id: product.id,
+                    title: product.name || product.title,
+                    image: product.images && product.images[0] ? product.images[0].src : product.image,
+                    price: parseFloat(product.price || product.price),
+                    original_price: parseFloat(product.regular_price || product.price || 0),
+                    description: product.description || '',
+                    category: product.categories && product.categories.length > 0 ?
+                        (product.categories[0].name || product.categories[0].slug) : 'General',
+                    category_id: product.categories && product.categories.length > 0 ?
+                        product.categories[0].id : null,
+                    rating: product.average_rating ? {
+                        rate: parseFloat(product.average_rating),
+                        count: product.rating_count || 0
+                    } : null
+                }));
+
+                // Filter products by category - try both slug/ID and name matches
+                const filteredProducts = transformedProducts.filter(
+                    (product: any) =>
+                        product.category_id?.toString() === slug?.toString() ||
+                        product.category?.toLowerCase().includes(slug.toString().toLowerCase()) ||
+                        product.category?.toLowerCase().replace(/\s+/g, '-') === slug.toString().toLowerCase()
                 );
+
                 setProducts(filteredProducts);
             } catch (err: any) {
                 setError(err.message || 'Failed to load products');
@@ -204,10 +231,10 @@ export default function CategoryScreen() {
                                     </Text>
                                     <View style={styles.priceRow}>
                                         <Text style={[styles.originalPrice, { color: colors.textSecondary }]}>
-                                            {`₦${(product.price * 1.3).toFixed(2)}`}
+                                            {`₦${(typeof product.price === 'number' ? product.price : parseFloat(product.price || '0')) * 1.3).toFixed(2)}`}
                                         </Text>
                                         <Text style={[styles.productPrice, { color: '#ff6b6b' }]}>
-                                            {`₦${product.price.toFixed(2)}`}
+                                            {`₦${typeof product.price === 'number' ? product.price.toFixed(2) : parseFloat(product.price || '0').toFixed(2)}`}
                                         </Text>
                                     </View>
                                     {product.rating && (

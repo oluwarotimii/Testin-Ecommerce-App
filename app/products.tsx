@@ -43,7 +43,26 @@ export default function ProductsScreen() {
       try {
         setLoading(true);
         const response = await apiService.getProducts();
-        setProducts(response);
+
+        // Transform WooCommerce API response to match expected format
+        const transformedProducts = response.map((product: any) => ({
+          id: product.id,
+          title: product.name || product.title,
+          image: product.images && product.images[0] ? product.images[0].src : product.image,
+          price: parseFloat(product.price || product.price),
+          original_price: parseFloat(product.regular_price || product.price || 0),
+          description: product.description || '',
+          category: product.categories && product.categories.length > 0 ?
+            (product.categories[0].name || product.categories[0].slug) : 'General',
+          category_id: product.categories && product.categories.length > 0 ?
+            product.categories[0].id : null,
+          rating: product.average_rating ? {
+            rate: parseFloat(product.average_rating),
+            count: product.rating_count || 0
+          } : null
+        }));
+
+        setProducts(transformedProducts);
       } catch (err: any) {
         setError(err.message || 'An unexpected error occurred');
       } finally {
@@ -86,17 +105,18 @@ export default function ProductsScreen() {
 
   const filteredProducts = useMemo(() => {
     let filtered = products.filter(product =>
-      product.title.toLowerCase().includes(searchQuery.toLowerCase())
+      product.title?.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
     // Apply price filter
-    filtered = filtered.filter(product => 
-      product.price >= filters.minPrice && product.price <= filters.maxPrice
+    filtered = filtered.filter(product =>
+      (typeof product.price === 'number' ? product.price : parseFloat(product.price || '0')) >= filters.minPrice &&
+      (typeof product.price === 'number' ? product.price : parseFloat(product.price || '0')) <= filters.maxPrice
     );
 
     // Apply rating filter
     if (filters.rating && filters.rating > 0) {
-      filtered = filtered.filter(product => 
+      filtered = filtered.filter(product =>
         product.rating && product.rating.rate >= filters.rating!
       );
     }
@@ -104,10 +124,16 @@ export default function ProductsScreen() {
     // Apply sorting
     switch (filters.sortBy) {
       case 'price-asc':
-        filtered.sort((a, b) => a.price - b.price);
+        filtered.sort((a, b) =>
+          (typeof a.price === 'number' ? a.price : parseFloat(a.price || '0')) -
+          (typeof b.price === 'number' ? b.price : parseFloat(b.price || '0'))
+        );
         break;
       case 'price-desc':
-        filtered.sort((a, b) => b.price - a.price);
+        filtered.sort((a, b) =>
+          (typeof b.price === 'number' ? b.price : parseFloat(b.price || '0')) -
+          (typeof a.price === 'number' ? a.price : parseFloat(a.price || '0'))
+        );
         break;
       case 'rating':
         filtered.sort((a, b) => (b.rating?.rate || 0) - (a.rating?.rate || 0));
@@ -183,8 +209,8 @@ export default function ProductsScreen() {
           <View style={styles.productDetails}>
             <Text style={[styles.productName, { color: colors.text }]} numberOfLines={2}>{product.title}</Text>
             <View style={styles.priceRow}>
-              <Text style={[styles.originalPrice, { color: colors.textSecondary }]}>{`₦${(product.price * 1.3).toFixed(2)}`}</Text>
-              <Text style={[styles.productPrice, { color: '#ff6b6b' }]}>{`₦${product.price.toFixed(2)}`}</Text>
+              <Text style={[styles.originalPrice, { color: colors.textSecondary }]}>{`₦${(typeof product.price === 'number' ? product.price : parseFloat(product.price || '0')) * 1.3).toFixed(2)}`}</Text>
+              <Text style={[styles.productPrice, { color: '#ff6b6b' }]}>{`₦${typeof product.price === 'number' ? product.price.toFixed(2) : parseFloat(product.price || '0').toFixed(2)}`}</Text>
             </View>
           </View>
         </TouchableOpacity>
@@ -212,8 +238,8 @@ export default function ProductsScreen() {
               <Text style={[styles.reviewsText, { color: colors.textSecondary }]}>({product.rating ? product.rating.count : 0})</Text>
             </View>
             <View style={styles.priceContainer}>
-              <Text style={[styles.originalPrice, { color: colors.textSecondary }]}>{`₦${(product.price * 1.3).toFixed(2)}`}</Text>
-              <Text style={[styles.price, { color: '#ff6b6b' }]}>{`₦${product.price.toFixed(2)}`}</Text>
+              <Text style={[styles.originalPrice, { color: colors.textSecondary }]}>{`₦${(typeof product.price === 'number' ? product.price : parseFloat(product.price || '0')) * 1.3).toFixed(2)}`}</Text>
+              <Text style={[styles.price, { color: '#ff6b6b' }]}>{`₦${typeof product.price === 'number' ? product.price.toFixed(2) : parseFloat(product.price || '0').toFixed(2)}`}</Text>
             </View>
           </View>
           <View style={styles.listProductActions}>
