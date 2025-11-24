@@ -16,25 +16,8 @@ export default function HomeScreen() {
   const colors = useThemeColors();
   const { apiService } = useAuth();
   const { setCartCount } = useCart();
-  const [loadingCarousel, setLoadingCarousel] = useState(false);
-  const [carouselItems, setCarouselItems] = useState<any[]>([
-    {
-      id: '1',
-      title: 'Premium Tech Collection',
-      subtitle: 'New arrivals with exclusive offers',
-      imageUrl: 'https://images.pexels.com/photos/5632371/pexels-photo-5632371.jpeg',
-      linkType: 'category',
-      linkValue: 'electronics',
-    },
-    {
-      id: '2',
-      title: 'Gaming Setup Essentials',
-      subtitle: 'Top products for your gaming station',
-      imageUrl: 'https://images.pexels.com/photos/230544/pexels-photo-230544.jpeg',
-      linkType: 'category',
-      linkValue: 'gaming',
-    }
-  ]);
+  const [loadingCarousel, setLoadingCarousel] = useState(true);
+  const [carouselItems, setCarouselItems] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
   const [loadingCategories, setLoadingCategories] = useState(true);
   const [errorCategories, setErrorCategories] = useState<string | null>(null);
@@ -90,15 +73,48 @@ export default function HomeScreen() {
     }
   }, [apiService, productLimit, hasMoreProducts, isLoadingMore]);
 
+  const fetchCarouselItems = useCallback(async () => {
+    if (!apiService) return;
+    setLoadingCarousel(true);
+    try {
+      // This will fetch carousel items from your Next.js admin API via your backend
+      const response = await apiService.getCarouselItems();
+      setCarouselItems(response);
+    } catch (err: any) {
+      console.error('Error fetching carousel items:', err);
+      // Fallback to default carousel items if API fails
+      setCarouselItems([
+        {
+          id: '1',
+          title: 'Premium Tech Collection',
+          subtitle: 'New arrivals with exclusive offers',
+          imageUrl: 'https://images.pexels.com/photos/5632371/pexels-photo-5632371.jpeg',
+          linkType: 'category',
+          linkValue: 'electronics',
+        },
+        {
+          id: '2',
+          title: 'Gaming Setup Essentials',
+          subtitle: 'Top products for your gaming station',
+          imageUrl: 'https://images.pexels.com/photos/230544/pexels-photo-230544.jpeg',
+          linkType: 'category',
+          linkValue: 'gaming',
+        }
+      ]);
+    } finally {
+      setLoadingCarousel(false);
+    }
+  }, [apiService]);
+
   const fetchCategories = useCallback(async () => {
     if (!apiService) return;
     setLoadingCategories(true);
     setErrorCategories(null);
     try {
       const response = await apiService.getCategories();
-      const formattedCategories = response.map((category: string) => ({
-        category_id: category,
-        name: category,
+      const formattedCategories = response.map((category: any) => ({
+        category_id: category.id || category.category_id,
+        name: category.name || category,
       }));
       setCategories(formattedCategories);
     } catch (err: any) {
@@ -112,15 +128,66 @@ export default function HomeScreen() {
     fetchProducts(productLimit);
     fetchCategories();
     fetchWishlist();
-  }, [fetchProducts, fetchCategories, fetchWishlist, productLimit]);
+    fetchCarouselItems(); // Add carousel fetching
+  }, [fetchProducts, fetchCategories, fetchWishlist, fetchCarouselItems, productLimit]);
+
+  // Handle push notifications
+  useEffect(() => {
+    const setupNotifications = async () => {
+      // Register for push notifications
+      if (apiService) {
+        try {
+          // Import the notification service function
+          const { registerForPushNotificationsAsync } = await import('@/services/notificationService');
+          await registerForPushNotificationsAsync(apiService);
+        } catch (error) {
+          console.error('Error setting up push notifications:', error);
+        }
+      }
+    };
+
+    setupNotifications();
+
+    // Setup notification listeners
+    let cleanupFn: (() => void) | null = null;
+
+    const setupNotificationListeners = async () => {
+      try {
+        const notificationService = await import('@/services/notificationService');
+        cleanupFn = notificationService.setupNotificationListeners((response) => {
+          // Handle notification tap - could navigate to specific content
+          const { linkType, linkValue } = response?.notification?.request?.content?.data || {};
+          if (linkType && linkValue) {
+            if (linkType === 'category') {
+              router.push(`/category/${linkValue}`);
+            } else if (linkType === 'product') {
+              router.push(`/product/${linkValue}`);
+            }
+          }
+        });
+      } catch (error) {
+        console.error('Error setting up notification listeners:', error);
+      }
+    };
+
+    setupNotificationListeners();
+
+    // Cleanup listeners on unmount
+    return () => {
+      if (cleanupFn) {
+        cleanupFn();
+      }
+    };
+  }, [apiService, router]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     await fetchProducts(productLimit);
     await fetchCategories();
     await fetchWishlist();
+    await fetchCarouselItems();
     setRefreshing(false);
-  }, [fetchProducts, fetchCategories, fetchWishlist, productLimit]);
+  }, [fetchProducts, fetchCategories, fetchWishlist, fetchCarouselItems, productLimit]);
 
 
   const handleSeeAllProducts = () => {
@@ -130,8 +197,17 @@ export default function HomeScreen() {
 
   const handleCarouselItemPress = useCallback((item: any) => {
     console.log('Carousel item pressed:', item);
-    // Example: Navigate to a product detail page
-    router.push(`/product/${item.id}`);
+    if (item.linkType === 'product') {
+      router.push(`/product/${item.linkValue}`);
+    } else if (item.linkType === 'category') {
+      router.push(`/category/${item.linkValue}`);
+    } else if (item.linkType === 'external') {
+      // Handle external links if needed
+      console.log('External link:', item.linkValue);
+    } else {
+      // Default action or navigate to home
+      router.push('/');
+    }
   }, [router]);
 
   const toggleWishlist = async (productId: number) => {
@@ -239,29 +315,33 @@ export default function HomeScreen() {
                 >
                   {/* Add category-specific icons */}
                   <View style={[styles.categoryIconContainer, { backgroundColor: colors.background }]}>
-                    {category.name.toLowerCase().includes('phone') || category.name.toLowerCase().includes('smart') ? (
-                      <Ionicons name="phone-portrait" size={24} color={colors.primary} />
-                    ) : category.name.toLowerCase().includes('laptop') || category.name.toLowerCase().includes('computer') ? (
-                      <Ionicons name="laptop" size={24} color={colors.primary} />
-                    ) : category.name.toLowerCase().includes('headphone') || category.name.toLowerCase().includes('audio') ? (
-                      <Ionicons name="headset" size={24} color={colors.primary} />
-                    ) : category.name.toLowerCase().includes('gaming') ? (
-                      <Ionicons name="game-controller" size={24} color={colors.primary} />
-                    ) : category.name.toLowerCase().includes('tablet') ? (
-                      <Ionicons name="tablet-landscape" size={24} color={colors.primary} />
-                    ) : category.name.toLowerCase().includes('watch') || category.name.toLowerCase().includes('wearable') ? (
-                      <Ionicons name="watch" size={24} color={colors.primary} />
-                    ) : category.name.toLowerCase().includes('home') ? (
-                      <Ionicons name="home" size={24} color={colors.primary} />
-                    ) : category.name.toLowerCase().includes('storage') ? (
-                      <Ionicons name="save" size={24} color={colors.primary} />
-                    ) : category.name.toLowerCase().includes('monitor') ? (
-                      <Ionicons name="desktop" size={24} color={colors.primary} />
+                    {category.name && typeof category.name === 'string' ? (
+                      category.name.toLowerCase().includes('phone') || category.name.toLowerCase().includes('smart') ? (
+                        <Ionicons name="phone-portrait" size={24} color={colors.primary} />
+                      ) : category.name.toLowerCase().includes('laptop') || category.name.toLowerCase().includes('computer') ? (
+                        <Ionicons name="laptop" size={24} color={colors.primary} />
+                      ) : category.name.toLowerCase().includes('headphone') || category.name.toLowerCase().includes('audio') ? (
+                        <Ionicons name="headset" size={24} color={colors.primary} />
+                      ) : category.name.toLowerCase().includes('gaming') ? (
+                        <Ionicons name="game-controller" size={24} color={colors.primary} />
+                      ) : category.name.toLowerCase().includes('tablet') ? (
+                        <Ionicons name="tablet-landscape" size={24} color={colors.primary} />
+                      ) : category.name.toLowerCase().includes('watch') || category.name.toLowerCase().includes('wearable') ? (
+                        <Ionicons name="watch" size={24} color={colors.primary} />
+                      ) : category.name.toLowerCase().includes('home') ? (
+                        <Ionicons name="home" size={24} color={colors.primary} />
+                      ) : category.name.toLowerCase().includes('storage') ? (
+                        <Ionicons name="save" size={24} color={colors.primary} />
+                      ) : category.name.toLowerCase().includes('monitor') ? (
+                        <Ionicons name="desktop" size={24} color={colors.primary} />
+                      ) : (
+                        <Ionicons name="layers" size={24} color={colors.primary} />
+                      )
                     ) : (
                       <Ionicons name="layers" size={24} color={colors.primary} />
                     )}
                   </View>
-                  <Text style={[styles.categoryName, { color: colors.text }]} numberOfLines={2}>{category.name.replace('-', ' ')}</Text>
+                  <Text style={[styles.categoryName, { color: colors.text }]} numberOfLines={2}>{category.name && typeof category.name === 'string' ? category.name.replace('-', ' ') : 'Category'}</Text>
                 </TouchableOpacity>
               ))}
             </View>

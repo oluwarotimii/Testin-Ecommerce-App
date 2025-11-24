@@ -116,6 +116,13 @@ export default function AccountScreen() {
       onPress: () => updateService.forceCheckForUpdates(),
     },
     {
+      id: 'wptest',
+      title: 'WordPress Test',
+      icon: () => <Ionicons name="globe" size={20} color={colors.primary} />,
+      type: 'navigation',
+      onPress: () => router.push('/wordpress-test'),
+    },
+    {
       id: 'devtools',
       title: 'Developer Tools',
       icon: () => <Ionicons name="code-slash" size={20} color={colors.primary} />,

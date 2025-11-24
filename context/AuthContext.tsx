@@ -1,6 +1,48 @@
 import React, { createContext, useState, useEffect, useContext, useMemo } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import DummyApiService from '@/services/dummyApiService';
+import WordPressApiService from '@/services/wordpressApiService';
+
+// Configuration for API service type
+const API_SERVICE_TYPE = process.env.EXPO_PUBLIC_API_SERVICE_TYPE || 'dummy'; // 'dummy' or 'wordpress'
+
+// WordPress configuration - these would typically come from environment variables
+const WORDPRESS_CONFIG = {
+  url: process.env.EXPO_PUBLIC_WORDPRESS_URL || 'https://yoursite.com',
+  consumerKey: process.env.EXPO_PUBLIC_WORDPRESS_CONSUMER_KEY || '',
+  consumerSecret: process.env.EXPO_PUBLIC_WORDPRESS_CONSUMER_SECRET || '',
+};
+
+interface ApiService {
+  sessionToken: string | null;
+  isAuthenticated: boolean;
+  login: (email: string, password: string) => Promise<any>;
+  register: (firstname: string, lastname: string, email: string, telephone: string, password: string) => Promise<any>;
+  signOut: () => Promise<any>;
+  getProducts: (params?: Record<string, any>) => Promise<any>;
+  getProduct: (product_id: number) => Promise<any>;
+  searchProducts: (search: string, page?: number, limit?: number) => Promise<any>;
+  getCategories: () => Promise<any>;
+  getCategory: (category_id: number | string) => Promise<any>;
+  getCartContents: () => Promise<any>;
+  addToCart: (product_id: number, quantity?: number) => Promise<any>;
+  updateCart: (cart_id: number, quantity: number) => Promise<any>;
+  removeFromCart: (key: number) => Promise<any>;
+  getWishlist: () => Promise<any>;
+  addToWishlist: (product_id: number) => Promise<any>;
+  removeFromWishlist: (product_id: number) => Promise<any>;
+  getPaymentMethods: () => Promise<any>;
+  getShippingMethods: () => Promise<any>;
+  createOrder: (orderData: any) => Promise<any>;
+  getOrders: () => Promise<any>;
+  getOrderInfo: (order_id: number) => Promise<any>;
+  getAccountDetails: () => Promise<any>;
+  updateAccountDetails: (details: Record<string, any>) => Promise<any>;
+  getAddressBook: () => Promise<any>;
+  getCarouselItems: () => Promise<any>;
+  updatePushToken: (token: string) => Promise<any>;
+  setSessionToken: (token: string | null) => void;
+}
 
 interface AuthContextType {
   sessionToken: string | null;
@@ -9,7 +51,7 @@ interface AuthContextType {
   register: (firstname: string, lastname: string, email: string, telephone: string, password: string) => Promise<boolean>;
   signOut: () => Promise<void>;
   loadingAuth: boolean;
-  apiService: DummyApiService;
+  apiService: ApiService;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -19,7 +61,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loadingAuth, setLoadingAuth] = useState(true);
 
-  const apiService = useMemo(() => new DummyApiService(sessionToken), [sessionToken]);
+  // Initialize the appropriate API service based on configuration
+  const apiService = useMemo(() => {
+    if (API_SERVICE_TYPE === 'wordpress') {
+      return new WordPressApiService(
+        WORDPRESS_CONFIG.url,
+        WORDPRESS_CONFIG.consumerKey,
+        WORDPRESS_CONFIG.consumerSecret,
+        sessionToken
+      );
+    } else {
+      return new DummyApiService(sessionToken);
+    }
+  }, [sessionToken]);
 
   useEffect(() => {
     const loadSession = async () => {
@@ -39,7 +93,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   useEffect(() => {
-    apiService.setSessionToken(sessionToken);
+    if (apiService) {
+      apiService.setSessionToken(sessionToken);
+    }
   }, [sessionToken, apiService]);
 
   const login = async (email: string, password: string): Promise<boolean> => {
@@ -82,7 +138,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signOut = async () => {
     try {
+      await apiService.signOut();
       await AsyncStorage.removeItem('sessionToken');
+      await AsyncStorage.removeItem('customerId');
       setSessionToken(null);
       setIsAuthenticated(false);
     } catch (error) {

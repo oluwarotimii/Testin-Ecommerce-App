@@ -1,7 +1,9 @@
 import * as Notifications from 'expo-notifications';
-import { Platform } from 'react-native';
+import * as Device from 'expo-device';
+import Constants from 'expo-constants';
+import { useAuth } from '@/context/AuthContext';
 
-// Set up notification handler
+// Set notification handler
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
     shouldShowAlert: true,
@@ -10,102 +12,73 @@ Notifications.setNotificationHandler({
   }),
 });
 
-class NotificationService {
-  async registerForPushNotificationsAsync() {
-    let token;
+const registerForPushNotificationsAsync = async (apiService: any) => {
+  if (!Device.isDevice) {
+    console.log('Must use a physical device for push notifications');
+    return null;
+  }
 
-    if (Platform.OS !== 'web') {
-      const { status: existingStatus } = await Notifications.getPermissionsAsync();
-      let finalStatus = existingStatus;
+  const { status: existingStatus } = await Notifications.getPermissionsAsync();
+  let finalStatus = existingStatus;
+  
+  if (existingStatus !== 'granted') {
+    const { status } = await Notifications.requestPermissionsAsync();
+    finalStatus = status;
+  }
+  
+  if (finalStatus !== 'granted') {
+    console.log('Permission not granted for push notifications');
+    return null;
+  }
 
-      if (existingStatus !== 'granted') {
-        const { status } = await Notifications.requestPermissionsAsync();
-        finalStatus = status;
-      }
+  const projectId =
+    Constants?.expoConfig?.extra?.eas?.projectId ?? Constants?.easConfig?.projectId;
 
-      if (finalStatus !== 'granted') {
-        console.log('Failed to get push token for push notification!');
-        return;
-      }
+  const pushToken = (await Notifications.getExpoPushTokenAsync({ projectId })).data;
 
-      token = (await Notifications.getExpoPushTokenAsync()).data;
-      console.log('Expo push token:', token);
+  // Send this token to your Next.js API via your Auth API service
+  try {
+    if (apiService && pushToken) {
+      await apiService.updatePushToken(pushToken);
+      console.log('Push token registered successfully:', pushToken);
     }
-
-    return token;
+  } catch (error) {
+    console.error('Error sending push token to API:', error);
   }
 
-  async scheduleNotification(title: string, body: string, seconds: number = 1) {
-    await Notifications.scheduleNotificationAsync({
-      content: {
-        title: title,
-        body: body,
-        sound: 'default',
-        priority: Notifications.AndroidNotificationPriority.HIGH,
-      },
-      trigger: { seconds },
-    });
-  }
-
-  async showNotification(title: string, body: string) {
-    await Notifications.presentNotificationAsync({
-      title: title,
-      body: body,
-      sound: 'default',
-      priority: Notifications.AndroidNotificationPriority.HIGH,
-    });
-  }
-
-  async setBadgeCount(count: number) {
-    await Notifications.setBadgeCountAsync(count);
-  }
-
-  async getBadgeCount() {
-    return await Notifications.getBadgeCountAsync();
-  }
-
-  // Configure notification listeners
-  addNotificationReceivedListener(listener: (notification: Notifications.Notification) => void) {
-    return Notifications.addNotificationReceivedListener(listener);
-  }
-
-  addNotificationResponseReceivedListener(listener: (response: Notifications.NotificationResponse) => void) {
-    return Notifications.addNotificationResponseReceivedListener(listener);
-  }
-
-  // Remove notification listeners
-  removeNotificationSubscription(subscription: any) {
-    if (subscription) {
-      subscription.remove();
-    }
-  }
-
-  // Clear all notifications
-  async clearAllNotifications() {
-    await Notifications.dismissAllNotificationsAsync();
-  }
-
-  // Cancel scheduled notifications
-  async cancelAllScheduledNotifications() {
-    await Notifications.cancelAllScheduledNotificationsAsync();
-  }
-
-  // Initialize notification service
-  async initialize() {
-    // Request permissions and set up the service
-    await this.registerForPushNotificationsAsync();
-  }
-
-  // Set up notification listeners (placeholder for now)
-  setupNotificationListeners() {
-    // This is a placeholder - implement actual listener setup if needed
-    return [];
-  }
-
-  // Cleanup notification listeners (placeholder for now)
-  cleanup(listeners: any[]) {
-    // This is a placeholder - implement actual cleanup if needed
-  }
+  return pushToken;
 }
 
-export default new NotificationService();
+const setupNotificationListeners = (navigationCallback?: (response: any) => void) => {
+  // Listener for when notification is received
+  const notificationListener = Notifications.addNotificationReceivedListener(notification => {
+    console.log('Received notification:', notification);
+  });
+
+  // Listener for when notification is tapped
+  const responseListener = Notifications.addNotificationResponseReceivedListener(response => {
+    console.log('Notification tapped:', response);
+    if (navigationCallback) {
+      navigationCallback(response);
+    }
+  });
+
+  // Return cleanup function
+  return () => {
+    notificationListener.remove();
+    responseListener.remove();
+  };
+}
+
+export default {
+  registerForPushNotificationsAsync,
+  setupNotificationListeners,
+  initialize: async (apiService?: any) => {
+    // Initialize notifications if needed
+    // For now, just register for push notifications
+    if (apiService) {
+      await registerForPushNotificationsAsync(apiService);
+    }
+    return true;
+  }
+};

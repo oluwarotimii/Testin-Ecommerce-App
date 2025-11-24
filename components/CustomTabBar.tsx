@@ -40,7 +40,7 @@ const CustomTabBar: React.FC<CustomTabBarProps> = ({ state, descriptors, navigat
     categories: 'menu',
     cart: 'cart',
     account: 'person',
-
+    'wordpress-test': 'globe',
   };
 
   const getIconName = (routeName: string, focused: boolean): any => {

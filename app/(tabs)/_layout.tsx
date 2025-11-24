@@ -47,6 +47,12 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="wordpress-test"
+        options={{
+          title: 'WP Test',
+        }}
+      />
+      <Tabs.Screen
         name="account"
         options={{
           title: 'Account',

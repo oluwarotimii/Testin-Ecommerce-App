@@ -515,7 +515,7 @@ const dummyOrders = [
 ];
 
 class DummyApiService {
-  private sessionToken: string | null;
+  sessionToken: string | null;
   private isUserLoggedIn: boolean;
 
   constructor(sessionToken: string | null = null) {
@@ -557,6 +557,10 @@ class DummyApiService {
     this.isUserLoggedIn = false;
     cartItems = []; // Clear cart on logout
     return { success: true };
+  }
+
+  async signOut() {
+    return await this.logout();
   }
 
   // Products
@@ -788,6 +792,46 @@ class DummyApiService {
 
   get isAuthenticated() {
     return this.isUserLoggedIn;
+  }
+
+  // Carousel
+  async getCarouselItems() {
+    // In a real implementation, this would fetch from your Next.js API
+    // For now, return a default set of carousel items
+    return [
+      {
+        id: '1',
+        title: 'Premium Tech Collection',
+        subtitle: 'New arrivals with exclusive offers',
+        imageUrl: 'https://images.pexels.com/photos/5632371/pexels-photo-5632371.jpeg',
+        linkType: 'category',
+        linkValue: 'electronics',
+      },
+      {
+        id: '2',
+        title: 'Gaming Setup Essentials',
+        subtitle: 'Top products for your gaming station',
+        imageUrl: 'https://images.pexels.com/photos/230544/pexels-photo-230544.jpeg',
+        linkType: 'category',
+        linkValue: 'gaming',
+      },
+      {
+        id: '3',
+        title: 'Home Office Setup',
+        subtitle: 'Everything you need for productivity',
+        imageUrl: 'https://images.pexels.com/photos/2334890/pexels-photo-2334890.jpeg',
+        linkType: 'category',
+        linkValue: 'laptops',
+      }
+    ];
+  }
+
+  // Push Notifications
+  async updatePushToken(token: string) {
+    // In a real implementation, this would send the token to your backend
+    // For now, we'll just log it
+    console.log('Push token registered:', token);
+    return { success: true, message: 'Token registered successfully' };
   }
 }
 

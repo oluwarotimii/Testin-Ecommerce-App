@@ -33,9 +33,6 @@ export default function RootLayout() {
   useFrameworkReady();
 
   useEffect(() => {
-    // Initialize notifications
-    notificationService.initialize();
-
     // Check for updates on app start
     updateService.checkForUpdates();
   }, []);

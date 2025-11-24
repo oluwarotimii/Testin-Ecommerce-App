@@ -85,6 +85,8 @@ npm run dev
 
 The app is designed to work with OpenCart's REST API. Update the base URLs in the service files to point to your OpenCart installation.
 
+Alternatively, you can integrate with WordPress/WooCommerce by configuring the appropriate environment variables (see WordPress Integration section below).
+
 ## Base URL
 
 All API endpoints are relative to the following base URL:
@@ -472,3 +474,16 @@ Retrieves the user's address book.
 ```bash
 curl --cookie "OCSESSID=your_session_token" http://localhost/testin/index.php?route=api/mobile/address_book
 ```
+
+## WordPress/WooCommerce Integration
+
+The application now supports integration with WordPress/WooCommerce sites using the WooCommerce REST API. Follow the guide in [WordPressIntegration.md](WordPressIntegration.md) to set up your WordPress site and connect it to the mobile app.
+
+### Switching Between API Services
+
+You can easily switch between different API backends by changing the environment variable:
+
+- Set `EXPO_PUBLIC_API_SERVICE_TYPE=wordpress` to use WordPress/WooCommerce API
+- Set `EXPO_PUBLIC_API_SERVICE_TYPE=dummy` to use local dummy data (default)
+
+The application's architecture allows for seamless switching between different API services without code changes.
