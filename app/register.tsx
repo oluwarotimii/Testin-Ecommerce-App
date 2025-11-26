@@ -21,9 +21,15 @@ export default function RegisterScreen() {
 
   const handleRegister = async () => {
     if (password !== confirmPassword) {
-      Alert.alert("Passwords don't match");
+      Alert.alert("Passwords don't match", "Please make sure both passwords are the same.");
       return;
     }
+
+    if (!firstName || !lastName || !email || !phone || !password) {
+      Alert.alert("Missing Information", "Please fill in all fields.");
+      return;
+    }
+
     setLoading(true);
     try {
       const success = await register(firstName, lastName, email, phone, password);
@@ -33,9 +39,24 @@ export default function RegisterScreen() {
       } else {
         Alert.alert('Registration Failed', 'An error occurred during registration.');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Registration error:", error);
-      Alert.alert('Registration Error', 'An unexpected error occurred. Please try again.');
+
+      // Parse error message for user-friendly display
+      let errorTitle = 'Registration Error';
+      let errorMessage = 'An unexpected error occurred. Please try again.';
+
+      if (error?.code === 'registration-error-email-exists') {
+        errorTitle = 'Email Already Registered';
+        errorMessage = 'This email is already registered. Please log in or use a different email address.';
+      } else if (error?.code === 'registration-error-username-exists') {
+        errorTitle = 'Username Already Exists';
+        errorMessage = 'This username is already taken. Please try a different email address.';
+      } else if (error?.message) {
+        errorMessage = error.message;
+      }
+
+      Alert.alert(errorTitle, errorMessage);
     } finally {
       setLoading(false);
     }

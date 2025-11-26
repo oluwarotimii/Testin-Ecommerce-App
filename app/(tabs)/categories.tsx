@@ -4,6 +4,7 @@ import { useRouter } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
 import { useThemeColors } from '@/hooks/useColorScheme';
 import { MaterialIcons, FontAwesome, Ionicons } from '@expo/vector-icons';
+import { transformCategories } from '@/utils/woocommerceTransformers';
 
 // Function to get icon for category
 const getCategoryIcon = (categoryName: string): string => {
@@ -73,10 +74,12 @@ export default function CategoriesScreen() {
       try {
         setLoading(true);
         const response = await apiService.getCategories();
-        const formattedCategories = response.map((category: string) => ({
-          id: category,
-          name: category.replace(/-/g, ' '),
-          icon: getCategoryIcon(category),
+        // Use transformation utility
+        const transformedCategories = transformCategories(response);
+        const formattedCategories = transformedCategories.map((category: any) => ({
+          id: category.category_id,
+          name: category.name.replace(/-/g, ' '),
+          icon: getCategoryIcon(category.name),
         }));
         setCategories(formattedCategories);
       } catch (error) {

@@ -8,6 +8,7 @@ import SkeletonProductItem from '@/components/SkeletonProductItem';
 import { useThemeColors } from '@/hooks/useColorScheme';
 import SafeImage from '@/components/SafeImage';
 import FilterModal, { FilterOptions } from '@/components/FilterModal';
+import { transformProducts } from '@/utils/woocommerceTransformers';
 
 export default function ProductsScreen() {
   const router = useRouter();
@@ -43,25 +44,8 @@ export default function ProductsScreen() {
       try {
         setLoading(true);
         const response = await apiService.getProducts();
-
-        // Transform WooCommerce API response to match expected format
-        const transformedProducts = response.map((product: any) => ({
-          id: product.id,
-          title: product.name || product.title,
-          image: product.images && product.images[0] ? product.images[0].src : product.image,
-          price: parseFloat(product.price || product.price),
-          original_price: parseFloat(product.regular_price || product.price || 0),
-          description: product.description || '',
-          category: product.categories && product.categories.length > 0 ?
-            (product.categories[0].name || product.categories[0].slug) : 'General',
-          category_id: product.categories && product.categories.length > 0 ?
-            product.categories[0].id : null,
-          rating: product.average_rating ? {
-            rate: parseFloat(product.average_rating),
-            count: product.rating_count || 0
-          } : null
-        }));
-
+        // Use transformation utility
+        const transformedProducts = transformProducts(response);
         setProducts(transformedProducts);
       } catch (err: any) {
         setError(err.message || 'An unexpected error occurred');
@@ -76,9 +60,9 @@ export default function ProductsScreen() {
 
   const toggleWishlist = async (productId: number) => {
     if (!apiService) return;
-    
+
     const isInWishlist = wishlist.includes(productId);
-    
+
     // Optimistic update
     if (isInWishlist) {
       setWishlist(prev => prev.filter(id => id !== productId));
@@ -159,7 +143,7 @@ export default function ProductsScreen() {
           onPress={() => router.push(`/product/${product.id}`)}
         >
           <SafeImage source={{ uri: product.image }} style={[styles.productImage, { backgroundColor: colors.background }]} />
-          
+
           {/* Wishlist button - top right */}
           <View style={styles.wishlistOverlay}>
             <TouchableOpacity
@@ -169,10 +153,10 @@ export default function ProductsScreen() {
                 toggleWishlist(product.id);
               }}
             >
-              <Ionicons 
-                name={wishlist.includes(product.id) ? "heart" : "heart-outline"} 
-                size={16} 
-                color={wishlist.includes(product.id) ? "#FF3B30" : colors.text} 
+              <Ionicons
+                name={wishlist.includes(product.id) ? "heart" : "heart-outline"}
+                size={16}
+                color={wishlist.includes(product.id) ? "#FF3B30" : colors.text}
               />
             </TouchableOpacity>
           </View>
@@ -221,8 +205,8 @@ export default function ProductsScreen() {
   const renderListView = () => (
     <View style={styles.listContainer}>
       {filteredProducts.map((product) => (
-        <TouchableOpacity 
-          key={product.id} 
+        <TouchableOpacity
+          key={product.id}
           style={[styles.listItem, { backgroundColor: colors.surface }]}
           onPress={() => router.push(`/product/${product.id}`)}
         >
@@ -243,13 +227,13 @@ export default function ProductsScreen() {
             </View>
           </View>
           <View style={styles.listProductActions}>
-            <TouchableOpacity 
-              style={[styles.listCartButton, { backgroundColor: colors.primary }]} 
+            <TouchableOpacity
+              style={[styles.listCartButton, { backgroundColor: colors.primary }]}
               onPress={async (e) => {
                 e.stopPropagation();
                 try {
                   await apiService.addToCart(product.id, 1);
-                  
+
                   try {
                     const cartResponse = await apiService.getCartContents();
                     if (cartResponse && cartResponse.products) {
@@ -266,17 +250,17 @@ export default function ProductsScreen() {
             >
               <Ionicons name="cart" size={20} color={colors.white} />
             </TouchableOpacity>
-            <TouchableOpacity 
-              style={styles.listWishlistButton} 
+            <TouchableOpacity
+              style={styles.listWishlistButton}
               onPress={(e) => {
                 e.stopPropagation();
                 toggleWishlist(product.id);
               }}
             >
-              <Ionicons 
-                name={wishlist.includes(product.id) ? "heart" : "heart-outline"} 
-                size={20} 
-                color={wishlist.includes(product.id) ? "#FF3B30" : colors.textSecondary} 
+              <Ionicons
+                name={wishlist.includes(product.id) ? "heart" : "heart-outline"}
+                size={20}
+                color={wishlist.includes(product.id) ? "#FF3B30" : colors.textSecondary}
               />
             </TouchableOpacity>
           </View>

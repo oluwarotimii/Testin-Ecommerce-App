@@ -25,18 +25,10 @@ export default function CartScreen() {
       const cartResponse = await apiService.getCartContents();
       setCart(cartResponse);
 
-      if (cartResponse && cartResponse.products) {
-        const productPromises = cartResponse.products.map(item =>
-          apiService.getProduct(item.productId)
-        );
-        const productsResponse = await Promise.all(productPromises);
-
-        const mergedProducts = cartResponse.products.map((cartItem, index) => ({
-          ...productsResponse[index],
-          quantity: cartItem.quantity,
-        }));
-
-        setProducts(mergedProducts);
+      if (cartResponse && cartResponse.products && cartResponse.products.length > 0) {
+        // Cart items now have all necessary data (productId, image, title, price, quantity)
+        // No need to fetch product details separately
+        setProducts(cartResponse.products);
       } else {
         setProducts([]);
       }
@@ -64,7 +56,10 @@ export default function CartScreen() {
     setCartCount(totalQuantity);
   }, [products, setCartCount]);
 
-  const subtotal = cart ? cart.cartTotal || 0 : products.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  const subtotal = cart ? cart.cartTotal || 0 : products.reduce((sum, item) => {
+    const price = typeof item.price === 'number' ? item.price : parseFloat(item.price || '0');
+    return sum + (price * item.quantity);
+  }, 0);
   const shipping = subtotal > 50 ? 0 : 9.99;
   const tax = subtotal * 0.08;
   const total = subtotal + shipping + tax;
@@ -134,11 +129,11 @@ export default function CartScreen() {
       {/* Cart Items */}
       <ScrollView style={[styles.content, { backgroundColor: colors.background }]} showsVerticalScrollIndicator={false}>
         {products.map((item) => (
-          <View key={item.id} style={[styles.cartItem, { borderBottomColor: colors.border }]}>
+          <View key={item.productId || item.id} style={[styles.cartItem, { borderBottomColor: colors.border }]}>
             <Image source={{ uri: item.image }} style={styles.itemImage} />
             <View style={styles.itemDetails}>
               <Text style={[styles.itemName, { color: colors.text }]} numberOfLines={2}>{item.title}</Text>
-              <Text style={[styles.itemPrice, { color: colors.primary }]}>{`₦${item.price.toFixed(2)}`}</Text>
+              <Text style={[styles.itemPrice, { color: colors.primary }]}>{`₦${(typeof item.price === 'number' ? item.price : parseFloat(item.price || '0')).toFixed(2)}`}</Text>
             </View>
             <View style={styles.itemActions}>
               <View style={[styles.quantityContainer, { backgroundColor: colors.surface }]}>
@@ -147,7 +142,7 @@ export default function CartScreen() {
                   onPress={async () => {
                     if (item.quantity > 1) {
                       try {
-                        await apiService.updateCart(item.id, item.quantity - 1);
+                        await apiService.updateCart(item.productId || item.id, item.quantity - 1);
                         fetchCartContents(); // Refresh cart after update
                       } catch (error) {
                         console.error('Error updating cart:', error);
@@ -162,7 +157,7 @@ export default function CartScreen() {
                   style={styles.quantityButton}
                   onPress={async () => {
                     try {
-                      await apiService.updateCart(item.id, item.quantity + 1);
+                      await apiService.updateCart(item.productId || item.id, item.quantity + 1);
                       fetchCartContents(); // Refresh cart after update
                     } catch (error) {
                       console.error('Error updating cart:', error);
@@ -176,7 +171,7 @@ export default function CartScreen() {
                 style={styles.removeButton}
                 onPress={async () => {
                   try {
-                    await apiService.removeFromCart(item.id);
+                    await apiService.removeFromCart(item.productId || item.id);
                     fetchCartContents(); // Refresh cart after removal
                   } catch (error) {
                     console.error('Error removing item from cart:', error);

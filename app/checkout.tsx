@@ -5,6 +5,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useThemeColors } from '@/hooks/useColorScheme';
 import { MaterialIcons, FontAwesome, Ionicons } from '@expo/vector-icons';
 import ProductGridItem from '@/components/ProductGridItem';
+import { formatPrice } from '@/utils/formatNumber';
 
 export default function CheckoutScreen() {
   const router = useRouter();
@@ -93,13 +94,8 @@ export default function CheckoutScreen() {
       setLoadingCart(true);
       const cartResponse = await apiService.getCartContents();
       if (cartResponse?.success && cartResponse?.products) {
-        const transformedProducts = cartResponse.products.map((item: any) => ({
-          ...item,
-          price: typeof item.price === 'string' ? parseFloat(item.price) : (typeof item.price === 'number' ? item.price : 0),
-          quantity: typeof item.quantity === 'string' ? parseInt(item.quantity) : (typeof item.quantity === 'number' ? item.quantity : 1),
-          id: item.productId || item.id
-        }));
-        setCartItems(transformedProducts);
+        // Cart items now have all necessary data (productId, image, title, price, quantity)
+        setCartItems(cartResponse.products);
       } else {
         setCartItems([]);
       }
@@ -139,10 +135,50 @@ export default function CheckoutScreen() {
   const handlePlaceOrder = async () => {
     setPlacingOrder(true);
     try {
-      const response = await apiService.createOrder();
-      if (response.success) {
+      const selectedAddressData = addresses[selectedAddress];
+      const selectedPaymentData = paymentMethods[selectedPayment];
+      const selectedShippingData = shippingMethods[selectedShipping];
+
+      // Format order data for WooCommerce
+      const orderData = {
+        payment_method: selectedPaymentData?.id || 'bacs',
+        payment_method_title: selectedPaymentData?.name || 'Direct Bank Transfer',
+        set_paid: false,
+        billing: {
+          first_name: selectedAddressData?.firstName || 'Customer',
+          last_name: selectedAddressData?.lastName || '',
+          address_1: selectedAddressData?.address || '',
+          city: selectedAddressData?.city || '',
+          state: selectedAddressData?.state || '',
+          postcode: selectedAddressData?.zipCode || '',
+          country: selectedAddressData?.country || '',
+          email: selectedAddressData?.email || '',
+          phone: selectedAddressData?.phone || ''
+        },
+        shipping: {
+          first_name: selectedAddressData?.firstName || 'Customer',
+          last_name: selectedAddressData?.lastName || '',
+          address_1: selectedAddressData?.address || '',
+          city: selectedAddressData?.city || '',
+          state: selectedAddressData?.state || '',
+          postcode: selectedAddressData?.zipCode || '',
+          country: selectedAddressData?.country || ''
+        },
+        line_items: cartItems.map((item: any) => ({
+          product_id: item.id || item.productId,
+          quantity: item.quantity || 1
+        })),
+        shipping_lines: [{
+          method_id: selectedShippingData?.id || 'flat_rate',
+          method_title: selectedShippingData?.name || 'Standard Shipping',
+          total: (selectedShippingData?.price || 0).toString()
+        }]
+      };
+
+      const response = await apiService.createOrder(orderData);
+      if (response.success || response.id) {
         Alert.alert('Order Placed Successfully', 'Your order has been placed successfully!', [
-          { text: 'OK', onPress: () => router.push('/(tabs)/orders') }
+          { text: 'OK', onPress: () => router.push('/orders') }
         ]);
       } else {
         Alert.alert('Order Placement Failed', response.error || 'An error occurred while placing your order.');
@@ -178,11 +214,11 @@ export default function CheckoutScreen() {
                   <Image source={{ uri: item.image }} style={[styles.itemImage, { backgroundColor: colors.surface }]} />
                   <View style={styles.itemDetails}>
                     <Text style={[styles.itemName, { color: colors.text }]} numberOfLines={2}>{item.title}</Text>
-                    <Text style={[styles.itemPrice, { color: colors.primary }]}>{`₦${(typeof item.price === 'number' ? item.price : parseFloat(item.price)).toFixed(2)}`}</Text>
+                    <Text style={[styles.itemPrice, { color: colors.primary }]}>{formatPrice(typeof item.price === 'number' ? item.price : parseFloat(item.price))}</Text>
                     <Text style={[styles.itemQuantity, { color: colors.textSecondary }]}>Qty: {item.quantity || 1}</Text>
                   </View>
                   <Text style={[styles.itemTotal, { color: colors.text }]}>
-                    {`₦${((typeof item.price === 'number' ? item.price : parseFloat(item.price)) * (item.quantity || 1)).toFixed(2)}`}
+                    {formatPrice((typeof item.price === 'number' ? item.price : parseFloat(item.price)) * (item.quantity || 1))}
                   </Text>
                 </View>
               ))}
@@ -287,7 +323,7 @@ export default function CheckoutScreen() {
                 </View>
                 <View style={styles.shippingPrice}>
                   <Text style={[styles.priceText, { color: colors.primary }]}>
-                    {shipping.price === 0 ? 'Free' : `₦${shipping.price.toFixed(2)}`}
+                    {shipping.price === 0 ? 'Free' : formatPrice(shipping.price)}
                   </Text>
                   {selectedShipping === index && (
                     <Ionicons name="checkmark-circle" size={24} color={colors.primary} />
@@ -321,29 +357,29 @@ export default function CheckoutScreen() {
           <View style={[styles.summaryCard, { backgroundColor: colors.surface }]}>
             <View style={styles.summaryRow}>
               <Text style={[styles.summaryLabel, { color: colors.text }]}>Subtotal</Text>
-              <Text style={[styles.summaryValue, { color: colors.text }]}>₦{orderSummary.subtotal.toFixed(2)}</Text>
+              <Text style={[styles.summaryValue, { color: colors.text }]}>{formatPrice(orderSummary.subtotal)}</Text>
             </View>
             <View style={styles.summaryRow}>
               <Text style={[styles.summaryLabel, { color: colors.text }]}>Shipping</Text>
               <Text style={[styles.summaryValue, { color: colors.text }]}>
-                {orderSummary.shipping === 0 ? 'Free' : `₦${orderSummary.shipping.toFixed(2)}`}
+                {orderSummary.shipping === 0 ? 'Free' : formatPrice(orderSummary.shipping)}
               </Text>
             </View>
             <View style={styles.summaryRow}>
               <Text style={[styles.summaryLabel, { color: colors.text }]}>Tax</Text>
-              <Text style={[styles.summaryValue, { color: colors.text }]}>₦{orderSummary.tax.toFixed(2)}</Text>
+              <Text style={[styles.summaryValue, { color: colors.text }]}>{formatPrice(orderSummary.tax)}</Text>
             </View>
             {orderSummary.discount > 0 && (
               <View style={styles.summaryRow}>
                 <Text style={[styles.summaryLabel, { color: colors.text }]}>Discount</Text>
                 <Text style={[styles.summaryValue, { color: colors.success }]}>
-                  -₦{orderSummary.discount.toFixed(2)}
+                  -{formatPrice(orderSummary.discount)}
                 </Text>
               </View>
             )}
             <View style={[styles.totalRow, { borderTopColor: colors.border }]}>
               <Text style={[styles.totalLabel, { color: colors.text }]}>Total</Text>
-              <Text style={[styles.totalValue, { color: colors.text }]}>₦{orderSummary.total.toFixed(2)}</Text>
+              <Text style={[styles.totalValue, { color: colors.text }]}>{formatPrice(orderSummary.total)}</Text>
             </View>
           </View>
         </View>
@@ -352,7 +388,7 @@ export default function CheckoutScreen() {
       {/* Place Order Button */}
       <View style={[styles.bottomBar, { backgroundColor: colors.background, borderTopColor: colors.border }]}>
         <TouchableOpacity style={[styles.placeOrderButton, { backgroundColor: colors.primary }]} onPress={handlePlaceOrder}>
-          <Text style={[styles.placeOrderText, { color: colors.white }]}>Place Order - ₦{orderSummary.total.toFixed(2)}</Text>
+          <Text style={[styles.placeOrderText, { color: colors.white }]}>Place Order - {formatPrice(orderSummary.total)}</Text>
         </TouchableOpacity>
       </View>
     </View>

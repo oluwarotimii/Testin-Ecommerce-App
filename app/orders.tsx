@@ -19,13 +19,27 @@ export default function OrdersScreen() {
       try {
         setLoading(true);
         const response = await apiService.getOrders();
-        if (response.success) {
+        // WooCommerce API returns array directly, not wrapped in success object
+        if (Array.isArray(response)) {
+          // Transform WooCommerce orders to app format
+          const transformedOrders = response.map((order: any) => ({
+            order_id: order.id || order.order_id,
+            date_added: order.date_created || order.date_added,
+            status: order.status,
+            total: order.total,
+            products: order.line_items || order.products || []
+          }));
+          setOrders(transformedOrders);
+        } else if (response.success && response.orders) {
+          // Fallback for dummy API format
           setOrders(response.orders);
         } else {
-          console.error('Failed to fetch orders:', response.error);
+          console.error('Unexpected response format:', response);
+          setOrders([]);
         }
       } catch (error) {
         console.error('Error fetching orders:', error);
+        setOrders([]);
       } finally {
         setLoading(false);
       }

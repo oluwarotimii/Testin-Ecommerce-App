@@ -5,6 +5,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useCart } from '@/context/CartContext';
 import { MaterialIcons, FontAwesome, Ionicons } from '@expo/vector-icons';
 import { useThemeColors } from '@/hooks/useColorScheme';
+import { transformProduct } from '@/utils/woocommerceTransformers';
 
 const { width } = Dimensions.get('window');
 
@@ -29,24 +30,8 @@ export default function ProductDetailScreen() {
       const fetchProduct = async () => {
         try {
           const fetchedProduct = await apiService.getProduct(Number(id));
-
-          // Transform WooCommerce API response to match expected format
-          const transformedProduct = {
-            id: fetchedProduct.id,
-            title: fetchedProduct.name || fetchedProduct.title,
-            image: fetchedProduct.images && fetchedProduct.images[0] ? fetchedProduct.images[0].src : fetchedProduct.image,
-            price: parseFloat(fetchedProduct.price || fetchedProduct.price),
-            original_price: parseFloat(fetchedProduct.regular_price || fetchedProduct.price || 0),
-            description: fetchedProduct.description || '',
-            category: fetchedProduct.categories && fetchedProduct.categories.length > 0 ?
-              (fetchedProduct.categories[0].name || fetchedProduct.categories[0].slug) : 'General',
-            category_id: fetchedProduct.categories && fetchedProduct.categories.length > 0 ?
-              fetchedProduct.categories[0].id : null,
-            rating: fetchedProduct.average_rating ? {
-              rate: parseFloat(fetchedProduct.average_rating),
-              count: fetchedProduct.rating_count || 0
-            } : null
-          };
+          // Use transformation utility
+          const transformedProduct = transformProduct(fetchedProduct);
 
           if (isMounted) {
             setProduct(transformedProduct);
@@ -95,23 +80,8 @@ export default function ProductDetailScreen() {
           // Get all products and filter for similar ones based on category
           const allProducts = await apiService.getProducts();
 
-          // Transform products to expected format
-          const transformedProducts = allProducts.map((p: any) => ({
-            id: p.id,
-            title: p.name || p.title,
-            image: p.images && p.images[0] ? p.images[0].src : p.image,
-            price: parseFloat(p.price || p.price),
-            original_price: parseFloat(p.regular_price || p.price || 0),
-            description: p.description || '',
-            category: p.categories && p.categories.length > 0 ?
-              (p.categories[0].name || p.categories[0].slug) : 'General',
-            category_id: p.categories && p.categories.length > 0 ?
-              p.categories[0].id : null,
-            rating: p.average_rating ? {
-              rate: parseFloat(p.average_rating),
-              count: p.rating_count || 0
-            } : null
-          }));
+          // Transform products using utility
+          const transformedProducts = allProducts.map((p: any) => transformProduct(p));
 
           // Filter products by same category, excluding the current product
           const filteredProducts = transformedProducts.filter((p: any) =>
@@ -304,7 +274,7 @@ export default function ProductDetailScreen() {
                 <TouchableOpacity
                   key={item.id}
                   style={[styles.similarProductItem, { backgroundColor: colors.background }]}
-                  onPress={() => router.push(`/product/${item.id}`)}
+                  onPress={() => router.push(`/product/${item.id}` as any)}
                 >
                   <Image source={{ uri: item.image }} style={[styles.similarProductImage, { backgroundColor: colors.surface }]} />
                   <Text style={[styles.similarProductName, { color: colors.text }]} numberOfLines={2}>{item.title}</Text>

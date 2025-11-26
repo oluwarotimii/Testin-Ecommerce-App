@@ -10,6 +10,8 @@ import { useTheme } from '@/context/ThemeContext';
 import { MaterialIcons, FontAwesome, Ionicons } from '@expo/vector-icons';
 import SkeletonLoader from '@/components/SkeletonLoader';
 import SkeletonProductItem from '@/components/SkeletonProductItem';
+import { transformProducts, transformCategories } from '@/utils/woocommerceTransformers';
+import { formatPrice } from '@/utils/formatNumber';
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -46,16 +48,8 @@ export default function HomeScreen() {
     setErrorProducts(null);
     try {
       const response = await apiService.getProducts({ limit });
-      // Transform WooCommerce API response to match expected format
-      const transformedProducts = response.map((product: any) => ({
-        id: product.id,
-        title: product.name || product.title,
-        image: product.images && product.images[0] ? product.images[0].src : product.image,
-        price: parseFloat(product.price || product.price),
-        original_price: parseFloat(product.regular_price || product.price || 0),
-        description: product.description || '',
-        category: product.categories && product.categories.length > 0 ? product.categories[0].name : 'General',
-      }));
+      // Transform WooCommerce API response using utility function
+      const transformedProducts = transformProducts(response);
       setProducts(transformedProducts);
       // Check if we have more products available (assuming the API returns max available)
       setHasMoreProducts(response.length >= limit);
@@ -73,16 +67,8 @@ export default function HomeScreen() {
     try {
       const newLimit = productLimit + 20; // Load 20 more products
       const response = await apiService.getProducts({ limit: newLimit });
-      // Transform WooCommerce API response to match expected format
-      const transformedProducts = response.map((product: any) => ({
-        id: product.id,
-        title: product.name || product.title,
-        image: product.images && product.images[0] ? product.images[0].src : product.image,
-        price: parseFloat(product.price || product.price),
-        original_price: parseFloat(product.regular_price || product.price || 0),
-        description: product.description || '',
-        category: product.categories && product.categories.length > 0 ? product.categories[0].name : 'General',
-      }));
+      // Transform WooCommerce API response using utility function
+      const transformedProducts = transformProducts(response);
       setProducts(transformedProducts);
       setHasMoreProducts(response.length >= newLimit);
       setProductLimit(newLimit);
@@ -132,10 +118,8 @@ export default function HomeScreen() {
     setErrorCategories(null);
     try {
       const response = await apiService.getCategories();
-      const formattedCategories = response.map((category: any) => ({
-        category_id: category.id || category.category_id,
-        name: category.name || category,
-      }));
+      // Transform WooCommerce categories using utility function
+      const formattedCategories = transformCategories(response);
       setCategories(formattedCategories);
     } catch (err: any) {
       setErrorCategories(err.message || 'An unexpected error occurred');
@@ -331,7 +315,7 @@ export default function HomeScreen() {
                 <TouchableOpacity
                   key={category.category_id}
                   style={[styles.categoryItem, { backgroundColor: colors.surface, flex: 1, marginHorizontal: 4 }]}
-                  onPress={() => router.push(`/products?category=${category.category_id}`)}
+                  onPress={() => router.push(`/category/${category.category_id}` as any)}
                 >
                   {/* Add category-specific icons */}
                   <View style={[styles.categoryIconContainer, { backgroundColor: colors.background }]}>
@@ -445,8 +429,8 @@ export default function HomeScreen() {
                 <View style={styles.productDetails}>
                   <Text style={[styles.productName, { color: colors.text }]} numberOfLines={2}>{product.title}</Text>
                   <View style={styles.priceContainer}>
-                    <Text style={[styles.originalPrice, { color: colors.textSecondary }]}>{`₦${((typeof product.price === 'number' ? product.price : parseFloat(product.price || '0')) * 1.3).toFixed(2)}`}</Text>
-                    <Text style={[styles.productPrice, { color: '#ff6b6b' }]}>{`₦${typeof product.price === 'number' ? product.price.toFixed(2) : parseFloat(product.price || '0').toFixed(2)}`}</Text>
+                    <Text style={[styles.originalPrice, { color: colors.textSecondary }]}>{formatPrice((typeof product.price === 'number' ? product.price : parseFloat(product.price || '0')) * 1.3)}</Text>
+                    <Text style={[styles.productPrice, { color: '#ff6b6b' }]}>{formatPrice(typeof product.price === 'number' ? product.price : parseFloat(product.price || '0'))}</Text>
                   </View>
                 </View>
               </TouchableOpacity>
@@ -534,8 +518,8 @@ export default function HomeScreen() {
                 <View style={styles.productDetails}>
                   <Text style={[styles.productName, { color: colors.text }]} numberOfLines={2}>{product.title}</Text>
                   <View style={styles.priceContainer}>
-                    <Text style={[styles.originalPrice, { color: colors.textSecondary }]}>{`₦${((typeof product.price === 'number' ? product.price : parseFloat(product.price || '0')) * 1.3).toFixed(2)}`}</Text>
-                    <Text style={[styles.productPrice, { color: '#ff6b6b' }]}>{`₦${typeof product.price === 'number' ? product.price.toFixed(2) : parseFloat(product.price || '0').toFixed(2)}`}</Text>
+                    <Text style={[styles.originalPrice, { color: colors.textSecondary }]}>{formatPrice((typeof product.price === 'number' ? product.price : parseFloat(product.price || '0')) * 1.3)}</Text>
+                    <Text style={[styles.productPrice, { color: '#ff6b6b' }]}>{formatPrice(typeof product.price === 'number' ? product.price : parseFloat(product.price || '0'))}</Text>
                   </View>
                 </View>
               </TouchableOpacity>

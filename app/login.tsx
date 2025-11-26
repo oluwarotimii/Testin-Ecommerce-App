@@ -15,6 +15,11 @@ export default function LoginScreen() {
   const [showPassword, setShowPassword] = useState(false);
 
   const handleLogin = async () => {
+    if (!email || !password) {
+      Alert.alert('Missing Information', 'Please enter both email and password.');
+      return;
+    }
+
     try {
       const success = await login(email, password);
       if (success) {
@@ -22,9 +27,24 @@ export default function LoginScreen() {
       } else {
         Alert.alert('Login Failed', 'Invalid credentials or an error occurred.');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Login error:", error);
-      Alert.alert('Login Error', 'An unexpected error occurred. Please try again.');
+
+      // Parse error message for user-friendly display
+      let errorTitle = 'Login Error';
+      let errorMessage = 'An unexpected error occurred. Please try again.';
+
+      if (error?.code === '[jwt_auth] incorrect_password' || error?.code === 'invalid_username') {
+        errorTitle = 'Invalid Credentials';
+        errorMessage = 'The email or password you entered is incorrect. Please try again.';
+      } else if (error?.message?.includes('incorrect') || error?.message?.includes('invalid')) {
+        errorTitle = 'Invalid Credentials';
+        errorMessage = 'The email or password you entered is incorrect. Please try again.';
+      } else if (error?.message) {
+        errorMessage = error.message;
+      }
+
+      Alert.alert(errorTitle, errorMessage);
     }
   };
 

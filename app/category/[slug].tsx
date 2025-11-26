@@ -6,6 +6,7 @@ import { useCart } from '@/context/CartContext';
 import { Ionicons } from '@expo/vector-icons';
 import { useThemeColors } from '@/hooks/useColorScheme';
 import SafeImage from '@/components/SafeImage';
+import { transformProducts } from '@/utils/woocommerceTransformers';
 
 export default function CategoryScreen() {
     const router = useRouter();
@@ -38,35 +39,31 @@ export default function CategoryScreen() {
                 setLoading(true);
                 setError(null);
 
-                // For WooCommerce, categories are often identified by ID rather than slug
-                // First, try to get all products and filter by category ID or name
+                // Fetch all products
                 const allProducts = await apiService.getProducts();
 
-                // Transform products to ensure they have the expected format
-                const transformedProducts = allProducts.map((product: any) => ({
-                    id: product.id,
-                    title: product.name || product.title,
-                    image: product.images && product.images[0] ? product.images[0].src : product.image,
-                    price: parseFloat(product.price || product.price),
-                    original_price: parseFloat(product.regular_price || product.price || 0),
-                    description: product.description || '',
-                    category: product.categories && product.categories.length > 0 ?
-                        (product.categories[0].name || product.categories[0].slug) : 'General',
-                    category_id: product.categories && product.categories.length > 0 ?
-                        product.categories[0].id : null,
-                    rating: product.average_rating ? {
-                        rate: parseFloat(product.average_rating),
-                        count: product.rating_count || 0
-                    } : null
-                }));
+                // Use transformation utility
+                const transformedProducts = transformProducts(allProducts);
 
-                // Filter products by category - try both slug/ID and name matches
-                const filteredProducts = transformedProducts.filter(
-                    (product: any) =>
-                        product.category_id?.toString() === slug?.toString() ||
-                        product.category?.toLowerCase().includes(slug.toString().toLowerCase()) ||
-                        product.category?.toLowerCase().replace(/\s+/g, '-') === slug.toString().toLowerCase()
-                );
+                // Filter products by category - handle both ID and slug
+                const slugStr = slug.toString().toLowerCase();
+                const filteredProducts = transformedProducts.filter((product: any) => {
+                    // Check if slug is a number (category ID)
+                    const isNumericSlug = !isNaN(Number(slugStr));
+
+                    if (isNumericSlug) {
+                        // Match by category ID
+                        return product.category_id?.toString() === slugStr;
+                    } else {
+                        // Match by category name or slug
+                        const categoryName = product.category?.toLowerCase() || '';
+                        const categorySlug = categoryName.replace(/\s+/g, '-');
+
+                        return categoryName.includes(slugStr) ||
+                            categorySlug === slugStr ||
+                            categoryName === slugStr.replace(/-/g, ' ');
+                    }
+                });
 
                 setProducts(filteredProducts);
             } catch (err: any) {
@@ -187,7 +184,7 @@ export default function CategoryScreen() {
                             <TouchableOpacity
                                 key={product.id}
                                 style={[styles.productCard, { backgroundColor: colors.surface }]}
-                                onPress={() => router.push(`/product/${product.id}`)}
+                                onPress={() => router.push(`/product/${product.id}` as any)}
                             >
                                 <SafeImage
                                     source={{ uri: product.image }}

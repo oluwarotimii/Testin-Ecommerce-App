@@ -15,50 +15,64 @@ export default function OrderDetailsScreen() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Mock order data (in real implementation, this would come from API)
-  const mockOrder = {
-    id: orderId || 'ORD001',
-    order_id: orderId || 'ORD001',
-    date: '2023-11-15T10:30:00Z',
-    status: 'delivered',
-    items: [
-      {
-        id: 1,
-        title: 'Wireless Bluetooth Headphones',
-        price: 59.99,
-        quantity: 1,
-        image: 'https://fakestoreapi.com/img/81QpkIctqPL._AC_SX679_.jpg',
-      },
-      {
-        id: 2,
-        title: 'Smart Watch Series 5',
-        price: 199.99,
-        quantity: 1,
-        image: 'https://fakestoreapi.com/img/71YtQufLk7L._AC_UL640_QL65_2.jpg',
-      }
-    ],
-    subtotal: 259.98,
-    shipping: 9.99,
-    tax: 21.50,
-    total: 291.47,
-    shipping_address: {
-      name: 'John Doe',
-      address: '123 Main Street',
-      city: 'New York',
-      state: 'NY',
-      zip_code: '10001',
-      country: 'USA',
-    },
-    payment_method: 'Visa ending in 1234',
-  };
 
   useEffect(() => {
-    // Simulate API call
-    setTimeout(() => {
-      setOrder(mockOrder);
-      setLoading(false);
-    }, 500);
-  }, [orderId]);
+    const fetchOrderDetails = async () => {
+      if (!orderId) {
+        setError('No order ID provided');
+        setLoading(false);
+        return;
+      }
+
+      try {
+        setLoading(true);
+        setError(null);
+
+        const orderData = await apiService.getOrderInfo(Number(orderId));
+
+        if (orderData && !orderData.error) {
+          // Transform WooCommerce order to app format
+          const transformedOrder = {
+            id: orderData.id,
+            order_id: orderData.id,
+            date: orderData.date_created || orderData.date_added,
+            status: orderData.status,
+            items: orderData.line_items ? orderData.line_items.map((item: any) => ({
+              id: item.product_id || item.id,
+              title: item.name || item.title,
+              price: parseFloat(item.price || item.total) / (item.quantity || 1),
+              quantity: item.quantity || 1,
+              image: item.image?.src || item.image || 'https://via.placeholder.com/150'
+            })) : [],
+            subtotal: parseFloat(orderData.total || '0') - parseFloat(orderData.shipping_total || '0') - parseFloat(orderData.total_tax || '0'),
+            shipping: parseFloat(orderData.shipping_total || '0'),
+            tax: parseFloat(orderData.total_tax || '0'),
+            total: parseFloat(orderData.total || '0'),
+            shipping_address: {
+              name: `${orderData.shipping?.first_name || ''} ${orderData.shipping?.last_name || ''}`.trim() || 'N/A',
+              address: orderData.shipping?.address_1 || 'N/A',
+              city: orderData.shipping?.city || 'N/A',
+              state: orderData.shipping?.state || 'N/A',
+              zip_code: orderData.shipping?.postcode || 'N/A',
+              country: orderData.shipping?.country || 'N/A'
+            },
+            payment_method: orderData.payment_method_title || 'N/A'
+          };
+
+          setOrder(transformedOrder);
+        } else {
+          setError('Order not found');
+        }
+      } catch (err: any) {
+        console.error('Error fetching order details:', err);
+        setError(err.message || 'Failed to load order details');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchOrderDetails();
+  }, [orderId, apiService]);
 
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {

@@ -223,18 +223,20 @@ class WordPressApiService {
   private api: AxiosInstance;
   private isUserLoggedIn: boolean;
   private wordpressUrl: string;
+  private jwtEndpoint: string;
 
   constructor(wordpressUrl: string, consumerKey: string, consumerSecret: string, sessionToken: string | null = null) {
     // Create axios instance with base configuration
     this.api = axios.create({
       baseURL: `${wordpressUrl}/wp-json/wc/v3/`,
       auth: {
-        username: "ck_03fa4b83972b0bffeed920fa435b36c5ce2da7d4",
-        password: "cs_dba4839b4024395a99b4d06ab554650b60dedd6b",
+        username: consumerKey,
+        password: consumerSecret,
       },
     });
 
     this.wordpressUrl = wordpressUrl;
+    this.jwtEndpoint = `${wordpressUrl}/wp-json/jwt-auth/v1/token`;
     this.sessionToken = sessionToken;
     this.isUserLoggedIn = !!sessionToken;
   }
@@ -253,41 +255,58 @@ class WordPressApiService {
   // Authentication methods
   async login(email: string, password: string) {
     try {
-      // WordPress/WooCommerce doesn't have a direct login endpoint for the REST API
-      // This is a simplified approach - for full authentication, you'd need JWT Authentication
-      // or create a custom endpoint that validates credentials
-      const token = `session_${Date.now()}`;
-      this.sessionToken = token;
-      this.isUserLoggedIn = true;
+      // Authenticate using JWT plugin
+      const response = await axios.post(this.jwtEndpoint, {
+        username: email,
+        password: password
+      });
 
-      // Store the token in AsyncStorage
-      await AsyncStorage.setItem('sessionToken', token);
+      if (response.data && response.data.token) {
+        const token = response.data.token;
+        this.sessionToken = token;
+        this.isUserLoggedIn = true;
 
-      // For a real implementation, you would typically validate credentials
-      // and retrieve customer info to store customer ID
-      // This is a placeholder implementation
-      const customer = await this.getCustomerByEmail(email);
-      if (customer && customer.id) {
-        await AsyncStorage.setItem('customerId', customer.id.toString());
+        // Store the token in AsyncStorage
+        await AsyncStorage.setItem('sessionToken', token);
+
+        // Get customer info and store customer ID
+        const customer = await this.getCustomerByEmail(email);
+        if (customer && customer.id) {
+          await AsyncStorage.setItem('customerId', customer.id.toString());
+        }
+
+        return {
+          token: token,
+          success: true,
+          user: response.data.user_email,
+          displayName: response.data.user_display_name
+        };
+      } else {
+        throw new Error('Invalid response from authentication server');
       }
+    } catch (error: any) {
+      console.error('Login error:', error.response?.data || error.message);
 
-      return {
-        token: token,
-        success: true
+      // Format error message for better user experience
+      const errorMessage = error.response?.data?.message || error.message || 'Login failed';
+      const errorCode = error.response?.data?.code || 'login_error';
+
+      throw {
+        code: errorCode,
+        message: errorMessage,
+        data: error.response?.data
       };
-    } catch (error) {
-      console.error('Login error:', error);
-      throw error;
     }
   }
 
   async register(firstname: string, lastname: string, email: string, telephone: string, password: string) {
     try {
-      const newCustomer: Partial<Customer> = {
+      const newCustomer: any = {
         email: email,
         first_name: firstname,
         last_name: lastname,
         username: email.split('@')[0],
+        password: password,
         billing: {
           first_name: firstname,
           last_name: lastname,
@@ -324,19 +343,26 @@ class WordPressApiService {
         await AsyncStorage.setItem('customerId', response.id.toString());
       }
 
-      // Login after registration
-      const token = `session_${Date.now()}`;
-      this.sessionToken = token;
-      this.isUserLoggedIn = true;
-      await AsyncStorage.setItem('sessionToken', token);
+      // Login after registration using JWT
+      const loginResponse = await this.login(email, password);
 
       return {
         ...response,
-        token: token
+        token: loginResponse.token
       };
     } catch (error: any) {
       console.error('Registration error:', error.response?.data || error.message);
-      throw error;
+
+      // Format error message for better user experience
+      const errorData = error.response?.data;
+      const errorMessage = errorData?.message || error.message || 'Registration failed';
+      const errorCode = errorData?.code || 'registration_error';
+
+      throw {
+        code: errorCode,
+        message: errorMessage,
+        data: errorData
+      };
     }
   }
 
@@ -362,10 +388,10 @@ class WordPressApiService {
   async logout() {
     this.sessionToken = null;
     this.isUserLoggedIn = false;
-    
+
     // Remove token from AsyncStorage
     await AsyncStorage.removeItem('sessionToken');
-    
+
     return { success: true };
   }
 
@@ -480,17 +506,23 @@ class WordPressApiService {
         let items = cartItems ? JSON.parse(cartItems) : [];
 
         // Check if product already exists in cart
-        const existingItemIndex = items.findIndex((item: any) => item.id === product_id);
+        const existingItemIndex = items.findIndex((item: any) => item.productId === product_id);
 
         if (existingItemIndex >= 0) {
           items[existingItemIndex].quantity += quantity;
         } else {
           // We need to get product details to add to cart
           const product = await this.getProduct(product_id);
-          items.push({
-            ...product,
+          const cartItem = {
+            key: `cart_${product_id}_${Date.now()}`,
+            productId: product.id,
+            id: product.id,
+            title: product.name,
+            image: product.images && product.images[0] ? product.images[0].src : '',
+            price: parseFloat(product.price || '0'),
             quantity: quantity
-          });
+          };
+          items.push(cartItem);
         }
 
         await AsyncStorage.setItem('cartItems', JSON.stringify(items));
@@ -507,14 +539,16 @@ class WordPressApiService {
     }
   }
 
-  async updateCart(cart_item_key: string, quantity: number) {
+  async updateCart(cart_item_key: string | number, quantity: number) {
     try {
       // Update cart by modifying quantity
       const cartItems = await AsyncStorage.getItem('cartItems');
       let items = cartItems ? JSON.parse(cartItems) : [];
 
-      // Find item by key and update quantity
-      const itemIndex = items.findIndex((item: any) => item.key === cart_item_key);
+      // Find item by key or productId and update quantity
+      const itemIndex = items.findIndex((item: any) =>
+        item.key === cart_item_key || item.productId === cart_item_key || item.id === cart_item_key
+      );
       if (itemIndex >= 0) {
         if (quantity <= 0) {
           items.splice(itemIndex, 1); // Remove item if quantity <= 0
@@ -535,13 +569,15 @@ class WordPressApiService {
     }
   }
 
-  async removeFromCart(key: string) {
+  async removeFromCart(key: string | number) {
     try {
       // Remove item from cart
       const cartItems = await AsyncStorage.getItem('cartItems');
       let items = cartItems ? JSON.parse(cartItems) : [];
 
-      items = items.filter((item: any) => item.key !== key);
+      items = items.filter((item: any) =>
+        item.key !== key && item.productId !== key && item.id !== key
+      );
 
       await AsyncStorage.setItem('cartItems', JSON.stringify(items));
 
