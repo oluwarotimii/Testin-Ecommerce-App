@@ -4,6 +4,7 @@ import { useRouter } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
 import { useThemeColors } from '@/hooks/useColorScheme';
 import { MaterialIcons, FontAwesome, Ionicons } from '@expo/vector-icons';
+import { formatPrice } from '@/utils/formatNumber';
 
 export default function SearchScreen() {
   const router = useRouter();
@@ -148,19 +149,21 @@ export default function SearchScreen() {
               >
                 <Image source={{ uri: product.image }} style={styles.resultImage} />
                 <View style={styles.resultInfo}>
-                  <Text style={[styles.resultName, { color: colors.text }]} numberOfLines={2}>{product.title}</Text>
-                  <Text style={[styles.resultCategory, { color: colors.textSecondary }]}>{product.category?.replace('-', ' ')}</Text>
-                  <View style={styles.resultRating}>
-                    <Ionicons name="star" size={12} color="#FFD700" />
-                    <Text style={[styles.ratingText, { color: colors.text }]}>{product.rating ? product.rating.rate : 0}</Text>
+                  <View>
+                    <Text style={[styles.resultName, { color: colors.text }]} numberOfLines={2}>{product.title}</Text>
+                    <Text style={styles.resultCategory}>{product.category}</Text>
                   </View>
-                  <Text style={[styles.resultPrice, { color: colors.primary }]}>{`₦${product.price.toFixed(2)}`}</Text>
+                  <Text style={[styles.resultPrice, { color: '#FFA500' }]}>
+                    {formatPrice(typeof product.price === 'number' ? product.price : parseFloat(product.price || '0'))}
+                  </Text>
                 </View>
               </TouchableOpacity>
             ))}
           </View>
         ) : (
-          <Text style={[styles.noResultsText, { color: colors.textSecondary }]}>No products found for "{searchQuery}".</Text>
+          <View style={styles.section}>
+            <Text style={styles.noResultsText}>No products found matching "{searchQuery}"</Text>
+          </View>
         )}
       </ScrollView>
     </View>
@@ -285,6 +288,14 @@ const styles = StyleSheet.create({
   noResultsText: {
     textAlign: 'center',
     color: '#8E8E93',
+    marginTop: 20,
+    fontSize: 16,
+  },
+  loadingIndicator: {
+    marginTop: 40,
+  },
+  errorText: {
+    textAlign: 'center',
     marginTop: 20,
     fontSize: 16,
   },

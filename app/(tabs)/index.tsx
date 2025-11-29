@@ -307,305 +307,334 @@ export default function HomeScreen() {
     }
   };
 
-  return (
-    <ScrollView
-      style={[styles.container, { backgroundColor: colors.background }]}
-      showsVerticalScrollIndicator={false}
-      refreshControl={
-        <RefreshControl
-          refreshing={refreshing}
-          onRefresh={onRefresh}
-          colors={[colors.primary]} // Use theme primary color
-          tintColor={colors.primary} // For iOS
-        />
-      }
-      onScroll={(event) => {
-        const { layoutMeasurement, contentOffset, contentSize } = event.nativeEvent;
-        const isCloseToBottom = layoutMeasurement.height + contentOffset.y >= contentSize.height - 500; // 500 is our threshold
+  const [scrollY, setScrollY] = useState(0);
 
-        if (isCloseToBottom && hasMoreProducts && !isLoadingMore) {
-          loadMoreProducts();
-        }
-      }}
-      scrollEventThrottle={16} // 16ms between scroll events (60fps)
-    >
-      {/* Header */}
-      <View style={[styles.header, { backgroundColor: colors.background }]}>
-        <View>
-          <Text style={[styles.greeting, { color: colors.textSecondary }]}>
-            {isAuthenticated && user ? `Good morning, ${user.first_name || 'User'}` : 'Good morning'}
-          </Text>
-          <Text style={[styles.title, { color: colors.text }]}>Discover</Text>
+  return (
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      {/* Sticky Header */}
+      <View style={[styles.stickyHeader, {
+        backgroundColor: colors.background,
+        opacity: scrollY > 50 ? 1 : 0,
+        pointerEvents: scrollY > 50 ? 'auto' : 'none',
+      }]}>
+        <View style={[styles.searchContainer, { backgroundColor: colors.surface, marginBottom: 0, flex: 1, marginRight: 12 }]}>
+          <Ionicons name="search" size={20} color={colors.textSecondary} />
+          <TextInput
+            style={[styles.searchPlaceholder, { color: colors.text }]}
+            placeholder="Search products..."
+            placeholderTextColor={colors.textSecondary}
+            onFocus={() => router.push('/search')}
+          />
         </View>
-        <View style={styles.headerIcons}>
-          <TouchableOpacity style={styles.iconButton} onPress={() => router.push('/search')}>
-            <Ionicons name="search" size={24} color={colors.text} />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.iconButton} onPress={() => router.push('/notifications')}>
-            <Ionicons name="notifications" size={24} color={colors.text} />
-          </TouchableOpacity>
-        </View>
+        <TouchableOpacity style={styles.iconButton} onPress={() => router.push('/notifications')}>
+          <Ionicons name="notifications" size={24} color={colors.text} />
+        </TouchableOpacity>
       </View>
 
-      {/* Marketing Banner */}
-      <MarketingBanner />
+      <ScrollView
+        style={[styles.container, { backgroundColor: colors.background }]}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={[colors.primary]}
+            tintColor={colors.primary}
+          />
+        }
+        onScroll={(event) => {
+          const { layoutMeasurement, contentOffset, contentSize } = event.nativeEvent;
+          setScrollY(contentOffset.y);
+          const isCloseToBottom = layoutMeasurement.height + contentOffset.y >= contentSize.height - 500;
 
-      {/* Carousel */}
-      <InstagramCarousel
-        data={carouselItems}
-        onItemPress={handleCarouselItemPress}
-      />
-
-      {/* Featured Categories */}
-      <View style={styles.section}>
-        <View style={styles.sectionHeader}>
-          <View style={styles.sectionTitleContainer}>
-            {/* <Ionicons name="star" size={20} color={colors.primary} /> */}
-            <Text style={[styles.sectionTitle, { color: colors.text }]}>Featured Categories</Text>
+          if (isCloseToBottom && hasMoreProducts && !isLoadingMore) {
+            loadMoreProducts();
+          }
+        }}
+        scrollEventThrottle={16}
+      >
+        {/* Header (Hidden when scrolled) */}
+        <View style={[styles.header, { backgroundColor: colors.background, opacity: scrollY > 50 ? 0 : 1 }]}>
+          <View>
+            <Text style={[styles.greeting, { color: colors.textSecondary }]}>
+              {isAuthenticated && user ? `Good morning, ${user.first_name || 'User'}` : 'Good morning'}
+            </Text>
+            <Text style={[styles.title, { color: colors.text }]}>Discover</Text>
           </View>
-          <TouchableOpacity onPress={() => router.push('/categories')}>
-            <Text style={[styles.seeAll, { color: colors.primary }]}>See All</Text>
-          </TouchableOpacity>
+          <View style={styles.headerIcons}>
+            <TouchableOpacity style={styles.iconButton} onPress={() => router.push('/search')}>
+              <Ionicons name="search" size={24} color={colors.text} />
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.iconButton} onPress={() => router.push('/notifications')}>
+              <Ionicons name="notifications" size={24} color={colors.text} />
+            </TouchableOpacity>
+          </View>
         </View>
-        <View style={styles.categoriesContainer}>
-          {loadingCategories ? (
-            <View style={styles.categoriesRow}>
-              <SkeletonLoader width="30%" height={80} borderRadius={12} style={styles.skeletonCategoryItem} />
-              <SkeletonLoader width="30%" height={80} borderRadius={12} style={styles.skeletonCategoryItem} />
-              <SkeletonLoader width="30%" height={80} borderRadius={12} style={styles.skeletonCategoryItem} />
+
+        {/* Marketing Banner */}
+        <MarketingBanner />
+
+        {/* Carousel */}
+        <InstagramCarousel
+          data={carouselItems}
+          onItemPress={handleCarouselItemPress}
+        />
+
+        {/* Featured Categories */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <View style={styles.sectionTitleContainer}>
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>Featured Categories</Text>
             </View>
-          ) : errorCategories ? (
-            <Text style={[styles.errorText, { color: colors.error }]}>Error loading categories: {errorCategories}</Text>
-          ) : categories.length === 0 ? (
-            <Text style={[styles.noProductsText, { color: colors.textSecondary }]}>No categories found.</Text>
-          ) : (
-            <View style={styles.categoriesRow}>
-              {categories.slice(0, 3).map((category) => ( // Show only first 3 categories
-                <TouchableOpacity
-                  key={category.category_id}
-                  style={[styles.categoryItem, { backgroundColor: colors.surface, flex: 1, marginHorizontal: 4 }]}
-                  onPress={() => router.push(`/category/${category.category_id}` as any)}
-                >
-                  {/* Add category-specific icons */}
-                  <View style={[styles.categoryIconContainer, { backgroundColor: colors.background }]}>
-                    {category.name && typeof category.name === 'string' ? (
-                      category.name.toLowerCase().includes('phone') || category.name.toLowerCase().includes('smart') ? (
-                        <Ionicons name="phone-portrait" size={24} color={colors.primary} />
-                      ) : category.name.toLowerCase().includes('laptop') || category.name.toLowerCase().includes('computer') ? (
-                        <Ionicons name="laptop" size={24} color={colors.primary} />
-                      ) : category.name.toLowerCase().includes('headphone') || category.name.toLowerCase().includes('audio') ? (
-                        <Ionicons name="headset" size={24} color={colors.primary} />
-                      ) : category.name.toLowerCase().includes('gaming') ? (
-                        <Ionicons name="game-controller" size={24} color={colors.primary} />
-                      ) : category.name.toLowerCase().includes('tablet') ? (
-                        <Ionicons name="tablet-landscape" size={24} color={colors.primary} />
-                      ) : category.name.toLowerCase().includes('watch') || category.name.toLowerCase().includes('wearable') ? (
-                        <Ionicons name="watch" size={24} color={colors.primary} />
-                      ) : category.name.toLowerCase().includes('home') ? (
-                        <Ionicons name="home" size={24} color={colors.primary} />
-                      ) : category.name.toLowerCase().includes('storage') ? (
-                        <Ionicons name="save" size={24} color={colors.primary} />
-                      ) : category.name.toLowerCase().includes('monitor') ? (
-                        <Ionicons name="desktop" size={24} color={colors.primary} />
+            <TouchableOpacity onPress={() => router.push('/categories')}>
+              <Text style={[styles.seeAll, { color: colors.primary }]}>See All</Text>
+            </TouchableOpacity>
+          </View>
+          <View style={styles.categoriesContainer}>
+            {loadingCategories ? (
+              <View style={styles.categoriesRow}>
+                <SkeletonLoader width="30%" height={80} borderRadius={12} style={styles.skeletonCategoryItem} />
+                <SkeletonLoader width="30%" height={80} borderRadius={12} style={styles.skeletonCategoryItem} />
+                <SkeletonLoader width="30%" height={80} borderRadius={12} style={styles.skeletonCategoryItem} />
+              </View>
+            ) : errorCategories ? (
+              <Text style={[styles.errorText, { color: colors.error }]}>Error loading categories: {errorCategories}</Text>
+            ) : categories.length === 0 ? (
+              <Text style={[styles.noProductsText, { color: colors.textSecondary }]}>No categories found.</Text>
+            ) : (
+              <View style={styles.categoriesRow}>
+                {categories.slice(0, 3).map((category) => (
+                  <TouchableOpacity
+                    key={category.category_id}
+                    style={[styles.categoryItem, { backgroundColor: colors.surface, flex: 1, marginHorizontal: 4 }]}
+                    onPress={() => router.push(`/category/${category.category_id}` as any)}
+                  >
+                    <View style={[styles.categoryIconContainer, { backgroundColor: colors.background }]}>
+                      {category.name && typeof category.name === 'string' ? (
+                        category.name.toLowerCase().includes('phone') || category.name.toLowerCase().includes('smart') ? (
+                          <Ionicons name="phone-portrait" size={24} color={colors.primary} />
+                        ) : category.name.toLowerCase().includes('laptop') || category.name.toLowerCase().includes('computer') ? (
+                          <Ionicons name="laptop" size={24} color={colors.primary} />
+                        ) : category.name.toLowerCase().includes('headphone') || category.name.toLowerCase().includes('audio') ? (
+                          <Ionicons name="headset" size={24} color={colors.primary} />
+                        ) : category.name.toLowerCase().includes('gaming') ? (
+                          <Ionicons name="game-controller" size={24} color={colors.primary} />
+                        ) : category.name.toLowerCase().includes('tablet') ? (
+                          <Ionicons name="tablet-landscape" size={24} color={colors.primary} />
+                        ) : category.name.toLowerCase().includes('watch') || category.name.toLowerCase().includes('wearable') ? (
+                          <Ionicons name="watch" size={24} color={colors.primary} />
+                        ) : category.name.toLowerCase().includes('home') ? (
+                          <Ionicons name="home" size={24} color={colors.primary} />
+                        ) : category.name.toLowerCase().includes('storage') ? (
+                          <Ionicons name="save" size={24} color={colors.primary} />
+                        ) : category.name.toLowerCase().includes('monitor') ? (
+                          <Ionicons name="desktop" size={24} color={colors.primary} />
+                        ) : (
+                          <Ionicons name="layers" size={24} color={colors.primary} />
+                        )
                       ) : (
                         <Ionicons name="layers" size={24} color={colors.primary} />
-                      )
-                    ) : (
-                      <Ionicons name="layers" size={24} color={colors.primary} />
-                    )}
+                      )}
+                    </View>
+                    <Text style={[styles.categoryName, { color: colors.text }]} numberOfLines={2}>{category.name && typeof category.name === 'string' ? category.name.replace('-', ' ') : 'Category'}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            )}
+          </View>
+        </View>
+
+        {/* Latest Products */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>Latest Products</Text>
+            <TouchableOpacity onPress={handleSeeAllProducts}>
+              <Text style={[styles.seeAll, { color: colors.primary }]}>See All</Text>
+            </TouchableOpacity>
+          </View>
+
+          {loadingProducts ? (
+            <View style={styles.productsGrid}>
+              <SkeletonProductItem viewMode="grid" />
+              <SkeletonProductItem viewMode="grid" />
+              <SkeletonProductItem viewMode="grid" />
+              <SkeletonProductItem viewMode="grid" />
+            </View>
+          ) : errorProducts ? (
+            <Text style={[styles.errorText, { color: colors.error }]}>Error loading products: {errorProducts}</Text>
+          ) : products.length === 0 ? (
+            <Text style={[styles.noProductsText, { color: colors.textSecondary }]}>No products found.</Text>
+          ) : (
+            <View style={styles.productsGrid}>
+              {products.slice(0, productLimit).map((product) => (
+                <TouchableOpacity
+                  key={product.id}
+                  style={[styles.productCard, { backgroundColor: colors.surface }]}
+                  onPress={() => router.push(`/product/${product.id}` as any)}
+                >
+                  <SafeImage source={{ uri: product.image }} style={[styles.productImage, { backgroundColor: colors.background }]} />
+                  <View style={styles.wishlistOverlay}>
+                    <TouchableOpacity
+                      style={[styles.wishlistButton, { backgroundColor: colors.surface }]}
+                      onPress={(e) => {
+                        e.stopPropagation();
+                        toggleWishlist(product.id);
+                      }}
+                    >
+                      <Ionicons
+                        name={wishlist.includes(product.id) ? "heart" : "heart-outline"}
+                        size={16}
+                        color={wishlist.includes(product.id) ? "#FF3B30" : colors.text}
+                      />
+                    </TouchableOpacity>
                   </View>
-                  <Text style={[styles.categoryName, { color: colors.text }]} numberOfLines={2}>{category.name && typeof category.name === 'string' ? category.name.replace('-', ' ') : 'Category'}</Text>
+
+                  <View style={styles.productDetails}>
+                    <Text style={[styles.productName, { color: colors.text }]} numberOfLines={2}>{product.title}</Text>
+                    <View style={styles.priceContainer}>
+                      <View>
+                        <Text style={[styles.originalPrice, { color: colors.textSecondary }]}>{formatPrice((typeof product.price === 'number' ? product.price : parseFloat(product.price || '0')) * 1.3)}</Text>
+                        <Text style={[styles.productPrice, { color: '#FFA500' }]}>{formatPrice(typeof product.price === 'number' ? product.price : parseFloat(product.price || '0'))}</Text>
+                      </View>
+
+                      <TouchableOpacity
+                        style={[styles.addToCartButton, { backgroundColor: colors.primary }]}
+                        onPress={async (e) => {
+                          e.stopPropagation();
+                          try {
+                            await apiService.addToCart(product.id, 1);
+                            try {
+                              const cartResponse = await apiService.getCartContents();
+                              if (cartResponse && cartResponse.products) {
+                                const newCartCount = cartResponse.products.reduce((total: any, item: any) => total + item.quantity, 0);
+                                setCartCount(newCartCount);
+                              }
+                            } catch (countError) {
+                              console.error("Error updating cart count:", countError);
+                            }
+                          } catch (error) {
+                            console.error('Add to cart error:', error);
+                          }
+                        }}
+                      >
+                        <Ionicons name="cart" size={18} color={colors.white} />
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                </TouchableOpacity>
+              ))}
+              {isLoadingMore && (
+                <View style={styles.loadingMoreContainer}>
+                  <ActivityIndicator size="small" color={colors.primary} />
+                </View>
+              )}
+            </View>
+          )}
+        </View>
+
+        {/* Trending Items */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>Trending Items</Text>
+            <TouchableOpacity onPress={() => router.push('/products')}>
+              <Text style={[styles.seeAll, { color: colors.primary }]}>See All</Text>
+            </TouchableOpacity>
+          </View>
+          {loadingProducts ? (
+            <View style={styles.productsGrid}>
+              <SkeletonProductItem viewMode="grid" />
+              <SkeletonProductItem viewMode="grid" />
+              <SkeletonProductItem viewMode="grid" />
+              <SkeletonProductItem viewMode="grid" />
+            </View>
+          ) : errorProducts ? (
+            <Text style={[styles.errorText, { color: colors.error }]}>Error loading products: {errorProducts}</Text>
+          ) : products.length === 0 ? (
+            <Text style={[styles.noProductsText, { color: colors.textSecondary }]}>No products found.</Text>
+          ) : (
+            <View style={styles.productsGrid}>
+              {products.map((product) => (
+                <TouchableOpacity
+                  key={product.id}
+                  style={[styles.productCard, { backgroundColor: colors.surface }]}
+                  onPress={() => router.push(`/product/${product.id}` as any)}
+                >
+                  <SafeImage source={{ uri: product.image }} style={[styles.productImage, { backgroundColor: colors.background }]} />
+                  <View style={styles.wishlistOverlay}>
+                    <TouchableOpacity
+                      style={[styles.wishlistButton, { backgroundColor: colors.surface }]}
+                      onPress={(e) => {
+                        e.stopPropagation();
+                        toggleWishlist(product.id);
+                      }}
+                    >
+                      <Ionicons
+                        name={wishlist.includes(product.id) ? "heart" : "heart-outline"}
+                        size={16}
+                        color={wishlist.includes(product.id) ? "#FF3B30" : colors.text}
+                      />
+                    </TouchableOpacity>
+                  </View>
+
+                  <View style={styles.productDetails}>
+                    <Text style={[styles.productName, { color: colors.text }]} numberOfLines={2}>{product.title}</Text>
+                    <View style={styles.priceContainer}>
+                      <View>
+                        <Text style={[styles.originalPrice, { color: colors.textSecondary }]}>{formatPrice((typeof product.price === 'number' ? product.price : parseFloat(product.price || '0')) * 1.3)}</Text>
+                        <Text style={[styles.productPrice, { color: '#FFA500' }]}>{formatPrice(typeof product.price === 'number' ? product.price : parseFloat(product.price || '0'))}</Text>
+                      </View>
+
+                      <TouchableOpacity
+                        style={[styles.addToCartButton, { backgroundColor: colors.primary }]}
+                        onPress={async (e) => {
+                          e.stopPropagation();
+                          try {
+                            await apiService.addToCart(product.id, 1);
+                            try {
+                              const cartResponse = await apiService.getCartContents();
+                              if (cartResponse && cartResponse.products) {
+                                const newCartCount = cartResponse.products.reduce((total: any, item: any) => total + item.quantity, 0);
+                                setCartCount(newCartCount);
+                              }
+                            } catch (countError) {
+                              console.error("Error updating cart count:", countError);
+                            }
+                          } catch (error) {
+                            console.error('Add to cart error:', error);
+                          }
+                        }}
+                      >
+                        <Ionicons name="cart" size={18} color={colors.white} />
+                      </TouchableOpacity>
+                    </View>
+                  </View>
                 </TouchableOpacity>
               ))}
             </View>
           )}
         </View>
-      </View>
-
-      {/* Latest Products */}
-      <View style={styles.section}>
-        <View style={styles.sectionHeader}>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>Latest Products</Text>
-          <TouchableOpacity onPress={handleSeeAllProducts}>
-            <Text style={[styles.seeAll, { color: colors.primary }]}>See All</Text>
-          </TouchableOpacity>
-        </View>
-
-        {loadingProducts ? (
-          <View style={styles.productsGrid}>
-            <SkeletonProductItem viewMode="grid" />
-            <SkeletonProductItem viewMode="grid" />
-            <SkeletonProductItem viewMode="grid" />
-            <SkeletonProductItem viewMode="grid" />
-          </View>
-        ) : errorProducts ? (
-          <Text style={[styles.errorText, { color: colors.error }]}>Error loading products: {errorProducts}</Text>
-        ) : products.length === 0 ? (
-          <Text style={[styles.noProductsText, { color: colors.textSecondary }]}>No products found.</Text>
-        ) : (
-          <View style={styles.productsGrid}>
-            {products.slice(0, productLimit).map((product) => (
-              <TouchableOpacity
-                key={product.id}
-                style={[styles.productCard, { backgroundColor: colors.surface }]}
-                onPress={() => router.push(`/product/${product.id}` as any)}
-              >
-                <SafeImage source={{ uri: product.image }} style={[styles.productImage, { backgroundColor: colors.background }]} />
-                {/* Wishlist button - top right */}
-                <View style={styles.wishlistOverlay}>
-                  <TouchableOpacity
-                    style={[styles.wishlistButton, { backgroundColor: colors.surface }]}
-                    onPress={(e) => {
-                      e.stopPropagation();
-                      toggleWishlist(product.id);
-                    }}
-                  >
-                    <Ionicons
-                      name={wishlist.includes(product.id) ? "heart" : "heart-outline"}
-                      size={16}
-                      color={wishlist.includes(product.id) ? "#FF3B30" : colors.text}
-                    />
-                  </TouchableOpacity>
-                </View>
-
-                {/* Product details below image */}
-                <View style={styles.productDetails}>
-                  <Text style={[styles.productName, { color: colors.text }]} numberOfLines={2}>{product.title}</Text>
-                  <View style={styles.priceContainer}>
-                    <View>
-                      <Text style={[styles.originalPrice, { color: colors.textSecondary }]}>{formatPrice((typeof product.price === 'number' ? product.price : parseFloat(product.price || '0')) * 1.3)}</Text>
-                      <Text style={[styles.productPrice, { color: '#ff6b6b' }]}>{formatPrice(typeof product.price === 'number' ? product.price : parseFloat(product.price || '0'))}</Text>
-                    </View>
-
-                    <TouchableOpacity
-                      style={[styles.addToCartButton, { backgroundColor: colors.primary }]}
-                      onPress={async (e) => {
-                        e.stopPropagation(); // Prevent triggering the product detail navigation
-                        try {
-                          // Add to cart logic
-                          await apiService.addToCart(product.id, 1);
-
-                          // Update cart count by fetching the current cart contents
-                          try {
-                            const cartResponse = await apiService.getCartContents();
-                            if (cartResponse && cartResponse.products) {
-                              const newCartCount = cartResponse.products.reduce((total: any, item: any) => total + item.quantity, 0);
-                              setCartCount(newCartCount);
-                            }
-                          } catch (countError) {
-                            console.error("Error updating cart count:", countError);
-                          }
-                        } catch (error) {
-                          console.error('Add to cart error:', error);
-                        }
-                      }}
-                    >
-                      <Ionicons name="cart" size={18} color={colors.white} />
-                    </TouchableOpacity>
-                  </View>
-                </View>
-              </TouchableOpacity>
-            ))}
-            {isLoadingMore && (
-              <View style={styles.loadingMoreContainer}>
-                <ActivityIndicator size="small" color={colors.primary} />
-              </View>
-            )}
-          </View>
-        )}
-      </View>
-
-      {/* Trending Items */}
-      <View style={styles.section}>
-        <View style={styles.sectionHeader}>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>Trending Items</Text>
-          <TouchableOpacity onPress={() => router.push('/products')}>
-            <Text style={[styles.seeAll, { color: colors.primary }]}>See All</Text>
-          </TouchableOpacity>
-        </View>
-        {loadingProducts ? (
-          <View style={styles.productsGrid}>
-            <SkeletonProductItem viewMode="grid" />
-            <SkeletonProductItem viewMode="grid" />
-            <SkeletonProductItem viewMode="grid" />
-            <SkeletonProductItem viewMode="grid" />
-          </View>
-        ) : errorProducts ? (
-          <Text style={[styles.errorText, { color: colors.error }]}>Error loading products: {errorProducts}</Text>
-        ) : products.length === 0 ? (
-          <Text style={[styles.noProductsText, { color: colors.textSecondary }]}>No products found.</Text>
-        ) : (
-          <View style={styles.productsGrid}>
-            {products.map((product) => (
-              <TouchableOpacity
-                key={product.id}
-                style={[styles.productCard, { backgroundColor: colors.surface }]}
-                onPress={() => router.push(`/ product / ${product.id} ` as any)}
-              >
-                <SafeImage source={{ uri: product.image }} style={[styles.productImage, { backgroundColor: colors.background }]} />
-                {/* Wishlist button - top right */}
-                <View style={styles.wishlistOverlay}>
-                  <TouchableOpacity
-                    style={[styles.wishlistButton, { backgroundColor: colors.surface }]}
-                    onPress={(e) => {
-                      e.stopPropagation();
-                      toggleWishlist(product.id);
-                    }}
-                  >
-                    <Ionicons
-                      name={wishlist.includes(product.id) ? "heart" : "heart-outline"}
-                      size={16}
-                      color={wishlist.includes(product.id) ? "#FF3B30" : colors.text}
-                    />
-                  </TouchableOpacity>
-                </View>
-
-                {/* Product details below image */}
-                <View style={styles.productDetails}>
-                  <Text style={[styles.productName, { color: colors.text }]} numberOfLines={2}>{product.title}</Text>
-                  <View style={styles.priceContainer}>
-                    <View>
-                      <Text style={[styles.originalPrice, { color: colors.textSecondary }]}>{formatPrice((typeof product.price === 'number' ? product.price : parseFloat(product.price || '0')) * 1.3)}</Text>
-                      <Text style={[styles.productPrice, { color: '#ff6b6b' }]}>{formatPrice(typeof product.price === 'number' ? product.price : parseFloat(product.price || '0'))}</Text>
-                    </View>
-
-                    <TouchableOpacity
-                      style={[styles.addToCartButton, { backgroundColor: colors.primary }]}
-                      onPress={async (e) => {
-                        e.stopPropagation();
-                        try {
-                          await apiService.addToCart(product.id, 1);
-
-                          try {
-                            const cartResponse = await apiService.getCartContents();
-                            if (cartResponse && cartResponse.products) {
-                              const newCartCount = cartResponse.products.reduce((total: any, item: any) => total + item.quantity, 0);
-                              setCartCount(newCartCount);
-                            }
-                          } catch (countError) {
-                            console.error("Error updating cart count:", countError);
-                          }
-                        } catch (error) {
-                          console.error('Add to cart error:', error);
-                        }
-                      }}
-                    >
-                      <Ionicons name="cart" size={18} color={colors.white} />
-                    </TouchableOpacity>
-                  </View>
-                </View>
-              </TouchableOpacity>
-            ))}
-          </View>
-        )}
-      </View>
-    </ScrollView >
+      </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  stickyHeader: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 100,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingTop: 60, // Adjust based on safe area
+    paddingBottom: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(0,0,0,0.05)',
   },
   header: {
     flexDirection: 'row',

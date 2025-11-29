@@ -191,6 +191,18 @@ export default function ProductDetailScreen() {
     }
   };
 
+  const handleShare = async () => {
+    try {
+      await Share.share({
+        message: `Check out this product: ${product.title} - ₦${product.price}`,
+        url: `https://femtech.ng/product/${product.id}`, // Hypothetical URL
+        title: product.title,
+      });
+    } catch (error: any) {
+      Alert.alert(error.message);
+    }
+  };
+
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Header */}
@@ -199,6 +211,12 @@ export default function ProductDetailScreen() {
           <Ionicons name="chevron-back" size={24} color={colors.text} />
         </TouchableOpacity>
         <View style={styles.headerActions}>
+          <TouchableOpacity style={styles.headerButton} onPress={() => router.push('/search')}>
+            <Ionicons name="search" size={24} color={colors.text} />
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.headerButton} onPress={handleShare}>
+            <Ionicons name="share-social-outline" size={24} color={colors.text} />
+          </TouchableOpacity>
           <TouchableOpacity style={styles.headerButton} onPress={toggleWishlist}>
             <Ionicons
               name={isInWishlist ? "heart" : "heart-outline"}
@@ -355,7 +373,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 20,
-    paddingTop: 60,
+    paddingTop: 50,
     paddingBottom: 10,
     zIndex: 10,
   },
@@ -508,6 +526,7 @@ const styles = StyleSheet.create({
   similarProductPrice: {
     fontSize: 16,
     fontWeight: '700',
+    color: '#FFA500',
   },
   actionBar: {
     position: 'absolute',

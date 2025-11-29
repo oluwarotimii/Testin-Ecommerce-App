@@ -20,7 +20,18 @@ export default function CategoryScreen() {
     const [error, setError] = useState<string | null>(null);
     const [wishlist, setWishlist] = useState<number[]>([]);
 
-    const categoryName = typeof slug === 'string' ? slug.replace(/-/g, ' ') : '';
+    const [categoryName, setCategoryName] = useState(typeof slug === 'string' ? slug.replace(/-/g, ' ') : '');
+
+    useEffect(() => {
+        if (products.length > 0) {
+            // If we have products, try to get the category name from the first product
+            // This handles the case where slug is an ID
+            const firstProduct = products[0];
+            if (firstProduct.category) {
+                setCategoryName(firstProduct.category);
+            }
+        }
+    }, [products]);
 
     const fetchWishlist = useCallback(async () => {
         if (!apiService) return;

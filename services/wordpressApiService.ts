@@ -688,8 +688,11 @@ class WordPressApiService {
 
   async createOrder(orderData: any) {
     try {
+      // Get customer ID if logged in
+      const customerId = await AsyncStorage.getItem('customerId');
+
       // Create an order in WooCommerce
-      const order = {
+      const order: any = {
         payment_method: orderData.payment_method,
         payment_method_title: orderData.payment_method_title || 'Direct Bank Transfer',
         set_paid: orderData.set_paid || false,
@@ -704,6 +707,10 @@ class WordPressApiService {
           }
         ]
       };
+
+      if (customerId) {
+        order.customer_id = parseInt(customerId);
+      }
 
       const response = await this.handleRequest('/orders', {
         method: 'post',
@@ -779,9 +786,17 @@ class WordPressApiService {
   async updateAccountDetails(details: Record<string, any>) {
     if (!this.isUserLoggedIn) {
       throw new Error("User not authenticated");
-      return response;
-    } else {
-      throw new Error("Customer ID not found");
+    }
+
+    try {
+      const customerId = await AsyncStorage.getItem('customerId');
+      if (!customerId) throw new Error("Customer ID not found");
+
+      const response = await this.api.put(`/ customers / ${customerId}`, details);
+      return response.data;
+    } catch (error: any) {
+      console.error('Error updating account details:', error.response?.data || error.message);
+      throw error;
     }
   }
 
@@ -803,7 +818,8 @@ class WordPressApiService {
         state: addressData.state,
         postcode: addressData.zipCode,
         country: addressData.country,
-        phone: addressData.phone
+        phone: addressData.phone,
+        email: addressData.email // Ensure email is included
       };
 
       // Update both billing and shipping for simplicity, or based on a flag
@@ -812,7 +828,7 @@ class WordPressApiService {
         shipping: wooAddress
       };
 
-      const response = await this.api.put(`/customers/${customerId}`, updateData);
+      const response = await this.api.put(`/ customers / ${customerId}`, updateData);
       return response.data;
     } catch (error: any) {
       console.error('Error updating customer address:', error.response?.data || error.message);
@@ -841,6 +857,7 @@ class WordPressApiService {
           zipCode: customer.billing.postcode,
           country: customer.billing.country,
           phone: customer.billing.phone,
+          email: customer.billing.email || customer.email, // Include email
           isDefault: true
         }
       ];

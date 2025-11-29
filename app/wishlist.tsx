@@ -102,37 +102,37 @@ export default function WishlistScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
-        {wishlist.map((item) => (
-          <View key={item.id} style={[styles.wishlistItem, { backgroundColor: colors.surface }]}>
-            <TouchableOpacity
-              style={styles.productImageContainer}
-              onPress={() => router.push(`/product/${item.id}`)}
-            >
-              <Image source={{ uri: item.image }} style={styles.productImage} />
-            </TouchableOpacity>
-            <View style={styles.productInfo}>
-              <Text style={[styles.productName, { color: colors.text }]} numberOfLines={2}>{item.title}</Text>
-              <View style={styles.priceRow}>
-                <Text style={[styles.originalPrice, { color: colors.textSecondary }]}>{`₦${(parseFloat(String(item.price || 0)) * 1.3).toFixed(2)}`}</Text>
-                <Text style={[styles.productPrice, { color: '#FFA500' }]}>{`₦${parseFloat(String(item.price || 0)).toFixed(2)}`}</Text>
+        <View style={styles.gridContainer}>
+          {wishlist.map((item) => (
+            <View key={item.id} style={[styles.gridItem, { backgroundColor: colors.surface }]}>
+              <TouchableOpacity
+                style={styles.gridImageContainer}
+                onPress={() => router.push(`/product/${item.id}`)}
+              >
+                <Image source={{ uri: item.image }} style={styles.gridImage} resizeMode="cover" />
+                <TouchableOpacity
+                  style={[styles.removeButtonAbsolute, { backgroundColor: 'rgba(255,255,255,0.8)' }]}
+                  onPress={() => removeFromWishlist(item.id)}
+                >
+                  <Ionicons name="trash-outline" size={20} color={colors.error} />
+                </TouchableOpacity>
+              </TouchableOpacity>
+
+              <View style={styles.gridInfo}>
+                <Text style={[styles.gridName, { color: colors.text }]} numberOfLines={2}>{item.title}</Text>
+                <View style={styles.gridPriceRow}>
+                  <Text style={[styles.gridPrice, { color: '#FFA500' }]}>{`₦${parseFloat(String(item.price || 0)).toFixed(2)}`}</Text>
+                </View>
+                <TouchableOpacity
+                  style={[styles.gridAddToCartButton, { backgroundColor: colors.primary }]}
+                  onPress={() => addToCart(item)}
+                >
+                  <Text style={[styles.gridAddToCartText, { color: colors.white }]}>Add to Cart</Text>
+                </TouchableOpacity>
               </View>
             </View>
-            <View style={styles.actions}>
-              <TouchableOpacity
-                style={[styles.addToCartButton, { backgroundColor: colors.primary }]}
-                onPress={() => addToCart(item)}
-              >
-                <Ionicons name="cart" size={20} color={colors.white} />
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.removeButton, { backgroundColor: colors.surface }]}
-                onPress={() => removeFromWishlist(item.id)}
-              >
-                <Ionicons name="trash" size={20} color={colors.error} />
-              </TouchableOpacity>
-            </View>
-          </View>
-        ))}
+          ))}
+        </View>
       </ScrollView>
     </View>
   );
@@ -159,69 +159,72 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    paddingHorizontal: 20,
+    paddingHorizontal: 10, // Reduced padding for grid
   },
   scrollContent: {
     paddingBottom: 100,
   },
-  wishlistItem: {
+  gridContainer: {
     flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 16,
-    paddingHorizontal: 12,
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+  },
+  gridItem: {
+    width: '48%', // 2 columns with spacing
     borderRadius: 12,
-    marginBottom: 12,
+    marginBottom: 16,
+    overflow: 'hidden',
+    elevation: 2, // Shadow for Android
+    shadowColor: '#000', // Shadow for iOS
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
   },
-  productImageContainer: {
-    marginRight: 16,
+  gridImageContainer: {
+    width: '100%',
+    height: 150,
+    position: 'relative',
   },
-  productImage: {
-    width: 80,
-    height: 80,
-    borderRadius: 8,
-    backgroundColor: '#E5E5EA',
+  gridImage: {
+    width: '100%',
+    height: '100%',
   },
-  productInfo: {
-    flex: 1,
-    marginRight: 12,
+  removeButtonAbsolute: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  productName: {
-    fontSize: 16,
+  gridInfo: {
+    padding: 12,
+  },
+  gridName: {
+    fontSize: 14,
     fontWeight: '500',
     marginBottom: 8,
+    height: 40, // Fixed height for 2 lines
   },
-  priceRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+  gridPriceRow: {
+    marginBottom: 12,
   },
-  originalPrice: {
-    fontSize: 12,
-    textDecorationLine: 'line-through',
-  },
-  productPrice: {
-    fontSize: 18,
+  gridPrice: {
+    fontSize: 16,
     fontWeight: 'bold',
   },
-  actions: {
-    flexDirection: 'column',
+  gridAddToCartButton: {
+    paddingVertical: 8,
+    borderRadius: 8,
     alignItems: 'center',
-    gap: 8,
   },
-  addToCartButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
+  gridAddToCartText: {
+    fontSize: 12,
+    fontWeight: '600',
   },
-  removeButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+  // Keep empty state styles
   emptyContainer: {
     flex: 1,
     justifyContent: 'center',

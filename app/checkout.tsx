@@ -1,10 +1,11 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Image } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Image, ActivityIndicator } from 'react-native';
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
 import { useThemeColors } from '@/hooks/useColorScheme';
 import { Ionicons } from '@expo/vector-icons';
 import { formatPrice } from '@/utils/formatNumber';
+import SkeletonLoader from '@/components/SkeletonLoader';
 
 export default function CheckoutScreen() {
   const router = useRouter();
@@ -157,10 +158,12 @@ export default function CheckoutScreen() {
 
       const response = await apiService.createOrder(orderData);
       if (response.success || response.id) {
-        // Local notification simulation (Alert) as requested
-        Alert.alert('Order Placed Successfully', 'Your order has been placed successfully! We will contact you soon.', [
-          { text: 'OK', onPress: () => router.push('/orders') }
-        ]);
+        // Redirect to success screen
+        const orderId = response.id || response.order?.id || 'Unknown';
+        router.push({
+          pathname: '/order-success',
+          params: { orderId }
+        });
       } else {
         Alert.alert('Order Placement Failed', response.error || 'An error occurred while placing your order.');
       }
@@ -171,6 +174,49 @@ export default function CheckoutScreen() {
       setPlacingOrder(false);
     }
   };
+
+  if (loadingAddresses || loadingCart) {
+    return (
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+            <Ionicons name="arrow-back" size={24} color={colors.text} />
+          </TouchableOpacity>
+          <Text style={[styles.title, { color: colors.text }]}>Checkout</Text>
+          <View style={{ width: 40 }} />
+        </View>
+        <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+          <View style={styles.section}>
+            <SkeletonLoader width={100} height={24} style={{ marginBottom: 16 }} />
+            <View style={[styles.itemsContainer, { backgroundColor: colors.surface, padding: 16 }]}>
+              <View style={{ flexDirection: 'row', marginBottom: 16 }}>
+                <SkeletonLoader width={60} height={60} borderRadius={8} />
+                <View style={{ marginLeft: 12, flex: 1 }}>
+                  <SkeletonLoader width="80%" height={16} style={{ marginBottom: 8 }} />
+                  <SkeletonLoader width="40%" height={16} />
+                </View>
+              </View>
+              <View style={{ flexDirection: 'row' }}>
+                <SkeletonLoader width={60} height={60} borderRadius={8} />
+                <View style={{ marginLeft: 12, flex: 1 }}>
+                  <SkeletonLoader width="80%" height={16} style={{ marginBottom: 8 }} />
+                  <SkeletonLoader width="40%" height={16} />
+                </View>
+              </View>
+            </View>
+          </View>
+          <View style={styles.section}>
+            <SkeletonLoader width={150} height={24} style={{ marginBottom: 16 }} />
+            <SkeletonLoader width="100%" height={100} borderRadius={12} />
+          </View>
+          <View style={styles.section}>
+            <SkeletonLoader width={120} height={24} style={{ marginBottom: 16 }} />
+            <SkeletonLoader width="100%" height={120} borderRadius={12} />
+          </View>
+        </ScrollView>
+      </View>
+    );
+  }
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -273,9 +319,13 @@ export default function CheckoutScreen() {
           onPress={handlePlaceOrder}
           disabled={placingOrder}
         >
-          <Text style={[styles.placeOrderText, { color: colors.white }]}>
-            {placingOrder ? 'Placing Order...' : `Place Order - ${formatPrice(orderSummary.total)}`}
-          </Text>
+          {placingOrder ? (
+            <ActivityIndicator color={colors.white} />
+          ) : (
+            <Text style={[styles.placeOrderText, { color: colors.white }]}>
+              {`Place Order - ${formatPrice(orderSummary.total)}`}
+            </Text>
+          )}
         </TouchableOpacity>
       </View>
     </View>
