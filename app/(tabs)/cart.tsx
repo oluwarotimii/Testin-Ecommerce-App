@@ -8,6 +8,7 @@ import { MaterialIcons, FontAwesome, Ionicons } from '@expo/vector-icons';
 import SkeletonCartItem from '@/components/SkeletonCartItem';
 import SkeletonLoader from '@/components/SkeletonLoader';
 import { useIsFocused } from '@react-navigation/native';
+import { formatPrice } from '@/utils/formatNumber';
 
 export default function CartScreen() {
   const router = useRouter();
@@ -133,7 +134,7 @@ export default function CartScreen() {
             <Image source={{ uri: item.image }} style={styles.itemImage} />
             <View style={styles.itemDetails}>
               <Text style={[styles.itemName, { color: colors.text }]} numberOfLines={2}>{item.title}</Text>
-              <Text style={[styles.itemPrice, { color: colors.primary }]}>{`₦${(typeof item.price === 'number' ? item.price : parseFloat(item.price || '0')).toFixed(2)}`}</Text>
+              <Text style={[styles.itemPrice, { color: colors.primary }]}>{formatPrice(typeof item.price === 'number' ? item.price : parseFloat(item.price || '0'))}</Text>
             </View>
             <View style={styles.itemActions}>
               <View style={[styles.quantityContainer, { backgroundColor: colors.surface }]}>
@@ -189,7 +190,7 @@ export default function CartScreen() {
       <View style={[styles.summary, { backgroundColor: colors.surface }]}>
         <View style={styles.summaryRow}>
           <Text style={[styles.totalLabel, { color: colors.text }]}>Total</Text>
-          <Text style={[styles.totalValue, { color: colors.text }]}>₦{total.toFixed(2)}</Text>
+          <Text style={[styles.totalValue, { color: colors.text }]}>{formatPrice(total)}</Text>
         </View>
 
         <TouchableOpacity

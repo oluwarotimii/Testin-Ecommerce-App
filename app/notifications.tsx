@@ -4,66 +4,25 @@ import { useRouter } from 'expo-router';
 import { useThemeColors } from '@/hooks/useColorScheme';
 import { Ionicons } from '@expo/vector-icons';
 
-// Mock notification data
-const mockNotifications = [
-  {
-    id: 1,
-    title: 'Order Shipped',
-    message: 'Your order #ORD001 has been shipped and is on its way!',
-    timestamp: new Date(Date.now() - 3600000), // 1 hour ago
-    type: 'order', // order, promotion, system, etc.
-    read: false,
-  },
-  {
-    id: 2,
-    title: 'Special Offer',
-    message: 'Get 20% off on electronics this weekend only!',
-    timestamp: new Date(Date.now() - 86400000), // 1 day ago
-    type: 'promotion',
-    read: false,
-  },
-  {
-    id: 3,
-    title: 'Welcome Bonus',
-    message: 'Congratulations! You\'ve earned ₦500 welcome bonus.',
-    timestamp: new Date(Date.now() - 172800000), // 2 days ago
-    type: 'system',
-    read: true,
-  },
-  {
-    id: 4,
-    title: 'Order Delivered',
-    message: 'Your order #ORD002 has been delivered successfully.',
-    timestamp: new Date(Date.now() - 259200000), // 3 days ago
-    type: 'order',
-    read: true,
-  },
-  {
-    id: 5,
-    title: 'Account Verified',
-    message: 'Your account has been verified. Enjoy shopping!',
-    timestamp: new Date(Date.now() - 604800000), // 1 week ago
-    type: 'system',
-    read: true,
-  },
-];
+// Empty mock notification data as requested
+const mockNotifications: any[] = [];
 
 export default function NotificationsScreen() {
   const router = useRouter();
   const colors = useThemeColors();
-  const [notifications, setNotifications] = useState(mockNotifications);
+  const [notifications, setNotifications] = useState<any[]>(mockNotifications);
   const [refreshing, setRefreshing] = useState(false);
 
   const markAsRead = (id: number) => {
-    setNotifications(prev => 
-      prev.map(notif => 
+    setNotifications(prev =>
+      prev.map(notif =>
         notif.id === id ? { ...notif, read: true } : notif
       )
     );
   };
 
   const markAllAsRead = () => {
-    setNotifications(prev => 
+    setNotifications(prev =>
       prev.map(notif => ({ ...notif, read: true }))
     );
   };
@@ -137,7 +96,7 @@ export default function NotificationsScreen() {
       )}
 
       {/* Notifications List */}
-      <ScrollView 
+      <ScrollView
         style={styles.notificationsContainer}
         showsVerticalScrollIndicator={false}
         refreshControl={
@@ -191,7 +150,7 @@ export default function NotificationsScreen() {
                 </View>
               </View>
               <View style={styles.notificationFooter}>
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={styles.actionButton}
                   onPress={() => deleteNotification(notification.id)}
                 >

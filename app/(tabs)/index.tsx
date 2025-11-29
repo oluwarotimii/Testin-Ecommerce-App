@@ -12,11 +12,13 @@ import SkeletonLoader from '@/components/SkeletonLoader';
 import SkeletonProductItem from '@/components/SkeletonProductItem';
 import { transformProducts, transformCategories } from '@/utils/woocommerceTransformers';
 import { formatPrice } from '@/utils/formatNumber';
+import MarketingBanner from '@/components/MarketingBanner';
+import { fetchCarousels } from '@/services/carousel';
 
 export default function HomeScreen() {
   const router = useRouter();
   const colors = useThemeColors();
-  const { apiService } = useAuth();
+  const { apiService, user, isAuthenticated } = useAuth();
   const { setCartCount } = useCart();
   const [loadingCarousel, setLoadingCarousel] = useState(true);
   const [carouselItems, setCarouselItems] = useState<any[]>([]);
@@ -31,6 +33,11 @@ export default function HomeScreen() {
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [wishlist, setWishlist] = useState<number[]>([]);
+
+  // Featured Section State
+  const [featuredProducts, setFeaturedProducts] = useState<any[]>([]);
+  const [featuredCategoryName, setFeaturedCategoryName] = useState<string>('');
+  const [loadingFeatured, setLoadingFeatured] = useState(true);
 
   const fetchWishlist = useCallback(async () => {
     if (!apiService) return;
@@ -79,38 +86,66 @@ export default function HomeScreen() {
     }
   }, [apiService, productLimit, hasMoreProducts, isLoadingMore]);
 
+  const [carouselError, setCarouselError] = useState<string | null>(null);
+
+  // ... existing code ...
+
   const fetchCarouselItems = useCallback(async () => {
-    if (!apiService) return;
     setLoadingCarousel(true);
+    setCarouselError(null);
     try {
-      // This will fetch carousel items from your Next.js admin API via your backend
-      const response = await apiService.getCarouselItems();
-      setCarouselItems(response);
+      const items = await fetchCarousels();
+      setCarouselItems(items);
     } catch (err: any) {
       console.error('Error fetching carousel items:', err);
-      // Fallback to default carousel items if API fails
-      setCarouselItems([
-        {
-          id: '1',
-          title: 'Premium Tech Collection',
-          subtitle: 'New arrivals with exclusive offers',
-          imageUrl: 'https://images.pexels.com/photos/5632371/pexels-photo-5632371.jpeg',
-          linkType: 'category',
-          linkValue: 'electronics',
-        },
-        {
-          id: '2',
-          title: 'Gaming Setup Essentials',
-          subtitle: 'Top products for your gaming station',
-          imageUrl: 'https://images.pexels.com/photos/230544/pexels-photo-230544.jpeg',
-          linkType: 'category',
-          linkValue: 'gaming',
-        }
-      ]);
+      setCarouselError(err.message || 'Failed to load carousel');
     } finally {
       setLoadingCarousel(false);
     }
-  }, [apiService]);
+  }, []);
+
+  // ... existing code ...
+
+  {/* Marketing Banner */ }
+  <MarketingBanner />
+  {/* Debug Error Message */ }
+  {
+    carouselError && (
+      <View style={{ padding: 10, backgroundColor: '#ffebee', margin: 10, borderRadius: 8 }}>
+        <Text style={{ color: '#c62828', textAlign: 'center' }}>
+          Carousel Error: {carouselError}
+        </Text>
+      </View>
+    )
+  }
+
+  {/* Loading Indicator */ }
+  {
+    loadingCarousel && (
+      <View style={{ padding: 20, alignItems: 'center' }}>
+        <ActivityIndicator size="large" color={colors.primary} />
+      </View>
+    )
+  }
+
+  {/* Empty State */ }
+  {
+    !loadingCarousel && !carouselError && carouselItems.length === 0 && (
+      <View style={{ padding: 20, alignItems: 'center' }}>
+        <Text style={{ color: colors.textSecondary }}>No carousel items found.</Text>
+      </View>
+    )
+  }
+
+  {/* Carousel */ }
+  {
+    !loadingCarousel && carouselItems.length > 0 && (
+      <InstagramCarousel
+        data={carouselItems}
+        onItemPress={handleCarouselItemPress}
+      />
+    )
+  }
 
   const fetchCategories = useCallback(async () => {
     if (!apiService) return;
@@ -128,25 +163,53 @@ export default function HomeScreen() {
     }
   }, [apiService]);
 
+  const fetchFeaturedCategory = useCallback(async () => {
+    if (!apiService) return;
+    setLoadingFeatured(true);
+    try {
+      // Try to find 'trending' category first
+      let categories = await apiService.getCategories({ slug: 'trending' });
+
+      // If not found, fallback to 'clothing' or just the first category
+      if (!categories || categories.length === 0) {
+        categories = await apiService.getCategories({ per_page: 1 });
+      }
+
+      if (categories && categories.length > 0) {
+        const category = categories[0];
+        setFeaturedCategoryName(category.name);
+
+        // Fetch products for this category
+        const products = await apiService.getProducts({ category: category.id, limit: 4 });
+        const transformed = transformProducts(products);
+        setFeaturedProducts(transformed);
+      }
+    } catch (error) {
+      console.error('Error fetching featured category:', error);
+    } finally {
+      setLoadingFeatured(false);
+    }
+  }, [apiService]);
+
   useEffect(() => {
     fetchProducts(productLimit);
     fetchCategories();
     fetchWishlist();
-    fetchCarouselItems(); // Add carousel fetching
-  }, [fetchProducts, fetchCategories, fetchWishlist, fetchCarouselItems, productLimit]);
+    fetchCarouselItems();
+    fetchFeaturedCategory();
+  }, [fetchProducts, fetchCategories, fetchWishlist, fetchCarouselItems, fetchFeaturedCategory, productLimit]);
 
   // Handle push notifications
   useEffect(() => {
     const setupNotifications = async () => {
       // Register for push notifications
-      if (apiService) {
-        try {
-          // Import the notification service function
-          const { registerForPushNotificationsAsync } = await import('@/services/notificationService');
-          await registerForPushNotificationsAsync(apiService);
-        } catch (error) {
-          console.error('Error setting up push notifications:', error);
-        }
+      try {
+        // Import the notification service function
+        const { registerForPushNotificationsAsync } = await import('@/services/notificationService');
+        // Pass session token if available, though currently not strictly required by the public endpoint
+        await registerForPushNotificationsAsync(apiService?.sessionToken || undefined);
+      } catch (error) {
+        console.error('Error setting up push notifications:', error);
       }
     };
 
@@ -163,9 +226,9 @@ export default function HomeScreen() {
           const { linkType, linkValue } = response?.notification?.request?.content?.data || {};
           if (linkType && linkValue) {
             if (linkType === 'category') {
-              router.push(`/category/${linkValue}`);
+              router.push(`/category/${linkValue}` as any);
             } else if (linkType === 'product') {
-              router.push(`/product/${linkValue}`);
+              router.push(`/product/${linkValue}` as any);
             }
           }
         });
@@ -190,8 +253,9 @@ export default function HomeScreen() {
     await fetchCategories();
     await fetchWishlist();
     await fetchCarouselItems();
+    await fetchFeaturedCategory();
     setRefreshing(false);
-  }, [fetchProducts, fetchCategories, fetchWishlist, fetchCarouselItems, productLimit]);
+  }, [fetchProducts, fetchCategories, fetchWishlist, fetchCarouselItems, fetchFeaturedCategory, productLimit]);
 
 
   const handleSeeAllProducts = () => {
@@ -202,9 +266,9 @@ export default function HomeScreen() {
   const handleCarouselItemPress = useCallback((item: any) => {
     console.log('Carousel item pressed:', item);
     if (item.linkType === 'product') {
-      router.push(`/product/${item.linkValue}`);
+      router.push(`/product/${item.linkValue}` as any);
     } else if (item.linkType === 'category') {
-      router.push(`/category/${item.linkValue}`);
+      router.push(`/category/${item.linkValue}` as any);
     } else if (item.linkType === 'external') {
       // Handle external links if needed
       console.log('External link:', item.linkValue);
@@ -268,8 +332,10 @@ export default function HomeScreen() {
       {/* Header */}
       <View style={[styles.header, { backgroundColor: colors.background }]}>
         <View>
-          <Text style={[styles.greeting, { color: colors.textSecondary }]}>Good Morning!</Text>
-          <Text style={[styles.username, { color: colors.text }]}>User Name</Text>
+          <Text style={[styles.greeting, { color: colors.textSecondary }]}>
+            {isAuthenticated && user ? `Good morning, ${user.first_name || 'User'}` : 'Good morning'}
+          </Text>
+          <Text style={[styles.title, { color: colors.text }]}>Discover</Text>
         </View>
         <View style={styles.headerIcons}>
           <TouchableOpacity style={styles.iconButton} onPress={() => router.push('/search')}>
@@ -280,6 +346,9 @@ export default function HomeScreen() {
           </TouchableOpacity>
         </View>
       </View>
+
+      {/* Marketing Banner */}
+      <MarketingBanner />
 
       {/* Carousel */}
       <InstagramCarousel
@@ -361,6 +430,7 @@ export default function HomeScreen() {
             <Text style={[styles.seeAll, { color: colors.primary }]}>See All</Text>
           </TouchableOpacity>
         </View>
+
         {loadingProducts ? (
           <View style={styles.productsGrid}>
             <SkeletonProductItem viewMode="grid" />
@@ -378,7 +448,7 @@ export default function HomeScreen() {
               <TouchableOpacity
                 key={product.id}
                 style={[styles.productCard, { backgroundColor: colors.surface }]}
-                onPress={() => router.push(`/product/${product.id}`)}
+                onPress={() => router.push(`/product/${product.id}` as any)}
               >
                 <SafeImage source={{ uri: product.image }} style={[styles.productImage, { backgroundColor: colors.background }]} />
                 {/* Wishlist button - top right */}
@@ -397,40 +467,41 @@ export default function HomeScreen() {
                     />
                   </TouchableOpacity>
                 </View>
-                {/* Actions overlay on image */}
-                <View style={styles.productActionsOverlay}>
-                  <TouchableOpacity
-                    style={[styles.addToCartButton, { backgroundColor: colors.primary }]}
-                    onPress={async (e) => {
-                      e.stopPropagation(); // Prevent triggering the product detail navigation
-                      try {
-                        // Add to cart logic
-                        await apiService.addToCart(product.id, 1);
 
-                        // Update cart count by fetching the current cart contents
-                        try {
-                          const cartResponse = await apiService.getCartContents();
-                          if (cartResponse && cartResponse.products) {
-                            const newCartCount = cartResponse.products.reduce((total: any, item: any) => total + item.quantity, 0);
-                            setCartCount(newCartCount);
-                          }
-                        } catch (countError) {
-                          console.error("Error updating cart count:", countError);
-                        }
-                      } catch (error) {
-                        console.error('Add to cart error:', error);
-                      }
-                    }}
-                  >
-                    <Ionicons name="cart" size={18} color={colors.white} />
-                  </TouchableOpacity>
-                </View>
                 {/* Product details below image */}
                 <View style={styles.productDetails}>
                   <Text style={[styles.productName, { color: colors.text }]} numberOfLines={2}>{product.title}</Text>
                   <View style={styles.priceContainer}>
-                    <Text style={[styles.originalPrice, { color: colors.textSecondary }]}>{formatPrice((typeof product.price === 'number' ? product.price : parseFloat(product.price || '0')) * 1.3)}</Text>
-                    <Text style={[styles.productPrice, { color: '#ff6b6b' }]}>{formatPrice(typeof product.price === 'number' ? product.price : parseFloat(product.price || '0'))}</Text>
+                    <View>
+                      <Text style={[styles.originalPrice, { color: colors.textSecondary }]}>{formatPrice((typeof product.price === 'number' ? product.price : parseFloat(product.price || '0')) * 1.3)}</Text>
+                      <Text style={[styles.productPrice, { color: '#ff6b6b' }]}>{formatPrice(typeof product.price === 'number' ? product.price : parseFloat(product.price || '0'))}</Text>
+                    </View>
+
+                    <TouchableOpacity
+                      style={[styles.addToCartButton, { backgroundColor: colors.primary }]}
+                      onPress={async (e) => {
+                        e.stopPropagation(); // Prevent triggering the product detail navigation
+                        try {
+                          // Add to cart logic
+                          await apiService.addToCart(product.id, 1);
+
+                          // Update cart count by fetching the current cart contents
+                          try {
+                            const cartResponse = await apiService.getCartContents();
+                            if (cartResponse && cartResponse.products) {
+                              const newCartCount = cartResponse.products.reduce((total: any, item: any) => total + item.quantity, 0);
+                              setCartCount(newCartCount);
+                            }
+                          } catch (countError) {
+                            console.error("Error updating cart count:", countError);
+                          }
+                        } catch (error) {
+                          console.error('Add to cart error:', error);
+                        }
+                      }}
+                    >
+                      <Ionicons name="cart" size={18} color={colors.white} />
+                    </TouchableOpacity>
                   </View>
                 </View>
               </TouchableOpacity>
@@ -469,7 +540,7 @@ export default function HomeScreen() {
               <TouchableOpacity
                 key={product.id}
                 style={[styles.productCard, { backgroundColor: colors.surface }]}
-                onPress={() => router.push(`/product/${product.id}`)}
+                onPress={() => router.push(`/ product / ${product.id} ` as any)}
               >
                 <SafeImage source={{ uri: product.image }} style={[styles.productImage, { backgroundColor: colors.background }]} />
                 {/* Wishlist button - top right */}
@@ -488,38 +559,39 @@ export default function HomeScreen() {
                     />
                   </TouchableOpacity>
                 </View>
-                {/* Actions overlay on image */}
-                <View style={styles.productActionsOverlay}>
-                  <TouchableOpacity
-                    style={[styles.addToCartButton, { backgroundColor: colors.primary }]}
-                    onPress={async (e) => {
-                      e.stopPropagation();
-                      try {
-                        await apiService.addToCart(product.id, 1);
 
-                        try {
-                          const cartResponse = await apiService.getCartContents();
-                          if (cartResponse && cartResponse.products) {
-                            const newCartCount = cartResponse.products.reduce((total: any, item: any) => total + item.quantity, 0);
-                            setCartCount(newCartCount);
-                          }
-                        } catch (countError) {
-                          console.error("Error updating cart count:", countError);
-                        }
-                      } catch (error) {
-                        console.error('Add to cart error:', error);
-                      }
-                    }}
-                  >
-                    <Ionicons name="cart" size={18} color={colors.white} />
-                  </TouchableOpacity>
-                </View>
                 {/* Product details below image */}
                 <View style={styles.productDetails}>
                   <Text style={[styles.productName, { color: colors.text }]} numberOfLines={2}>{product.title}</Text>
                   <View style={styles.priceContainer}>
-                    <Text style={[styles.originalPrice, { color: colors.textSecondary }]}>{formatPrice((typeof product.price === 'number' ? product.price : parseFloat(product.price || '0')) * 1.3)}</Text>
-                    <Text style={[styles.productPrice, { color: '#ff6b6b' }]}>{formatPrice(typeof product.price === 'number' ? product.price : parseFloat(product.price || '0'))}</Text>
+                    <View>
+                      <Text style={[styles.originalPrice, { color: colors.textSecondary }]}>{formatPrice((typeof product.price === 'number' ? product.price : parseFloat(product.price || '0')) * 1.3)}</Text>
+                      <Text style={[styles.productPrice, { color: '#ff6b6b' }]}>{formatPrice(typeof product.price === 'number' ? product.price : parseFloat(product.price || '0'))}</Text>
+                    </View>
+
+                    <TouchableOpacity
+                      style={[styles.addToCartButton, { backgroundColor: colors.primary }]}
+                      onPress={async (e) => {
+                        e.stopPropagation();
+                        try {
+                          await apiService.addToCart(product.id, 1);
+
+                          try {
+                            const cartResponse = await apiService.getCartContents();
+                            if (cartResponse && cartResponse.products) {
+                              const newCartCount = cartResponse.products.reduce((total: any, item: any) => total + item.quantity, 0);
+                              setCartCount(newCartCount);
+                            }
+                          } catch (countError) {
+                            console.error("Error updating cart count:", countError);
+                          }
+                        } catch (error) {
+                          console.error('Add to cart error:', error);
+                        }
+                      }}
+                    >
+                      <Ionicons name="cart" size={18} color={colors.white} />
+                    </TouchableOpacity>
                   </View>
                 </View>
               </TouchableOpacity>
@@ -527,7 +599,7 @@ export default function HomeScreen() {
           </View>
         )}
       </View>
-    </ScrollView>
+    </ScrollView >
   );
 }
 
@@ -629,14 +701,15 @@ const styles = StyleSheet.create({
   },
   productCard: {
     width: '47%', // Slightly less than 50% to account for gaps
-    borderRadius: 12,
+    borderRadius: 16,
     overflow: 'hidden',
     position: 'relative',
-    height: 200, // Increased height to accommodate image + text
+    marginBottom: 16,
+    // Removed fixed height to allow content to grow
   },
   productImage: {
     width: '100%',
-    height: 120, // Fixed height for image to prevent width stretching
+    height: 160, // Increased height
   },
   wishlistOverlay: {
     position: 'absolute',
@@ -651,18 +724,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  productActionsOverlay: {
-    position: 'absolute',
-    bottom: 8,
-    right: 8,
-    zIndex: 1,
-  },
+  // productActionsOverlay removed
   productDetails: {
-    padding: 8,
-    paddingTop: 4,
-    paddingRight: 48,
-    position: 'relative',
-    top: 0,
+    padding: 12,
   },
   productTextContainer: {
     flex: 1,
@@ -670,19 +734,22 @@ const styles = StyleSheet.create({
   productName: {
     fontSize: 14,
     fontWeight: '500',
-    marginBottom: 4,
+    marginBottom: 8,
+    height: 40,
+    lineHeight: 20,
   },
   priceContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    justifyContent: 'space-between',
+    width: '100%',
   },
   originalPrice: {
     fontSize: 12,
     textDecorationLine: 'line-through',
   },
   productPrice: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: 'bold',
   },
   addToCartButton: {
@@ -691,7 +758,7 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
-    marginLeft: 8,
+    // marginLeft removed as we use space-between
   },
   loadingMoreContainer: {
     width: '100%',

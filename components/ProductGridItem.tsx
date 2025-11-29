@@ -15,23 +15,24 @@ const ProductGridItem: React.FC<ProductGridItemProps> = ({ product, onPress, onA
       <TouchableOpacity
         style={styles.productCard}
         onPress={onPress}
+        activeOpacity={0.9}
       >
         <SafeImage source={{ uri: product.image }} style={styles.productImage} />
-        {/* Bottom overlay with blur/opacity */}
-        <View style={[styles.productOverlay, { backgroundColor: '#F2F2F7CC' }]}>
-          <View style={styles.productTextContainer}>
-            <Text style={[styles.productName, { color: '#1D1D1F' }]} numberOfLines={2}>{product.title}</Text>
-            <Text style={[styles.productPrice, { color: '#007AFF' }]}>{`₦${product.price.toFixed(2)}`}</Text>
-          </View>
-          <View style={styles.productActions}>
+
+        <View style={styles.productDetails}>
+          <Text style={styles.productName} numberOfLines={2}>{product.title}</Text>
+
+          <View style={styles.bottomRow}>
+            <Text style={styles.productPrice}>{`₦${product.price.toFixed(2)}`}</Text>
+
             <TouchableOpacity
-              style={[styles.addToCartButton, { backgroundColor: '#007AFF' }]}
+              style={styles.addToCartButton}
               onPress={(e) => {
-                e.stopPropagation(); // Prevent triggering the product detail navigation
+                e.stopPropagation();
                 onAddToCart();
               }}
             >
-              <Ionicons name="cart" size={18} color="#FFFFFF" />
+              <Ionicons name="cart" size={20} color="#FFFFFF" />
             </TouchableOpacity>
           </View>
         </View>
@@ -42,56 +43,65 @@ const ProductGridItem: React.FC<ProductGridItemProps> = ({ product, onPress, onA
 
 const styles = StyleSheet.create({
   gridItem: {
-    width: '47%',
-    backgroundColor: '#F2F2F7',
-    borderRadius: 12,
-    overflow: 'hidden',
+    width: '48%',
+    marginBottom: 16,
+    borderRadius: 16,
+    backgroundColor: '#FFFFFF',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 3,
   },
   productCard: {
     width: '100%',
-    height: 140,
-    borderRadius: 12,
     overflow: 'hidden',
-    position: 'relative',
+    borderRadius: 16,
   },
   productImage: {
     width: '100%',
-    height: '100%',
-    backgroundColor: '#E5E5EA',
+    height: 160,
+    backgroundColor: '#F2F2F7',
   },
-  productOverlay: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
+  productDetails: {
+    padding: 12,
+  },
+  productName: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#1D1D1F',
+    marginBottom: 12,
+    lineHeight: 20,
+    height: 40, // Fixed height for 2 lines to keep alignment
+  },
+  bottomRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: 12,
   },
-  productTextContainer: {
-    flex: 1,
-  },
-  productActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginLeft: 8,
+  productPrice: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#007AFF',
   },
   addToCartButton: {
     width: 36,
     height: 36,
     borderRadius: 18,
+    backgroundColor: '#007AFF',
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  productName: {
-    fontSize: 14,
-    fontWeight: '500',
-    marginBottom: 4,
-  },
-  productPrice: {
-    fontSize: 16,
-    fontWeight: 'bold',
+    shadowColor: '#007AFF',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 4,
   },
 });
 

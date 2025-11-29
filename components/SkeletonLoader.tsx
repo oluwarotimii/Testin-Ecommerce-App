@@ -7,16 +7,18 @@ interface SkeletonLoaderProps {
   height?: number;
   borderRadius?: number;
   marginBottom?: number;
+  style?: any;
 }
 
-const SkeletonLoader: React.FC<SkeletonLoaderProps> = ({ 
-  width = '100%', 
-  height = 20, 
+const SkeletonLoader: React.FC<SkeletonLoaderProps> = ({
+  width = '100%',
+  height = 20,
   borderRadius = 8,
-  marginBottom = 8
+  marginBottom = 8,
+  style
 }) => {
   const colors = useThemeColors();
-  
+
   return (
     <View style={[
       styles.skeleton,
@@ -26,7 +28,8 @@ const SkeletonLoader: React.FC<SkeletonLoaderProps> = ({
         borderRadius,
         marginBottom,
         backgroundColor: colors.textSecondary + '40' // 40% opacity
-      }
+      },
+      style
     ]} />
   );
 };

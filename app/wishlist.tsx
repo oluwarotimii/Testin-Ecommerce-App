@@ -113,12 +113,12 @@ export default function WishlistScreen() {
             <View style={styles.productInfo}>
               <Text style={[styles.productName, { color: colors.text }]} numberOfLines={2}>{item.title}</Text>
               <View style={styles.priceRow}>
-                <Text style={[styles.originalPrice, { color: colors.textSecondary }]}>{`₦${(item.price * 1.3).toFixed(2)}`}</Text>
-                <Text style={[styles.productPrice, { color: '#ff6b6b' }]}>{`₦${item.price.toFixed(2)}`}</Text>
+                <Text style={[styles.originalPrice, { color: colors.textSecondary }]}>{`₦${(parseFloat(String(item.price || 0)) * 1.3).toFixed(2)}`}</Text>
+                <Text style={[styles.productPrice, { color: '#FFA500' }]}>{`₦${parseFloat(String(item.price || 0)).toFixed(2)}`}</Text>
               </View>
             </View>
             <View style={styles.actions}>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={[styles.addToCartButton, { backgroundColor: colors.primary }]}
                 onPress={() => addToCart(item)}
               >

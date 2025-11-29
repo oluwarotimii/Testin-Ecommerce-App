@@ -22,7 +22,7 @@ interface ApiService {
   getProducts: (params?: Record<string, any>) => Promise<any>;
   getProduct: (product_id: number) => Promise<any>;
   searchProducts: (search: string, page?: number, limit?: number) => Promise<any>;
-  getCategories: () => Promise<any>;
+  getCategories: (params?: any) => Promise<any>;
   getCategory: (category_id: number | string) => Promise<any>;
   getCartContents: () => Promise<any>;
   addToCart: (product_id: number, quantity?: number) => Promise<any>;
@@ -42,6 +42,8 @@ interface ApiService {
   getCarouselItems: () => Promise<any>;
   updatePushToken: (token: string) => Promise<any>;
   setSessionToken: (token: string | null) => void;
+  validateToken?: (token: string) => Promise<boolean>;
+  updateCustomerAddress?: (addressData: any) => Promise<any>;
 }
 
 interface AuthContextType {
@@ -75,13 +77,58 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, [sessionToken]);
 
+  const [user, setUser] = useState<any>(null);
+
   useEffect(() => {
     const loadSession = async () => {
       try {
         const storedToken = await AsyncStorage.getItem('sessionToken');
         if (storedToken) {
-          setSessionToken(storedToken);
-          setIsAuthenticated(true);
+          // Validate token if service supports it
+          if (apiService.validateToken) {
+            const isValid = await apiService.validateToken(storedToken);
+            if (isValid) {
+              setSessionToken(storedToken);
+              setIsAuthenticated(true);
+
+              // Fetch user details
+              try {
+                const customerId = await AsyncStorage.getItem('customerId');
+                if (customerId) {
+                  // We need to fetch the user details to get the name
+                  // This assumes apiService has a method to get user details by ID or current session
+                  if (apiService.getAccountDetails) {
+                    const userDetails = await apiService.getAccountDetails();
+                    setUser(userDetails);
+                  }
+                }
+              } catch (userError) {
+                console.error("Error fetching user details:", userError);
+              }
+
+            } else {
+              // Token invalid, clear it
+              console.log('Stored token is invalid, clearing session');
+              await AsyncStorage.removeItem('sessionToken');
+              await AsyncStorage.removeItem('customerId');
+              setSessionToken(null);
+              setIsAuthenticated(false);
+              setUser(null);
+            }
+          } else {
+            // Fallback for services without validation (e.g. dummy)
+            setSessionToken(storedToken);
+            setIsAuthenticated(true);
+            // Fetch user details for services without validation
+            try {
+              if (apiService.getAccountDetails) {
+                const userDetails = await apiService.getAccountDetails();
+                setUser(userDetails);
+              }
+            } catch (userError) {
+              console.error("Error fetching user details for non-validating service:", userError);
+            }
+          }
         }
       } catch (error) {
         console.error("Failed to load session token:", error);
@@ -90,7 +137,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     };
     loadSession();
-  }, []);
+  }, [apiService]);
 
   useEffect(() => {
     if (apiService) {
@@ -106,6 +153,37 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         await AsyncStorage.setItem('sessionToken', token);
         setSessionToken(token);
         setIsAuthenticated(true);
+
+        // Fetch and set user details immediately after login
+        try {
+          if (apiService.getAccountDetails) {
+            // We need to wait a bit for the token to be propagated or explicitly pass it if needed
+            // But apiService.setSessionToken might be triggered by the effect. 
+            // To be safe, we can manually set it on the service instance if possible, 
+            // or just wait for the effect. 
+            // Actually, the apiService instance is stable. We can just call getAccountDetails after a small delay or assume the effect runs fast.
+            // Let's try fetching.
+
+            // Note: We need to ensure the service has the token. 
+            // The useEffect [sessionToken, apiService] will run.
+            // But we want to return from this function with the user logged in.
+
+            // Let's just set the user to a temporary object if we have the data, or fetch it.
+            // The login response might contain user info?
+            if (response.user_email) {
+              // It's a partial user.
+            }
+
+            // We will let the UI trigger a fetch or do it here.
+            // Let's try to fetch it.
+            apiService.setSessionToken(token); // Force update service immediately
+            const userDetails = await apiService.getAccountDetails();
+            setUser(userDetails);
+          }
+        } catch (e) {
+          console.error("Error fetching user details after login:", e);
+        }
+
         return true;
       } else {
         console.error("Login failed:", response);

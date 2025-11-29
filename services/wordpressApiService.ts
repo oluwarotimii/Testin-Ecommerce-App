@@ -239,6 +239,16 @@ class WordPressApiService {
     this.jwtEndpoint = `${wordpressUrl}/wp-json/jwt-auth/v1/token`;
     this.sessionToken = sessionToken;
     this.isUserLoggedIn = !!sessionToken;
+
+    // Add request interceptor to inject JWT token
+    this.api.interceptors.request.use(async (config) => {
+      if (this.sessionToken) {
+        config.headers.Authorization = `Bearer ${this.sessionToken}`;
+      }
+      return config;
+    }, (error) => {
+      return Promise.reject(error);
+    });
   }
 
   // Helper method to handle API requests with error handling
@@ -249,6 +259,24 @@ class WordPressApiService {
     } catch (error: any) {
       console.error(`Error making request to ${endpoint}:`, error.response?.data || error.message);
       throw error;
+    }
+  }
+
+  async validateToken(token: string): Promise<boolean> {
+    try {
+      const response = await axios.post(
+        `${this.wordpressUrl}/wp-json/jwt-auth/v1/token/validate`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }
+      );
+      return response.status === 200;
+    } catch (error) {
+      console.error('Token validation failed:', error);
+      return false;
     }
   }
 
@@ -431,9 +459,14 @@ class WordPressApiService {
   }
 
   // Categories
-  async getCategories() {
+  async getCategories(params: any = {}) {
     try {
-      const response = await this.api.get('/products/categories');
+      const response = await this.api.get('/products/categories', {
+        params: {
+          per_page: 100,
+          ...params
+        }
+      });
       return response.data;
     } catch (error: any) {
       console.error('Error fetching categories:', error.response?.data || error.message);
@@ -441,7 +474,7 @@ class WordPressApiService {
     }
   }
 
-  async getCategory(category_id: number) {
+  async getCategory(category_id: number | string) {
     try {
       const response = await this.api.get(`/products/categories/${category_id}`);
       return response.data;
@@ -452,32 +485,22 @@ class WordPressApiService {
   }
 
   // Shopping Cart (using draft orders in WooCommerce)
+  // Shopping Cart (using draft orders in WooCommerce)
   async getCartContents() {
     // In WooCommerce, cart functionality is often handled through draft orders
     // This is a simplified implementation - in practice, you'll need to implement
     // your own cart management or use a plugin that provides cart endpoints
     try {
-      // Get the current user's cart if they're logged in
-      if (this.sessionToken) {
-        // This would require a custom endpoint or plugin that manages cart data
-        // For now, returning an empty cart as placeholder
-        return {
-          success: true,
-          products: [],
-          cartTotal: 0
-        };
-      } else {
-        // For guests, we might store cart items in device memory or AsyncStorage
-        // This is a simplified implementation
-        const cartItems = await AsyncStorage.getItem('cartItems');
-        const items = cartItems ? JSON.parse(cartItems) : [];
+      // For now, we use AsyncStorage for BOTH guests and logged-in users to ensure immediate functionality
+      // In a future update, this should sync with the server using the Store API
+      const cartItems = await AsyncStorage.getItem('cartItems');
+      const items = cartItems ? JSON.parse(cartItems) : [];
 
-        return {
-          success: true,
-          products: items,
-          cartTotal: items.reduce((sum: number, item: any) => sum + (item.price * item.quantity), 0)
-        };
-      }
+      return {
+        success: true,
+        products: items,
+        cartTotal: items.reduce((sum: number, item: any) => sum + (item.price * item.quantity), 0)
+      };
     } catch (error) {
       console.error('Error getting cart contents:', error);
       return {
@@ -490,49 +513,37 @@ class WordPressApiService {
 
   async addToCart(product_id: number, quantity: number = 1) {
     try {
-      // For logged-in users, we could create/update a draft order
-      // For guest users, we'll temporarily store in AsyncStorage
-      if (this.sessionToken) {
-        // This would require a custom endpoint or plugin that manages cart data
-        // Placeholder response
-        return {
-          success: true,
-          message: "Product added to cart",
-          cart: []
-        };
+      // Use AsyncStorage for ALL users for now
+      const cartItems = await AsyncStorage.getItem('cartItems');
+      let items = cartItems ? JSON.parse(cartItems) : [];
+
+      // Check if product already exists in cart
+      const existingItemIndex = items.findIndex((item: any) => item.productId === product_id);
+
+      if (existingItemIndex >= 0) {
+        items[existingItemIndex].quantity += quantity;
       } else {
-        // For guest users, store in AsyncStorage
-        const cartItems = await AsyncStorage.getItem('cartItems');
-        let items = cartItems ? JSON.parse(cartItems) : [];
-
-        // Check if product already exists in cart
-        const existingItemIndex = items.findIndex((item: any) => item.productId === product_id);
-
-        if (existingItemIndex >= 0) {
-          items[existingItemIndex].quantity += quantity;
-        } else {
-          // We need to get product details to add to cart
-          const product = await this.getProduct(product_id);
-          const cartItem = {
-            key: `cart_${product_id}_${Date.now()}`,
-            productId: product.id,
-            id: product.id,
-            title: product.name,
-            image: product.images && product.images[0] ? product.images[0].src : '',
-            price: parseFloat(product.price || '0'),
-            quantity: quantity
-          };
-          items.push(cartItem);
-        }
-
-        await AsyncStorage.setItem('cartItems', JSON.stringify(items));
-
-        return {
-          success: true,
-          message: "Product added to cart",
-          cart: items
+        // We need to get product details to add to cart
+        const product = await this.getProduct(product_id);
+        const cartItem = {
+          key: `cart_${product_id}_${Date.now()}`,
+          productId: product.id,
+          id: product.id,
+          title: product.name,
+          image: product.images && product.images[0] ? product.images[0].src : '',
+          price: parseFloat(product.price || '0'),
+          quantity: quantity
         };
+        items.push(cartItem);
       }
+
+      await AsyncStorage.setItem('cartItems', JSON.stringify(items));
+
+      return {
+        success: true,
+        message: "Product added to cart",
+        cart: items
+      };
     } catch (error) {
       console.error('Error adding to cart:', error);
       throw error;
@@ -768,28 +779,57 @@ class WordPressApiService {
   async updateAccountDetails(details: Record<string, any>) {
     if (!this.isUserLoggedIn) {
       throw new Error("User not authenticated");
-    }
-
-    const customerId = await AsyncStorage.getItem('customerId');
-    if (customerId) {
-      const response = await this.handleRequest(`/customers/${parseInt(customerId)}`, {
-        method: 'put',
-        data: details
-      });
-
       return response;
     } else {
       throw new Error("Customer ID not found");
     }
   }
 
-  async getAddressBook() {
-    try {
-      if (!this.isUserLoggedIn) {
-        throw new Error("User not authenticated");
-      }
+  async updateCustomerAddress(addressData: any) {
+    if (!this.isUserLoggedIn) {
+      throw new Error("User not authenticated");
+    }
 
+    try {
+      const customerId = await AsyncStorage.getItem('customerId');
+      if (!customerId) throw new Error("Customer ID not found");
+
+      // Map local address format to WooCommerce format
+      const wooAddress = {
+        first_name: addressData.firstName,
+        last_name: addressData.lastName,
+        address_1: addressData.address,
+        city: addressData.city,
+        state: addressData.state,
+        postcode: addressData.zipCode,
+        country: addressData.country,
+        phone: addressData.phone
+      };
+
+      // Update both billing and shipping for simplicity, or based on a flag
+      const updateData = {
+        billing: wooAddress,
+        shipping: wooAddress
+      };
+
+      const response = await this.api.put(`/customers/${customerId}`, updateData);
+      return response.data;
+    } catch (error: any) {
+      console.error('Error updating customer address:', error.response?.data || error.message);
+      throw error;
+    }
+  }
+
+  // Address Book
+  async getAddressBook() {
+    if (!this.isUserLoggedIn) {
+      return [];
+    }
+
+    try {
       const customer = await this.getAccountDetails();
+      // Return billing address as the primary address
+      // In a real app with multiple addresses, you'd need a custom endpoint or plugin
       return [
         {
           id: 1,
@@ -800,7 +840,8 @@ class WordPressApiService {
           state: customer.billing.state,
           zipCode: customer.billing.postcode,
           country: customer.billing.country,
-          phone: customer.billing.phone
+          phone: customer.billing.phone,
+          isDefault: true
         }
       ];
     } catch (error) {

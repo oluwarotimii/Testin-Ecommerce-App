@@ -6,6 +6,9 @@ import { useCart } from '@/context/CartContext';
 import { MaterialIcons, FontAwesome, Ionicons } from '@expo/vector-icons';
 import { useThemeColors } from '@/hooks/useColorScheme';
 import { transformProduct } from '@/utils/woocommerceTransformers';
+import { formatPrice } from '@/utils/formatNumber';
+import { stripHtml } from '@/utils/htmlUtils';
+import SkeletonProductDetail from '@/components/SkeletonProductDetail';
 
 const { width } = Dimensions.get('window');
 
@@ -22,6 +25,7 @@ export default function ProductDetailScreen() {
 
   const [product, setProduct] = useState<any>(null);
   const [similarProducts, setSimilarProducts] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let isMounted = true; // Flag to prevent state updates on unmounted components
@@ -29,6 +33,7 @@ export default function ProductDetailScreen() {
     if (id) {
       const fetchProduct = async () => {
         try {
+          setLoading(true);
           const fetchedProduct = await apiService.getProduct(Number(id));
           // Use transformation utility
           const transformedProduct = transformProduct(fetchedProduct);
@@ -40,6 +45,10 @@ export default function ProductDetailScreen() {
           console.error("Error fetching product:", error);
           if (isMounted) {
             setProduct(null);
+          }
+        } finally {
+          if (isMounted) {
+            setLoading(false);
           }
         }
       };
@@ -108,10 +117,14 @@ export default function ProductDetailScreen() {
     };
   }, [product?.id, apiService]);
 
+  if (loading) {
+    return <SkeletonProductDetail />;
+  }
+
   if (!product) {
     return (
       <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
-        <Text style={{ color: colors.text }}>Loading product details...</Text>
+        <Text style={{ color: colors.text }}>Product not found.</Text>
       </View>
     );
   }
@@ -163,11 +176,15 @@ export default function ProductDetailScreen() {
 
   const buyNow = async () => {
     try {
-      // First, add the product to cart temporarily
-      await apiService.addToCart(product.id, quantity);
-
-      // Then navigate to checkout
-      router.push('/checkout');
+      // Navigate to checkout with product ID and quantity as params
+      // This allows checkout page to handle single item purchase bypassing the cart
+      router.push({
+        pathname: '/checkout',
+        params: {
+          productId: product.id,
+          quantity: quantity
+        }
+      });
     } catch (error) {
       console.error("Buy now error:", error);
       Alert.alert("Error", "Failed to process purchase. Please try again.");
@@ -215,24 +232,24 @@ export default function ProductDetailScreen() {
             <Text style={[styles.productName, { color: colors.text }]}>{product.title}</Text>
           </View>
 
-          {/* Rating */}
-          <View style={styles.ratingSection}>
+          {/* Rating - Commented out as requested */}
+          {/* <View style={styles.ratingSection}>
             <View style={styles.rating}>
               <Ionicons name="star" size={16} color="#FFD700" />
               <Text style={[styles.ratingText, { color: colors.text }]}>{product.rating ? product.rating.rate : 0}</Text>
               <Text style={[styles.reviewsText, { color: colors.textSecondary }]}>({product.rating ? product.rating.count : 0} reviews)</Text>
             </View>
-          </View>
+          </View> */}
 
           {/* Price */}
           <View style={styles.priceSection}>
-            <Text style={[styles.currentPrice, { color: colors.primary }]}>₦{typeof product.price === 'number' ? product.price.toFixed(2) : parseFloat(product.price || '0').toFixed(2)}</Text>
+            <Text style={[styles.currentPrice, { color: '#FF3B30' }]}>{formatPrice(typeof product.price === 'number' ? product.price : parseFloat(product.price || '0'))}</Text>
           </View>
 
           {/* Description */}
           <View style={styles.descriptionSection}>
             <Text style={[styles.sectionTitle, { color: colors.text }]}>Description</Text>
-            <Text style={[styles.description, { color: colors.textSecondary }]}>{product.description}</Text>
+            <Text style={[styles.description, { color: colors.textSecondary }]}>{stripHtml(product.description)}</Text>
           </View>
 
           {/* Quantity Selector */}
@@ -261,7 +278,7 @@ export default function ProductDetailScreen() {
           <View style={[styles.similarProductsSection, { backgroundColor: colors.surface }]}>
             <View style={styles.sectionHeader}>
               <Text style={[styles.sectionTitle, { color: colors.text }]}>Similar Items</Text>
-              <TouchableOpacity onPress={() => router.push('/category/' + product.category)}>
+              <TouchableOpacity onPress={() => router.push(('/category/' + product.category) as any)}>
                 <Text style={[styles.viewAllText, { color: colors.primary }]}>View All</Text>
               </TouchableOpacity>
             </View>
@@ -278,7 +295,7 @@ export default function ProductDetailScreen() {
                 >
                   <Image source={{ uri: item.image }} style={[styles.similarProductImage, { backgroundColor: colors.surface }]} />
                   <Text style={[styles.similarProductName, { color: colors.text }]} numberOfLines={2}>{item.title}</Text>
-                  <Text style={[styles.similarProductPrice, { color: colors.primary }]}>₦{typeof item.price === 'number' ? item.price.toFixed(2) : parseFloat(item.price || '0').toFixed(2)}</Text>
+                  <Text style={[styles.similarProductPrice, { color: '#FF3B30' }]}>{formatPrice(typeof item.price === 'number' ? item.price : parseFloat(item.price || '0'))}</Text>
                 </TouchableOpacity>
               ))}
             </ScrollView>
@@ -372,6 +389,7 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     padding: 20,
+    flex: 1,
   },
   titleSection: {
     marginBottom: 15,

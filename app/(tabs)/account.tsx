@@ -73,7 +73,7 @@ export default function AccountScreen() {
       id: 'wishlist',
       title: 'Wishlist',
       icon: () => <Ionicons name="heart" size={20} color={colors.primary} />,
-      onPress: () => router.push('/(tabs)/wishlist'),
+      onPress: () => router.push('/wishlist'),
     },
   ];
 
@@ -205,10 +205,15 @@ export default function AccountScreen() {
               <View style={[styles.profileSection, { backgroundColor: colors.surface }]}>
                 <View style={styles.profileInfo}>
                   <View style={[styles.avatar, { backgroundColor: colors.primary }]}>
-                    <Text style={[styles.avatarText, { color: colors.white }]}>{userDetails.name.firstname ? userDetails.name.firstname.charAt(0) : ''}{userDetails.name.lastname ? userDetails.name.lastname.charAt(0) : ''}</Text>
+                    <Text style={[styles.avatarText, { color: colors.white }]}>
+                      {userDetails.first_name ? userDetails.first_name.charAt(0) : ''}
+                      {userDetails.last_name ? userDetails.last_name.charAt(0) : ''}
+                    </Text>
                   </View>
                   <View style={styles.userDetails}>
-                    <Text style={[styles.userName, { color: colors.text }]}>{userDetails.name.firstname} {userDetails.name.lastname}</Text>
+                    <Text style={[styles.userName, { color: colors.text }]}>
+                      {userDetails.first_name} {userDetails.last_name}
+                    </Text>
                     <Text style={[styles.userEmail, { color: colors.textSecondary }]}>{userDetails.email}</Text>
                   </View>
                 </View>

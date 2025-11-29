@@ -1,10 +1,9 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert, Image } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Image } from 'react-native';
 import { useState, useEffect, useCallback } from 'react';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
 import { useThemeColors } from '@/hooks/useColorScheme';
-import { MaterialIcons, FontAwesome, Ionicons } from '@expo/vector-icons';
-import ProductGridItem from '@/components/ProductGridItem';
+import { Ionicons } from '@expo/vector-icons';
 import { formatPrice } from '@/utils/formatNumber';
 
 export default function CheckoutScreen() {
@@ -12,28 +11,19 @@ export default function CheckoutScreen() {
   const colors = useThemeColors();
   const { apiService } = useAuth();
   const [addresses, setAddresses] = useState<any[]>([]);
-  const [paymentMethods, setPaymentMethods] = useState<any[]>([]);
-  const [shippingMethods, setShippingMethods] = useState<any[]>([]);
   const [cartItems, setCartItems] = useState<any[]>([]);
 
   const [loadingAddresses, setLoadingAddresses] = useState(true);
-  const [loadingPaymentMethods, setLoadingPaymentMethods] = useState(true);
-  const [loadingShippingMethods, setLoadingShippingMethods] = useState(true);
   const [loadingCart, setLoadingCart] = useState(true);
   const [placingOrder, setPlacingOrder] = useState(false);
 
-  // Additional state for selections and promo code
   const [selectedAddress, setSelectedAddress] = useState(0);
-  const [selectedPayment, setSelectedPayment] = useState(0);
-  const [selectedShipping, setSelectedShipping] = useState(0);
-  const [promoCode, setPromoCode] = useState('');
   const [orderSummary, setOrderSummary] = useState({
     subtotal: 0,
-    shipping: 0,
-    tax: 0,
-    discount: 0,
     total: 0
   });
+
+  const { productId, quantity } = useLocalSearchParams();
 
   const fetchCheckoutData = useCallback(async () => {
     try {
@@ -55,94 +45,84 @@ export default function CheckoutScreen() {
     }
 
     try {
-      setLoadingPaymentMethods(true);
-      const paymentResponse = await apiService.getPaymentMethods();
-      if (Array.isArray(paymentResponse)) {
-        setPaymentMethods(paymentResponse);
-        if (paymentResponse.length > 0) {
-          setSelectedPayment(0);
-        }
-      } else {
-        setPaymentMethods([]);
-      }
-    } catch (error) {
-      console.error("Failed to fetch payment methods:", error);
-      setPaymentMethods([]);
-    } finally {
-      setLoadingPaymentMethods(false);
-    }
-
-    try {
-      setLoadingShippingMethods(true);
-      const shippingResponse = await apiService.getShippingMethods();
-      if (Array.isArray(shippingResponse)) {
-        setShippingMethods(shippingResponse);
-        if (shippingResponse.length > 0) {
-          setSelectedShipping(0);
-        }
-      } else {
-        setShippingMethods([]);
-      }
-    } catch (error) {
-      console.error("Failed to fetch shipping methods:", error);
-      setShippingMethods([]);
-    } finally {
-      setLoadingShippingMethods(false);
-    }
-
-    try {
       setLoadingCart(true);
-      const cartResponse = await apiService.getCartContents();
-      if (cartResponse?.success && cartResponse?.products) {
-        // Cart items now have all necessary data (productId, image, title, price, quantity)
-        setCartItems(cartResponse.products);
+
+      // Check if we are doing a "Buy Now" (single item checkout)
+      if (productId && quantity) {
+        const id = Number(productId);
+        const qty = Number(quantity);
+        const product = await apiService.getProduct(id);
+
+        if (product) {
+          setCartItems([{
+            id: product.id,
+            productId: product.id,
+            title: product.name,
+            image: product.images && product.images[0] ? product.images[0].src : '',
+            price: parseFloat(product.price || '0'),
+            quantity: qty
+          }]);
+        } else {
+          // Fallback to cart if product fetch fails
+          const cartResponse = await apiService.getCartContents();
+          if (cartResponse?.success && cartResponse?.products) {
+            setCartItems(cartResponse.products);
+          } else {
+            setCartItems([]);
+          }
+        }
       } else {
-        setCartItems([]);
+        // Normal checkout flow - fetch cart
+        const cartResponse = await apiService.getCartContents();
+        if (cartResponse?.success && cartResponse?.products) {
+          setCartItems(cartResponse.products);
+        } else {
+          setCartItems([]);
+        }
       }
     } catch (error) {
-      console.error("Failed to fetch cart contents:", error);
+      console.error("Failed to fetch checkout items:", error);
       setCartItems([]);
     } finally {
       setLoadingCart(false);
     }
-  }, [apiService]);
+  }, [apiService, productId, quantity]);
 
   useEffect(() => {
     fetchCheckoutData();
   }, [fetchCheckoutData]);
 
   useEffect(() => {
-    const selectedShippingMethod = shippingMethods[selectedShipping];
     const subtotal = cartItems.reduce((sum, item) => {
       const itemPrice = typeof item.price === 'number' ? item.price : parseFloat(item.price) || 0;
       const itemQuantity = typeof item.quantity === 'number' ? item.quantity : parseInt(item.quantity) || 1;
       return sum + (itemPrice * itemQuantity);
     }, 0);
-    const shippingCost = selectedShippingMethod ? (typeof selectedShippingMethod.price === 'number' ? selectedShippingMethod.price : parseFloat(selectedShippingMethod.price) || 0) : 0;
-    const tax = subtotal * 0.08;
-    const discount = promoCode ? subtotal * 0.1 : 0;
-    const total = subtotal + shippingCost + tax - discount;
+
+    // No tax, no shipping, no discount as per request
+    const total = subtotal;
 
     setOrderSummary({
       subtotal,
-      shipping: shippingCost,
-      tax,
-      discount,
       total
     });
-  }, [cartItems, shippingMethods, selectedShipping, promoCode]);
+  }, [cartItems]);
 
   const handlePlaceOrder = async () => {
+    if (addresses.length === 0) {
+      Alert.alert('Address Required', 'Please add a shipping address to proceed.');
+      return;
+    }
+
     setPlacingOrder(true);
     try {
       const selectedAddressData = addresses[selectedAddress];
-      const selectedPaymentData = paymentMethods[selectedPayment];
-      const selectedShippingData = shippingMethods[selectedShipping];
 
       // Format order data for WooCommerce
+      // Using default/fallback values for payment and shipping as sections were removed
       const orderData = {
-        payment_method: selectedPaymentData?.id || 'bacs',
-        payment_method_title: selectedPaymentData?.name || 'Direct Bank Transfer',
+        payment_method: 'bacs',
+        payment_method_title: 'Direct Bank Transfer',
         set_paid: false,
         billing: {
           first_name: selectedAddressData?.firstName || 'Customer',
@@ -169,15 +149,16 @@ export default function CheckoutScreen() {
           quantity: item.quantity || 1
         })),
         shipping_lines: [{
-          method_id: selectedShippingData?.id || 'flat_rate',
-          method_title: selectedShippingData?.name || 'Standard Shipping',
-          total: (selectedShippingData?.price || 0).toString()
+          method_id: 'flat_rate',
+          method_title: 'Standard Shipping',
+          total: '0'
         }]
       };
 
       const response = await apiService.createOrder(orderData);
       if (response.success || response.id) {
-        Alert.alert('Order Placed Successfully', 'Your order has been placed successfully!', [
+        // Local notification simulation (Alert) as requested
+        Alert.alert('Order Placed Successfully', 'Your order has been placed successfully! We will contact you soon.', [
           { text: 'OK', onPress: () => router.push('/orders') }
         ]);
       } else {
@@ -204,7 +185,7 @@ export default function CheckoutScreen() {
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
 
-        {/* Cart Items (Your Order) - Moved to top and styled like Cart */}
+        {/* Cart Items (Your Order) */}
         {cartItems.length > 0 && (
           <View style={styles.section}>
             <Text style={[styles.sectionTitle, { color: colors.text }]}>Your Order</Text>
@@ -257,98 +238,12 @@ export default function CheckoutScreen() {
               </View>
             </TouchableOpacity>
           ))}
-          <TouchableOpacity style={[styles.addButton, { borderColor: colors.primary }]}>
+          <TouchableOpacity
+            style={[styles.addButton, { borderColor: colors.primary }]}
+            onPress={() => router.push('/addresses')}
+          >
             <Text style={[styles.addButtonText, { color: colors.primary }]}>+ Add New Address</Text>
           </TouchableOpacity>
-        </View>
-
-        {/* Payment Method */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Ionicons name="card" size={20} color={colors.primary} />
-            <Text style={[styles.sectionTitle, { color: colors.text }]}>Payment Method</Text>
-          </View>
-          {paymentMethods.map((payment, index) => (
-            <TouchableOpacity
-              key={payment.id}
-              style={[
-                styles.optionCard,
-                { backgroundColor: colors.surface, borderColor: 'transparent' },
-                selectedPayment === index && { borderColor: colors.primary, backgroundColor: colors.primary + '10' }
-              ]}
-              onPress={() => setSelectedPayment(index)}
-            >
-              <View style={styles.optionContent}>
-                <View style={styles.paymentInfo}>
-                  <Text style={styles.paymentIcon}>{payment.icon}</Text>
-                  <View>
-                    <Text style={[styles.paymentName, { color: colors.text }]}>{payment.name}</Text>
-                    {payment.isDefault && (
-                      <Text style={[styles.defaultBadge, { color: colors.primary }]}>Default</Text>
-                    )}
-                  </View>
-                </View>
-                {selectedPayment === index && (
-                  <Ionicons name="checkmark-circle" size={24} color={colors.primary} />
-                )}
-              </View>
-            </TouchableOpacity>
-          ))}
-          <TouchableOpacity style={[styles.addButton, { borderColor: colors.primary }]}>
-            <Text style={[styles.addButtonText, { color: colors.primary }]}>+ Add New Payment Method</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Shipping Method */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Ionicons name="boat" size={20} color={colors.primary} />
-            <Text style={[styles.sectionTitle, { color: colors.text }]}>Shipping Method</Text>
-          </View>
-          {shippingMethods.map((shipping, index) => (
-            <TouchableOpacity
-              key={shipping.id}
-              style={[
-                styles.optionCard,
-                { backgroundColor: colors.surface, borderColor: 'transparent' },
-                selectedShipping === index && { borderColor: colors.primary, backgroundColor: colors.primary + '10' }
-              ]}
-              onPress={() => setSelectedShipping(index)}
-            >
-              <View style={styles.optionContent}>
-                <View style={styles.shippingInfo}>
-                  <Text style={[styles.shippingName, { color: colors.text }]}>{shipping.name}</Text>
-                  <Text style={[styles.shippingTime, { color: colors.textSecondary }]}>{shipping.time}</Text>
-                  <Text style={[styles.shippingDescription, { color: colors.textSecondary }]}>{shipping.description}</Text>
-                </View>
-                <View style={styles.shippingPrice}>
-                  <Text style={[styles.priceText, { color: colors.primary }]}>
-                    {shipping.price === 0 ? 'Free' : formatPrice(shipping.price)}
-                  </Text>
-                  {selectedShipping === index && (
-                    <Ionicons name="checkmark-circle" size={24} color={colors.primary} />
-                  )}
-                </View>
-              </View>
-            </TouchableOpacity>
-          ))}
-        </View>
-
-        {/* Promo Code */}
-        <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>Promo Code</Text>
-          <View style={styles.promoContainer}>
-            <TextInput
-              style={[styles.promoInput, { backgroundColor: colors.surface, color: colors.text }]}
-              placeholder="Enter promo code"
-              placeholderTextColor={colors.textSecondary}
-              value={promoCode}
-              onChangeText={setPromoCode}
-            />
-            <TouchableOpacity style={[styles.applyButton, { backgroundColor: colors.primary }]}>
-              <Text style={[styles.applyButtonText, { color: colors.white }]}>Apply</Text>
-            </TouchableOpacity>
-          </View>
         </View>
 
         {/* Order Summary */}
@@ -359,24 +254,7 @@ export default function CheckoutScreen() {
               <Text style={[styles.summaryLabel, { color: colors.text }]}>Subtotal</Text>
               <Text style={[styles.summaryValue, { color: colors.text }]}>{formatPrice(orderSummary.subtotal)}</Text>
             </View>
-            <View style={styles.summaryRow}>
-              <Text style={[styles.summaryLabel, { color: colors.text }]}>Shipping</Text>
-              <Text style={[styles.summaryValue, { color: colors.text }]}>
-                {orderSummary.shipping === 0 ? 'Free' : formatPrice(orderSummary.shipping)}
-              </Text>
-            </View>
-            <View style={styles.summaryRow}>
-              <Text style={[styles.summaryLabel, { color: colors.text }]}>Tax</Text>
-              <Text style={[styles.summaryValue, { color: colors.text }]}>{formatPrice(orderSummary.tax)}</Text>
-            </View>
-            {orderSummary.discount > 0 && (
-              <View style={styles.summaryRow}>
-                <Text style={[styles.summaryLabel, { color: colors.text }]}>Discount</Text>
-                <Text style={[styles.summaryValue, { color: colors.success }]}>
-                  -{formatPrice(orderSummary.discount)}
-                </Text>
-              </View>
-            )}
+
             <View style={[styles.totalRow, { borderTopColor: colors.border }]}>
               <Text style={[styles.totalLabel, { color: colors.text }]}>Total</Text>
               <Text style={[styles.totalValue, { color: colors.text }]}>{formatPrice(orderSummary.total)}</Text>
@@ -387,8 +265,17 @@ export default function CheckoutScreen() {
 
       {/* Place Order Button */}
       <View style={[styles.bottomBar, { backgroundColor: colors.background, borderTopColor: colors.border }]}>
-        <TouchableOpacity style={[styles.placeOrderButton, { backgroundColor: colors.primary }]} onPress={handlePlaceOrder}>
-          <Text style={[styles.placeOrderText, { color: colors.white }]}>Place Order - {formatPrice(orderSummary.total)}</Text>
+        <Text style={[styles.contactNotice, { color: colors.error }]}>
+          Place your order, we will contact you for details
+        </Text>
+        <TouchableOpacity
+          style={[styles.placeOrderButton, { backgroundColor: colors.primary }]}
+          onPress={handlePlaceOrder}
+          disabled={placingOrder}
+        >
+          <Text style={[styles.placeOrderText, { color: colors.white }]}>
+            {placingOrder ? 'Placing Order...' : `Place Order - ${formatPrice(orderSummary.total)}`}
+          </Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -498,42 +385,6 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     marginTop: 4,
   },
-  paymentInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-  },
-  paymentIcon: {
-    fontSize: 24,
-    marginRight: 12,
-  },
-  paymentName: {
-    fontSize: 16,
-    fontWeight: '500',
-  },
-  shippingInfo: {
-    flex: 1,
-  },
-  shippingName: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 2,
-  },
-  shippingTime: {
-    fontSize: 14,
-    marginBottom: 2,
-  },
-  shippingDescription: {
-    fontSize: 12,
-  },
-  shippingPrice: {
-    alignItems: 'flex-end',
-  },
-  priceText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginBottom: 4,
-  },
   addButton: {
     borderWidth: 1,
     borderStyle: 'dashed',
@@ -544,27 +395,6 @@ const styles = StyleSheet.create({
   addButtonText: {
     fontSize: 16,
     fontWeight: '500',
-  },
-  promoContainer: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  promoInput: {
-    flex: 1,
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    fontSize: 16,
-  },
-  applyButton: {
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderRadius: 12,
-    justifyContent: 'center',
-  },
-  applyButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
   },
   summaryCard: {
     borderRadius: 12,
@@ -581,7 +411,6 @@ const styles = StyleSheet.create({
   summaryValue: {
     fontSize: 16,
   },
-
   totalRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -598,10 +427,15 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   bottomBar: {
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    paddingBottom: 32,
+    padding: 20,
+    paddingBottom: 30,
     borderTopWidth: 1,
+  },
+  contactNotice: {
+    textAlign: 'center',
+    marginBottom: 12,
+    fontSize: 14,
+    fontWeight: '500',
   },
   placeOrderButton: {
     paddingVertical: 16,

@@ -9,6 +9,7 @@ import { useThemeColors } from '@/hooks/useColorScheme';
 import SafeImage from '@/components/SafeImage';
 import FilterModal, { FilterOptions } from '@/components/FilterModal';
 import { transformProducts } from '@/utils/woocommerceTransformers';
+import { formatPrice } from '@/utils/formatNumber';
 
 export default function ProductsScreen() {
   const router = useRouter();
@@ -193,8 +194,8 @@ export default function ProductsScreen() {
           <View style={styles.productDetails}>
             <Text style={[styles.productName, { color: colors.text }]} numberOfLines={2}>{product.title}</Text>
             <View style={styles.priceRow}>
-              <Text style={[styles.originalPrice, { color: colors.textSecondary }]}>{`₦${((typeof product.price === 'number' ? product.price : parseFloat(product.price || '0')) * 1.3).toFixed(2)}`}</Text>
-              <Text style={[styles.productPrice, { color: '#ff6b6b' }]}>{`₦${typeof product.price === 'number' ? product.price.toFixed(2) : parseFloat(product.price || '0').toFixed(2)}`}</Text>
+              <Text style={[styles.originalPrice, { color: colors.textSecondary }]}>{formatPrice((typeof product.price === 'number' ? product.price : parseFloat(product.price || '0')) * 1.3)}</Text>
+              <Text style={[styles.productPrice, { color: '#ff6b6b' }]}>{formatPrice(typeof product.price === 'number' ? product.price : parseFloat(product.price || '0'))}</Text>
             </View>
           </View>
         </TouchableOpacity>
@@ -222,8 +223,8 @@ export default function ProductsScreen() {
               <Text style={[styles.reviewsText, { color: colors.textSecondary }]}>({product.rating ? product.rating.count : 0})</Text>
             </View>
             <View style={styles.priceContainer}>
-              <Text style={[styles.originalPrice, { color: colors.textSecondary }]}>{`₦${((typeof product.price === 'number' ? product.price : parseFloat(product.price || '0')) * 1.3).toFixed(2)}`}</Text>
-              <Text style={[styles.price, { color: '#ff6b6b' }]}>{`₦${typeof product.price === 'number' ? product.price.toFixed(2) : parseFloat(product.price || '0').toFixed(2)}`}</Text>
+              <Text style={[styles.originalPrice, { color: colors.textSecondary }]}>{formatPrice((typeof product.price === 'number' ? product.price : parseFloat(product.price || '0')) * 1.3)}</Text>
+              <Text style={[styles.price, { color: '#ff6b6b' }]}>{formatPrice(typeof product.price === 'number' ? product.price : parseFloat(product.price || '0'))}</Text>
             </View>
           </View>
           <View style={styles.listProductActions}>

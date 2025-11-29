@@ -593,7 +593,8 @@ class DummyApiService {
     return dummyElectronicsCategories;
   }
 
-  async getCategory(category_name: string) {
+  async getCategory(category_identifier: string | number) {
+    const category_name = String(category_identifier);
     const filteredProducts = dummyElectronicsProducts.filter(product =>
       product.category === category_name
     );

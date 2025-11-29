@@ -1,10 +1,11 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, ActivityIndicator, Image } from 'react-native';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
 import { useThemeColors } from '@/hooks/useColorScheme';
 import { MaterialIcons, FontAwesome, Ionicons } from '@expo/vector-icons';
 import { transformCategories } from '@/utils/woocommerceTransformers';
+import SafeImage from '@/components/SafeImage';
 
 // Function to get icon for category
 const getCategoryIcon = (categoryName: string): string => {
@@ -80,6 +81,7 @@ export default function CategoriesScreen() {
           id: category.category_id,
           name: category.name.replace(/-/g, ' '),
           icon: getCategoryIcon(category.name),
+          image: category.image
         }));
         setCategories(formattedCategories);
       } catch (error) {
@@ -104,9 +106,16 @@ export default function CategoriesScreen() {
           style={[styles.gridItem, { backgroundColor: colors.surface }]}
           onPress={() => router.push(`/category/${category.id}` as any)}
         >
-          <View style={[styles.iconCircle, { backgroundColor: colors.primaryLight }]}>
-            <Ionicons name={category.icon as any} size={32} color={colors.primary} />
-          </View>
+          {category.image ? (
+            <SafeImage
+              source={{ uri: category.image }}
+              style={[styles.categoryImage, { backgroundColor: colors.background }]}
+            />
+          ) : (
+            <View style={[styles.iconCircle, { backgroundColor: colors.primaryLight }]}>
+              <Ionicons name={category.icon as any} size={32} color={colors.primary} />
+            </View>
+          )}
           <Text style={[styles.categoryNameGrid, { color: colors.text }]} numberOfLines={2}>
             {category.name}
           </Text>
@@ -123,9 +132,16 @@ export default function CategoriesScreen() {
           style={[styles.listItem, { borderBottomColor: colors.border }]}
           onPress={() => router.push(`/category/${category.id}` as any)}
         >
-          <View style={[styles.iconContainer, { backgroundColor: colors.surface }]}>
-            <Ionicons name={category.icon as any} size={24} color={colors.primary} />
-          </View>
+          {category.image ? (
+            <SafeImage
+              source={{ uri: category.image }}
+              style={[styles.categoryImageList, { backgroundColor: colors.background }]}
+            />
+          ) : (
+            <View style={[styles.iconContainer, { backgroundColor: colors.surface }]}>
+              <Ionicons name={category.icon as any} size={24} color={colors.primary} />
+            </View>
+          )}
           <View style={styles.categoryInfo}>
             <Text style={[styles.categoryNameList, { color: colors.text }]} numberOfLines={1}>
               {category.name}
@@ -258,6 +274,7 @@ const styles = StyleSheet.create({
     padding: 16,
     alignItems: 'center',
     justifyContent: 'center',
+    overflow: 'hidden',
   },
   iconCircle: {
     width: 64,
@@ -265,6 +282,12 @@ const styles = StyleSheet.create({
     borderRadius: 32,
     alignItems: 'center',
     justifyContent: 'center',
+    marginBottom: 12,
+  },
+  categoryImage: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
     marginBottom: 12,
   },
   categoryNameGrid: {
@@ -287,6 +310,12 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
+    marginRight: 16,
+  },
+  categoryImageList: {
+    width: 48,
+    height: 48,
+    borderRadius: 12,
     marginRight: 16,
   },
   categoryInfo: {

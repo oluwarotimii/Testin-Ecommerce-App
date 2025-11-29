@@ -46,28 +46,34 @@ export default function AddressesScreen() {
 
   const handleAddAddress = async () => {
     try {
-      // In a real implementation, you would call the API to add the address
-      // const response = await apiService.addAddress(formData);
-      // For now, we'll just simulate adding it
-      const newAddress = {
-        id: Date.now(),
-        ...formData,
-      };
-      setAddresses([...addresses, newAddress]);
-      setFormData({
-        firstName: '',
-        lastName: '',
-        address: '',
-        city: '',
-        state: '',
-        zipCode: '',
-        country: '',
-        phone: '',
-        isDefault: false,
-      });
-      setIsAdding(false);
+      if (apiService.updateCustomerAddress) {
+        setLoading(true);
+        await apiService.updateCustomerAddress(formData);
+
+        // Refresh addresses
+        const updatedAddresses = await apiService.getAddressBook();
+        setAddresses(updatedAddresses);
+
+        setFormData({
+          firstName: '',
+          lastName: '',
+          address: '',
+          city: '',
+          state: '',
+          zipCode: '',
+          country: '',
+          phone: '',
+          isDefault: false,
+        });
+        setIsAdding(false);
+      } else {
+        console.warn("Update address not supported by API service");
+      }
     } catch (error) {
       console.error('Error adding address:', error);
+      alert('Failed to update address. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -139,7 +145,7 @@ export default function AddressesScreen() {
             <TextInput
               style={[styles.input, { backgroundColor: colors.surface, color: colors.text }]}
               value={formData.firstName}
-              onChangeText={(text) => setFormData({...formData, firstName: text})}
+              onChangeText={(text) => setFormData({ ...formData, firstName: text })}
               placeholder="John"
             />
           </View>
@@ -149,7 +155,7 @@ export default function AddressesScreen() {
             <TextInput
               style={[styles.input, { backgroundColor: colors.surface, color: colors.text }]}
               value={formData.lastName}
-              onChangeText={(text) => setFormData({...formData, lastName: text})}
+              onChangeText={(text) => setFormData({ ...formData, lastName: text })}
               placeholder="Doe"
             />
           </View>
@@ -159,7 +165,7 @@ export default function AddressesScreen() {
             <TextInput
               style={[styles.input, { backgroundColor: colors.surface, color: colors.text }]}
               value={formData.address}
-              onChangeText={(text) => setFormData({...formData, address: text})}
+              onChangeText={(text) => setFormData({ ...formData, address: text })}
               placeholder="123 Main Street"
             />
           </View>
@@ -170,7 +176,7 @@ export default function AddressesScreen() {
               <TextInput
                 style={[styles.input, { backgroundColor: colors.surface, color: colors.text }]}
                 value={formData.city}
-                onChangeText={(text) => setFormData({...formData, city: text})}
+                onChangeText={(text) => setFormData({ ...formData, city: text })}
                 placeholder="New York"
               />
             </View>
@@ -179,7 +185,7 @@ export default function AddressesScreen() {
               <TextInput
                 style={[styles.input, { backgroundColor: colors.surface, color: colors.text }]}
                 value={formData.state}
-                onChangeText={(text) => setFormData({...formData, state: text})}
+                onChangeText={(text) => setFormData({ ...formData, state: text })}
                 placeholder="NY"
               />
             </View>
@@ -191,7 +197,7 @@ export default function AddressesScreen() {
               <TextInput
                 style={[styles.input, { backgroundColor: colors.surface, color: colors.text }]}
                 value={formData.zipCode}
-                onChangeText={(text) => setFormData({...formData, zipCode: text})}
+                onChangeText={(text) => setFormData({ ...formData, zipCode: text })}
                 placeholder="10001"
                 keyboardType="numeric"
               />
@@ -201,7 +207,7 @@ export default function AddressesScreen() {
               <TextInput
                 style={[styles.input, { backgroundColor: colors.surface, color: colors.text }]}
                 value={formData.country}
-                onChangeText={(text) => setFormData({...formData, country: text})}
+                onChangeText={(text) => setFormData({ ...formData, country: text })}
                 placeholder="USA"
               />
             </View>
@@ -212,20 +218,20 @@ export default function AddressesScreen() {
             <TextInput
               style={[styles.input, { backgroundColor: colors.surface, color: colors.text }]}
               value={formData.phone}
-              onChangeText={(text) => setFormData({...formData, phone: text})}
+              onChangeText={(text) => setFormData({ ...formData, phone: text })}
               placeholder="+1 (555) 123-4567"
               keyboardType="phone-pad"
             />
           </View>
 
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.defaultAddressContainer}
-            onPress={() => setFormData({...formData, isDefault: !formData.isDefault})}
+            onPress={() => setFormData({ ...formData, isDefault: !formData.isDefault })}
           >
-            <Ionicons 
-              name={formData.isDefault ? "checkbox" : "square-outline"} 
-              size={24} 
-              color={colors.primary} 
+            <Ionicons
+              name={formData.isDefault ? "checkbox" : "square-outline"}
+              size={24}
+              color={colors.primary}
             />
             <Text style={[styles.defaultAddressText, { color: colors.text }]}>Set as default address</Text>
           </TouchableOpacity>
@@ -276,7 +282,7 @@ export default function AddressesScreen() {
               <Text style={[styles.addressPhone, { color: colors.textSecondary }]}>{address.phone}</Text>
               <View style={styles.addressActions}>
                 {!address.isDefault && (
-                  <TouchableOpacity 
+                  <TouchableOpacity
                     style={[styles.actionButton, { borderColor: colors.primary }]}
                     onPress={() => handleSetDefault(address.id)}
                   >
