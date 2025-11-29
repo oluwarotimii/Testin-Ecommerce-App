@@ -114,6 +114,11 @@ export default function WishlistScreen() {
           {wishlist.map((item) => {
             // Fix image source - use images array if available
             const imageUrl = item.images?.[0]?.src || item.image || '';
+            // Handle both WooCommerce format (name) and transformed format (title)
+            const productName = item.name || item.title || 'Product';
+            // Handle price - WooCommerce returns string, ensure it's a number
+            const productPrice = typeof item.price === 'string' ? parseFloat(item.price) : (item.price || 0);
+            const formattedPrice = productPrice.toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
             return (
               <View key={item.id} style={[styles.gridItem, { backgroundColor: colors.surface }]}>
@@ -131,9 +136,9 @@ export default function WishlistScreen() {
                 </TouchableOpacity>
 
                 <View style={styles.gridInfo}>
-                  <Text style={[styles.gridName, { color: colors.text }]} numberOfLines={2}>{item.title}</Text>
+                  <Text style={[styles.gridName, { color: colors.text }]} numberOfLines={2}>{productName}</Text>
                   <View style={styles.gridPriceRow}>
-                    <Text style={[styles.gridPrice, { color: '#FFA500' }]}>{`₦${parseFloat(String(item.price || 0)).toFixed(2)}`}</Text>
+                    <Text style={[styles.gridPrice, { color: '#FFA500' }]}>₦{formattedPrice}</Text>
                   </View>
                   <TouchableOpacity
                     style={[styles.gridAddToCartButton, { backgroundColor: colors.primary }]}

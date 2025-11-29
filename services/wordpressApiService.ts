@@ -513,6 +513,35 @@ class WordPressApiService {
     }
   }
 
+  async getProductsByCategory(categorySlug: string, limit: number = 20) {
+    try {
+      // First, get the category by slug to find its ID
+      const categories = await this.getCategories({ slug: categorySlug });
+
+      if (!categories || categories.length === 0) {
+        console.warn(`Category with slug "${categorySlug}" not found`);
+        return [];
+      }
+
+      const categoryId = categories[0].id;
+
+      // Fetch products for this category
+      const response = await this.api.get('/products', {
+        params: {
+          category: categoryId,
+          per_page: limit,
+          orderby: 'date',
+          order: 'desc'
+        }
+      });
+
+      return response.data;
+    } catch (error: any) {
+      console.error(`Error fetching products for category "${categorySlug}":`, error.response?.data || error.message);
+      throw error;
+    }
+  }
+
   // Shopping Cart (using draft orders in WooCommerce)
   // Shopping Cart (using draft orders in WooCommerce)
   async getCartContents() {

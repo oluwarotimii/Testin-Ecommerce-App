@@ -104,49 +104,6 @@ export default function HomeScreen() {
     }
   }, []);
 
-  // ... existing code ...
-
-  {/* Marketing Banner */ }
-  <MarketingBanner />
-  {/* Debug Error Message */ }
-  {
-    carouselError && (
-      <View style={{ padding: 10, backgroundColor: '#ffebee', margin: 10, borderRadius: 8 }}>
-        <Text style={{ color: '#c62828', textAlign: 'center' }}>
-          Carousel Error: {carouselError}
-        </Text>
-      </View>
-    )
-  }
-
-  {/* Loading Indicator */ }
-  {
-    loadingCarousel && (
-      <View style={{ padding: 20, alignItems: 'center' }}>
-        <ActivityIndicator size="large" color={colors.primary} />
-      </View>
-    )
-  }
-
-  {/* Empty State */ }
-  {
-    !loadingCarousel && !carouselError && carouselItems.length === 0 && (
-      <View style={{ padding: 20, alignItems: 'center' }}>
-        <Text style={{ color: colors.textSecondary }}>No carousel items found.</Text>
-      </View>
-    )
-  }
-
-  {/* Carousel */ }
-  {
-    !loadingCarousel && carouselItems.length > 0 && (
-      <InstagramCarousel
-        data={carouselItems}
-        onItemPress={handleCarouselItemPress}
-      />
-    )
-  }
-
   const fetchCategories = useCallback(async () => {
     if (!apiService) return;
     setLoadingCategories(true);
@@ -371,8 +328,7 @@ export default function HomeScreen() {
           </View>
         </View>
 
-        {/* Marketing Banner */}
-        <MarketingBanner />
+      
 
         {/* Carousel */}
         <InstagramCarousel
@@ -532,6 +488,8 @@ export default function HomeScreen() {
           )}
         </View>
 
+              {/* Marketing Banner */}
+        <MarketingBanner />
         {/* Trending Items */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
