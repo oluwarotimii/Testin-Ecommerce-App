@@ -1,5 +1,5 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, TextInput, Animated } from 'react-native';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
 import { useCart } from '@/context/CartContext';
@@ -7,6 +7,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useThemeColors } from '@/hooks/useColorScheme';
 import SafeImage from '@/components/SafeImage';
 import { transformProducts } from '@/utils/woocommerceTransformers';
+import BackButton from '@/components/BackButton';
 
 export default function CategoryScreen() {
     const router = useRouter();
@@ -19,19 +20,15 @@ export default function CategoryScreen() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [wishlist, setWishlist] = useState<number[]>([]);
+    const [categoryName, setCategoryName] = useState('Category');
+    const [searchQuery, setSearchQuery] = useState('');
+    const [showSearch, setShowSearch] = useState(false);
+    const scrollY = useRef(new Animated.Value(0)).current;
 
-    const [categoryName, setCategoryName] = useState(typeof slug === 'string' ? slug.replace(/-/g, ' ') : '');
-
-    useEffect(() => {
-        if (products.length > 0) {
-            // If we have products, try to get the category name from the first product
-            // This handles the case where slug is an ID
-            const firstProduct = products[0];
-            if (firstProduct.category) {
-                setCategoryName(firstProduct.category);
-            }
-        }
-    }, [products]);
+    const formatPrice = (price: string | number) => {
+        const numPrice = typeof price === 'string' ? parseFloat(price) : price;
+        return numPrice.toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    };
 
     const fetchWishlist = useCallback(async () => {
         if (!apiService) return;
@@ -50,6 +47,21 @@ export default function CategoryScreen() {
                 setLoading(true);
                 setError(null);
 
+                const slugStr = slug.toString();
+
+                // Try to fetch category details from WooCommerce
+                try {
+                    const categories = await apiService.getCategories();
+                    const category = categories.find((cat: any) =>
+                        cat.slug === slugStr || cat.id.toString() === slugStr
+                    );
+                    if (category) {
+                        setCategoryName(category.name);
+                    }
+                } catch (catError) {
+                    console.error('Error fetching category details:', catError);
+                }
+
                 // Fetch all products
                 const allProducts = await apiService.getProducts();
 
@@ -57,20 +69,22 @@ export default function CategoryScreen() {
                 const transformedProducts = transformProducts(allProducts);
 
                 // Filter products by category - handle both ID and slug
-                const slugStr = slug.toString().toLowerCase();
                 const filteredProducts = transformedProducts.filter((product: any) => {
-                    // Check if slug is a number (category ID)
-                    const isNumericSlug = !isNaN(Number(slugStr));
+                    // Check if product has categories array
+                    if (product.categories && Array.isArray(product.categories)) {
+                        return product.categories.some((cat: any) =>
+                            cat.slug === slugStr || cat.id.toString() === slugStr
+                        );
+                    }
 
+                    // Fallback to old logic
+                    const isNumericSlug = !isNaN(Number(slugStr));
                     if (isNumericSlug) {
-                        // Match by category ID
                         return product.category_id?.toString() === slugStr;
                     } else {
-                        // Match by category name or slug
                         const categoryName = product.category?.toLowerCase() || '';
                         const categorySlug = categoryName.replace(/\s+/g, '-');
-
-                        return categoryName.includes(slugStr) ||
+                        return categoryName.includes(slugStr.toLowerCase()) ||
                             categorySlug === slugStr ||
                             categoryName === slugStr.replace(/-/g, ' ');
                     }
@@ -87,6 +101,13 @@ export default function CategoryScreen() {
         fetchCategoryProducts();
         fetchWishlist();
     }, [apiService, slug, fetchWishlist]);
+
+    const filteredProducts = useMemo(() => {
+        if (!searchQuery) return products;
+        return products.filter(product =>
+            product.title?.toLowerCase().includes(searchQuery.toLowerCase())
+        );
+    }, [products, searchQuery]);
 
     const toggleWishlist = async (productId: number) => {
         if (!apiService) return;
@@ -140,13 +161,22 @@ export default function CategoryScreen() {
         }
     };
 
+    const handleScroll = Animated.event(
+        [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+        {
+            useNativeDriver: false,
+            listener: (event: any) => {
+                const offsetY = event.nativeEvent.contentOffset.y;
+                setShowSearch(offsetY > 100);
+            },
+        }
+    );
+
     return (
         <View style={[styles.container, { backgroundColor: colors.background }]}>
             {/* Header */}
             <View style={[styles.header, { backgroundColor: colors.background }]}>
-                <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-                    <Ionicons name="arrow-back" size={24} color={colors.text} />
-                </TouchableOpacity>
+                <BackButton />
                 <View style={styles.headerCenter}>
                     <Text style={[styles.title, { color: colors.text }]} numberOfLines={1}>
                         {categoryName}
@@ -155,20 +185,43 @@ export default function CategoryScreen() {
                 <View style={{ width: 40 }} />
             </View>
 
+            {/* Sticky Search Bar */}
+            {showSearch && (
+                <View style={[styles.stickySearchContainer, { backgroundColor: colors.background }]}>
+                    <View style={[styles.searchBar, { backgroundColor: colors.surface }]}>
+                        <Ionicons name="search" size={20} color={colors.textSecondary} />
+                        <TextInput
+                            style={[styles.searchInput, { color: colors.text }]}
+                            placeholder="Search products..."
+                            placeholderTextColor={colors.textSecondary}
+                            value={searchQuery}
+                            onChangeText={setSearchQuery}
+                        />
+                        {searchQuery.length > 0 && (
+                            <TouchableOpacity onPress={() => setSearchQuery('')}>
+                                <Ionicons name="close-circle" size={20} color={colors.textSecondary} />
+                            </TouchableOpacity>
+                        )}
+                    </View>
+                </View>
+            )}
+
             {/* Products Count */}
             {!loading && !error && (
                 <View style={styles.countContainer}>
                     <Text style={[styles.countText, { color: colors.textSecondary }]}>
-                        {products.length} {products.length === 1 ? 'product' : 'products'} found
+                        {filteredProducts.length} {filteredProducts.length === 1 ? 'product' : 'products'} found
                     </Text>
                 </View>
             )}
 
             {/* Content */}
-            <ScrollView
+            <Animated.ScrollView
                 style={styles.content}
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={styles.scrollContent}
+                onScroll={handleScroll}
+                scrollEventThrottle={16}
             >
                 {loading ? (
                     <View style={styles.centerContainer}>
@@ -182,7 +235,7 @@ export default function CategoryScreen() {
                         <Ionicons name="alert-circle" size={64} color={colors.error} />
                         <Text style={[styles.errorText, { color: colors.error }]}>{error}</Text>
                     </View>
-                ) : products.length === 0 ? (
+                ) : filteredProducts.length === 0 ? (
                     <View style={styles.centerContainer}>
                         <Ionicons name="cube-outline" size={64} color={colors.textSecondary} />
                         <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
@@ -191,7 +244,7 @@ export default function CategoryScreen() {
                     </View>
                 ) : (
                     <View style={styles.gridContainer}>
-                        {products.map((product) => (
+                        {filteredProducts.map((product) => (
                             <TouchableOpacity
                                 key={product.id}
                                 style={[styles.productCard, { backgroundColor: colors.surface }]}
@@ -238,11 +291,8 @@ export default function CategoryScreen() {
                                         {product.title}
                                     </Text>
                                     <View style={styles.priceRow}>
-                                        <Text style={[styles.originalPrice, { color: colors.textSecondary }]}>
-                                            {`₦${((typeof product.price === 'number' ? product.price : parseFloat(product.price || '0')) * 1.3).toFixed(2)}`}
-                                        </Text>
-                                        <Text style={[styles.productPrice, { color: '#ff6b6b' }]}>
-                                            {`₦${typeof product.price === 'number' ? product.price.toFixed(2) : parseFloat(product.price || '0').toFixed(2)}`}
+                                        <Text style={[styles.productPrice, { color: '#FFA500' }]}>
+                                            ₦{formatPrice(typeof product.price === 'number' ? product.price : parseFloat(product.price || '0'))}
                                         </Text>
                                     </View>
                                     {product.rating && (
@@ -261,7 +311,7 @@ export default function CategoryScreen() {
                         ))}
                     </View>
                 )}
-            </ScrollView>
+            </Animated.ScrollView>
         </View>
     );
 }
@@ -275,8 +325,8 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         alignItems: 'center',
         paddingHorizontal: 16,
-        paddingTop: 60,
-        paddingBottom: 16,
+        paddingTop: 50, // Reduced from 60
+        paddingBottom: 12, // Reduced from 16
     },
     backButton: {
         padding: 8,
@@ -291,9 +341,28 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         textTransform: 'capitalize',
     },
+    stickySearchContainer: {
+        paddingHorizontal: 16,
+        paddingVertical: 8,
+        borderBottomWidth: 1,
+        borderBottomColor: 'rgba(0,0,0,0.1)',
+    },
+    searchBar: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: 12,
+        paddingVertical: 10,
+        borderRadius: 12,
+        gap: 8,
+    },
+    searchInput: {
+        flex: 1,
+        fontSize: 14,
+    },
     countContainer: {
-        paddingHorizontal: 24,
-        paddingBottom: 12,
+        paddingHorizontal: 20,
+        paddingBottom: 8, // Reduced from 12
+        paddingTop: 4,
     },
     countText: {
         fontSize: 14,
@@ -302,7 +371,7 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     scrollContent: {
-        paddingBottom: 120,
+        paddingBottom: 100, // Reduced from 120
     },
     centerContainer: {
         flex: 1,
@@ -328,19 +397,20 @@ const styles = StyleSheet.create({
     gridContainer: {
         flexDirection: 'row',
         flexWrap: 'wrap',
-        paddingHorizontal: 16,
-        gap: 12,
+        paddingHorizontal: 12, // Reduced from 16
+        gap: 10, // Reduced from 12
     },
     productCard: {
-        width: '47%',
+        width: '48%', // Increased from 47%
         borderRadius: 12,
         overflow: 'hidden',
         position: 'relative',
-        minHeight: 220,
+        minHeight: 240, // Increased from 220 to accommodate content
+        marginBottom: 4,
     },
     productImage: {
         width: '100%',
-        height: 120,
+        height: 140, // Increased from 120
     },
     wishlistOverlay: {
         position: 'absolute',
@@ -354,6 +424,11 @@ const styles = StyleSheet.create({
         borderRadius: 16,
         alignItems: 'center',
         justifyContent: 'center',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        elevation: 3,
     },
     productActionsOverlay: {
         position: 'absolute',
@@ -367,41 +442,47 @@ const styles = StyleSheet.create({
         borderRadius: 18,
         alignItems: 'center',
         justifyContent: 'center',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.2,
+        shadowRadius: 4,
+        elevation: 4,
     },
     productDetails: {
-        padding: 8,
-        paddingTop: 4,
+        padding: 10, // Increased from 8
+        paddingTop: 6, // Increased from 4
         paddingRight: 48,
     },
     productName: {
-        fontSize: 14,
+        fontSize: 13, // Reduced from 14
         fontWeight: '500',
         marginBottom: 4,
+        lineHeight: 18,
     },
     priceRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 8,
+        gap: 6, // Reduced from 8
         marginBottom: 4,
     },
     originalPrice: {
-        fontSize: 12,
+        fontSize: 11, // Reduced from 12
         textDecorationLine: 'line-through',
     },
     productPrice: {
-        fontSize: 18,
+        fontSize: 16, // Reduced from 18
         fontWeight: 'bold',
     },
     ratingRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 4,
+        gap: 3, // Reduced from 4
     },
     ratingText: {
-        fontSize: 12,
+        fontSize: 11, // Reduced from 12
         fontWeight: '500',
     },
     reviewCount: {
-        fontSize: 11,
+        fontSize: 10, // Reduced from 11
     },
 });

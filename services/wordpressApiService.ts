@@ -426,8 +426,37 @@ class WordPressApiService {
   // Products
   async getProducts(params?: Record<string, any>) {
     try {
-      const response = await this.api.get('/products', { params });
-      return response.data;
+      // WooCommerce default limit is 10, we need to fetch all products
+      // Set per_page to 100 (WooCommerce max) and implement pagination if needed
+      const defaultParams = {
+        per_page: 100, // Maximum allowed by WooCommerce
+        ...params
+      };
+
+      const response = await this.api.get('/products', { params: defaultParams });
+
+      // Check if there are more pages
+      const totalPages = parseInt(response.headers['x-wp-totalpages'] || '1');
+      let allProducts = response.data;
+
+      // If there are more pages, fetch them all
+      if (totalPages > 1) {
+        const pagePromises = [];
+        for (let page = 2; page <= totalPages; page++) {
+          pagePromises.push(
+            this.api.get('/products', {
+              params: { ...defaultParams, page }
+            })
+          );
+        }
+
+        const additionalPages = await Promise.all(pagePromises);
+        additionalPages.forEach(pageResponse => {
+          allProducts = allProducts.concat(pageResponse.data);
+        });
+      }
+
+      return allProducts;
     } catch (error: any) {
       console.error('Error fetching products:', error.response?.data || error.message);
       throw error;
@@ -792,7 +821,7 @@ class WordPressApiService {
       const customerId = await AsyncStorage.getItem('customerId');
       if (!customerId) throw new Error("Customer ID not found");
 
-      const response = await this.api.put(`/ customers / ${customerId}`, details);
+      const response = await this.api.put(`/customers/${customerId}`, details);
       return response.data;
     } catch (error: any) {
       console.error('Error updating account details:', error.response?.data || error.message);
@@ -809,26 +838,41 @@ class WordPressApiService {
       const customerId = await AsyncStorage.getItem('customerId');
       if (!customerId) throw new Error("Customer ID not found");
 
-      // Map local address format to WooCommerce format
-      const wooAddress = {
-        first_name: addressData.firstName,
-        last_name: addressData.lastName,
-        address_1: addressData.address,
-        city: addressData.city,
-        state: addressData.state,
-        postcode: addressData.zipCode,
-        country: addressData.country,
-        phone: addressData.phone,
-        email: addressData.email // Ensure email is included
+      // Prepare shipping address - WooCommerce requires ALL fields
+      const shippingAddress = {
+        first_name: addressData.firstName || '',
+        last_name: addressData.lastName || '',
+        company: addressData.company || '',
+        address_1: addressData.address || '',
+        address_2: addressData.address2 || '',
+        city: addressData.city || '',
+        state: addressData.state || '',
+        postcode: addressData.zipCode || '',
+        country: addressData.country || '',
+        phone: addressData.phone || ''
       };
 
-      // Update both billing and shipping for simplicity, or based on a flag
+      // Also update billing to keep names in sync
+      const billingAddress = {
+        first_name: addressData.firstName || '',
+        last_name: addressData.lastName || '',
+        company: addressData.company || '',
+        address_1: addressData.address || '',
+        address_2: addressData.address2 || '',
+        city: addressData.city || '',
+        state: addressData.state || '',
+        postcode: addressData.zipCode || '',
+        country: addressData.country || '',
+        email: addressData.email || '',
+        phone: addressData.phone || ''
+      };
+
       const updateData = {
-        billing: wooAddress,
-        shipping: wooAddress
+        shipping: shippingAddress,
+        billing: billingAddress
       };
 
-      const response = await this.api.put(`/ customers / ${customerId}`, updateData);
+      const response = await this.api.put(`/customers/${customerId}`, updateData);
       return response.data;
     } catch (error: any) {
       console.error('Error updating customer address:', error.response?.data || error.message);
@@ -844,20 +888,22 @@ class WordPressApiService {
 
     try {
       const customer = await this.getAccountDetails();
-      // Return billing address as the primary address
-      // In a real app with multiple addresses, you'd need a custom endpoint or plugin
+      // Return shipping address as the primary address
+      // WooCommerce stores one billing and one shipping address per customer
       return [
         {
           id: 1,
-          firstName: customer.billing.first_name,
-          lastName: customer.billing.last_name,
-          address: customer.billing.address_1,
-          city: customer.billing.city,
-          state: customer.billing.state,
-          zipCode: customer.billing.postcode,
-          country: customer.billing.country,
-          phone: customer.billing.phone,
-          email: customer.billing.email || customer.email, // Include email
+          firstName: customer.shipping?.first_name || customer.first_name || '',
+          lastName: customer.shipping?.last_name || customer.last_name || '',
+          company: customer.shipping?.company || '',
+          address: customer.shipping?.address_1 || '',
+          address2: customer.shipping?.address_2 || '',
+          city: customer.shipping?.city || '',
+          state: customer.shipping?.state || '',
+          zipCode: customer.shipping?.postcode || '',
+          country: customer.shipping?.country || '',
+          phone: customer.shipping?.phone || customer.billing?.phone || '',
+          email: customer.email || '',
           isDefault: true
         }
       ];

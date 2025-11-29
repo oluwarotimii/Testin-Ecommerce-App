@@ -4,6 +4,7 @@ import { useRouter } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
 import { useThemeColors } from '@/hooks/useColorScheme';
 import { Ionicons } from '@expo/vector-icons';
+import BackButton from '@/components/BackButton';
 
 export default function AddressesScreen() {
   const router = useRouter();
@@ -17,13 +18,15 @@ export default function AddressesScreen() {
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
+    company: '',
     address: '',
+    address2: '',
     city: '',
     state: '',
     zipCode: '',
     country: '',
     phone: '',
-    email: '', // Added email field
+    email: '',
     isDefault: false,
   });
 
@@ -51,7 +54,9 @@ export default function AddressesScreen() {
     setFormData({
       firstName: address.firstName || '',
       lastName: address.lastName || '',
+      company: address.company || '',
       address: address.address || '',
+      address2: address.address2 || '',
       city: address.city || '',
       state: address.state || '',
       zipCode: address.zipCode || '',
@@ -66,8 +71,8 @@ export default function AddressesScreen() {
 
   const handleSaveAddress = async () => {
     try {
-      if (!formData.firstName || !formData.lastName || !formData.address || !formData.city || !formData.country || !formData.email) {
-        Alert.alert('Missing Information', 'Please fill in all required fields (First Name, Last Name, Address, City, Country, Email).');
+      if (!formData.firstName || !formData.lastName || !formData.address || !formData.city || !formData.country) {
+        Alert.alert('Missing Information', 'Please fill in all required fields (First Name, Last Name, Address, City, Country).');
         return;
       }
 
@@ -81,7 +86,9 @@ export default function AddressesScreen() {
         setFormData({
           firstName: '',
           lastName: '',
+          company: '',
           address: '',
+          address2: '',
           city: '',
           state: '',
           zipCode: '',
@@ -92,13 +99,13 @@ export default function AddressesScreen() {
         });
         setIsAdding(false);
         setIsEditing(false);
-        Alert.alert('Success', 'Address updated successfully');
+        Alert.alert('Success', 'Shipping address updated successfully');
       } else {
         console.warn("Update address not supported by API service");
       }
     } catch (error) {
       console.error('Error saving address:', error);
-      Alert.alert('Error', 'Failed to update address. Please try again.');
+      Alert.alert('Error', 'Failed to update shipping address. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -124,10 +131,9 @@ export default function AddressesScreen() {
     return (
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={24} color={colors.text} />
-          </TouchableOpacity>
-          <Text style={[styles.title, { color: colors.text }]}>Addresses</Text>
+          <BackButton />
+          <Text style={[styles.title, { color: colors.text }]}>Shipping Addresses</Text>
+          <View style={{ width: 40 }} />
         </View>
 
         <View style={[styles.emptyContainer, { backgroundColor: colors.background }]}>
@@ -156,10 +162,8 @@ export default function AddressesScreen() {
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         {/* Header */}
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => { setIsAdding(false); setIsEditing(false); }} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={24} color={colors.text} />
-          </TouchableOpacity>
-          <Text style={[styles.title, { color: colors.text }]}>{isEditing ? 'Edit Address' : 'Add New Address'}</Text>
+          <BackButton onPress={() => { setIsAdding(false); setIsEditing(false); }} />
+          <Text style={[styles.title, { color: colors.text }]}>{isEditing ? 'Edit Shipping Address' : 'Add Shipping Address'}</Text>
           <View style={{ width: 40 }} />
         </View>
 
@@ -172,7 +176,8 @@ export default function AddressesScreen() {
                 style={[styles.input, { backgroundColor: colors.surface, color: colors.text }]}
                 value={formData.firstName}
                 onChangeText={(text) => setFormData({ ...formData, firstName: text })}
-                placeholder="John"
+                placeholder=""
+                placeholderTextColor={colors.textSecondary}
               />
             </View>
 
@@ -182,29 +187,54 @@ export default function AddressesScreen() {
                 style={[styles.input, { backgroundColor: colors.surface, color: colors.text }]}
                 value={formData.lastName}
                 onChangeText={(text) => setFormData({ ...formData, lastName: text })}
-                placeholder="Doe"
+                placeholder=""
+                placeholderTextColor={colors.textSecondary}
               />
             </View>
 
             <View style={styles.inputGroup}>
-              <Text style={[styles.label, { color: colors.text }]}>Email *</Text>
+              <Text style={[styles.label, { color: colors.text }]}>Email</Text>
               <TextInput
                 style={[styles.input, { backgroundColor: colors.surface, color: colors.text }]}
                 value={formData.email}
                 onChangeText={(text) => setFormData({ ...formData, email: text })}
-                placeholder="john.doe@example.com"
+                placeholder=""
+                placeholderTextColor={colors.textSecondary}
                 keyboardType="email-address"
                 autoCapitalize="none"
               />
             </View>
 
             <View style={styles.inputGroup}>
-              <Text style={[styles.label, { color: colors.text }]}>Address *</Text>
+              <Text style={[styles.label, { color: colors.text }]}>Company</Text>
+              <TextInput
+                style={[styles.input, { backgroundColor: colors.surface, color: colors.text }]}
+                value={formData.company}
+                onChangeText={(text) => setFormData({ ...formData, company: text })}
+                placeholder=""
+                placeholderTextColor={colors.textSecondary}
+              />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={[styles.label, { color: colors.text }]}>Address Line 1 *</Text>
               <TextInput
                 style={[styles.input, { backgroundColor: colors.surface, color: colors.text }]}
                 value={formData.address}
                 onChangeText={(text) => setFormData({ ...formData, address: text })}
-                placeholder="123 Main Street"
+                placeholder=""
+                placeholderTextColor={colors.textSecondary}
+              />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={[styles.label, { color: colors.text }]}>Address Line 2</Text>
+              <TextInput
+                style={[styles.input, { backgroundColor: colors.surface, color: colors.text }]}
+                value={formData.address2}
+                onChangeText={(text) => setFormData({ ...formData, address2: text })}
+                placeholder=""
+                placeholderTextColor={colors.textSecondary}
               />
             </View>
 
@@ -215,7 +245,8 @@ export default function AddressesScreen() {
                   style={[styles.input, { backgroundColor: colors.surface, color: colors.text }]}
                   value={formData.city}
                   onChangeText={(text) => setFormData({ ...formData, city: text })}
-                  placeholder="New York"
+                  placeholder=""
+                  placeholderTextColor={colors.textSecondary}
                 />
               </View>
               <View style={styles.halfInputGroup}>
@@ -224,7 +255,8 @@ export default function AddressesScreen() {
                   style={[styles.input, { backgroundColor: colors.surface, color: colors.text }]}
                   value={formData.state}
                   onChangeText={(text) => setFormData({ ...formData, state: text })}
-                  placeholder="NY"
+                  placeholder=""
+                  placeholderTextColor={colors.textSecondary}
                 />
               </View>
             </View>
@@ -236,8 +268,9 @@ export default function AddressesScreen() {
                   style={[styles.input, { backgroundColor: colors.surface, color: colors.text }]}
                   value={formData.zipCode}
                   onChangeText={(text) => setFormData({ ...formData, zipCode: text })}
-                  placeholder="10001"
-                  keyboardType="numeric"
+                  placeholder=""
+                  placeholderTextColor={colors.textSecondary}
+                  keyboardType="default"
                 />
               </View>
               <View style={styles.halfInputGroup}>
@@ -246,7 +279,8 @@ export default function AddressesScreen() {
                   style={[styles.input, { backgroundColor: colors.surface, color: colors.text }]}
                   value={formData.country}
                   onChangeText={(text) => setFormData({ ...formData, country: text })}
-                  placeholder="USA"
+                  placeholder=""
+                  placeholderTextColor={colors.textSecondary}
                 />
               </View>
             </View>
@@ -257,28 +291,22 @@ export default function AddressesScreen() {
                 style={[styles.input, { backgroundColor: colors.surface, color: colors.text }]}
                 value={formData.phone}
                 onChangeText={(text) => setFormData({ ...formData, phone: text })}
-                placeholder="+1 (555) 123-4567"
+                placeholder=""
+                placeholderTextColor={colors.textSecondary}
                 keyboardType="phone-pad"
               />
             </View>
 
             <TouchableOpacity
-              style={styles.defaultAddressContainer}
-              onPress={() => setFormData({ ...formData, isDefault: !formData.isDefault })}
-            >
-              <Ionicons
-                name={formData.isDefault ? "checkbox" : "square-outline"}
-                size={24}
-                color={colors.primary}
-              />
-              <Text style={[styles.defaultAddressText, { color: colors.text }]}>Set as default address</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
               style={[styles.saveButton, { backgroundColor: colors.primary }]}
               onPress={handleSaveAddress}
+              disabled={loading}
             >
-              <Text style={[styles.saveButtonText, { color: colors.white }]}>Save Address</Text>
+              {loading ? (
+                <ActivityIndicator size="small" color={colors.white} />
+              ) : (
+                <Text style={[styles.saveButtonText, { color: colors.white }]}>Save Shipping Address</Text>
+              )}
             </TouchableOpacity>
           </View>
           <View style={{ height: 40 }} />
@@ -291,15 +319,15 @@ export default function AddressesScreen() {
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color={colors.text} />
-        </TouchableOpacity>
+        <BackButton />
         <Text style={[styles.title, { color: colors.text }]}>Shipping Addresses</Text>
         <TouchableOpacity onPress={() => {
           setFormData({
             firstName: '',
             lastName: '',
+            company: '',
             address: '',
+            address2: '',
             city: '',
             state: '',
             zipCode: '',
@@ -367,7 +395,7 @@ export default function AddressesScreen() {
                     <Text style={[styles.actionButtonText, { color: colors.primary }]}>Set Default</Text>
                   </TouchableOpacity>
                 )}
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={[styles.actionButton, { borderColor: colors.textSecondary }]}
                   onPress={() => handleEditAddress(address)}
                 >

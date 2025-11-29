@@ -6,6 +6,7 @@ import { useThemeColors } from '@/hooks/useColorScheme';
 import { Ionicons } from '@expo/vector-icons';
 import SkeletonProductItem from '@/components/SkeletonProductItem';
 import SkeletonLoader from '@/components/SkeletonLoader';
+import BackButton from '@/components/BackButton';
 
 export default function WishlistScreen() {
   const router = useRouter();
@@ -52,7 +53,8 @@ export default function WishlistScreen() {
     return (
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         <View style={styles.header}>
-          <Text style={[styles.title, { color: colors.text }]}>My Wishlist</Text>
+          <BackButton />
+          <Text style={[styles.title, { color: colors.text }]}>Wishlist</Text>
           <SkeletonLoader width={60} height={16} />
         </View>
 
@@ -73,6 +75,11 @@ export default function WishlistScreen() {
   if (wishlist.length === 0) {
     return (
       <View style={[styles.container, { backgroundColor: colors.background }]}>
+        <View style={styles.header}>
+          <BackButton />
+          <Text style={[styles.title, { color: colors.text }]}>Wishlist</Text>
+          <View style={{ width: 60 }} />
+        </View>
         <View style={styles.emptyContainer}>
           <Ionicons name="heart-outline" size={80} color={colors.textSecondary} />
           <Text style={[styles.emptyTitle, { color: colors.text }]}>Your wishlist is empty</Text>
@@ -92,7 +99,8 @@ export default function WishlistScreen() {
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Header */}
       <View style={styles.header}>
-        <Text style={[styles.title, { color: colors.text }]}>My Wishlist</Text>
+        <BackButton />
+        <Text style={[styles.title, { color: colors.text }]}>Wishlist</Text>
         <Text style={[styles.itemCount, { color: colors.textSecondary }]}>{wishlist.length} items</Text>
       </View>
 
@@ -103,35 +111,40 @@ export default function WishlistScreen() {
         contentContainerStyle={styles.scrollContent}
       >
         <View style={styles.gridContainer}>
-          {wishlist.map((item) => (
-            <View key={item.id} style={[styles.gridItem, { backgroundColor: colors.surface }]}>
-              <TouchableOpacity
-                style={styles.gridImageContainer}
-                onPress={() => router.push(`/product/${item.id}`)}
-              >
-                <Image source={{ uri: item.image }} style={styles.gridImage} resizeMode="cover" />
-                <TouchableOpacity
-                  style={[styles.removeButtonAbsolute, { backgroundColor: 'rgba(255,255,255,0.8)' }]}
-                  onPress={() => removeFromWishlist(item.id)}
-                >
-                  <Ionicons name="trash-outline" size={20} color={colors.error} />
-                </TouchableOpacity>
-              </TouchableOpacity>
+          {wishlist.map((item) => {
+            // Fix image source - use images array if available
+            const imageUrl = item.images?.[0]?.src || item.image || '';
 
-              <View style={styles.gridInfo}>
-                <Text style={[styles.gridName, { color: colors.text }]} numberOfLines={2}>{item.title}</Text>
-                <View style={styles.gridPriceRow}>
-                  <Text style={[styles.gridPrice, { color: '#FFA500' }]}>{`₦${parseFloat(String(item.price || 0)).toFixed(2)}`}</Text>
-                </View>
+            return (
+              <View key={item.id} style={[styles.gridItem, { backgroundColor: colors.surface }]}>
                 <TouchableOpacity
-                  style={[styles.gridAddToCartButton, { backgroundColor: colors.primary }]}
-                  onPress={() => addToCart(item)}
+                  style={styles.gridImageContainer}
+                  onPress={() => router.push(`/product/${item.id}`)}
                 >
-                  <Text style={[styles.gridAddToCartText, { color: colors.white }]}>Add to Cart</Text>
+                  <Image source={{ uri: imageUrl }} style={styles.gridImage} resizeMode="cover" />
+                  <TouchableOpacity
+                    style={[styles.removeButtonAbsolute, { backgroundColor: 'rgba(255,255,255,0.8)' }]}
+                    onPress={() => removeFromWishlist(item.id)}
+                  >
+                    <Ionicons name="trash-outline" size={20} color={colors.error} />
+                  </TouchableOpacity>
                 </TouchableOpacity>
+
+                <View style={styles.gridInfo}>
+                  <Text style={[styles.gridName, { color: colors.text }]} numberOfLines={2}>{item.title}</Text>
+                  <View style={styles.gridPriceRow}>
+                    <Text style={[styles.gridPrice, { color: '#FFA500' }]}>{`₦${parseFloat(String(item.price || 0)).toFixed(2)}`}</Text>
+                  </View>
+                  <TouchableOpacity
+                    style={[styles.gridAddToCartButton, { backgroundColor: colors.primary }]}
+                    onPress={() => addToCart(item)}
+                  >
+                    <Text style={[styles.gridAddToCartText, { color: colors.white }]}>Add to Cart</Text>
+                  </TouchableOpacity>
+                </View>
               </View>
-            </View>
-          ))}
+            );
+          })}
         </View>
       </ScrollView>
     </View>

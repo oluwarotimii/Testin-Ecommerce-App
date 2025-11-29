@@ -5,6 +5,8 @@ import { useAuth } from '@/context/AuthContext';
 import { useThemeColors } from '@/hooks/useColorScheme';
 import { Ionicons } from '@expo/vector-icons';
 import SkeletonLoader from '@/components/SkeletonLoader';
+import BackButton from '@/components/BackButton';
+import { getOrderStatus } from '@/constants/orderStatus';
 
 
 export default function OrdersScreen() {
@@ -48,21 +50,18 @@ export default function OrdersScreen() {
     fetchOrders();
   }, [apiService]);
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'delivered': return colors.success;
-      case 'shipped': return colors.info;
-      case 'processing': return colors.warning;
-      case 'cancelled': return colors.error;
-      default: return colors.textSecondary;
-    }
+  const formatPrice = (price: string | number) => {
+    const numPrice = typeof price === 'string' ? parseFloat(price) : price;
+    return numPrice.toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   };
 
   if (loading) {
     return (
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         <View style={styles.header}>
-          <Text style={[styles.title, { color: colors.text }]}>My Orders</Text>
+          <BackButton />
+          <Text style={[styles.title, { color: colors.text }]}>Orders</Text>
+          <View style={{ width: 40 }} />
         </View>
         <View style={styles.content}>
           {[1, 2, 3].map((i) => (
@@ -80,17 +79,24 @@ export default function OrdersScreen() {
   if (orders.length === 0) {
     return (
       <View style={[styles.emptyContainer, { backgroundColor: colors.background }]}>
-        <Ionicons name="bag-handle-outline" size={80} color={colors.textSecondary} />
-        <Text style={[styles.emptyTitle, { color: colors.text }]}>No orders yet</Text>
-        <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>
-          Start shopping to see your orders here.
-        </Text>
-        <TouchableOpacity
-          style={[styles.shopButton, { backgroundColor: colors.primary }]}
-          onPress={() => router.push('/(tabs)')}
-        >
-          <Text style={[styles.shopButtonText, { color: colors.white }]}>Start Shopping</Text>
-        </TouchableOpacity>
+        <View style={styles.header}>
+          <BackButton />
+          <Text style={[styles.title, { color: colors.text }]}>Orders</Text>
+          <View style={{ width: 40 }} />
+        </View>
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 40 }}>
+          <Ionicons name="bag-handle-outline" size={80} color={colors.textSecondary} />
+          <Text style={[styles.emptyTitle, { color: colors.text }]}>No orders yet</Text>
+          <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>
+            Start shopping to see your orders here.
+          </Text>
+          <TouchableOpacity
+            style={[styles.shopButton, { backgroundColor: colors.primary }]}
+            onPress={() => router.push('/(tabs)')}
+          >
+            <Text style={[styles.shopButtonText, { color: colors.white }]}>Start Shopping</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     );
   }
@@ -98,45 +104,50 @@ export default function OrdersScreen() {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={styles.header}>
-        <Text style={[styles.title, { color: colors.text }]}>My Orders</Text>
+        <BackButton />
+        <Text style={[styles.title, { color: colors.text }]}>Orders</Text>
+        <View style={{ width: 40 }} />
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {orders.map((order) => (
-          <TouchableOpacity
-            key={order.order_id}
-            style={[styles.orderCard, { backgroundColor: colors.surface }]}
-            onPress={() => router.push(`/order/${order.order_id}`)}
-          >
-            <View style={styles.cardHeader}>
-              <View>
-                <Text style={[styles.orderId, { color: colors.text }]}>Order #{order.order_id}</Text>
-                <Text style={[styles.orderDate, { color: colors.textSecondary }]}>
-                  {new Date(order.date_added).toLocaleDateString()}
-                </Text>
+        {orders.map((order) => {
+          const orderStatus = getOrderStatus(order.status);
+          return (
+            <TouchableOpacity
+              key={order.order_id}
+              style={[styles.orderCard, { backgroundColor: colors.surface }]}
+              onPress={() => router.push(`/order/${order.order_id}`)}
+            >
+              <View style={styles.cardHeader}>
+                <View>
+                  <Text style={[styles.orderId, { color: colors.text }]}>Order #{order.order_id}</Text>
+                  <Text style={[styles.orderDate, { color: colors.textSecondary }]}>
+                    {new Date(order.date_added).toLocaleDateString()}
+                  </Text>
+                </View>
+                <View style={[styles.statusBadge, { backgroundColor: orderStatus.color + '20' }]}>
+                  <Text style={[styles.statusText, { color: orderStatus.color }]}>
+                    {orderStatus.label}
+                  </Text>
+                </View>
               </View>
-              <View style={[styles.statusBadge, { backgroundColor: getStatusColor(order.status) + '20' }]}>
-                <Text style={[styles.statusText, { color: getStatusColor(order.status) }]}>
-                  {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
-                </Text>
-              </View>
-            </View>
 
-            <View style={[styles.divider, { backgroundColor: colors.border }]} />
+              <View style={[styles.divider, { backgroundColor: colors.border }]} />
 
-            <View style={styles.cardFooter}>
-              <Text style={[styles.itemCount, { color: colors.textSecondary }]}>
-                {order.products ? order.products.length : 0} items
-              </Text>
-              <View style={styles.totalContainer}>
-                <Text style={[styles.totalLabel, { color: colors.textSecondary }]}>Total: </Text>
-                <Text style={[styles.totalAmount, { color: colors.primary }]}>
-                  ₦{parseFloat(order.total).toFixed(2)}
+              <View style={styles.cardFooter}>
+                <Text style={[styles.itemCount, { color: colors.textSecondary }]}>
+                  {order.products ? order.products.length : 0} items
                 </Text>
+                <View style={styles.totalContainer}>
+                  <Text style={[styles.totalLabel, { color: colors.textSecondary }]}>Total: </Text>
+                  <Text style={[styles.totalAmount, { color: '#FFA500' }]}>
+                    ₦{formatPrice(order.total)}
+                  </Text>
+                </View>
               </View>
-            </View>
-          </TouchableOpacity>
-        ))}
+            </TouchableOpacity>
+          );
+        })}
       </ScrollView>
     </View>
   );

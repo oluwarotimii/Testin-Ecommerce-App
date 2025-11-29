@@ -4,6 +4,8 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useThemeColors } from '@/hooks/useColorScheme';
 import { useAuth } from '@/context/AuthContext';
 import { Ionicons } from '@expo/vector-icons';
+import BackButton from '@/components/BackButton';
+import { getOrderStatus } from '@/constants/orderStatus';
 
 export default function OrderDetailsScreen() {
   const router = useRouter();
@@ -15,6 +17,10 @@ export default function OrderDetailsScreen() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const formatPrice = (price: string | number) => {
+    const numPrice = typeof price === 'string' ? parseFloat(price) : price;
+    return numPrice.toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  };
 
   useEffect(() => {
     const fetchOrderDetails = async () => {
@@ -74,26 +80,6 @@ export default function OrderDetailsScreen() {
     fetchOrderDetails();
   }, [orderId, apiService]);
 
-  const getStatusColor = (status: string) => {
-    switch (status.toLowerCase()) {
-      case 'delivered': return colors.success;
-      case 'shipped': return colors.info;
-      case 'processing': return colors.warning;
-      case 'cancelled': return colors.error;
-      default: return colors.textSecondary;
-    }
-  };
-
-  const getStatusIcon = (status: string) => {
-    switch (status.toLowerCase()) {
-      case 'delivered': return 'checkmark-circle';
-      case 'shipped': return 'boat';
-      case 'processing': return 'time';
-      case 'cancelled': return 'close-circle';
-      default: return 'cube';
-    }
-  };
-
   if (loading) {
     return (
       <View style={[styles.container, { backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center' }]}>
@@ -116,12 +102,12 @@ export default function OrderDetailsScreen() {
     );
   }
 
+  const orderStatus = getOrderStatus(order.status);
+
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color={colors.text} />
-        </TouchableOpacity>
+        <BackButton />
         <Text style={[styles.title, { color: colors.text }]}>Order Details</Text>
         <View style={{ width: 40 }} />
       </View>
@@ -130,12 +116,12 @@ export default function OrderDetailsScreen() {
         {/* Status Card */}
         <View style={[styles.card, { backgroundColor: colors.surface }]}>
           <View style={styles.statusHeader}>
-            <View style={[styles.statusIconContainer, { backgroundColor: getStatusColor(order.status) + '20' }]}>
-              <Ionicons name={getStatusIcon(order.status) as any} size={24} color={getStatusColor(order.status)} />
+            <View style={[styles.statusIconContainer, { backgroundColor: orderStatus.color + '20' }]}>
+              <Ionicons name="cube" size={24} color={orderStatus.color} />
             </View>
             <View>
-              <Text style={[styles.statusText, { color: getStatusColor(order.status) }]}>
-                {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+              <Text style={[styles.statusText, { color: orderStatus.color }]}>
+                {orderStatus.label}
               </Text>
               <Text style={[styles.statusDate, { color: colors.textSecondary }]}>
                 {new Date(order.date).toLocaleDateString()} • {new Date(order.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
@@ -159,7 +145,7 @@ export default function OrderDetailsScreen() {
                     </Text>
                   </View>
                   <Text style={[styles.itemPrice, { color: colors.text }]}>
-                    ₦{(item.price * item.quantity).toFixed(2)}
+                    ₦{formatPrice(item.price * item.quantity)}
                   </Text>
                 </View>
                 {index < order.items.length - 1 && (
@@ -176,20 +162,20 @@ export default function OrderDetailsScreen() {
           <View style={[styles.card, { backgroundColor: colors.surface }]}>
             <View style={styles.summaryRow}>
               <Text style={[styles.summaryLabel, { color: colors.textSecondary }]}>Subtotal</Text>
-              <Text style={[styles.summaryValue, { color: colors.text }]}>₦{order.subtotal.toFixed(2)}</Text>
+              <Text style={[styles.summaryValue, { color: colors.text }]}>₦{formatPrice(order.subtotal)}</Text>
             </View>
             <View style={styles.summaryRow}>
               <Text style={[styles.summaryLabel, { color: colors.textSecondary }]}>Shipping</Text>
-              <Text style={[styles.summaryValue, { color: colors.text }]}>₦{order.shipping.toFixed(2)}</Text>
+              <Text style={[styles.summaryValue, { color: colors.text }]}>₦{formatPrice(order.shipping)}</Text>
             </View>
             <View style={styles.summaryRow}>
               <Text style={[styles.summaryLabel, { color: colors.textSecondary }]}>Tax</Text>
-              <Text style={[styles.summaryValue, { color: colors.text }]}>₦{order.tax.toFixed(2)}</Text>
+              <Text style={[styles.summaryValue, { color: colors.text }]}>₦{formatPrice(order.tax)}</Text>
             </View>
             <View style={[styles.divider, { backgroundColor: colors.border }]} />
             <View style={styles.summaryRow}>
               <Text style={[styles.totalLabel, { color: colors.text }]}>Total</Text>
-              <Text style={[styles.totalValue, { color: colors.primary }]}>₦{order.total.toFixed(2)}</Text>
+              <Text style={[styles.totalValue, { color: '#FFA500' }]}>₦{formatPrice(order.total)}</Text>
             </View>
           </View>
         </View>

@@ -10,6 +10,7 @@ import SafeImage from '@/components/SafeImage';
 import FilterModal, { FilterOptions } from '@/components/FilterModal';
 import { transformProducts } from '@/utils/woocommerceTransformers';
 import { formatPrice } from '@/utils/formatNumber';
+import BackButton from '@/components/BackButton';
 
 export default function ProductsScreen() {
   const router = useRouter();
@@ -274,9 +275,7 @@ export default function ProductsScreen() {
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Header */}
       <View style={[styles.header, { backgroundColor: colors.background }]}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color={colors.text} />
-        </TouchableOpacity>
+        <BackButton />
         <View style={styles.headerCenter}>
           <Text style={[styles.title, { color: colors.text }]}>Products</Text>
         </View>
