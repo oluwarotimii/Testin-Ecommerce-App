@@ -12,7 +12,7 @@ export default function AccountScreen() {
   const colors = useThemeColors();
   const { colorScheme, toggleColorScheme, setColorScheme } = useTheme();
   const { isAuthenticated, apiService, signOut, loadingAuth } = useAuth();
-  console.log('isAuthenticated:', isAuthenticated, 'loadingAuth:', loadingAuth);
+  // console.log('isAuthenticated:', isAuthenticated, 'loadingAuth:', loadingAuth);
   const [darkMode, setDarkMode] = useState(colorScheme === 'dark');
 
   useEffect(() => {
@@ -63,12 +63,12 @@ export default function AccountScreen() {
       icon: () => <Ionicons name="location" size={20} color={colors.primary} />,
       onPress: () => router.push('/addresses'),
     },
-    {
-      id: 'payment',
-      title: 'Payment Methods',
-      icon: () => <Ionicons name="card" size={20} color={colors.primary} />,
-      onPress: () => router.push('/payment-methods'),
-    },
+    // {
+    //   id: 'payment',
+    //   title: 'Payment Methods',
+    //   icon: () => <Ionicons name="card" size={20} color={colors.primary} />,
+    //   onPress: () => router.push('/payment-methods'),
+    // },
     {
       id: 'wishlist',
       title: 'Wishlist',
@@ -122,13 +122,13 @@ export default function AccountScreen() {
       type: 'navigation',
       onPress: () => router.push('/wordpress-test'),
     },
-    {
-      id: 'devtools',
-      title: 'Developer Tools',
-      icon: () => <Ionicons name="code-slash" size={20} color={colors.primary} />,
-      type: 'navigation',
-      onPress: () => router.push('/devtools'),
-    },
+    // {
+    //   id: 'devtools',
+    //   title: 'Developer Tools',
+    //   icon: () => <Ionicons name="code-slash" size={20} color={colors.primary} />,
+    //   type: 'navigation',
+    //   onPress: () => router.push('/devtools'),
+    // },
   ];
 
   const supportItems = [
@@ -206,13 +206,19 @@ export default function AccountScreen() {
                 <View style={styles.profileInfo}>
                   <View style={[styles.avatar, { backgroundColor: colors.primary }]}>
                     <Text style={[styles.avatarText, { color: colors.white }]}>
-                      {userDetails.first_name ? userDetails.first_name.charAt(0) : ''}
-                      {userDetails.last_name ? userDetails.last_name.charAt(0) : ''}
+                      {userDetails.first_name ? userDetails.first_name.charAt(0) :
+                       userDetails.name?.firstname ? userDetails.name.firstname.charAt(0) :
+                       userDetails.firstname ? userDetails.firstname.charAt(0) :
+                       'U'}
+                      {userDetails.last_name ? userDetails.last_name.charAt(0) :
+                       userDetails.name?.lastname ? userDetails.name.lastname.charAt(0) :
+                       userDetails.lastname ? userDetails.lastname.charAt(0) :
+                       ''}
                     </Text>
                   </View>
                   <View style={styles.userDetails}>
                     <Text style={[styles.userName, { color: colors.text }]}>
-                      {userDetails.first_name} {userDetails.last_name}
+                      {userDetails.first_name || userDetails.name?.firstname || userDetails.firstname || 'User'} {userDetails.last_name || userDetails.name?.lastname || userDetails.lastname || ''}
                     </Text>
                     <Text style={[styles.userEmail, { color: colors.textSecondary }]}>{userDetails.email}</Text>
                   </View>
@@ -256,22 +262,6 @@ export default function AccountScreen() {
             </>
           ) : (
             <>
-              {/* Settings for non-authenticated users */}
-              <View style={styles.section}>
-                <Text style={[styles.sectionTitle, { color: colors.text }]}>Settings</Text>
-                <View style={[styles.menuContainer, { backgroundColor: colors.surface }]}>
-                  {settingsItems.map(renderSettingsItem)}
-                </View>
-              </View>
-
-              {/* Support for non-authenticated users */}
-              <View style={styles.section}>
-                <Text style={[styles.sectionTitle, { color: colors.text }]}>Support</Text>
-                <View style={[styles.menuContainer, { backgroundColor: colors.surface }]}>
-                  {supportItems.map(renderMenuItem)}
-                </View>
-              </View>
-
               <View style={[styles.emptyContainer, { backgroundColor: colors.background }]}>
                 <Ionicons name="person-circle-outline" size={80} color={colors.textSecondary} style={styles.emptyIcon} />
                 <Text style={[styles.emptyTitle, { color: colors.text }]}>You are not logged in.</Text>

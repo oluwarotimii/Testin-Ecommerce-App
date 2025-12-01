@@ -28,7 +28,8 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/icon.png",
         "backgroundColor": "#FFFFFF"
-      }
+      },
+      "package": "com.frobenius.femtechit"
     },
     "web": {
       "bundler": "metro",
@@ -45,13 +46,20 @@
           "icon": "./assets/images/icon.png",
           "color": "#007AFF",
           "sounds": [
-            "./assets/notification.wav"
+            "./assets/images/notif.mp3"
           ]
         }
       ]
     ],
     "experiments": {
       "typedRoutes": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "3b709fd7-ceb1-44d6-acca-0286fcea7af4"
+      }
+    },
+    "owner": "frobenius"
   }
 }

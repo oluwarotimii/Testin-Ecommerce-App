@@ -29,10 +29,10 @@ export default function ProfileScreen() {
           const response = await apiService.getAccountDetails();
           setUser(response);
           setFormData({
-            firstname: response.name?.firstname || '',
-            lastname: response.name?.lastname || '',
+            firstname: response.first_name || response.name?.firstname || response.firstname || '',
+            lastname: response.last_name || response.name?.lastname || response.lastname || '',
             email: response.email || '',
-            phone: response.phone || '',
+            phone: response.phone || response.mobile || response.phone_number || response.billing?.phone || '',
           });
         } catch (error) {
           console.error('Error fetching user details:', error);
@@ -193,7 +193,7 @@ export default function ProfileScreen() {
           <View style={styles.infoGrid}>
             <View style={styles.infoItem}>
               <Ionicons name="call-outline" size={20} color={colors.textSecondary} />
-              <Text style={[styles.infoText, { color: colors.text }]}>{formData.phone || 'No phone number'}</Text>
+              <Text style={[styles.infoText, { color: colors.text }]}>{formData.phone || user?.billing?.phone || user?.mobile || user?.phone_number || 'No phone number'}</Text>
             </View>
           </View>
         )}
