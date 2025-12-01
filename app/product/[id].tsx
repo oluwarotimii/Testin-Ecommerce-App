@@ -9,6 +9,7 @@ import { transformProduct } from '@/utils/woocommerceTransformers';
 import { formatPrice } from '@/utils/formatNumber';
 import { stripHtml } from '@/utils/htmlUtils';
 import SkeletonProductDetail from '@/components/SkeletonProductDetail';
+import ProductCard from '@/components/ProductCard';
 
 const { width } = Dimensions.get('window');
 
@@ -304,15 +305,14 @@ export default function ProductDetailScreen() {
               contentContainerStyle={styles.similarProductsContainer}
             >
               {similarProducts.map((item) => (
-                <TouchableOpacity
+                <ProductCard
                   key={item.id}
-                  style={[styles.similarProductItem, { backgroundColor: colors.background }]}
+                  product={item}
                   onPress={() => router.push(`/product/${item.id}` as any)}
-                >
-                  <Image source={{ uri: item.image }} style={[styles.similarProductImage, { backgroundColor: colors.surface }]} />
-                  <Text style={[styles.similarProductName, { color: colors.text }]} numberOfLines={2}>{item.title}</Text>
-                  <Text style={[styles.similarProductPrice, { color: '#FF3B30' }]}>{formatPrice(typeof item.price === 'number' ? item.price : parseFloat(item.price || '0'))}</Text>
-                </TouchableOpacity>
+                  isLiked={false} // Similar items don't show wishlist status in this context usually, or we can fetch it. For now false or check wishlist array if available.
+                  onToggleWishlist={() => { }} // No wishlist toggle in similar items for now or implement if needed
+                  style={{ width: 160, marginRight: 12 }}
+                />
               ))}
             </ScrollView>
           </View>
@@ -502,30 +502,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     gap: 16,
   },
-  similarProductItem: {
-    width: 140,
-    borderRadius: 12,
-    padding: 12,
-    marginRight: 10,
-  },
-  similarProductImage: {
-    width: '100%',
-    height: 120,
-    borderRadius: 8,
-    marginBottom: 10,
-    resizeMode: 'contain',
-  },
-  similarProductName: {
-    fontSize: 14,
-    fontWeight: '500',
-    marginBottom: 5,
-    height: 36,
-  },
-  similarProductPrice: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#FFA500',
-  },
+
   actionBar: {
     position: 'absolute',
     bottom: 0,

@@ -8,6 +8,7 @@ import { useThemeColors } from '@/hooks/useColorScheme';
 import SafeImage from '@/components/SafeImage';
 import { transformProducts } from '@/utils/woocommerceTransformers';
 import BackButton from '@/components/BackButton';
+import ProductCard from '@/components/ProductCard';
 
 export default function CategoryScreen() {
     const router = useRouter();
@@ -244,69 +245,13 @@ export default function CategoryScreen() {
                 ) : (
                     <View style={styles.gridContainer}>
                         {filteredProducts.map((product) => (
-                            <TouchableOpacity
+                            <ProductCard
                                 key={product.id}
-                                style={[styles.productCard, { backgroundColor: colors.surface }]}
+                                product={product}
                                 onPress={() => router.push(`/product/${product.id}` as any)}
-                            >
-                                <SafeImage
-                                    source={{ uri: product.image }}
-                                    style={[styles.productImage, { backgroundColor: colors.background }]}
-                                />
-
-                                {/* Wishlist button - top right */}
-                                <View style={styles.wishlistOverlay}>
-                                    <TouchableOpacity
-                                        style={[styles.wishlistButton, { backgroundColor: colors.surface }]}
-                                        onPress={(e) => {
-                                            e.stopPropagation();
-                                            toggleWishlist(product.id);
-                                        }}
-                                    >
-                                        <Ionicons
-                                            name={wishlist.includes(product.id) ? "heart" : "heart-outline"}
-                                            size={16}
-                                            color={wishlist.includes(product.id) ? "#FF3B30" : colors.text}
-                                        />
-                                    </TouchableOpacity>
-                                </View>
-
-                                {/* Add to cart button - bottom right */}
-                                <View style={styles.productActionsOverlay}>
-                                    <TouchableOpacity
-                                        style={[styles.addToCartButton, { backgroundColor: colors.primary }]}
-                                        onPress={(e) => {
-                                            e.stopPropagation();
-                                            handleAddToCart(product.id);
-                                        }}
-                                    >
-                                        <Ionicons name="cart" size={18} color={colors.white} />
-                                    </TouchableOpacity>
-                                </View>
-
-                                {/* Product details */}
-                                <View style={styles.productDetails}>
-                                    <Text style={[styles.productName, { color: colors.text }]} numberOfLines={2}>
-                                        {product.title}
-                                    </Text>
-                                    <View style={styles.priceRow}>
-                                        <Text style={[styles.productPrice, { color: '#FFA500' }]}>
-                                            ₦{formatPrice(typeof product.price === 'number' ? product.price : parseFloat(product.price || '0'))}
-                                        </Text>
-                                    </View>
-                                    {product.rating && (
-                                        <View style={styles.ratingRow}>
-                                            <Ionicons name="star" size={12} color="#FFD700" />
-                                            <Text style={[styles.ratingText, { color: colors.text }]}>
-                                                {product.rating.rate}
-                                            </Text>
-                                            <Text style={[styles.reviewCount, { color: colors.textSecondary }]}>
-                                                ({product.rating.count})
-                                            </Text>
-                                        </View>
-                                    )}
-                                </View>
-                            </TouchableOpacity>
+                                isLiked={wishlist.includes(product.id)}
+                                onToggleWishlist={() => toggleWishlist(product.id)}
+                            />
                         ))}
                     </View>
                 )}
@@ -399,89 +344,5 @@ const styles = StyleSheet.create({
         paddingHorizontal: 12, // Reduced from 16
         gap: 10, // Reduced from 12
     },
-    productCard: {
-        width: '48%', // Increased from 47%
-        borderRadius: 12,
-        overflow: 'hidden',
-        position: 'relative',
-        minHeight: 240, // Increased from 220 to accommodate content
-        marginBottom: 4,
-    },
-    productImage: {
-        width: '100%',
-        height: 140, // Increased from 120
-    },
-    wishlistOverlay: {
-        position: 'absolute',
-        top: 8,
-        right: 8,
-        zIndex: 2,
-    },
-    wishlistButton: {
-        width: 32,
-        height: 32,
-        borderRadius: 16,
-        alignItems: 'center',
-        justifyContent: 'center',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-        elevation: 3,
-    },
-    productActionsOverlay: {
-        position: 'absolute',
-        bottom: 8,
-        right: 8,
-        zIndex: 1,
-    },
-    addToCartButton: {
-        width: 36,
-        height: 36,
-        borderRadius: 18,
-        alignItems: 'center',
-        justifyContent: 'center',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.2,
-        shadowRadius: 4,
-        elevation: 4,
-    },
-    productDetails: {
-        padding: 10, // Increased from 8
-        paddingTop: 6, // Increased from 4
-        paddingRight: 48,
-    },
-    productName: {
-        fontSize: 13, // Reduced from 14
-        fontWeight: '500',
-        marginBottom: 4,
-        lineHeight: 18,
-    },
-    priceRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 6, // Reduced from 8
-        marginBottom: 4,
-    },
-    originalPrice: {
-        fontSize: 11, // Reduced from 12
-        textDecorationLine: 'line-through',
-    },
-    productPrice: {
-        fontSize: 16, // Reduced from 18
-        fontWeight: 'bold',
-    },
-    ratingRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 3, // Reduced from 4
-    },
-    ratingText: {
-        fontSize: 11, // Reduced from 12
-        fontWeight: '500',
-    },
-    reviewCount: {
-        fontSize: 10, // Reduced from 11
-    },
+
 });

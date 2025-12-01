@@ -11,6 +11,7 @@ import FilterModal, { FilterOptions } from '@/components/FilterModal';
 import { transformProducts } from '@/utils/woocommerceTransformers';
 import { formatPrice } from '@/utils/formatNumber';
 import BackButton from '@/components/BackButton';
+import ProductCard from '@/components/ProductCard';
 
 export default function ProductsScreen() {
   const router = useRouter();
@@ -139,65 +140,13 @@ export default function ProductsScreen() {
   const renderGridView = () => (
     <View style={styles.gridContainer}>
       {filteredProducts.map((product) => (
-        <TouchableOpacity
+        <ProductCard
           key={product.id}
-          style={[styles.productCard, { backgroundColor: colors.surface }]}
-          onPress={() => router.push(`/product/${product.id}`)}
-        >
-          <SafeImage source={{ uri: product.image }} style={[styles.productImage, { backgroundColor: colors.background }]} />
-
-          {/* Wishlist button - top right */}
-          <View style={styles.wishlistOverlay}>
-            <TouchableOpacity
-              style={[styles.wishlistButton, { backgroundColor: colors.surface }]}
-              onPress={(e) => {
-                e.stopPropagation();
-                toggleWishlist(product.id);
-              }}
-            >
-              <Ionicons
-                name={wishlist.includes(product.id) ? "heart" : "heart-outline"}
-                size={16}
-                color={wishlist.includes(product.id) ? "#FF3B30" : colors.text}
-              />
-            </TouchableOpacity>
-          </View>
-
-          {/* Actions overlay on image */}
-          <View style={styles.productActionsOverlay}>
-            <TouchableOpacity
-              style={[styles.addToCartButton, { backgroundColor: colors.primary }]}
-              onPress={async (e) => {
-                e.stopPropagation();
-                // Optimistic update for faster UI response
-                setCartCount(prev => prev + 1);
-                try {
-                  await apiService.addToCart(product.id, 1);
-                  // Fetch actual cart count to sync
-                  const cartResponse = await apiService.getCartContents();
-                  if (cartResponse && cartResponse.products) {
-                    const newCartCount = cartResponse.products.reduce((total: any, item: any) => total + item.quantity, 0);
-                    setCartCount(newCartCount);
-                  }
-                } catch (error) {
-                  console.error('Add to cart error:', error);
-                  // Revert optimistic update on error
-                  setCartCount(prev => prev - 1);
-                }
-              }}
-            >
-              <Ionicons name="cart" size={18} color={colors.white} />
-            </TouchableOpacity>
-          </View>
-          {/* Product details below image */}
-          <View style={styles.productDetails}>
-            <Text style={[styles.productName, { color: colors.text }]} numberOfLines={2}>{product.title}</Text>
-            <View style={styles.priceRow}>
-              <Text style={[styles.originalPrice, { color: colors.textSecondary }]}>{formatPrice((typeof product.price === 'number' ? product.price : parseFloat(product.price || '0')) * 1.3)}</Text>
-              <Text style={[styles.productPrice, { color: '#ff6b6b' }]}>{formatPrice(typeof product.price === 'number' ? product.price : parseFloat(product.price || '0'))}</Text>
-            </View>
-          </View>
-        </TouchableOpacity>
+          product={product}
+          onPress={() => router.push(`/product/${product.id}` as any)}
+          isLiked={wishlist.includes(product.id)}
+          onToggleWishlist={() => toggleWishlist(product.id)}
+        />
       ))}
     </View>
   );
@@ -208,7 +157,7 @@ export default function ProductsScreen() {
         <TouchableOpacity
           key={product.id}
           style={[styles.listItem, { backgroundColor: colors.surface }]}
-          onPress={() => router.push(`/product/${product.id}`)}
+          onPress={() => router.push(`/product/${product.id}` as any)}
         >
           <View style={styles.listImageContainer}>
             <SafeImage source={{ uri: product.image }} style={[styles.listImage, { backgroundColor: colors.background }]} />
@@ -441,69 +390,6 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     paddingHorizontal: 16,
     gap: 12,
-  },
-  productCard: {
-    width: '47%',
-    borderRadius: 12,
-    overflow: 'hidden',
-    position: 'relative',
-    height: 200,
-  },
-  productImage: {
-    width: '100%',
-    height: 120,
-  },
-  wishlistOverlay: {
-    position: 'absolute',
-    top: 8,
-    right: 8,
-    zIndex: 2,
-  },
-  wishlistButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  productActionsOverlay: {
-    position: 'absolute',
-    bottom: 8,
-    right: 8,
-    zIndex: 1,
-  },
-  productDetails: {
-    padding: 8,
-    paddingTop: 4,
-    paddingRight: 48,
-    position: 'relative',
-    top: 0,
-  },
-  productName: {
-    fontSize: 14,
-    fontWeight: '500',
-    marginBottom: 4,
-  },
-  priceRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  originalPrice: {
-    fontSize: 12,
-    textDecorationLine: 'line-through',
-  },
-  productPrice: {
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  addToCartButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginLeft: 8,
   },
   listContainer: {
     paddingHorizontal: 20,

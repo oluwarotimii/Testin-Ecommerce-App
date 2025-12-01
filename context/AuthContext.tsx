@@ -54,6 +54,7 @@ interface AuthContextType {
   signOut: () => Promise<void>;
   loadingAuth: boolean;
   apiService: ApiService;
+  user: any;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -64,7 +65,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loadingAuth, setLoadingAuth] = useState(true);
 
   // Initialize the appropriate API service based on configuration
-  const apiService = useMemo(() => {
+  const apiService: ApiService = useMemo(() => {
     if (API_SERVICE_TYPE === 'wordpress') {
       return new WordPressApiService(
         WORDPRESS_CONFIG.url,
@@ -170,7 +171,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
             // Let's just set the user to a temporary object if we have the data, or fetch it.
             // The login response might contain user info?
-            if (response.user_email) {
+            if ((response as any).user_email) {
               // It's a partial user.
             }
 
@@ -227,7 +228,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <AuthContext.Provider value={{ sessionToken, isAuthenticated, login, register, signOut, loadingAuth, apiService }}>
+    <AuthContext.Provider value={{ sessionToken, isAuthenticated, login, register, signOut, loadingAuth, apiService, user }}>
       {children}
     </AuthContext.Provider>
   );
