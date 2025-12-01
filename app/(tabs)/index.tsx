@@ -371,19 +371,8 @@ export default function HomeScreen() {
                           <Ionicons name="image-outline" size={32} color={colors.textSecondary} />
                         </View>
                       )}
-                      <View style={styles.categoryCartOverlay}>
-                        <TouchableOpacity
-                          style={[styles.categoryAddToCartButton, { backgroundColor: colors.primary }]}
-                          onPress={(e) => {
-                            e.stopPropagation();
-                            // Navigate to category page when cart button is pressed
-                            router.push(`/category/${category.category_id}` as any);
-                          }}
-                        >
-                          <Ionicons name="chevron-forward" size={18} color={colors.white} />
-                        </TouchableOpacity>
-                      </View>
                     </View>
+                    <Text style={[styles.categoryName, { color: colors.text }]} numberOfLines={2}>{category.name && typeof category.name === 'string' ? category.name.replace('-', ' ') : 'Category'}</Text>
                   </TouchableOpacity>
                 ))}
               </View>
@@ -630,19 +619,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  categoryCartOverlay: {
-    position: 'absolute',
-    bottom: 8,
-    right: 8,
-    zIndex: 2,
-  },
-  categoryAddToCartButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#007AFF', // Default primary color
+  categoryName: {
+    fontSize: 12,
+    textAlign: 'center',
+    fontWeight: '500',
+    marginTop: 8,
   },
   skeletonCategoryItem: {
     marginHorizontal: 2,
