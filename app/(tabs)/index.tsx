@@ -357,20 +357,33 @@ export default function HomeScreen() {
                 {categories.slice(0, 3).map((category) => (
                   <TouchableOpacity
                     key={category.category_id}
-                    style={[styles.categoryItem, { backgroundColor: colors.surface, flex: 1, marginHorizontal: 4 }]}
+                    style={styles.categoryCard}
                     onPress={() => router.push(`/category/${category.category_id}` as any)}
                   >
-                    {category.image ? (
-                      <SafeImage
-                        source={{ uri: category.image }}
-                        style={styles.categoryImage}
-                      />
-                    ) : (
-                      <View style={[styles.categoryImagePlaceholder, { backgroundColor: colors.background }]}>
-                        <Ionicons name="image-outline" size={32} color={colors.textSecondary} />
+                    <View style={styles.categoryImageContainer}>
+                      {category.image ? (
+                        <SafeImage
+                          source={{ uri: category.image }}
+                          style={styles.categoryItemImage}
+                        />
+                      ) : (
+                        <View style={[styles.categoryItemImagePlaceholder, { backgroundColor: colors.background }]}>
+                          <Ionicons name="image-outline" size={32} color={colors.textSecondary} />
+                        </View>
+                      )}
+                      <View style={styles.categoryCartOverlay}>
+                        <TouchableOpacity
+                          style={[styles.categoryAddToCartButton, { backgroundColor: colors.primary }]}
+                          onPress={(e) => {
+                            e.stopPropagation();
+                            // Navigate to category page when cart button is pressed
+                            router.push(`/category/${category.category_id}` as any);
+                          }}
+                        >
+                          <Ionicons name="chevron-forward" size={18} color={colors.white} />
+                        </TouchableOpacity>
                       </View>
-                    )}
-                    <Text style={[styles.categoryName, { color: colors.text }]} numberOfLines={2}>{category.name && typeof category.name === 'string' ? category.name.replace('-', ' ') : 'Category'}</Text>
+                    </View>
                   </TouchableOpacity>
                 ))}
               </View>
@@ -552,31 +565,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 8,
   },
-  categoryItem: {
-    alignItems: 'center',
-    paddingVertical: 12,
-    borderRadius: 12,
-    marginHorizontal: 2,
-  },
-  categoryImage: {
-    width: '100%',
-    height: 80,
-    borderRadius: 8,
-    marginBottom: 8,
-  },
-  categoryImagePlaceholder: {
-    width: '100%',
-    height: 80,
-    borderRadius: 8,
-    marginBottom: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  categoryName: {
-    fontSize: 12,
-    textAlign: 'center',
-    fontWeight: '500',
-  },
   productsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -618,6 +606,43 @@ const styles = StyleSheet.create({
   loadingIndicator: {
     marginTop: 20,
     marginBottom: 20,
+  },
+  categoryCard: {
+    width: '30%', // 3 items per row with some spacing
+    borderRadius: 16,
+    overflow: 'hidden',
+    position: 'relative',
+    marginBottom: 16,
+  },
+  categoryImageContainer: {
+    position: 'relative',
+    width: '100%',
+  },
+  categoryItemImage: {
+    width: '100%',
+    height: 100, // Adjusted height for category card
+    borderRadius: 8,
+  },
+  categoryItemImagePlaceholder: {
+    width: '100%',
+    height: 100,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  categoryCartOverlay: {
+    position: 'absolute',
+    bottom: 8,
+    right: 8,
+    zIndex: 2,
+  },
+  categoryAddToCartButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#007AFF', // Default primary color
   },
   skeletonCategoryItem: {
     marginHorizontal: 2,
