@@ -133,6 +133,15 @@ export default function WishlistScreen() {
                   >
                     <Ionicons name="trash-outline" size={20} color={colors.error} />
                   </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.wishlistAddToCartButton, { backgroundColor: colors.primary }]}
+                    onPress={(e) => {
+                      e.stopPropagation();
+                      addToCart(item);
+                    }}
+                  >
+                    <Ionicons name="cart" size={18} color={colors.white} />
+                  </TouchableOpacity>
                 </TouchableOpacity>
 
                 <View style={styles.gridInfo}>
@@ -140,12 +149,6 @@ export default function WishlistScreen() {
                   <View style={styles.gridPriceRow}>
                     <Text style={[styles.gridPrice, { color: '#FFA500' }]}>₦{formattedPrice}</Text>
                   </View>
-                  <TouchableOpacity
-                    style={[styles.gridAddToCartButton, { backgroundColor: colors.primary }]}
-                    onPress={() => addToCart(item)}
-                  >
-                    <Text style={[styles.gridAddToCartText, { color: colors.white }]}>Add to Cart</Text>
-                  </TouchableOpacity>
                 </View>
               </View>
             );
@@ -202,6 +205,17 @@ const styles = StyleSheet.create({
     width: '100%',
     height: 150,
     position: 'relative',
+  },
+  wishlistAddToCartButton: {
+    position: 'absolute',
+    bottom: 8,
+    right: 8,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#007AFF', // Default primary color
   },
   gridImage: {
     width: '100%',

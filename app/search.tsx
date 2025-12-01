@@ -176,7 +176,20 @@ export default function SearchScreen() {
                 style={[styles.resultItem, { borderBottomColor: colors.border }]}
                 onPress={() => router.push(`/product/${product.id}`)}
               >
-                <Image source={{ uri: product.image }} style={styles.resultImage} />
+                <View style={styles.resultImageContainer}>
+                  <Image source={{ uri: product.image }} style={styles.resultImage} />
+                  <View style={styles.resultCartOverlay}>
+                    <TouchableOpacity
+                      style={[styles.resultAddToCartButton, { backgroundColor: colors.primary }]}
+                      onPress={(e) => {
+                        e.stopPropagation();
+                        // Add to cart functionality can be added here
+                      }}
+                    >
+                      <Ionicons name="cart" size={18} color={colors.white} />
+                    </TouchableOpacity>
+                  </View>
+                </View>
                 <View style={styles.resultInfo}>
                   <View>
                     <Text style={[styles.resultName, { color: colors.text }]} numberOfLines={2}>{product.title}</Text>
@@ -277,12 +290,28 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#F2F2F7',
   },
+  resultImageContainer: {
+    position: 'relative',
+  },
   resultImage: {
     width: 60,
     height: 60,
     borderRadius: 8,
     backgroundColor: '#F2F2F7',
     marginRight: 12,
+  },
+  resultCartOverlay: {
+    position: 'absolute',
+    bottom: 4,
+    right: 4,
+    zIndex: 2,
+  },
+  resultAddToCartButton: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   resultInfo: {
     flex: 1,

@@ -356,7 +356,7 @@ export default function ProductDetailScreen() {
                         />
                       </TouchableOpacity>
                     </View>
-                    <View style={styles.similarCartOverlay}>
+                    <View style={styles.cartOverlayBottom}>
                       <TouchableOpacity
                         style={[styles.addToCartButton, { backgroundColor: colors.primary }]}
                         onPress={(e) => {
@@ -592,9 +592,9 @@ const styles = StyleSheet.create({
     left: 8,
     zIndex: 2,
   },
-  similarCartOverlay: {
+  cartOverlayBottom: {
     position: 'absolute',
-    top: 8,
+    bottom: 8,
     right: 8,
     zIndex: 2,
   },
@@ -635,6 +635,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
   },
+  // Note: similarCartOverlay was removed as we're using cartOverlayBottom now
 
   actionBar: {
     position: 'absolute',

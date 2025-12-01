@@ -114,7 +114,7 @@ export default function BestDealsSection({ wishlist, toggleWishlist }: BestDeals
                                         />
                                     </TouchableOpacity>
                                 </View>
-                                <View style={styles.cartOverlay}>
+                                <View style={styles.cartOverlayBottom}>
                                     <TouchableOpacity
                                         style={[styles.addToCartButton, { backgroundColor: colors.primary }]}
                                         onPress={async (e) => {
@@ -205,9 +205,9 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
     },
-    cartOverlay: {
+    cartOverlayBottom: {
         position: 'absolute',
-        top: 8,
+        bottom: 8,
         right: 8,
         zIndex: 2,
     },

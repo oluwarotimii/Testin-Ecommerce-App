@@ -25,22 +25,36 @@ export default function ProductCard({ product, onPress, isLiked, onToggleWishlis
             style={[styles.productCard, { backgroundColor: colors.surface }, style]}
             onPress={onPress}
         >
-            <SafeImage source={{ uri: product.image }} style={[styles.productImage, { backgroundColor: colors.background }]} />
+            <View style={styles.productImageContainer}>
+                <SafeImage source={{ uri: product.image }} style={[styles.productImage, { backgroundColor: colors.background }]} />
 
-            <View style={styles.wishlistOverlay}>
-                <TouchableOpacity
-                    style={[styles.wishlistButton, { backgroundColor: colors.surface }]}
-                    onPress={(e) => {
-                        e.stopPropagation();
-                        onToggleWishlist();
-                    }}
-                >
-                    <Ionicons
-                        name={isLiked ? "heart" : "heart-outline"}
-                        size={16}
-                        color={isLiked ? "#FF3B30" : colors.text}
-                    />
-                </TouchableOpacity>
+                <View style={styles.wishlistOverlay}>
+                    <TouchableOpacity
+                        style={[styles.wishlistButton, { backgroundColor: colors.surface }]}
+                        onPress={(e) => {
+                            e.stopPropagation();
+                            onToggleWishlist();
+                        }}
+                    >
+                        <Ionicons
+                            name={isLiked ? "heart" : "heart-outline"}
+                            size={16}
+                            color={isLiked ? "#FF3B30" : colors.text}
+                        />
+                    </TouchableOpacity>
+                </View>
+
+                <View style={styles.cartOverlayBottom}>
+                    <TouchableOpacity
+                        style={[styles.addToCartButton, { backgroundColor: colors.primary }]}
+                        onPress={(e) => {
+                            e.stopPropagation();
+                            // Add to cart functionality would be implemented here if needed in this component
+                        }}
+                    >
+                        <Ionicons name="cart" size={18} color={colors.white} />
+                    </TouchableOpacity>
+                </View>
             </View>
 
             <View style={styles.productDetails}>
@@ -49,10 +63,6 @@ export default function ProductCard({ product, onPress, isLiked, onToggleWishlis
                     <View>
                         <Text style={[styles.originalPrice, { color: colors.textSecondary }]}>{formatPrice(originalPrice)}</Text>
                         <Text style={[styles.productPrice, { color: '#FFA500' }]}>{formatPrice(price)}</Text>
-                    </View>
-
-                    <View style={[styles.addToCartButton, { backgroundColor: colors.primary }]}>
-                        <Ionicons name="cart" size={18} color={colors.white} />
                     </View>
                 </View>
             </View>
@@ -68,6 +78,9 @@ const styles = StyleSheet.create({
         position: 'relative',
         marginBottom: 16,
     },
+    productImageContainer: {
+        position: 'relative',
+    },
     productImage: {
         width: '100%',
         height: 160,
@@ -75,6 +88,12 @@ const styles = StyleSheet.create({
     wishlistOverlay: {
         position: 'absolute',
         top: 8,
+        left: 8,
+        zIndex: 2,
+    },
+    cartOverlayBottom: {
+        position: 'absolute',
+        bottom: 8,
         right: 8,
         zIndex: 2,
     },
@@ -82,6 +101,13 @@ const styles = StyleSheet.create({
         width: 32,
         height: 32,
         borderRadius: 16,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    addToCartButton: {
+        width: 36,
+        height: 36,
+        borderRadius: 18,
         alignItems: 'center',
         justifyContent: 'center',
     },

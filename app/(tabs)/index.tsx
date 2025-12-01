@@ -428,7 +428,7 @@ export default function HomeScreen() {
                         />
                       </TouchableOpacity>
                     </View>
-                    <View style={styles.cartOverlay}>
+                    <View style={styles.cartOverlayBottom}>
                       <TouchableOpacity
                         style={[styles.addToCartButton, { backgroundColor: colors.primary }]}
                         onPress={async (e) => {
@@ -653,9 +653,9 @@ const styles = StyleSheet.create({
     left: 8,
     zIndex: 2,
   },
-  cartOverlay: {
+  cartOverlayBottom: {
     position: 'absolute',
-    top: 8,
+    bottom: 8,
     right: 8,
     zIndex: 2,
   },
