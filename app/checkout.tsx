@@ -292,7 +292,7 @@ export default function CheckoutScreen() {
                   <Image source={{ uri: item.image }} style={[styles.itemImage, { backgroundColor: colors.surface }]} />
                   <View style={styles.itemDetails}>
                     <Text style={[styles.itemName, { color: colors.text }]} numberOfLines={2}>{item.title}</Text>
-                    <Text style={[styles.itemPrice, { color: colors.primary }]}>{formatPrice(typeof item.price === 'number' ? item.price : parseFloat(item.price))}</Text>
+                    <Text style={[styles.itemPrice, { color: '#FFA500' }]}>{formatPrice(typeof item.price === 'number' ? item.price : parseFloat(item.price))}</Text>
                     <Text style={[styles.itemQuantity, { color: colors.textSecondary }]}>Qty: {item.quantity || 1}</Text>
                   </View>
                   <Text style={[styles.itemTotal, { color: colors.text }]}>

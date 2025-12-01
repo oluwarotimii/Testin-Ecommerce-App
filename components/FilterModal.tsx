@@ -81,11 +81,11 @@ export default function FilterModal({
             <View style={styles.section}>
               <Text style={[styles.sectionTitle, { color: colors.text }]}>Price Range</Text>
               <View style={styles.priceDisplay}>
-                <Text style={[styles.priceText, { color: colors.primary }]}>
+                <Text style={[styles.priceText, { color: '#FFA500' }]}>
                   ₦{minPrice.toFixed(0)}
                 </Text>
                 <Text style={[styles.priceText, { color: colors.textSecondary }]}>-</Text>
-                <Text style={[styles.priceText, { color: colors.primary }]}>
+                <Text style={[styles.priceText, { color: '#FFA500' }]}>
                   ₦{maxPrice.toFixed(0)}
                 </Text>
               </View>

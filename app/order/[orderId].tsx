@@ -144,7 +144,7 @@ export default function OrderDetailsScreen() {
                       Qty: {item.quantity}
                     </Text>
                   </View>
-                  <Text style={[styles.itemPrice, { color: colors.text }]}>
+                  <Text style={[styles.itemPrice, { color: '#FFA500' }]}>
                     ₦{formatPrice(item.price * item.quantity)}
                   </Text>
                 </View>

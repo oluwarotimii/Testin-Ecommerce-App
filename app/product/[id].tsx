@@ -260,7 +260,7 @@ export default function ProductDetailScreen() {
 
           {/* Price */}
           <View style={styles.priceSection}>
-            <Text style={[styles.currentPrice, { color: '#FF3B30' }]}>{formatPrice(typeof product.price === 'number' ? product.price : parseFloat(product.price || '0'))}</Text>
+            <Text style={[styles.currentPrice, { color: '#FFA500' }]}>{formatPrice(typeof product.price === 'number' ? product.price : parseFloat(product.price || '0'))}</Text>
           </View>
 
           {/* Description */}

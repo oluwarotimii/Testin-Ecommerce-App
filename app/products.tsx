@@ -1,5 +1,5 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, TextInput, ActivityIndicator } from 'react-native';
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, TextInput, ActivityIndicator, Animated, useWindowDimensions } from 'react-native';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
 import { useCart } from '@/context/CartContext';
@@ -19,6 +19,7 @@ export default function ProductsScreen() {
   const { apiService } = useAuth();
   const { setCartCount } = useCart();
   const colors = useThemeColors();
+  const scrollY = useRef(new Animated.Value(0)).current;
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [searchQuery, setSearchQuery] = useState('');
   const [products, setProducts] = useState<any[]>([]);
@@ -193,7 +194,7 @@ export default function ProductsScreen() {
             </View>
             <View style={styles.priceContainer}>
               <Text style={[styles.originalPrice, { color: colors.textSecondary }]}>{formatPrice((typeof product.price === 'number' ? product.price : parseFloat(product.price || '0')) * 1.3)}</Text>
-              <Text style={[styles.price, { color: '#ff6b6b' }]}>{formatPrice(typeof product.price === 'number' ? product.price : parseFloat(product.price || '0'))}</Text>
+              <Text style={[styles.price, { color: '#FFA500' }]}>{formatPrice(typeof product.price === 'number' ? product.price : parseFloat(product.price || '0'))}</Text>
             </View>
           </View>
           <View style={styles.listProductActions}>
@@ -239,94 +240,134 @@ export default function ProductsScreen() {
     </View>
   );
 
+  // Calculate header collapse
+  const headerHeight = 120; // Approximate header height (header + search + category)
+  const minHeaderHeight = 60; // Minimum height when collapsed
+  const headerHeightDiff = headerHeight - minHeaderHeight;
+
+  const headerOpacity = scrollY.interpolate({
+    inputRange: [0, 100],
+    outputRange: [1, 0.5],
+    extrapolate: 'clamp',
+  });
+
+  const headerTranslateY = scrollY.interpolate({
+    inputRange: [0, headerHeightDiff],
+    outputRange: [0, -60],  // Move header up by 60px when collapsed
+    extrapolate: 'clamp',
+  });
+
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      {/* Header */}
-      <View style={[styles.header, { backgroundColor: colors.background }]}>
-        <BackButton />
-        <View style={styles.headerCenter}>
-          <Text style={[styles.title, { color: colors.text }]}>Shop All Products</Text>
-        </View>
-        <View style={styles.headerActions}>
-          <TouchableOpacity style={styles.filterButton} onPress={() => setShowFilterModal(true)}>
-            <Ionicons name="filter" size={20} color={colors.primary} />
-          </TouchableOpacity>
-          <View style={[styles.viewToggle, { backgroundColor: colors.surface }]}>
+      <Animated.View
+        style={[
+          styles.headerContainer,
+          {
+            backgroundColor: colors.background,
+            transform: [{ translateY: headerTranslateY }],
+          }
+        ]}
+      >
+        {/* Header */}
+        <View style={[styles.header, { backgroundColor: colors.background }]}>
+          <View style={styles.headerLeft}>
             <TouchableOpacity
-              style={[styles.toggleButton, viewMode === 'grid' && { backgroundColor: colors.primary }]}
-              onPress={() => setViewMode('grid')}
+              onPress={() => router.push('/(tabs)')}
+              style={styles.backButton}
             >
-              <Ionicons name="grid" size={16} color={viewMode === 'grid' ? colors.white : colors.textSecondary} />
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.toggleButton, viewMode === 'list' && { backgroundColor: colors.primary }]}
-              onPress={() => setViewMode('list')}
-            >
-              <Ionicons name="list" size={16} color={viewMode === 'list' ? colors.white : colors.textSecondary} />
+              <Ionicons name="arrow-back" size={24} color={colors.text} />
             </TouchableOpacity>
           </View>
+          <Animated.View style={[styles.headerCenter, { opacity: headerOpacity }]}>
+            <Text style={[styles.title, { color: colors.text }]}>Shop All Products</Text>
+          </Animated.View>
+          <Animated.View style={{ opacity: headerOpacity }}>
+            <View style={styles.headerActions}>
+              <TouchableOpacity style={styles.filterButton} onPress={() => setShowFilterModal(true)}>
+                <Ionicons name="filter" size={20} color={colors.primary} />
+              </TouchableOpacity>
+              <View style={[styles.viewToggle, { backgroundColor: colors.surface }]}>
+                <TouchableOpacity
+                  style={[styles.toggleButton, viewMode === 'grid' && { backgroundColor: colors.primary }]}
+                  onPress={() => setViewMode('grid')}
+                >
+                  <Ionicons name="grid" size={16} color={viewMode === 'grid' ? colors.white : colors.textSecondary} />
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.toggleButton, viewMode === 'list' && { backgroundColor: colors.primary }]}
+                  onPress={() => setViewMode('list')}
+                >
+                  <Ionicons name="list" size={16} color={viewMode === 'list' ? colors.white : colors.textSecondary} />
+                </TouchableOpacity>
+              </View>
+            </View>
+          </Animated.View>
         </View>
-      </View>
 
-      {/* Search Bar */}
-      <View style={[styles.searchContainer, { backgroundColor: colors.surface }]}>
-        <Ionicons name="search" size={20} color={colors.textSecondary} />
-        <TextInput
-          style={[styles.searchInput, { color: colors.text }]}
-          placeholder="Search products..."
-          placeholderTextColor={colors.textSecondary}
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-        />
-      </View>
+        {/* Search Bar */}
+        <Animated.View style={{ opacity: headerOpacity }}>
+          <View style={[styles.searchContainer, { backgroundColor: colors.surface }]}>
+            <Ionicons name="search" size={20} color={colors.textSecondary} />
+            <TextInput
+              style={[styles.searchInput, { color: colors.text }]}
+              placeholder="Search products..."
+              placeholderTextColor={colors.textSecondary}
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+            />
+          </View>
+        </Animated.View>
 
-      {/* Category Filter */}
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        style={[styles.categoryScroll, { maxHeight: 40 }]}
-        contentContainerStyle={[styles.categoryScrollContent, {
-          alignItems: 'center',
-          paddingVertical: 0
-        }]}
-      >
-        <View style={{ flexDirection: 'row', flexWrap: 'nowrap', gap: 8 }}>
-          <TouchableOpacity
-            style={[
-              styles.categoryButton,
-              { backgroundColor: colors.surface },
-              selectedCategory === 'all' && { backgroundColor: colors.primary }
-            ]}
-            onPress={() => setSelectedCategory('all')}
+        {/* Category Filter */}
+        <Animated.View style={{ opacity: headerOpacity }}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={[styles.categoryScroll, { maxHeight: 40 }]}
+            contentContainerStyle={[styles.categoryScrollContent, {
+              alignItems: 'center',
+              paddingVertical: 0
+            }]}
           >
-            <Text style={[
-              styles.categoryText,
-              selectedCategory === 'all' ? { color: colors.white } : { color: colors.text }
-            ]}>
-              All
-            </Text>
-          </TouchableOpacity>
+            <View style={{ flexDirection: 'row', flexWrap: 'nowrap', gap: 8 }}>
+              <TouchableOpacity
+                style={[
+                  styles.categoryButton,
+                  { backgroundColor: colors.surface },
+                  selectedCategory === 'all' && { backgroundColor: colors.primary }
+                ]}
+                onPress={() => setSelectedCategory('all')}
+              >
+                <Text style={[
+                  styles.categoryText,
+                  selectedCategory === 'all' ? { color: colors.white } : { color: colors.text }
+                ]}>
+                  All
+                </Text>
+              </TouchableOpacity>
 
-          {categories.map((category) => (
-            <TouchableOpacity
-              key={category.id}
-              style={[
-                styles.categoryButton,
-                { backgroundColor: colors.surface },
-                selectedCategory === category.slug && { backgroundColor: colors.primary }
-              ]}
-              onPress={() => setSelectedCategory(category.slug)}
-            >
-              <Text style={[
-                styles.categoryText,
-                selectedCategory === category.slug ? { color: colors.white } : { color: colors.text }
-              ]}>
-                {category.name}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-      </ScrollView>
+              {categories.map((category) => (
+                <TouchableOpacity
+                  key={category.id}
+                  style={[
+                    styles.categoryButton,
+                    { backgroundColor: colors.surface },
+                    selectedCategory === category.slug && { backgroundColor: colors.primary }
+                  ]}
+                  onPress={() => setSelectedCategory(category.slug)}
+                >
+                  <Text style={[
+                    styles.categoryText,
+                    selectedCategory === category.slug ? { color: colors.white } : { color: colors.text }
+                  ]}>
+                    {category.name}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </ScrollView>
+        </Animated.View>
+      </Animated.View>
 
       {/* Results Count */}
       <View style={styles.resultsContainer}>
@@ -340,10 +381,15 @@ export default function ProductsScreen() {
       </View>
 
       {/* Products */}
-      <ScrollView
+      <Animated.ScrollView
         style={styles.content}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
+        onScroll={Animated.event(
+          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+          { useNativeDriver: true }
+        )}
+        scrollEventThrottle={16}
       >
         {loading ? (
           <View style={styles.gridContainer}>
@@ -373,7 +419,7 @@ export default function ProductsScreen() {
         ) : (
           viewMode === 'grid' ? renderGridView() : renderListView()
         )}
-      </ScrollView>
+      </Animated.ScrollView>
 
       {/* Filter Modal */}
       <FilterModal
@@ -391,13 +437,19 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  headerContainer: {
+    zIndex: 10,
+  },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingTop: 60,
-    paddingBottom: 16,
+    paddingTop: 30,
+    paddingBottom: 8,
+  },
+  headerLeft: {
+    flex: 1,
   },
   backButton: {
     padding: 8,
