@@ -36,6 +36,7 @@ export default function HomeScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [wishlist, setWishlist] = useState<number[]>([]);
   const [carouselError, setCarouselError] = useState<string | null>(null);
+  const [cartSuccess, setCartSuccess] = useState<{[key: number]: boolean}>({});
 
   const fetchWishlist = useCallback(async () => {
     if (!apiService) return;
@@ -228,6 +229,38 @@ export default function HomeScreen() {
     }
   };
 
+  const addToCart = async (product: any) => {
+    try {
+      const result = await apiService.addToCart(product.id, 1);
+      console.log(`Added ${product.title} to cart!`, result);
+
+      // Show success indicator
+      setCartSuccess(prev => ({ ...prev, [product.id]: true }));
+      setTimeout(() => {
+        setCartSuccess(prev => {
+          const newCartSuccess = { ...prev };
+          delete newCartSuccess[product.id];
+          return newCartSuccess;
+        });
+      }, 1500); // Hide after 1.5 seconds
+
+      // Update cart count
+      try {
+        const cartResponse = await apiService.getCartContents();
+        if (cartResponse && cartResponse.products) {
+          const newCartCount = cartResponse.products.reduce((total: any, item: any) => total + item.quantity, 0);
+          setCartCount(newCartCount);
+        }
+      } catch (countError) {
+        console.error("Error updating cart count:", countError);
+        // Fallback: increment by 1
+        setCartCount(prevCount => prevCount + 1);
+      }
+    } catch (error) {
+      console.error("Add to cart error:", error);
+    }
+  };
+
   const [scrollY, setScrollY] = useState(0);
 
   return (
@@ -373,13 +406,54 @@ export default function HomeScreen() {
           ) : (
             <View style={styles.productsGrid}>
               {products.slice(0, productLimit).map((product) => (
-                <ProductCard
+                <TouchableOpacity
                   key={product.id}
-                  product={product}
+                  style={styles.productCard}
                   onPress={() => router.push(`/product/${product.id}` as any)}
-                  isLiked={wishlist.includes(product.id)}
-                  onToggleWishlist={() => toggleWishlist(product.id)}
-                />
+                >
+                  <View style={styles.productImageContainer}>
+                    <SafeImage source={{ uri: product.image }} style={[styles.productImage, { backgroundColor: colors.background }]} />
+                    <View style={styles.wishlistOverlay}>
+                      <TouchableOpacity
+                        style={[styles.wishlistButton, { backgroundColor: colors.surface }]}
+                        onPress={(e) => {
+                          e.stopPropagation();
+                          toggleWishlist(product.id);
+                        }}
+                      >
+                        <Ionicons
+                          name={wishlist.includes(product.id) ? "heart" : "heart-outline"}
+                          size={16}
+                          color={wishlist.includes(product.id) ? "#FF3B30" : colors.text}
+                        />
+                      </TouchableOpacity>
+                    </View>
+                    <View style={styles.cartOverlay}>
+                      <TouchableOpacity
+                        style={[styles.addToCartButton, { backgroundColor: colors.primary }]}
+                        onPress={async (e) => {
+                          e.stopPropagation();
+                          await addToCart(product);
+                        }}
+                      >
+                        <Ionicons name="cart" size={18} color={colors.white} />
+                      </TouchableOpacity>
+                    </View>
+                    {cartSuccess[product.id] && (
+                      <View style={styles.successOverlay}>
+                        <Ionicons name="checkmark-circle" size={24} color="#4CD964" />
+                      </View>
+                    )}
+                  </View>
+
+                  <View style={styles.productInfo}>
+                    <Text style={[styles.productName, { color: colors.text }]} numberOfLines={2}>{product.title}</Text>
+                    <View style={styles.priceRow}>
+                      <Text style={[styles.originalPrice, { color: colors.textSecondary }]}>{formatPrice((typeof product.price === 'number' ? product.price : parseFloat(product.price || '0')) * 1.3)}</Text>
+                      <Text style={[styles.productPrice, { color: '#FFA500' }]}>{formatPrice(typeof product.price === 'number' ? product.price : parseFloat(product.price || '0'))}</Text>
+                    </View>
+                  </View>
+                </TouchableOpacity>
               ))}
               {isLoadingMore && (
                 <View style={styles.loadingMoreContainer}>
@@ -557,5 +631,80 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 20,
     fontSize: 16,
+  },
+  productCard: {
+    width: '47%', // Default width for grid
+    borderRadius: 16,
+    overflow: 'hidden',
+    position: 'relative',
+    marginBottom: 16,
+  },
+  productImageContainer: {
+    position: 'relative',
+    width: '100%',
+  },
+  productImage: {
+    width: '100%',
+    height: 160,
+  },
+  wishlistOverlay: {
+    position: 'absolute',
+    top: 8,
+    left: 8,
+    zIndex: 2,
+  },
+  cartOverlay: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    zIndex: 2,
+  },
+  wishlistButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  addToCartButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  successOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 3,
+  },
+  productInfo: {
+    paddingTop: 8,
+    paddingHorizontal: 4,
+  },
+  productName: {
+    fontSize: 14,
+    fontWeight: '500',
+    marginBottom: 6,
+    lineHeight: 18,
+  },
+  priceRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  originalPrice: {
+    fontSize: 11,
+    textDecorationLine: 'line-through',
+  },
+  productPrice: {
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });
