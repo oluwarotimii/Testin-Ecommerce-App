@@ -12,6 +12,7 @@ import { transformProducts } from '@/utils/woocommerceTransformers';
 import { formatPrice } from '@/utils/formatNumber';
 import BackButton from '@/components/BackButton';
 import ProductCard from '@/components/ProductCard';
+import { Colors } from '@/constants/Colors';
 
 export default function ProductsScreen() {
   const router = useRouter();
@@ -26,10 +27,12 @@ export default function ProductsScreen() {
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [filters, setFilters] = useState<FilterOptions>({
     minPrice: 0,
-    maxPrice: 1000,
+    maxPrice: 100000000, // 100 million
     sortBy: 'newest',
   });
   const [wishlist, setWishlist] = useState<number[]>([]);
+  const [categories, setCategories] = useState<any[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
 
   const fetchWishlist = useCallback(async () => {
     if (!apiService) return;
@@ -38,6 +41,16 @@ export default function ProductsScreen() {
       setWishlist(wishlistItems.map((item: any) => item.id));
     } catch (error) {
       console.error('Error fetching wishlist:', error);
+    }
+  }, [apiService]);
+
+  const fetchCategories = useCallback(async () => {
+    if (!apiService) return;
+    try {
+      const response = await apiService.getCategories();
+      setCategories(response);
+    } catch (error) {
+      console.error('Error fetching categories:', error);
     }
   }, [apiService]);
 
@@ -59,7 +72,8 @@ export default function ProductsScreen() {
 
     fetchProducts();
     fetchWishlist();
-  }, [apiService, fetchWishlist]);
+    fetchCategories();
+  }, [apiService, fetchWishlist, fetchCategories]);
 
   const toggleWishlist = async (productId: number) => {
     if (!apiService) return;
@@ -94,6 +108,13 @@ export default function ProductsScreen() {
     let filtered = products.filter(product =>
       product.title?.toLowerCase().includes(searchQuery.toLowerCase())
     );
+
+    // Apply category filter
+    if (selectedCategory !== 'all' && selectedCategory) {
+      filtered = filtered.filter(product =>
+        product.category?.toLowerCase() === selectedCategory.toLowerCase()
+      );
+    }
 
     // Apply price filter
     filtered = filtered.filter(product =>
@@ -135,7 +156,7 @@ export default function ProductsScreen() {
     }
 
     return filtered;
-  }, [products, searchQuery, filters]);
+  }, [products, searchQuery, filters, selectedCategory]);
 
   const renderGridView = () => (
     <View style={styles.gridContainer}>
@@ -224,7 +245,7 @@ export default function ProductsScreen() {
       <View style={[styles.header, { backgroundColor: colors.background }]}>
         <BackButton />
         <View style={styles.headerCenter}>
-          <Text style={[styles.title, { color: colors.text }]}>Products</Text>
+          <Text style={[styles.title, { color: colors.text }]}>Shop All Products</Text>
         </View>
         <View style={styles.headerActions}>
           <TouchableOpacity style={styles.filterButton} onPress={() => setShowFilterModal(true)}>
@@ -258,6 +279,54 @@ export default function ProductsScreen() {
           onChangeText={setSearchQuery}
         />
       </View>
+
+      {/* Category Filter */}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        style={[styles.categoryScroll, { maxHeight: 40 }]}
+        contentContainerStyle={[styles.categoryScrollContent, {
+          alignItems: 'center',
+          paddingVertical: 0
+        }]}
+      >
+        <View style={{ flexDirection: 'row', flexWrap: 'nowrap', gap: 8 }}>
+          <TouchableOpacity
+            style={[
+              styles.categoryButton,
+              { backgroundColor: colors.surface },
+              selectedCategory === 'all' && { backgroundColor: colors.primary }
+            ]}
+            onPress={() => setSelectedCategory('all')}
+          >
+            <Text style={[
+              styles.categoryText,
+              selectedCategory === 'all' ? { color: colors.white } : { color: colors.text }
+            ]}>
+              All
+            </Text>
+          </TouchableOpacity>
+
+          {categories.map((category) => (
+            <TouchableOpacity
+              key={category.id}
+              style={[
+                styles.categoryButton,
+                { backgroundColor: colors.surface },
+                selectedCategory === category.slug && { backgroundColor: colors.primary }
+              ]}
+              onPress={() => setSelectedCategory(category.slug)}
+            >
+              <Text style={[
+                styles.categoryText,
+                selectedCategory === category.slug ? { color: colors.white } : { color: colors.text }
+              ]}>
+                {category.name}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      </ScrollView>
 
       {/* Results Count */}
       <View style={styles.resultsContainer}>
@@ -312,7 +381,7 @@ export default function ProductsScreen() {
         onClose={() => setShowFilterModal(false)}
         onApply={(newFilters) => setFilters(newFilters)}
         currentFilters={filters}
-        maxPriceLimit={1000}
+        maxPriceLimit={100000000}
       />
     </View>
   );
@@ -374,7 +443,7 @@ const styles = StyleSheet.create({
   },
   resultsContainer: {
     paddingHorizontal: 16,
-    marginBottom: 16,
+    marginBottom: 4,
   },
   resultsText: {
     fontSize: 14,
@@ -470,5 +539,20 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 20,
     fontSize: 16,
+  },
+  categoryScroll: {
+    paddingHorizontal: 8,
+    marginBottom: 4,
+  },
+  categoryButton: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+    marginRight: 6,
+    height: 30,
+  },
+  categoryText: {
+    fontSize: 10,
+    fontWeight: '500',
   },
 });

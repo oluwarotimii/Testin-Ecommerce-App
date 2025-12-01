@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { useColorScheme } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface ThemeContextType {
   colorScheme: 'light' | 'dark';
@@ -21,8 +22,13 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
     // Load theme preference from storage or default to device theme
     const loadTheme = async () => {
       try {
-        // For now, we'll default to device theme, but this could be extended to use AsyncStorage
-        setColorSchemeState(deviceColorScheme || 'light');
+        const savedTheme = await AsyncStorage.getItem('theme');
+        if (savedTheme && (savedTheme === 'light' || savedTheme === 'dark')) {
+          setColorSchemeState(savedTheme);
+        } else {
+          // Default to device theme if no preference is saved
+          setColorSchemeState(deviceColorScheme || 'light');
+        }
       } catch (error) {
         console.error('Failed to load theme preference:', error);
         setColorSchemeState(deviceColorScheme || 'light');
@@ -30,14 +36,25 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
     };
 
     loadTheme();
-  }, [deviceColorScheme]);
+  }, []);
 
-  const toggleColorScheme = () => {
-    setColorSchemeState(prev => prev === 'light' ? 'dark' : 'light');
+  const toggleColorScheme = async () => {
+    const newScheme = colorScheme === 'light' ? 'dark' : 'light';
+    setColorSchemeState(newScheme);
+    try {
+      await AsyncStorage.setItem('theme', newScheme);
+    } catch (error) {
+      console.error('Failed to save theme preference:', error);
+    }
   };
 
-  const setColorScheme = (scheme: 'light' | 'dark') => {
+  const setColorScheme = async (scheme: 'light' | 'dark') => {
     setColorSchemeState(scheme);
+    try {
+      await AsyncStorage.setItem('theme', scheme);
+    } catch (error) {
+      console.error('Failed to save theme preference:', error);
+    }
   };
 
   if (colorScheme === null) {

@@ -3,14 +3,14 @@ import { useState, useEffect, useCallback } from 'react';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
 import { useThemeColors } from '@/hooks/useColorScheme';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { formatPrice } from '@/utils/formatNumber';
 import SkeletonLoader from '@/components/SkeletonLoader';
 
 export default function CheckoutScreen() {
   const router = useRouter();
   const colors = useThemeColors();
-  const { apiService, isAuthenticated } = useAuth();
+  const { apiService, isAuthenticated, loadingAuth } = useAuth();
   const [addresses, setAddresses] = useState<any[]>([]);
   const [cartItems, setCartItems] = useState<any[]>([]);
 
@@ -89,30 +89,12 @@ export default function CheckoutScreen() {
     }
   }, [apiService, productId, quantity]);
 
-  // Redirect to login if not authenticated
+  // Check authentication status and fetch checkout data only if authenticated
   useEffect(() => {
-    if (!isAuthenticated) {
-      Alert.alert(
-        'Login Required',
-        'Please login to proceed with checkout',
-        [
-          {
-            text: 'Login',
-            onPress: () => router.replace('/login')
-          },
-          {
-            text: 'Cancel',
-            onPress: () => router.back(),
-            style: 'cancel'
-          }
-        ]
-      );
+    if (isAuthenticated) {
+      fetchCheckoutData();
     }
-  }, [isAuthenticated, router]);
-
-  useEffect(() => {
-    fetchCheckoutData();
-  }, [fetchCheckoutData]);
+  }, [isAuthenticated, fetchCheckoutData]);
 
   useEffect(() => {
     const subtotal = cartItems.reduce((sum, item) => {
@@ -195,6 +177,54 @@ export default function CheckoutScreen() {
       setPlacingOrder(false);
     }
   };
+
+  // Show login prompt screen if not authenticated
+  if (!isAuthenticated) {
+    if (loadingAuth) {
+      return (
+        <View style={[styles.container, { backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center' }]}>
+          <ActivityIndicator size="large" color={colors.primary} />
+        </View>
+      );
+    }
+
+    return (
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+            <Ionicons name="arrow-back" size={24} color={colors.text} />
+          </TouchableOpacity>
+          <Text style={[styles.title, { color: colors.text }]}>Checkout</Text>
+          <View style={{ width: 40 }} />
+        </View>
+
+        <View style={[styles.loginPromptContainer, { backgroundColor: colors.background }]}>
+          <View style={styles.loginIconContainer}>
+            <Ionicons name="lock-closed" size={64} color={colors.primary} />
+          </View>
+
+          <Text style={[styles.loginPromptTitle, { color: colors.text }]}>Login Required</Text>
+          <Text style={[styles.loginPromptSubtitle, { color: colors.textSecondary }]}>
+            Please login to proceed with checkout and complete your purchase
+          </Text>
+
+          <TouchableOpacity
+            style={[styles.loginButton, { backgroundColor: colors.primary }]}
+            onPress={() => router.push('/login')}
+          >
+            <Text style={[styles.loginButtonText, { color: colors.white }]}>Login to Continue</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.signupButton}
+            onPress={() => router.push('/register')}
+          >
+            <Text style={[styles.signupButtonText, { color: colors.primary }]}>Create Account</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  }
 
   if (loadingAddresses || loadingCart) {
     return (
@@ -516,5 +546,43 @@ const styles = StyleSheet.create({
   placeOrderText: {
     fontSize: 16,
     fontWeight: '600',
+  },
+  loginPromptContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 32,
+  },
+  loginIconContainer: {
+    marginBottom: 32,
+  },
+  loginPromptTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  loginPromptSubtitle: {
+    fontSize: 16,
+    textAlign: 'center',
+    marginBottom: 32,
+  },
+  loginButton: {
+    width: '100%',
+    paddingVertical: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  loginButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  signupButton: {
+    paddingVertical: 12,
+  },
+  signupButtonText: {
+    fontSize: 14,
+    fontWeight: '500',
   },
 });

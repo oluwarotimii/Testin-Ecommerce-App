@@ -4,7 +4,7 @@
     "slug": "femtech-it",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/images/logo.png",
     "scheme": "myapp",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
@@ -14,7 +14,7 @@
       "backgroundColor": "#007AFF"
     },
     "updates": {
-      "url": "https://u.expo.dev/your-project-id"
+      "url": "https://u.expo.dev/3b709fd7-ceb1-44d6-acca-0286fcea7af4"
     },
     "runtimeVersion": {
       "policy": "sdkVersion"
@@ -31,7 +31,7 @@
     "android": {
       "useNextNotificationsApi": true,
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/icon.png",
+        "foregroundImage": "./assets/images/logo.png",
         "backgroundColor": "#FFFFFF"
       },
       "package": "com.frobenius.femtechit"
@@ -48,7 +48,7 @@
       [
         "expo-notifications",
         {
-          "icon": "./assets/images/icon.png",
+          "icon": "./assets/images/logo.png",
           "color": "#007AFF",
           "sounds": [
             "./assets/images/notif.mp3"
