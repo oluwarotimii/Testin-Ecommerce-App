@@ -4,7 +4,7 @@ import DummyApiService from '@/services/dummyApiService';
 import WordPressApiService from '@/services/wordpressApiService';
 
 // Configuration for API service type
-const API_SERVICE_TYPE = process.env.EXPO_PUBLIC_API_SERVICE_TYPE || 'dummy'; // 'dummy' or 'wordpress'
+const API_SERVICE_TYPE = process.env.EXPO_PUBLIC_API_SERVICE_TYPE || 'wordpress'; // 'dummy' or 'wordpress'
 
 // WordPress configuration - these would typically come from environment variables
 const WORDPRESS_CONFIG = {

@@ -154,7 +154,6 @@ export default function ProductDetailScreen() {
     try {
       const result = await apiService.addToCart(product.id, quantity);
       console.log(`Added ${quantity} of ${product.title} to cart!`, result);
-      Alert.alert("Success", `${quantity} ${product.title}(s) added to cart!`);
 
       // Update cart count by fetching the current cart contents
       try {
@@ -170,7 +169,6 @@ export default function ProductDetailScreen() {
       }
     } catch (error) {
       console.error("Add to cart error:", error);
-      Alert.alert("Error", "Failed to add item to cart. Please try again.");
     }
   };
 

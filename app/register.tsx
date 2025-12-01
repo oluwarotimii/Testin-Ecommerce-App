@@ -66,7 +66,7 @@ export default function RegisterScreen() {
     <ScrollView style={[styles.container, { backgroundColor: colors.background }]} contentContainerStyle={styles.contentContainer}>
       <TouchableOpacity
         style={styles.backButton}
-        onPress={() => router.back()}
+        onPress={() => router.push('/(tabs)')}
       >
         <Ionicons name="arrow-back" size={24} color={colors.primary} />
       </TouchableOpacity>

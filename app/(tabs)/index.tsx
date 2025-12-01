@@ -328,7 +328,7 @@ export default function HomeScreen() {
           </View>
         </View>
 
-      
+
 
         {/* Carousel */}
         <InstagramCarousel
@@ -365,33 +365,16 @@ export default function HomeScreen() {
                     style={[styles.categoryItem, { backgroundColor: colors.surface, flex: 1, marginHorizontal: 4 }]}
                     onPress={() => router.push(`/category/${category.category_id}` as any)}
                   >
-                    <View style={[styles.categoryIconContainer, { backgroundColor: colors.background }]}>
-                      {category.name && typeof category.name === 'string' ? (
-                        category.name.toLowerCase().includes('phone') || category.name.toLowerCase().includes('smart') ? (
-                          <Ionicons name="phone-portrait" size={24} color={colors.primary} />
-                        ) : category.name.toLowerCase().includes('laptop') || category.name.toLowerCase().includes('computer') ? (
-                          <Ionicons name="laptop" size={24} color={colors.primary} />
-                        ) : category.name.toLowerCase().includes('headphone') || category.name.toLowerCase().includes('audio') ? (
-                          <Ionicons name="headset" size={24} color={colors.primary} />
-                        ) : category.name.toLowerCase().includes('gaming') ? (
-                          <Ionicons name="game-controller" size={24} color={colors.primary} />
-                        ) : category.name.toLowerCase().includes('tablet') ? (
-                          <Ionicons name="tablet-landscape" size={24} color={colors.primary} />
-                        ) : category.name.toLowerCase().includes('watch') || category.name.toLowerCase().includes('wearable') ? (
-                          <Ionicons name="watch" size={24} color={colors.primary} />
-                        ) : category.name.toLowerCase().includes('home') ? (
-                          <Ionicons name="home" size={24} color={colors.primary} />
-                        ) : category.name.toLowerCase().includes('storage') ? (
-                          <Ionicons name="save" size={24} color={colors.primary} />
-                        ) : category.name.toLowerCase().includes('monitor') ? (
-                          <Ionicons name="desktop" size={24} color={colors.primary} />
-                        ) : (
-                          <Ionicons name="layers" size={24} color={colors.primary} />
-                        )
-                      ) : (
-                        <Ionicons name="layers" size={24} color={colors.primary} />
-                      )}
-                    </View>
+                    {category.image ? (
+                      <SafeImage
+                        source={{ uri: category.image }}
+                        style={styles.categoryImage}
+                      />
+                    ) : (
+                      <View style={[styles.categoryImagePlaceholder, { backgroundColor: colors.background }]}>
+                        <Ionicons name="image-outline" size={32} color={colors.textSecondary} />
+                      </View>
+                    )}
                     <Text style={[styles.categoryName, { color: colors.text }]} numberOfLines={2}>{category.name && typeof category.name === 'string' ? category.name.replace('-', ' ') : 'Category'}</Text>
                   </TouchableOpacity>
                 ))}
@@ -457,19 +440,20 @@ export default function HomeScreen() {
                         style={[styles.addToCartButton, { backgroundColor: colors.primary }]}
                         onPress={async (e) => {
                           e.stopPropagation();
+                          // Optimistic update for faster UI response
+                          setCartCount(prev => prev + 1);
                           try {
                             await apiService.addToCart(product.id, 1);
-                            try {
-                              const cartResponse = await apiService.getCartContents();
-                              if (cartResponse && cartResponse.products) {
-                                const newCartCount = cartResponse.products.reduce((total: any, item: any) => total + item.quantity, 0);
-                                setCartCount(newCartCount);
-                              }
-                            } catch (countError) {
-                              console.error("Error updating cart count:", countError);
+                            // Fetch actual cart count to sync
+                            const cartResponse = await apiService.getCartContents();
+                            if (cartResponse && cartResponse.products) {
+                              const newCartCount = cartResponse.products.reduce((total: any, item: any) => total + item.quantity, 0);
+                              setCartCount(newCartCount);
                             }
                           } catch (error) {
                             console.error('Add to cart error:', error);
+                            // Revert optimistic update on error
+                            setCartCount(prev => prev - 1);
                           }
                         }}
                       >
@@ -488,7 +472,7 @@ export default function HomeScreen() {
           )}
         </View>
 
-              {/* Marketing Banner */}
+        {/* Marketing Banner */}
         <MarketingBanner />
         {/* Trending Items */}
         <View style={styles.section}>
@@ -546,19 +530,20 @@ export default function HomeScreen() {
                         style={[styles.addToCartButton, { backgroundColor: colors.primary }]}
                         onPress={async (e) => {
                           e.stopPropagation();
+                          // Optimistic update for faster UI response
+                          setCartCount(prev => prev + 1);
                           try {
                             await apiService.addToCart(product.id, 1);
-                            try {
-                              const cartResponse = await apiService.getCartContents();
-                              if (cartResponse && cartResponse.products) {
-                                const newCartCount = cartResponse.products.reduce((total: any, item: any) => total + item.quantity, 0);
-                                setCartCount(newCartCount);
-                              }
-                            } catch (countError) {
-                              console.error("Error updating cart count:", countError);
+                            // Fetch actual cart count to sync
+                            const cartResponse = await apiService.getCartContents();
+                            if (cartResponse && cartResponse.products) {
+                              const newCartCount = cartResponse.products.reduce((total: any, item: any) => total + item.quantity, 0);
+                              setCartCount(newCartCount);
                             }
                           } catch (error) {
                             console.error('Add to cart error:', error);
+                            // Revert optimistic update on error
+                            setCartCount(prev => prev - 1);
                           }
                         }}
                       >
@@ -666,13 +651,19 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     marginHorizontal: 2,
   },
-  categoryIconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+  categoryImage: {
+    width: '100%',
+    height: 80,
+    borderRadius: 8,
+    marginBottom: 8,
+  },
+  categoryImagePlaceholder: {
+    width: '100%',
+    height: 80,
+    borderRadius: 8,
+    marginBottom: 8,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 8,
   },
   categoryName: {
     fontSize: 12,

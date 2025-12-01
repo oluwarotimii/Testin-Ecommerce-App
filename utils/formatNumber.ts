@@ -9,7 +9,8 @@ export function formatNumber(value: number | string, decimals: number = 2): stri
 
     if (isNaN(num)) return '0.00';
 
-    return num.toLocaleString('en-US', {
+    // Use en-NG locale for proper Nigerian number formatting
+    return num.toLocaleString('en-NG', {
         minimumFractionDigits: decimals,
         maximumFractionDigits: decimals
     });

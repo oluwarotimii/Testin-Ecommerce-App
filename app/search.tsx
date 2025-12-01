@@ -5,6 +5,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useThemeColors } from '@/hooks/useColorScheme';
 import { MaterialIcons, FontAwesome, Ionicons } from '@expo/vector-icons';
 import { formatPrice } from '@/utils/formatNumber';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function SearchScreen() {
   const router = useRouter();
@@ -16,14 +17,22 @@ export default function SearchScreen() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Load recent searches from storage (for now, using static data)
+  // Load recent searches from storage
   useEffect(() => {
-    setRecentSearches([
-      'iPhone',
-      'MacBook',
-      'AirPods',
-      'iPad',
-    ]);
+    const loadRecentSearches = async () => {
+      try {
+        const storedSearches = await AsyncStorage.getItem('recentSearches');
+        if (storedSearches) {
+          setRecentSearches(JSON.parse(storedSearches));
+        }
+      } catch (error) {
+        console.error('Error loading recent searches:', error);
+        // Start with empty array if there's an error
+        setRecentSearches([]);
+      }
+    };
+
+    loadRecentSearches();
   }, []);
 
   // Search as user types with debounce
@@ -53,22 +62,42 @@ export default function SearchScreen() {
     }
   };
 
-  const handleSearch = (query: string) => {
+  const handleSearch = async (query: string) => {
     if (query.trim()) {
       // Add to recent searches if not already there
       if (!recentSearches.includes(query)) {
         const newRecentSearches = [query, ...recentSearches.slice(0, 4)];
         setRecentSearches(newRecentSearches);
+
+        // Save to AsyncStorage
+        try {
+          await AsyncStorage.setItem('recentSearches', JSON.stringify(newRecentSearches));
+        } catch (error) {
+          console.error('Error saving recent search:', error);
+        }
       }
     }
   };
 
-  const removeRecentSearch = (searchToRemove: string) => {
-    setRecentSearches(recentSearches.filter(search => search !== searchToRemove));
+  const removeRecentSearch = async (searchToRemove: string) => {
+    const newRecentSearches = recentSearches.filter(search => search !== searchToRemove);
+    setRecentSearches(newRecentSearches);
+
+    try {
+      await AsyncStorage.setItem('recentSearches', JSON.stringify(newRecentSearches));
+    } catch (error) {
+      console.error('Error removing recent search:', error);
+    }
   };
 
-  const clearAllRecentSearches = () => {
+  const clearAllRecentSearches = async () => {
     setRecentSearches([]);
+
+    try {
+      await AsyncStorage.removeItem('recentSearches');
+    } catch (error) {
+      console.error('Error clearing recent searches:', error);
+    }
   };
 
   return (

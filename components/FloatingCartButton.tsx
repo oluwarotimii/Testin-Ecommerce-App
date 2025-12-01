@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
 import { TouchableOpacity, Text, View, StyleSheet, Animated } from 'react-native';
 import { useCart } from '@/context/CartContext';
 import { useThemeColors } from '@/hooks/useColorScheme';
@@ -10,29 +10,29 @@ const FloatingCartButton: React.FC = () => {
   const colors = useThemeColors();
   const router = useRouter();
   const pathname = usePathname();
-  const animatedValue = new Animated.Value(0);
+  const animatedValue = useRef(new Animated.Value(0)).current;
 
   // Hide the button when on the cart page
   const isOnCartPage = pathname === '/(tabs)/cart' || pathname === '/cart';
 
-  // Animate the button when cart count changes
+  // Animate the button when cart count changes from 0 to >0 or >0 to 0 (visibility change)
+  const prevCartCount = useRef(cartCount);
+
   React.useEffect(() => {
-    if (cartCount > 0) {
+    const wasVisible = prevCartCount.current > 0;
+    const isVisible = cartCount > 0;
+
+    if (wasVisible !== isVisible) {
       Animated.spring(animatedValue, {
-        toValue: 1,
-        useNativeDriver: true,
-        tension: 120,
-        friction: 8,
-      }).start();
-    } else {
-      Animated.spring(animatedValue, {
-        toValue: 0,
+        toValue: isVisible ? 1 : 0,
         useNativeDriver: true,
         tension: 120,
         friction: 8,
       }).start();
     }
-  }, [cartCount]);
+
+    prevCartCount.current = cartCount;
+  }, [cartCount, animatedValue]);
 
   const scale = animatedValue.interpolate({
     inputRange: [0, 1],

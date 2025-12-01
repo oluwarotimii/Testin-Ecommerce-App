@@ -12,16 +12,22 @@ import { getOrderStatus } from '@/constants/orderStatus';
 export default function OrdersScreen() {
   const router = useRouter();
   const colors = useThemeColors();
-  const { apiService } = useAuth();
+  const { apiService, isAuthenticated } = useAuth();
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Redirect to login if not authenticated
+    if (!isAuthenticated) {
+      router.replace('/login');
+      return;
+    }
+
     const fetchOrders = async () => {
       try {
         setLoading(true);
         const response = await apiService.getOrders();
-        // WooCommerce API returns array directly, not wrapped in success object
+        // WooCommerce API returns array directly
         if (Array.isArray(response)) {
           // Transform WooCommerce orders to app format
           const transformedOrders = response.map((order: any) => ({
@@ -32,9 +38,6 @@ export default function OrdersScreen() {
             products: order.line_items || order.products || []
           }));
           setOrders(transformedOrders);
-        } else if (response.success && response.orders) {
-          // Fallback for dummy API format
-          setOrders(response.orders);
         } else {
           console.error('Unexpected response format:', response);
           setOrders([]);
@@ -48,7 +51,7 @@ export default function OrdersScreen() {
     };
 
     fetchOrders();
-  }, [apiService]);
+  }, [apiService, isAuthenticated, router]);
 
   const formatPrice = (price: string | number) => {
     const numPrice = typeof price === 'string' ? parseFloat(price) : price;

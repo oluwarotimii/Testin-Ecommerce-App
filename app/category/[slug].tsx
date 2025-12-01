@@ -140,24 +140,23 @@ export default function CategoryScreen() {
 
     const handleAddToCart = async (productId: number) => {
         if (!apiService) return;
+        // Optimistic update for faster UI response
+        setCartCount(prev => prev + 1);
         try {
             await apiService.addToCart(productId, 1);
-
-            // Update cart count
-            try {
-                const cartResponse = await apiService.getCartContents();
-                if (cartResponse && cartResponse.products) {
-                    const newCartCount = cartResponse.products.reduce(
-                        (total: any, item: any) => total + item.quantity,
-                        0
-                    );
-                    setCartCount(newCartCount);
-                }
-            } catch (countError) {
-                console.error("Error updating cart count:", countError);
+            // Fetch actual cart count to sync
+            const cartResponse = await apiService.getCartContents();
+            if (cartResponse && cartResponse.products) {
+                const newCartCount = cartResponse.products.reduce(
+                    (total: any, item: any) => total + item.quantity,
+                    0
+                );
+                setCartCount(newCartCount);
             }
         } catch (error) {
             console.error('Add to cart error:', error);
+            // Revert optimistic update on error
+            setCartCount(prev => prev - 1);
         }
     };
 

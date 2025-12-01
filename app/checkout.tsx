@@ -10,7 +10,7 @@ import SkeletonLoader from '@/components/SkeletonLoader';
 export default function CheckoutScreen() {
   const router = useRouter();
   const colors = useThemeColors();
-  const { apiService } = useAuth();
+  const { apiService, isAuthenticated } = useAuth();
   const [addresses, setAddresses] = useState<any[]>([]);
   const [cartItems, setCartItems] = useState<any[]>([]);
 
@@ -88,6 +88,27 @@ export default function CheckoutScreen() {
       setLoadingCart(false);
     }
   }, [apiService, productId, quantity]);
+
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!isAuthenticated) {
+      Alert.alert(
+        'Login Required',
+        'Please login to proceed with checkout',
+        [
+          {
+            text: 'Login',
+            onPress: () => router.replace('/login')
+          },
+          {
+            text: 'Cancel',
+            onPress: () => router.back(),
+            style: 'cancel'
+          }
+        ]
+      );
+    }
+  }, [isAuthenticated, router]);
 
   useEffect(() => {
     fetchCheckoutData();

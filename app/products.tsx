@@ -168,23 +168,21 @@ export default function ProductsScreen() {
             <TouchableOpacity
               style={[styles.addToCartButton, { backgroundColor: colors.primary }]}
               onPress={async (e) => {
-                e.stopPropagation(); // Prevent triggering the product detail navigation
+                e.stopPropagation();
+                // Optimistic update for faster UI response
+                setCartCount(prev => prev + 1);
                 try {
-                  // Add to cart logic
                   await apiService.addToCart(product.id, 1);
-
-                  // Update cart count by fetching the current cart contents
-                  try {
-                    const cartResponse = await apiService.getCartContents();
-                    if (cartResponse && cartResponse.products) {
-                      const newCartCount = cartResponse.products.reduce((total: any, item: any) => total + item.quantity, 0);
-                      setCartCount(newCartCount);
-                    }
-                  } catch (countError) {
-                    console.error("Error updating cart count:", countError);
+                  // Fetch actual cart count to sync
+                  const cartResponse = await apiService.getCartContents();
+                  if (cartResponse && cartResponse.products) {
+                    const newCartCount = cartResponse.products.reduce((total: any, item: any) => total + item.quantity, 0);
+                    setCartCount(newCartCount);
                   }
                 } catch (error) {
                   console.error('Add to cart error:', error);
+                  // Revert optimistic update on error
+                  setCartCount(prev => prev - 1);
                 }
               }}
             >
@@ -233,20 +231,20 @@ export default function ProductsScreen() {
               style={[styles.listCartButton, { backgroundColor: colors.primary }]}
               onPress={async (e) => {
                 e.stopPropagation();
+                // Optimistic update for faster UI response
+                setCartCount(prev => prev + 1);
                 try {
                   await apiService.addToCart(product.id, 1);
-
-                  try {
-                    const cartResponse = await apiService.getCartContents();
-                    if (cartResponse && cartResponse.products) {
-                      const newCartCount = cartResponse.products.reduce((total: any, item: any) => total + item.quantity, 0);
-                      setCartCount(newCartCount);
-                    }
-                  } catch (countError) {
-                    console.error("Error updating cart count:", countError);
+                  // Fetch actual cart count to sync
+                  const cartResponse = await apiService.getCartContents();
+                  if (cartResponse && cartResponse.products) {
+                    const newCartCount = cartResponse.products.reduce((total: any, item: any) => total + item.quantity, 0);
+                    setCartCount(newCartCount);
                   }
                 } catch (error) {
                   console.error('Add to cart error:', error);
+                  // Revert optimistic update on error
+                  setCartCount(prev => prev - 1);
                 }
               }}
             >
