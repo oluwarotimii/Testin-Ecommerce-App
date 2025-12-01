@@ -279,7 +279,7 @@ export default function ProductsScreen() {
             </TouchableOpacity>
           </View>
           <Animated.View style={[styles.headerCenter, { opacity: headerOpacity }]}>
-            <Text style={[styles.title, { color: colors.text }]}>Shop All Products</Text>
+            <Text style={[styles.title, { color: colors.text }]}>Products</Text>
           </Animated.View>
           <Animated.View style={{ opacity: headerOpacity }}>
             <View style={styles.headerActions}>
