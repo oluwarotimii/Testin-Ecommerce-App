@@ -26,6 +26,7 @@ export default function ProductDetailScreen() {
 
   const [product, setProduct] = useState<any>(null);
   const [similarProducts, setSimilarProducts] = useState<any[]>([]);
+  const [similarProductsInWishlist, setSimilarProductsInWishlist] = useState<Set<number>>(new Set());
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -61,14 +62,24 @@ export default function ProductDetailScreen() {
     };
   }, [id]);
 
-  // Check if product is in wishlist when product loads
+  // Check if product and similar products are in wishlist when product loads
   useEffect(() => {
     const checkWishlistStatus = async () => {
       if (product?.id) {
         try {
           const wishlist = await apiService.getWishlist();
-          const isInWishlist = wishlist.some((item: any) => item.id === product.id);
-          setIsInWishlist(isInWishlist);
+          const productInWishlist = wishlist.some((item: any) => item.id === product.id);
+          setIsInWishlist(productInWishlist);
+
+          // Update similar products wishlist status
+          const similarProductIds = similarProducts.map((p: any) => p.id);
+          const similarInWishlist = new Set<number>();
+          wishlist.forEach((item: any) => {
+            if (similarProductIds.includes(item.id)) {
+              similarInWishlist.add(item.id);
+            }
+          });
+          setSimilarProductsInWishlist(similarInWishlist);
         } catch (error) {
           console.error("Error checking wishlist status:", error);
         }
@@ -76,7 +87,7 @@ export default function ProductDetailScreen() {
     };
 
     checkWishlistStatus();
-  }, [product?.id, apiService]);
+  }, [product?.id, similarProducts, apiService]);
 
   // Fetch similar products useEffect - must be defined before conditional return
   useEffect(() => {
@@ -117,6 +128,28 @@ export default function ProductDetailScreen() {
       isMounted = false; // Cleanup function to set flag to false
     };
   }, [product?.id, apiService]);
+
+  const toggleSimilarProductWishlist = async (productId: number) => {
+    try {
+      if (similarProductsInWishlist.has(productId)) {
+        await apiService.removeFromWishlist(productId);
+        setSimilarProductsInWishlist(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(productId);
+          return newSet;
+        });
+      } else {
+        await apiService.addToWishlist(productId);
+        setSimilarProductsInWishlist(prev => {
+          const newSet = new Set(prev);
+          newSet.add(productId);
+          return newSet;
+        });
+      }
+    } catch (error) {
+      console.error("Error updating similar product wishlist:", error);
+    }
+  };
 
   if (loading) {
     return <SkeletonProductDetail />;
@@ -299,22 +332,52 @@ export default function ProductDetailScreen() {
                 <Text style={[styles.viewAllText, { color: colors.primary }]}>View All</Text>
               </TouchableOpacity>
             </View>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.similarProductsContainer}
-            >
+            <View style={styles.similarProductsGrid}>
               {similarProducts.map((item) => (
-                <ProductCard
+                <TouchableOpacity
                   key={item.id}
-                  product={item}
+                  style={styles.similarProductCard}
                   onPress={() => router.push(`/product/${item.id}` as any)}
-                  isLiked={false} // Similar items don't show wishlist status in this context usually, or we can fetch it. For now false or check wishlist array if available.
-                  onToggleWishlist={() => { }} // No wishlist toggle in similar items for now or implement if needed
-                  style={{ width: 160, marginRight: 12 }}
-                />
+                >
+                  <View style={styles.similarProductImageContainer}>
+                    <Image source={{ uri: item.image }} style={[styles.similarProductImage, { backgroundColor: colors.background }]} />
+                    <View style={styles.similarWishlistOverlay}>
+                      <TouchableOpacity
+                        style={[styles.wishlistButton, { backgroundColor: colors.surface }]}
+                        onPress={async (e) => {
+                          e.stopPropagation();
+                          await toggleSimilarProductWishlist(item.id);
+                        }}
+                      >
+                        <Ionicons
+                          name={similarProductsInWishlist.has(item.id) ? "heart" : "heart-outline"}
+                          size={16}
+                          color={similarProductsInWishlist.has(item.id) ? "#FF3B30" : colors.text}
+                        />
+                      </TouchableOpacity>
+                    </View>
+                    <View style={styles.similarCartOverlay}>
+                      <TouchableOpacity
+                        style={[styles.addToCartButton, { backgroundColor: colors.primary }]}
+                        onPress={(e) => {
+                          e.stopPropagation();
+                          // Add to cart functionality can be added here
+                        }}
+                      >
+                        <Ionicons name="cart" size={18} color={colors.white} />
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                  <View style={styles.similarProductInfo}>
+                    <Text style={[styles.similarProductName, { color: colors.text }]} numberOfLines={2}>{item.title}</Text>
+                    <View style={styles.priceRow}>
+                      <Text style={[styles.originalPrice, { color: colors.textSecondary }]}>{formatPrice((typeof item.price === 'number' ? item.price : parseFloat(item.price || '0')) * 1.3)}</Text>
+                      <Text style={[styles.similarProductPrice, { color: '#FFA500' }]}>{formatPrice(typeof item.price === 'number' ? item.price : parseFloat(item.price || '0'))}</Text>
+                    </View>
+                  </View>
+                </TouchableOpacity>
               ))}
-            </ScrollView>
+            </View>
           </View>
         )}
       </ScrollView>
@@ -501,6 +564,76 @@ const styles = StyleSheet.create({
   similarProductsContainer: {
     paddingHorizontal: 20,
     gap: 16,
+  },
+  similarProductsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    paddingHorizontal: 20,
+    gap: 12,
+  },
+  similarProductCard: {
+    width: '47%', // Default width for grid
+    borderRadius: 16,
+    overflow: 'hidden',
+    position: 'relative',
+    marginBottom: 16,
+  },
+  similarProductImageContainer: {
+    position: 'relative',
+    width: '100%',
+  },
+  similarProductImage: {
+    width: '100%',
+    height: 160,
+  },
+  similarWishlistOverlay: {
+    position: 'absolute',
+    top: 8,
+    left: 8,
+    zIndex: 2,
+  },
+  similarCartOverlay: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    zIndex: 2,
+  },
+  wishlistButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  addToCartButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  similarProductInfo: {
+    paddingTop: 8,
+    paddingHorizontal: 4,
+  },
+  similarProductName: {
+    fontSize: 14,
+    fontWeight: '500',
+    marginBottom: 6,
+    lineHeight: 18,
+  },
+  priceRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  originalPrice: {
+    fontSize: 11,
+    textDecorationLine: 'line-through',
+  },
+  similarProductPrice: {
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 
   actionBar: {
