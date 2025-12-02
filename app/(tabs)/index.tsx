@@ -116,11 +116,14 @@ export default function HomeScreen() {
   }, [apiService]);
 
   useEffect(() => {
-    // Only fetch if authenticated (this WordPress site requires auth for all endpoints)
-    if (isAuthenticated && apiService) {
+    // Fetch products and categories regardless of user authentication (using WooCommerce API credentials)
+    // Only fetch wishlist if authenticated
+    if (apiService) {
       fetchProducts(productLimit);
       fetchCategories();
-      fetchWishlist();
+      if (isAuthenticated) {
+        fetchWishlist();
+      }
     }
     // Always fetch carousel (public endpoint)
     fetchCarouselItems();

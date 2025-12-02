@@ -224,6 +224,8 @@ class WordPressApiService {
   private isUserLoggedIn: boolean;
   private wordpressUrl: string;
   private jwtEndpoint: string;
+  private consumerKey: string;
+  private consumerSecret: string;
 
   constructor(wordpressUrl: string, consumerKey: string, consumerSecret: string, sessionToken: string | null = null) {
     // Ensure wordpressUrl doesn't end with a slash to avoid double slash in URL
@@ -250,51 +252,74 @@ class WordPressApiService {
 
     this.wordpressUrl = cleanWordpressUrl;
     this.jwtEndpoint = `${cleanWordpressUrl}/wp-json/jwt-auth/v1/token`;
+    this.consumerKey = consumerKey;
+    this.consumerSecret = consumerSecret;
     this.sessionToken = sessionToken;
     this.isUserLoggedIn = !!sessionToken;
 
-    // Add request interceptor to inject authentication credentials and JWT token
-    this.api.interceptors.request.use(async (config) => {
-      // Add WooCommerce consumer key and secret as URL parameters
-      // Only add them if they're not already present to avoid conflicts
-      if (!config.params) {
-        config.params = {};
+    // FIXED: Updated interceptor to properly handle authentication
+    this.api.interceptors.request.use(
+      async (config) => {
+        // Initialize params if not present
+        if (!config.params) {
+          config.params = {};
+        }
+
+        // CRITICAL FIX: Always add consumer credentials
+        config.params.consumer_key = this.consumerKey;
+        config.params.consumer_secret = this.consumerSecret;
+
+        // Initialize headers if not present
+        if (!config.headers) {
+          config.headers = {} as any;
+        }
+
+        // Exclude JWT token for WooCommerce REST API endpoints as they only accept consumer key/secret
+        // WooCommerce does not accept JWT tokens on any of its REST API endpoints
+        const isWooCommerceEndpoint = config.url?.includes('/wc/v3/');
+
+        if (this.sessionToken && !isWooCommerceEndpoint) {
+          // For non-WooCommerce endpoints (like JWT authentication endpoints), include JWT token
+          config.headers.Authorization = `Bearer ${this.sessionToken}`;
+        }
+        // For all WooCommerce endpoints, do NOT include JWT token - only use consumer key/secret
+
+        console.log('API Request:', {
+          url: `${config.baseURL}${config.url}`,
+          method: config.method,
+          hasConsumerKey: !!config.params.consumer_key,
+          hasConsumerSecret: !!config.params.consumer_secret,
+          hasAuth: !!config.headers.Authorization,
+          isWooCommerceEndpoint
+        });
+
+        return config;
+      },
+      (error) => {
+        console.error('Request interceptor error:', error);
+        return Promise.reject(error);
       }
+    );
 
-      // Always set the consumer key and secret (don't check if they're already present)
-      // to ensure they're always included in the request
-      config.params.consumer_key = consumerKey;
-      config.params.consumer_secret = consumerSecret;
-
-      // Initialize headers if not present
-      if (!config.headers) {
-        config.headers = {} as any;
+    // Add response interceptor for better error handling
+    this.api.interceptors.response.use(
+      (response) => response,
+      (error) => {
+        if (error.response) {
+          console.error('API Error Response:', {
+            status: error.response.status,
+            statusText: error.response.statusText,
+            data: error.response.data,
+            url: error.config?.url,
+          });
+        } else if (error.request) {
+          console.error('API No Response:', error.request);
+        } else {
+          console.error('API Request Setup Error:', error.message);
+        }
+        return Promise.reject(error);
       }
-
-      // For public WooCommerce endpoints (products, categories), only use consumer key/secret authentication
-      // as JWT token can sometimes conflict with permissions in certain server configurations
-      // For customer-specific endpoints (customers, orders), include JWT token as well
-      const isPublicEndpoint = config.url?.includes('/products') ||
-                              config.url?.includes('/categories');
-
-      if (this.sessionToken && !isPublicEndpoint) {
-        // For non-public endpoints (like customers, orders), include JWT token
-        config.headers.Authorization = `Bearer ${this.sessionToken}`;
-      }
-      // For public endpoints (products, categories), do NOT include JWT token - only use consumer key/secret
-
-      // Log the final config for debugging
-      console.log('API Request Config:', {
-        url: config.baseURL + (config.url || ''),
-        params: config.params,
-        headers: config.headers,
-        isPublicEndpoint
-      });
-
-      return config;
-    }, (error) => {
-      return Promise.reject(error);
-    });
+    );
   }
 
   // Helper method to handle API requests with error handling

@@ -26,7 +26,7 @@ export default function BestDealsSection({ wishlist, toggleWishlist }: BestDeals
     const [featuredCategoryId, setFeaturedCategoryId] = useState<number | null>(null);
 
     const fetchFeaturedCategory = useCallback(async () => {
-        if (!apiService || !isAuthenticated) return;
+        if (!apiService) return;
         setLoadingFeatured(true);
         try {
             // Try to find 'trending' category first
@@ -51,7 +51,7 @@ export default function BestDealsSection({ wishlist, toggleWishlist }: BestDeals
         } finally {
             setLoadingFeatured(false);
         }
-    }, [apiService, isAuthenticated]);
+    }, [apiService]);
 
     useEffect(() => {
         fetchFeaturedCategory();
