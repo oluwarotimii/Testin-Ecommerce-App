@@ -18,7 +18,7 @@ interface BestDealsSectionProps {
 export default function BestDealsSection({ wishlist, toggleWishlist }: BestDealsSectionProps) {
     const router = useRouter();
     const colors = useThemeColors();
-    const { apiService } = useAuth();
+    const { apiService, isAuthenticated } = useAuth();
     const { setCartCount } = useCart();
 
     const [featuredProducts, setFeaturedProducts] = useState<any[]>([]);
@@ -26,7 +26,7 @@ export default function BestDealsSection({ wishlist, toggleWishlist }: BestDeals
     const [featuredCategoryId, setFeaturedCategoryId] = useState<number | null>(null);
 
     const fetchFeaturedCategory = useCallback(async () => {
-        if (!apiService) return;
+        if (!apiService || !isAuthenticated) return;
         setLoadingFeatured(true);
         try {
             // Try to find 'trending' category first
@@ -51,7 +51,7 @@ export default function BestDealsSection({ wishlist, toggleWishlist }: BestDeals
         } finally {
             setLoadingFeatured(false);
         }
-    }, [apiService]);
+    }, [apiService, isAuthenticated]);
 
     useEffect(() => {
         fetchFeaturedCategory();

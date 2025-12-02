@@ -2,16 +2,38 @@ import React, { createContext, useState, useEffect, useContext, useMemo } from '
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import DummyApiService from '@/services/dummyApiService';
 import WordPressApiService from '@/services/wordpressApiService';
+import Constants from 'expo-constants';
 
-// Configuration for API service type
-const API_SERVICE_TYPE = process.env.EXPO_PUBLIC_API_SERVICE_TYPE || 'wordpress'; // 'dummy' or 'wordpress'
+// Configuration for API service type - using values from app.json extra section
+const { expoPublicApiServiceType, expoPublicWordpressUrl, expoPublicWordpressConsumerKey, expoPublicWordpressConsumerSecret } = Constants.expoConfig?.extra || {};
 
-// WordPress configuration - these would typically come from environment variables
+// Fallback for when Constants.expoConfig?.extra is not available (e.g., during development builds)
+// Try using process.env for development scenarios
+const API_SERVICE_TYPE = expoPublicApiServiceType || process.env.EXPO_PUBLIC_API_SERVICE_TYPE || 'wordpress'; // 'dummy' or 'wordpress' - default to wordpress if not set
+
+// WordPress configuration - using values from app.json extra section with fallbacks
 const WORDPRESS_CONFIG = {
-  url: process.env.EXPO_PUBLIC_WORDPRESS_URL || 'https://yoursite.com',
-  consumerKey: process.env.EXPO_PUBLIC_WORDPRESS_CONSUMER_KEY || '',
-  consumerSecret: process.env.EXPO_PUBLIC_WORDPRESS_CONSUMER_SECRET || '',
+  url: expoPublicWordpressUrl || process.env.EXPO_PUBLIC_WORDPRESS_URL || 'https://femtech.ng/',
+  consumerKey: expoPublicWordpressConsumerKey || process.env.EXPO_PUBLIC_WORDPRESS_CONSUMER_KEY || '',
+  consumerSecret: expoPublicWordpressConsumerSecret || process.env.EXPO_PUBLIC_WORDPRESS_CONSUMER_SECRET || '',
 };
+
+// Log the configuration for debugging
+console.log('WordPress API Configuration:', {
+  apiServiceType: API_SERVICE_TYPE,
+  wordpressUrl: WORDPRESS_CONFIG.url,
+  hasConsumerKey: !!WORDPRESS_CONFIG.consumerKey,
+  hasConsumerSecret: !!WORDPRESS_CONFIG.consumerSecret,
+  consumerKeyLength: WORDPRESS_CONFIG.consumerKey ? WORDPRESS_CONFIG.consumerKey.length : 0,
+  consumerSecretLength: WORDPRESS_CONFIG.consumerSecret ? WORDPRESS_CONFIG.consumerSecret.length : 0,
+});
+
+// Validate that we have the necessary credentials if using WordPress API
+if (API_SERVICE_TYPE === 'wordpress') {
+  if (!WORDPRESS_CONFIG.consumerKey || !WORDPRESS_CONFIG.consumerSecret) {
+    console.error('WordPress API requires consumer key and secret. Please check your app.json configuration.');
+  }
+}
 
 interface ApiService {
   sessionToken: string | null;
@@ -147,6 +169,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [sessionToken, apiService]);
 
   const login = async (email: string, password: string): Promise<boolean> => {
+    setLoadingAuth(true);
     try {
       const response = await apiService.login(email, password);
       if (response.token) {
@@ -158,26 +181,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         // Fetch and set user details immediately after login
         try {
           if (apiService.getAccountDetails) {
-            // We need to wait a bit for the token to be propagated or explicitly pass it if needed
-            // But apiService.setSessionToken might be triggered by the effect. 
-            // To be safe, we can manually set it on the service instance if possible, 
-            // or just wait for the effect. 
-            // Actually, the apiService instance is stable. We can just call getAccountDetails after a small delay or assume the effect runs fast.
-            // Let's try fetching.
-
-            // Note: We need to ensure the service has the token. 
-            // The useEffect [sessionToken, apiService] will run.
-            // But we want to return from this function with the user logged in.
-
-            // Let's just set the user to a temporary object if we have the data, or fetch it.
-            // The login response might contain user info?
-            if ((response as any).user_email) {
-              // It's a partial user.
-            }
-
-            // We will let the UI trigger a fetch or do it here.
-            // Let's try to fetch it.
-            apiService.setSessionToken(token); // Force update service immediately
+            // Force update service immediately
+            apiService.setSessionToken(token);
             const userDetails = await apiService.getAccountDetails();
             setUser(userDetails);
           }
@@ -187,16 +192,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         return true;
       } else {
-        console.error("Login failed:", response);
-        return false;
+        throw new Error('Login failed: No token received from server');
       }
-    } catch (error) {
-      console.error("Login API error:", error);
-      return false;
+    } finally {
+      setLoadingAuth(false);
     }
   };
 
   const register = async (firstname: string, lastname: string, email: string, telephone: string, password: string): Promise<boolean> => {
+    setLoadingAuth(true);
     try {
       const response = await apiService.register(firstname, lastname, email, telephone, password);
       if (response.token) {
@@ -206,12 +210,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setIsAuthenticated(true);
         return true;
       } else {
-        console.error("Registration failed:", response);
-        return false;
+        throw new Error('Registration failed: No token received from server');
       }
-    } catch (error) {
-      console.error("Registration API error:", error);
-      return false;
+    } finally {
+      setLoadingAuth(false);
     }
   };
 

@@ -1,4 +1,4 @@
-import { API_BASE_URL } from './config';
+import { DASHBOARD_API_BASE_URL } from './config';
 
 export interface CarouselItem {
     id: number;
@@ -14,7 +14,7 @@ export interface CarouselItem {
 
 export async function fetchCarousels(limit: number = 10): Promise<CarouselItem[]> {
     try {
-        const response = await fetch(`${API_BASE_URL}/api/carousel/public?limit=${limit}`);
+        const response = await fetch(`${DASHBOARD_API_BASE_URL}/api/carousel/public?limit=${limit}`);
         console.log('Carousel API Response Status:', response.status);
         const data = await response.json();
         console.log('Carousel API Data:', JSON.stringify(data, null, 2));

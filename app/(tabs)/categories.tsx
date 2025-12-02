@@ -98,6 +98,7 @@ export default function CategoriesScreen() {
     category.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+
   const renderGridView = () => (
     <View style={styles.gridContainer}>
       {filteredCategories.map((category) => (

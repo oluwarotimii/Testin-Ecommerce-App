@@ -1,4 +1,4 @@
-import { API_BASE_URL } from './config';
+import { DASHBOARD_API_BASE_URL } from './config';
 
 export interface BannerItem {
     id: number;
@@ -13,7 +13,7 @@ export interface BannerItem {
 
 export async function fetchBanner(): Promise<BannerItem | null> {
     try {
-        const response = await fetch(`${API_BASE_URL}/api/banner/public`);
+        const response = await fetch(`${DASHBOARD_API_BASE_URL}/api/banner/public`);
         const data = await response.json();
 
         if (!response.ok) {

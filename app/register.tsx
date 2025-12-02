@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Alert, Image } from 'react-native';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Alert, Image, ActivityIndicator } from 'react-native';
 import { useState } from 'react';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
@@ -17,7 +17,6 @@ export default function RegisterScreen() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [loading, setLoading] = useState(false);
 
   const handleRegister = async () => {
     if (password !== confirmPassword) {
@@ -30,15 +29,10 @@ export default function RegisterScreen() {
       return;
     }
 
-    setLoading(true);
     try {
-      const success = await register(firstName, lastName, email, phone, password);
-      if (success) {
-        Alert.alert('Registration Successful', 'Account created successfully!');
-        router.push('/(tabs)');
-      } else {
-        Alert.alert('Registration Failed', 'An error occurred during registration.');
-      }
+      await register(firstName, lastName, email, phone, password);
+      Alert.alert('Registration Successful', 'Account created successfully!');
+      router.push('/(tabs)');
     } catch (error: any) {
       console.error("Registration error:", error);
 
@@ -57,8 +51,6 @@ export default function RegisterScreen() {
       }
 
       Alert.alert(errorTitle, errorMessage);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -171,8 +163,11 @@ export default function RegisterScreen() {
           </TouchableOpacity>
         </View>
 
-        <TouchableOpacity style={[styles.registerButton, { backgroundColor: colors.primary }]} onPress={handleRegister} disabled={loading}>
-          <Text style={[styles.registerButtonText, { color: colors.white }]}>{loading ? 'Registering...' : 'Create Account'}</Text>
+        <TouchableOpacity style={[styles.registerButton, { backgroundColor: colors.primary }]} onPress={handleRegister} disabled={loadingAuth}>
+          <View style={styles.buttonContent}>
+            {loadingAuth && <ActivityIndicator size="small" color={colors.white} style={styles.buttonSpinner} />}
+            <Text style={[styles.registerButtonText, { color: colors.white }]}>{loadingAuth ? 'Registering...' : 'Create Account'}</Text>
+          </View>
         </TouchableOpacity>
       </View>
 
@@ -248,6 +243,14 @@ const styles = StyleSheet.create({
   registerButtonText: {
     fontSize: 16,
     fontWeight: '600',
+  },
+  buttonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  buttonSpinner: {
+    marginRight: 8,
   },
   footer: {
     flexDirection: 'row',

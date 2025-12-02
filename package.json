@@ -36,6 +36,7 @@
     "expo-updates": "~29.0.12",
     "expo-web-browser": "~15.0.9",
     "fs-extra": "^11.3.2",
+    "install": "^0.13.0",
     "lucide-react-native": "^0.475.0",
     "react": "19.1.0",
     "react-dom": "19.1.0",

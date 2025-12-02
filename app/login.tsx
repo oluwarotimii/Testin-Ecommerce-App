@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Alert, Image } from 'react-native';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Alert, Image, ActivityIndicator } from 'react-native';
 import { useState } from 'react';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
@@ -21,12 +21,8 @@ export default function LoginScreen() {
     }
 
     try {
-      const success = await login(email, password);
-      if (success) {
-        router.push('/(tabs)');
-      } else {
-        Alert.alert('Login Failed', 'Invalid credentials or an error occurred.');
-      }
+      await login(email, password);
+      router.push('/(tabs)');
     } catch (error: any) {
       console.error("Login error:", error);
 
@@ -101,26 +97,15 @@ export default function LoginScreen() {
           </TouchableOpacity>
         </View>
 
-        <TouchableOpacity style={styles.forgotPassword}>
+        <TouchableOpacity style={styles.forgotPassword} onPress={() => router.push('/forgot-password')}>
           <Text style={[styles.forgotPasswordText, { color: colors.primary }]}>Forgot Password?</Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={[styles.loginButton, { backgroundColor: colors.primary }]} onPress={handleLogin} disabled={loadingAuth}>
-          <Text style={[styles.loginButtonText, { color: colors.white }]}>{loadingAuth ? 'Signing In...' : 'Sign In'}</Text>
-        </TouchableOpacity>
-
-        <View style={styles.divider}>
-          <View style={[styles.dividerLine, { backgroundColor: colors.border }]} />
-          <Text style={[styles.dividerText, { color: colors.textSecondary }]}>or</Text>
-          <View style={[styles.dividerLine, { backgroundColor: colors.border }]} />
-        </View>
-
-        <TouchableOpacity style={[styles.socialButton, { backgroundColor: colors.surface }]}>
-          <Text style={[styles.socialButtonText, { color: colors.text }]}>Continue with Google</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={[styles.socialButton, { backgroundColor: colors.surface }]}>
-          <Text style={[styles.socialButtonText, { color: colors.text }]}>Continue with Apple</Text>
+          <View style={styles.buttonContent}>
+            {loadingAuth && <ActivityIndicator size="small" color={colors.white} style={styles.buttonSpinner} />}
+            <Text style={[styles.loginButtonText, { color: colors.white }]}>{loadingAuth ? 'Signing In...' : 'Sign In'}</Text>
+          </View>
         </TouchableOpacity>
       </View>
 
@@ -204,6 +189,14 @@ const styles = StyleSheet.create({
   loginButtonText: {
     fontSize: 16,
     fontWeight: '600',
+  },
+  buttonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  buttonSpinner: {
+    marginRight: 8,
   },
   divider: {
     flexDirection: 'row',

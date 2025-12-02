@@ -36,7 +36,7 @@ export default function HomeScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [wishlist, setWishlist] = useState<number[]>([]);
   const [carouselError, setCarouselError] = useState<string | null>(null);
-  const [cartSuccess, setCartSuccess] = useState<{[key: number]: boolean}>({});
+  const [cartSuccess, setCartSuccess] = useState<{ [key: number]: boolean }>({});
 
   const fetchWishlist = useCallback(async () => {
     if (!apiService) return;
@@ -116,11 +116,15 @@ export default function HomeScreen() {
   }, [apiService]);
 
   useEffect(() => {
-    fetchProducts(productLimit);
-    fetchCategories();
-    fetchWishlist();
+    // Only fetch if authenticated (this WordPress site requires auth for all endpoints)
+    if (isAuthenticated && apiService) {
+      fetchProducts(productLimit);
+      fetchCategories();
+      fetchWishlist();
+    }
+    // Always fetch carousel (public endpoint)
     fetchCarouselItems();
-  }, [fetchProducts, fetchCategories, fetchWishlist, fetchCarouselItems, productLimit]);
+  }, [isAuthenticated, apiService, fetchProducts, fetchCategories, fetchWishlist, fetchCarouselItems, productLimit]);
 
   // Handle push notifications
   useEffect(() => {

@@ -226,25 +226,71 @@ class WordPressApiService {
   private jwtEndpoint: string;
 
   constructor(wordpressUrl: string, consumerKey: string, consumerSecret: string, sessionToken: string | null = null) {
-    // Create axios instance with base configuration
-    this.api = axios.create({
-      baseURL: `${wordpressUrl}/wp-json/wc/v3/`,
-      auth: {
-        username: consumerKey,
-        password: consumerSecret,
-      },
+    // Ensure wordpressUrl doesn't end with a slash to avoid double slash in URL
+    const cleanWordpressUrl = wordpressUrl.endsWith('/') ? wordpressUrl.slice(0, -1) : wordpressUrl;
+
+    // Log for debugging to verify credentials are being passed
+    console.log('Initializing WordPress API Service:', {
+      wordpressUrl: cleanWordpressUrl,
+      hasConsumerKey: !!consumerKey,
+      hasConsumerSecret: !!consumerSecret,
+      consumerKeyLength: consumerKey ? consumerKey.length : 0,
+      consumerSecretLength: consumerSecret ? consumerSecret.length : 0
     });
 
-    this.wordpressUrl = wordpressUrl;
-    this.jwtEndpoint = `${wordpressUrl}/wp-json/jwt-auth/v1/token`;
+    // Validate that we have the necessary credentials
+    if (!consumerKey || !consumerSecret) {
+      console.error('WordPress API Service: Consumer key or secret is missing. API calls may fail.');
+    }
+
+    // Create axios instance with base configuration
+    this.api = axios.create({
+      baseURL: `${cleanWordpressUrl}/wp-json/wc/v3/`,
+    });
+
+    this.wordpressUrl = cleanWordpressUrl;
+    this.jwtEndpoint = `${cleanWordpressUrl}/wp-json/jwt-auth/v1/token`;
     this.sessionToken = sessionToken;
     this.isUserLoggedIn = !!sessionToken;
 
-    // Add request interceptor to inject JWT token
+    // Add request interceptor to inject authentication credentials and JWT token
     this.api.interceptors.request.use(async (config) => {
-      if (this.sessionToken) {
+      // Add WooCommerce consumer key and secret as URL parameters
+      // Only add them if they're not already present to avoid conflicts
+      if (!config.params) {
+        config.params = {};
+      }
+
+      // Always set the consumer key and secret (don't check if they're already present)
+      // to ensure they're always included in the request
+      config.params.consumer_key = consumerKey;
+      config.params.consumer_secret = consumerSecret;
+
+      // Initialize headers if not present
+      if (!config.headers) {
+        config.headers = {} as any;
+      }
+
+      // For public WooCommerce endpoints (products, categories), only use consumer key/secret authentication
+      // as JWT token can sometimes conflict with permissions in certain server configurations
+      // For customer-specific endpoints (customers, orders), include JWT token as well
+      const isPublicEndpoint = config.url?.includes('/products') ||
+                              config.url?.includes('/categories');
+
+      if (this.sessionToken && !isPublicEndpoint) {
+        // For non-public endpoints (like customers, orders), include JWT token
         config.headers.Authorization = `Bearer ${this.sessionToken}`;
       }
+      // For public endpoints (products, categories), do NOT include JWT token - only use consumer key/secret
+
+      // Log the final config for debugging
+      console.log('API Request Config:', {
+        url: config.baseURL + (config.url || ''),
+        params: config.params,
+        headers: config.headers,
+        isPublicEndpoint
+      });
+
       return config;
     }, (error) => {
       return Promise.reject(error);
@@ -257,7 +303,18 @@ class WordPressApiService {
       const response = await this.api(endpoint, options);
       return response.data;
     } catch (error: any) {
-      console.error(`Error making request to ${endpoint}:`, error.response?.data || error.message);
+      // Enhanced error logging for 403 errors
+      if (error.response?.status === 403) {
+        console.error(`403 Forbidden error for ${endpoint}:`, {
+          endpoint,
+          hasToken: !!this.sessionToken,
+          tokenPreview: this.sessionToken ? `${this.sessionToken.substring(0, 20)}...` : 'none',
+          errorData: error.response?.data,
+          errorMessage: error.message
+        });
+      } else {
+        console.error(`Error making request to ${endpoint}:`, error.response?.data || error.message);
+      }
       throw error;
     }
   }
@@ -291,23 +348,29 @@ class WordPressApiService {
 
       if (response.data && response.data.token) {
         const token = response.data.token;
+
+        // CRITICAL: Set token FIRST so axios interceptor can use it
         this.sessionToken = token;
         this.isUserLoggedIn = true;
 
         // Store the token in AsyncStorage
         await AsyncStorage.setItem('sessionToken', token);
 
-        // Get customer info and store customer ID
+        // Now get customer info with the token properly set
         const customer = await this.getCustomerByEmail(email);
         if (customer && customer.id) {
           await AsyncStorage.setItem('customerId', customer.id.toString());
+          console.log('Customer ID stored:', customer.id);
+        } else {
+          console.warn('Customer not found for email:', email);
         }
 
         return {
           token: token,
           success: true,
           user: response.data.user_email,
-          displayName: response.data.user_display_name
+          displayName: response.data.user_display_name,
+          customerId: customer?.id
         };
       } else {
         throw new Error('Invalid response from authentication server');
@@ -830,14 +893,54 @@ class WordPressApiService {
       const response = await this.api.get(`/customers/${parseInt(customerId)}`);
       return response.data;
     } else {
-      // Try to find customer by email if ID is not stored
+      // Try to get customer by email from JWT token
       const sessionToken = await AsyncStorage.getItem('sessionToken');
       if (sessionToken) {
-        // This would require a more complex implementation in a real app
-        // For now, we'll return an error
-        throw new Error("Customer ID not found");
+        try {
+          // Decode JWT to get email (JWT format: header.payload.signature)
+          const payload = sessionToken.split('.')[1];
+          // Use atob for React Native compatibility instead of Buffer
+          // Add padding if needed for atob
+          let base64 = payload.replace(/-/g, '+').replace(/_/g, '/');
+          while (base64.length % 4) base64 += '=';
+          const decodedPayload = JSON.parse(atob(base64));
+
+          // Try different possible email fields in JWT payload
+          let email = decodedPayload.data?.user?.user_email ||
+                     decodedPayload.user_email ||
+                     decodedPayload.email ||
+                     decodedPayload.data?.email;
+
+          // Try different possible ID fields as well
+          const userId = decodedPayload.data?.user?.id ||
+                        decodedPayload.user_id ||
+                        decodedPayload.id ||
+                        decodedPayload.data?.user?.ID;
+
+          if (email) {
+            console.log('Fetching customer by email from JWT:', email);
+            const customer = await this.getCustomerByEmail(email);
+            if (customer && customer.id) {
+              // Store the customer ID for future use
+              await AsyncStorage.setItem('customerId', customer.id.toString());
+              return customer;
+            }
+          }
+          // If we couldn't get customer by email, try to use the user ID directly if available
+          else if (userId) {
+            console.log('Fetching customer by ID from JWT:', userId);
+            const customer = await this.api.get(`/customers/${userId}`);
+            if (customer && customer.data && customer.data.id) {
+              // Store the customer ID for future use
+              await AsyncStorage.setItem('customerId', customer.data.id.toString());
+              return customer.data;
+            }
+          }
+        } catch (decodeError) {
+          console.error('Error decoding JWT token:', decodeError);
+        }
       }
-      throw new Error("User not authenticated");
+      throw new Error("Customer ID not found and unable to fetch customer details");
     }
   }
 
