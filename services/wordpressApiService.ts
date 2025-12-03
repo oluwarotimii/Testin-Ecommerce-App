@@ -257,40 +257,29 @@ class WordPressApiService {
     this.sessionToken = sessionToken;
     this.isUserLoggedIn = !!sessionToken;
 
-    // FIXED: Updated interceptor to properly handle authentication
+    // FIXED: This Axios instance is dedicated to WooCommerce API (baseURL = /wp-json/wc/v3/)
+    // WooCommerce REST API ONLY accepts Basic Auth with consumer key/secret
+    // NEVER send JWT tokens to WooCommerce endpoints - they will be rejected with 403
     this.api.interceptors.request.use(
       async (config) => {
-        // Initialize params if not present
-        if (!config.params) {
-          config.params = {};
-        }
-
-        // CRITICAL FIX: Always add consumer credentials
-        config.params.consumer_key = this.consumerKey;
-        config.params.consumer_secret = this.consumerSecret;
-
         // Initialize headers if not present
         if (!config.headers) {
           config.headers = {} as any;
         }
 
-        // Exclude JWT token for WooCommerce REST API endpoints as they only accept consumer key/secret
-        // WooCommerce does not accept JWT tokens on any of its REST API endpoints
-        const isWooCommerceEndpoint = config.url?.includes('/wc/v3/');
-
-        if (this.sessionToken && !isWooCommerceEndpoint) {
-          // For non-WooCommerce endpoints (like JWT authentication endpoints), include JWT token
-          config.headers.Authorization = `Bearer ${this.sessionToken}`;
-        }
-        // For all WooCommerce endpoints, do NOT include JWT token - only use consumer key/secret
+        // Since this Axios instance baseURL is set to WooCommerce API (/wc/v3/),
+        // ALL requests from this instance should use Basic Auth with consumer key/secret
+        // This prevents JWT tokens from being incorrectly added after user login
+        const authString = `${this.consumerKey}:${this.consumerSecret}`;
+        // Using pure JavaScript Base64 encoding for universal compatibility
+        const base64Auth = this.toBase64(authString);
+        config.headers.Authorization = `Basic ${base64Auth}`;
 
         console.log('API Request:', {
           url: `${config.baseURL}${config.url}`,
           method: config.method,
-          hasConsumerKey: !!config.params.consumer_key,
-          hasConsumerSecret: !!config.params.consumer_secret,
           hasAuth: !!config.headers.Authorization,
-          isWooCommerceEndpoint
+          authType: 'Basic (Consumer Key/Secret) - WooCommerce'
         });
 
         return config;
@@ -932,15 +921,15 @@ class WordPressApiService {
 
           // Try different possible email fields in JWT payload
           let email = decodedPayload.data?.user?.user_email ||
-                     decodedPayload.user_email ||
-                     decodedPayload.email ||
-                     decodedPayload.data?.email;
+            decodedPayload.user_email ||
+            decodedPayload.email ||
+            decodedPayload.data?.email;
 
           // Try different possible ID fields as well
           const userId = decodedPayload.data?.user?.id ||
-                        decodedPayload.user_id ||
-                        decodedPayload.id ||
-                        decodedPayload.data?.user?.ID;
+            decodedPayload.user_id ||
+            decodedPayload.id ||
+            decodedPayload.data?.user?.ID;
 
           if (email) {
             console.log('Fetching customer by email from JWT:', email);
@@ -1089,6 +1078,32 @@ class WordPressApiService {
 
   get isAuthenticated() {
     return this.isUserLoggedIn;
+  }
+
+  // Helper method for Base64 encoding in React Native
+  private toBase64(str: string): string {
+    // Pure JavaScript Base64 encoding implementation
+    const base64Chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+    let output = '';
+    let i = 0;
+
+    while (i < str.length) {
+      const char1 = str.charCodeAt(i++);
+      const char2 = i < str.length ? str.charCodeAt(i++) : 0;
+      const char3 = i < str.length ? str.charCodeAt(i++) : 0;
+
+      const bits = (char1 << 16) | (char2 << 8) | char3;
+      const enc1 = (bits >> 18) & 63;
+      const enc2 = (bits >> 12) & 63;
+      const enc3 = (bits >> 6) & 63;
+      const enc4 = bits & 63;
+
+      output += base64Chars.charAt(enc1) + base64Chars.charAt(enc2) +
+        (isNaN(char2) ? '=' : base64Chars.charAt(enc3)) +
+        (isNaN(char3) ? '=' : base64Chars.charAt(enc4));
+    }
+
+    return output;
   }
 
   // Carousel

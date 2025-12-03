@@ -30,51 +30,51 @@ export default function SettingsScreen() {
       type: 'switch',
       value: darkMode,
     },
-    {
-      id: 'notifications',
-      title: 'Push Notifications',
-      icon: 'notifications',
-      type: 'switch',
-      value: notifications,
-      onToggle: setNotifications,
-    },
-    {
-      id: 'email-notifications',
-      title: 'Email Notifications',
-      icon: 'mail',
-      type: 'switch',
-      value: emailNotifications,
-      onToggle: setEmailNotifications,
-    },
-    {
-      id: 'newsletter',
-      title: 'Subscribe to Newsletter',
-      icon: 'newspaper',
-      type: 'switch',
-      value: newsletter,
-      onToggle: setNewsletter,
-    },
+    // {
+    //   id: 'notifications',
+    //   title: 'Push Notifications',
+    //   icon: 'notifications',
+    //   type: 'switch',
+    //   value: notifications,
+    //   onToggle: setNotifications,
+    // },
+    // {
+  //     id: 'email-notifications',
+  //     title: 'Email Notifications',
+  //     icon: 'mail',
+  //     type: 'switch',
+  //     value: emailNotifications,
+  //     onToggle: setEmailNotifications,
+  //   },
+  //   {
+  //     id: 'newsletter',
+  //     title: 'Subscribe to Newsletter',
+  //     icon: 'newspaper',
+  //     type: 'switch',
+  //     value: newsletter,
+  //     onToggle: setNewsletter,
+  //   },
   ];
 
   const appSettingsItems = [
-    {
-      id: 'language',
-      title: 'Language',
-      icon: 'globe',
-      onPress: () => console.log('Language setting pressed'),
-    },
-    {
-      id: 'currency',
-      title: 'Currency',
-      icon: 'cash',
-      onPress: () => console.log('Currency setting pressed'),
-    },
-    {
-      id: 'updates',
-      title: 'Check for Updates',
-      icon: 'download',
-      onPress: () => updateService.forceCheckForUpdates(),
-    },
+    // {
+    //   id: 'language',
+    //   title: 'Language',
+    //   icon: 'globe',
+    //   onPress: () => console.log('Language setting pressed'),
+    // },
+    // {
+    //   id: 'currency',
+    //   title: 'Currency',
+    //   icon: 'cash',
+    //   onPress: () => console.log('Currency setting pressed'),
+    // },
+    // {
+    //   id: 'updates',
+    //   title: 'Check for Updates',
+    //   icon: 'download',
+    //   onPress: () => updateService.forceCheckForUpdates(),
+    // },
     {
       id: 'privacy',
       title: 'Privacy Policy',
@@ -90,12 +90,12 @@ export default function SettingsScreen() {
   ];
 
   const accountItems = [
-    {
-      id: 'delete-account',
-      title: 'Delete Account',
-      icon: 'trash',
-      onPress: () => console.log('Delete Account pressed'),
-    },
+    // {
+    //   id: 'delete-account',
+    //   title: 'Delete Account',
+    //   icon: 'trash',
+    //   onPress: () => console.log('Delete Account pressed'),
+    // },
   ];
 
   const handleLogout = async () => {
@@ -151,9 +151,9 @@ export default function SettingsScreen() {
         <Text style={[styles.sectionTitle, { color: colors.text }]}>App Settings</Text>
         <View style={[styles.menuContainer, { backgroundColor: colors.surface }]}>
           {appSettingsItems.map((item) => (
-            <TouchableOpacity 
-              key={item.id} 
-              style={[styles.menuItem, { borderBottomColor: colors.border }]} 
+            <TouchableOpacity
+              key={item.id}
+              style={[styles.menuItem, { borderBottomColor: colors.border }]}
               onPress={item.onPress}
             >
               <View style={styles.menuItemLeft}>
@@ -172,9 +172,9 @@ export default function SettingsScreen() {
         <Text style={[styles.sectionTitle, { color: colors.text }]}>Account</Text>
         <View style={[styles.menuContainer, { backgroundColor: colors.surface }]}>
           {accountItems.map((item) => (
-            <TouchableOpacity 
-              key={item.id} 
-              style={[styles.menuItem, { borderBottomColor: colors.border }]} 
+            <TouchableOpacity
+              key={item.id}
+              style={[styles.menuItem, { borderBottomColor: colors.border }]}
               onPress={item.onPress}
             >
               <View style={styles.menuItemLeft}>
@@ -186,8 +186,8 @@ export default function SettingsScreen() {
               <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
             </TouchableOpacity>
           ))}
-          <TouchableOpacity 
-            style={[styles.logoutButton, { backgroundColor: colors.surface }]} 
+          <TouchableOpacity
+            style={[styles.logoutButton, { backgroundColor: colors.surface }]}
             onPress={handleLogout}
           >
             <Ionicons name="log-out" size={20} color={colors.error} />

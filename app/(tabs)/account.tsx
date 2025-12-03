@@ -93,14 +93,14 @@ export default function AccountScreen() {
   ];
 
   const settingsItems = [
-    {
-      id: 'notifications',
-      title: 'Push Notifications',
-      icon: () => <Ionicons name="notifications" size={20} color={colors.primary} />,
-      type: 'switch',
-      value: notifications,
-      onToggle: setNotifications,
-    },
+    // {
+    //   id: 'notifications',
+    //   title: 'Push Notifications',
+    //   icon: () => <Ionicons name="notifications" size={20} color={colors.primary} />,
+    //   type: 'switch',
+    //   value: notifications,
+    //   onToggle: setNotifications,
+    // },
     {
       id: 'settings',
       title: 'App Settings',
@@ -108,20 +108,20 @@ export default function AccountScreen() {
       type: 'navigation',
       onPress: () => router.push('/settings'),
     },
-    {
-      id: 'updates',
-      title: 'Check for Updates',
-      icon: () => <Ionicons name="download" size={20} color={colors.primary} />,
-      type: 'navigation',
-      onPress: () => updateService.forceCheckForUpdates(),
-    },
-    {
-      id: 'wptest',
-      title: 'WordPress Test',
-      icon: () => <Ionicons name="globe" size={20} color={colors.primary} />,
-      type: 'navigation',
-      onPress: () => router.push('/wordpress-test'),
-    },
+    // {
+    //   id: 'updates',
+    //   title: 'Check for Updates',
+    //   icon: () => <Ionicons name="download" size={20} color={colors.primary} />,
+    //   type: 'navigation',
+    //   onPress: () => updateService.forceCheckForUpdates(),
+    // },
+    // {
+    //   id: 'wptest',
+    //   title: 'WordPress Test',
+    //   icon: () => <Ionicons name="globe" size={20} color={colors.primary} />,
+    //   type: 'navigation',
+    //   onPress: () => router.push('/wordpress-test'),
+    // },
     // {
     //   id: 'devtools',
     //   title: 'Developer Tools',
