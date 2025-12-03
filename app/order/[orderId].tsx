@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, ActivityIndicator } from 'react-native';
 import { useState, useEffect } from 'react';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useThemeColors } from '@/hooks/useColorScheme';
@@ -83,7 +83,8 @@ export default function OrderDetailsScreen() {
   if (loading) {
     return (
       <View style={[styles.container, { backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center' }]}>
-        <Text style={{ color: colors.text }}>Loading order details...</Text>
+        <ActivityIndicator size="large" color={colors.primary} />
+        <Text style={{ color: colors.textSecondary, marginTop: 16 }}>Loading order details...</Text>
       </View>
     );
   }
@@ -182,7 +183,16 @@ export default function OrderDetailsScreen() {
 
         {/* Shipping Info */}
         <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>Shipping Details</Text>
+          <View style={styles.sectionHeader}>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>Shipping Details</Text>
+            <TouchableOpacity
+              style={[styles.editButton, { borderColor: colors.primary }]}
+              onPress={() => router.push('/addresses')}
+            >
+              <Ionicons name="pencil" size={16} color={colors.primary} />
+              <Text style={[styles.editButtonText, { color: colors.primary }]}>Edit Address</Text>
+            </TouchableOpacity>
+          </View>
           <View style={[styles.card, { backgroundColor: colors.surface }]}>
             <View style={styles.infoRow}>
               <Ionicons name="location-outline" size={20} color={colors.textSecondary} style={styles.infoIcon} />
@@ -279,6 +289,27 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginBottom: 12,
     marginLeft: 4,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+    marginLeft: 4,
+    marginRight: 4,
+  },
+  editButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+    borderWidth: 1,
+    gap: 4,
+  },
+  editButtonText: {
+    fontSize: 14,
+    fontWeight: '500',
   },
   itemRow: {
     flexDirection: 'row',
