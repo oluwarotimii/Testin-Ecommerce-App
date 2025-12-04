@@ -82,8 +82,11 @@ export default function BestDealsSection({ wishlist, toggleWishlist }: BestDeals
         <View style={styles.section}>
             <View style={styles.sectionHeader}>
                 <Text style={[styles.sectionTitle, { color: colors.text }]}>Best Deals</Text>
-                <TouchableOpacity onPress={() => featuredCategoryId ? router.push(`/category/${featuredCategoryId}` as any) : router.push('/products')}>
-                    <Text style={[styles.seeAll, { color: colors.primary }]}>See All</Text>
+                <TouchableOpacity
+                    style={[styles.seeAllButton, { backgroundColor: colors.primary }]}
+                    onPress={() => featuredCategoryId ? router.push(`/category/${featuredCategoryId}` as any) : router.push('/products')}
+                >
+                    <Text style={[styles.seeAllButtonText, { color: colors.white }]}>See All</Text>
                 </TouchableOpacity>
             </View>
 
@@ -245,5 +248,14 @@ const styles = StyleSheet.create({
         textAlign: 'center',
         marginTop: 20,
         fontSize: 16,
+    },
+    seeAllButton: {
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        borderRadius: 20,
+    },
+    seeAllButtonText: {
+        fontSize: 14,
+        fontWeight: '500',
     },
 });

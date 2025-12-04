@@ -298,9 +298,9 @@ export default function ProductDetailScreen() {
           </View>
 
           {/* Description */}
-          <View style={styles.descriptionSection}>
-            <Text style={[styles.sectionTitle, { color: colors.text }]}>Description</Text>
-            <Text style={[styles.description, { color: colors.textSecondary }]}>{stripHtml(product.description)}</Text>
+          <View style={[styles.descriptionSection, { backgroundColor: colors.surface, borderRadius: 12, padding: 16 }]}>
+            <Text style={[styles.sectionTitle, { color: colors.text, marginBottom: 10 }]}>Description</Text>
+            <Text style={[styles.description, { color: colors.text }]}>{stripHtml(product.description)}</Text>
           </View>
 
           {/* Quantity Selector */}
@@ -326,11 +326,14 @@ export default function ProductDetailScreen() {
 
         {/* Similar Products */}
         {similarProducts.length > 0 && (
-          <View style={[styles.similarProductsSection, { backgroundColor: colors.surface }]}>
+          <View style={[styles.similarProductsSection, { backgroundColor: colors.surface, borderRadius: 12, padding: 16, marginTop: 16 }]}>
             <View style={styles.sectionHeader}>
               <Text style={[styles.sectionTitle, { color: colors.text }]}>Similar Items</Text>
-              <TouchableOpacity onPress={() => router.push(('/category/' + product.category) as any)}>
-                <Text style={[styles.viewAllText, { color: colors.primary }]}>View All</Text>
+              <TouchableOpacity
+                style={[styles.seeAllButton, { backgroundColor: colors.primary }]}
+                onPress={() => router.push(('/category/' + product.category) as any)}
+              >
+                <Text style={[styles.seeAllButtonText, { color: colors.white }]}>View All</Text>
               </TouchableOpacity>
             </View>
             <View style={styles.similarProductsGrid}>
@@ -703,5 +706,20 @@ const styles = StyleSheet.create({
     right: 20,
     zIndex: 101,
     padding: 10,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  seeAllButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+  },
+  seeAllButtonText: {
+    fontSize: 14,
+    fontWeight: '500',
   },
 });
