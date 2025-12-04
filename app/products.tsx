@@ -8,7 +8,7 @@ import SkeletonProductItem from '@/components/SkeletonProductItem';
 import { useThemeColors } from '@/hooks/useColorScheme';
 import SafeImage from '@/components/SafeImage';
 import FilterModal, { FilterOptions } from '@/components/FilterModal';
-import { transformProducts } from '@/utils/woocommerceTransformers';
+import { transformProducts, transformCategories } from '@/utils/woocommerceTransformers';
 import { formatPrice } from '@/utils/formatNumber';
 import BackButton from '@/components/BackButton';
 import ProductCard from '@/components/ProductCard';
@@ -50,7 +50,9 @@ export default function ProductsScreen() {
     if (!apiService) return;
     try {
       const response = await apiService.getCategories();
-      setCategories(response);
+      // Use transformation utility to ensure consistent format
+      const transformedCategories = transformCategories(response);
+      setCategories(transformedCategories);
     } catch (error) {
       console.error('Error fetching categories:', error);
     }
@@ -145,9 +147,33 @@ export default function ProductsScreen() {
 
     // Apply category filter
     if (selectedCategory !== 'all' && selectedCategory) {
-      filtered = filtered.filter(product =>
-        product.category?.toLowerCase() === selectedCategory.toLowerCase()
-      );
+      filtered = filtered.filter(product => {
+        // Find the category by slug from the available categories
+        const selectedCat = categories.find(cat => cat.slug === selectedCategory);
+
+        if (!selectedCat) {
+          // If we can't find the category by slug, match by product's category name
+          return product.category?.toLowerCase() === selectedCategory.toLowerCase();
+        }
+
+        // Match by multiple criteria:
+        // 1. Direct category ID match
+        // 2. Category name match
+        // 3. Category slug match
+        // 4. Check if product belongs to this category (by checking categories array in product)
+        return (
+          product.category_id === selectedCat.id ||
+          product.category?.toLowerCase() === selectedCat.name?.toLowerCase() ||
+          product.category?.toLowerCase() === selectedCat.slug?.toLowerCase() ||
+          // Check if product.categories array contains the selected category
+          (product.categories && Array.isArray(product.categories) &&
+           product.categories.some((cat: any) =>
+             cat.id === selectedCat.category_id ||
+             cat.name?.toLowerCase() === selectedCat.name?.toLowerCase() ||
+             cat.slug?.toLowerCase() === selectedCat.slug?.toLowerCase()
+           ))
+        );
+      });
     }
 
     // Apply price filter
