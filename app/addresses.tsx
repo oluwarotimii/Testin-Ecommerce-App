@@ -76,36 +76,53 @@ export default function AddressesScreen() {
         return;
       }
 
-      if (apiService.updateCustomerAddress) {
-        setLoading(true);
-        await apiService.updateCustomerAddress(formData);
+      setLoading(true);
 
-        // Refresh addresses
-        await fetchAddresses();
-
-        setFormData({
-          firstName: '',
-          lastName: '',
-          company: '',
-          address: '',
-          address2: '',
-          city: '',
-          state: '',
-          zipCode: '',
-          country: '',
-          phone: '',
-          email: '',
-          isDefault: false,
-        });
-        setIsAdding(false);
-        setIsEditing(false);
-        Alert.alert('Success', 'Shipping address updated successfully');
+      if (isEditing) {
+        // Update existing address
+        if (apiService.updateCustomerAddress) {
+          await apiService.updateCustomerAddress(formData);
+          Alert.alert('Success', 'Shipping address updated successfully');
+        } else {
+          console.warn("Update address not supported by API service");
+        }
       } else {
-        console.warn("Update address not supported by API service");
+        // Add new address - try to find the appropriate method
+        if (apiService.addCustomerAddress) {
+          await apiService.addCustomerAddress(formData);
+          Alert.alert('Success', 'New shipping address added successfully');
+        } else if (apiService.updateCustomerAddress) {
+          // Fallback: This may create/update depending on implementation
+          await apiService.updateCustomerAddress(formData);
+          Alert.alert('Success', 'Shipping address saved successfully');
+        } else {
+          console.warn("Address management not supported by API service");
+        }
       }
+
+      // Refresh addresses
+      await fetchAddresses();
+
+      // Reset form and navigation state
+      setFormData({
+        firstName: '',
+        lastName: '',
+        company: '',
+        address: '',
+        address2: '',
+        city: '',
+        state: '',
+        zipCode: '',
+        country: '',
+        phone: '',
+        email: '',
+        isDefault: false,
+      });
+      setIsAdding(false);
+      setIsEditing(false);
     } catch (error) {
       console.error('Error saving address:', error);
-      Alert.alert('Error', 'Failed to update shipping address. Please try again.');
+      Alert.alert('Error', 'Failed to save shipping address. Please try again.');
     } finally {
       setLoading(false);
     }
