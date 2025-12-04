@@ -258,23 +258,8 @@ export default function HomeScreen() {
         });
       }, 1500); // Hide after 1.5 seconds
 
-      // Add a small delay before fetching updated cart to ensure the server processes the add
-      await new Promise(resolve => setTimeout(resolve, 300)); // 300ms delay
-
-      // Update cart count to actual value from server with error handling
-      try {
-        const cartResponse = await apiService.getCartContents();
-        if (cartResponse && cartResponse.products) {
-          const newCartCount = cartResponse.products.reduce((total: any, item: any) => total + item.quantity, 0);
-          setCartCount(newCartCount);
-        } else {
-          // If the cart fetch fails or returns empty, keep the optimistic update
-          console.warn("Could not fetch updated cart contents");
-        }
-      } catch (countError) {
-        console.error("Error fetching cart contents, keeping optimistic count:", countError);
-        // Keep the optimistic update if cart fetch fails
-      }
+      // Don't fetch cart contents immediately - trust the add operation result
+      // Cart sync will happen naturally on next page load or cart screen visit
     } catch (error) {
       console.error("Add to cart error:", error);
       // Revert optimistic update on error
