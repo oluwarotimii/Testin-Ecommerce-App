@@ -13,7 +13,7 @@ import SafeImage from '@/components/SafeImage';
 export default function CheckoutScreen() {
   const router = useRouter();
   const colors = useThemeColors();
-  const { apiService, isAuthenticated, loadingAuth } = useAuth();
+  const { apiService, isAuthenticated, loadingAuth, user } = useAuth();
   const { setCartCount } = useCart();
   const [addresses, setAddresses] = useState<any[]>([]);
   const [cartItems, setCartItems] = useState<any[]>([]);
@@ -133,15 +133,15 @@ export default function CheckoutScreen() {
         payment_method_title: 'Direct Bank Transfer',
         set_paid: false,
         billing: {
-          first_name: selectedAddressData?.firstName || 'Customer',
-          last_name: selectedAddressData?.lastName || '',
+          first_name: user?.first_name || user?.first_name || user?.name?.split(' ')[0] || 'Customer',
+          last_name: user?.last_name || user?.name?.split(' ').slice(1).join(' ') || user?.name || '',
           address_1: selectedAddressData?.address || '',
           city: selectedAddressData?.city || '',
           state: selectedAddressData?.state || '',
           postcode: selectedAddressData?.zipCode || '',
           country: selectedAddressData?.country || '',
-          email: selectedAddressData?.email || '',
-          phone: selectedAddressData?.phone || ''
+          email: user?.email || selectedAddressData?.email || '',
+          phone: user?.phone || selectedAddressData?.phone || ''
         },
         shipping: {
           first_name: selectedAddressData?.firstName || 'Customer',
