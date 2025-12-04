@@ -58,10 +58,13 @@ export default function CartScreen() {
     setCartCount(totalQuantity);
   }, [products, setCartCount]);
 
-  const subtotal = cart ? cart.cartTotal || 0 : products.reduce((sum, item) => {
+  // Calculate subtotal consistently with checkout page
+  const subtotal = products.reduce((sum, item) => {
     const price = typeof item.price === 'number' ? item.price : parseFloat(item.price || '0');
-    return sum + (price * item.quantity);
+    const quantity = typeof item.quantity === 'number' ? item.quantity : parseInt(item.quantity) || 1;
+    return sum + (price * quantity);
   }, 0);
+  // Keep the same calculation to maintain consistency
   const shipping = subtotal > 50 ? 0 : 9.99;
   const tax = subtotal * 0.08;
   const total = subtotal + shipping + tax;
@@ -144,8 +147,17 @@ export default function CartScreen() {
                   onPress={async () => {
                     if (item.quantity > 1) {
                       try {
-                        await apiService.updateCart(item.productId || item.id, item.quantity - 1);
-                        fetchCartContents(); // Refresh cart after update
+                        const result = await apiService.updateCart(item.productId || item.id, item.quantity - 1);
+                        if (result.success) {
+                          // Update the item quantity directly to avoid full cart reload
+                          setProducts(prevProducts =>
+                            prevProducts.map(cartItem =>
+                              cartItem.id === item.id || cartItem.productId === item.productId
+                                ? { ...cartItem, quantity: cartItem.quantity - 1 }
+                                : cartItem
+                            )
+                          );
+                        }
                       } catch (error) {
                         console.error('Error updating cart:', error);
                       }
@@ -159,8 +171,17 @@ export default function CartScreen() {
                   style={styles.quantityButton}
                   onPress={async () => {
                     try {
-                      await apiService.updateCart(item.productId || item.id, item.quantity + 1);
-                      fetchCartContents(); // Refresh cart after update
+                      const result = await apiService.updateCart(item.productId || item.id, item.quantity + 1);
+                      if (result.success) {
+                        // Update the item quantity directly to avoid full cart reload
+                        setProducts(prevProducts =>
+                          prevProducts.map(cartItem =>
+                            cartItem.id === item.id || cartItem.productId === item.productId
+                              ? { ...cartItem, quantity: cartItem.quantity + 1 }
+                              : cartItem
+                          )
+                        );
+                      }
                     } catch (error) {
                       console.error('Error updating cart:', error);
                     }
@@ -173,8 +194,15 @@ export default function CartScreen() {
                 style={styles.removeButton}
                 onPress={async () => {
                   try {
-                    await apiService.removeFromCart(item.productId || item.id);
-                    fetchCartContents(); // Refresh cart after removal
+                    const result = await apiService.removeFromCart(item.productId || item.id);
+                    if (result.success) {
+                      // Remove the item directly to avoid full cart reload
+                      setProducts(prevProducts =>
+                        prevProducts.filter(cartItem =>
+                          cartItem.id !== item.id && cartItem.productId !== item.productId
+                        )
+                      );
+                    }
                   } catch (error) {
                     console.error('Error removing item from cart:', error);
                   }
