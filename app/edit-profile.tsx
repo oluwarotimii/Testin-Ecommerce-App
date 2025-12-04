@@ -1,19 +1,19 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Image, ActivityIndicator, Alert } from 'react-native';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
 import { useThemeColors } from '@/hooks/useColorScheme';
 import { Ionicons } from '@expo/vector-icons';
 
-export default function ProfileScreen() {
+export default function EditProfileScreen() {
   const router = useRouter();
   const colors = useThemeColors();
-  const { apiService, isAuthenticated, logout } = useAuth();
+  const { apiService, isAuthenticated } = useAuth();
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<any>(null);
 
-  // User data state
-  const [userData, setUserData] = useState({
+  // Form state
+  const [formData, setFormData] = useState({
     firstname: '',
     lastname: '',
     email: '',
@@ -27,7 +27,7 @@ export default function ProfileScreen() {
           setLoading(true);
           const response = await apiService.getAccountDetails();
           setUser(response);
-          setUserData({
+          setFormData({
             firstname: response.first_name || response.name?.firstname || response.firstname || '',
             lastname: response.last_name || response.name?.lastname || response.lastname || '',
             email: response.email || '',
@@ -46,22 +46,23 @@ export default function ProfileScreen() {
     }
   }, [isAuthenticated, apiService]);
 
-  const handleLogout = async () => {
-    Alert.alert(
-      "Logout",
-      "Are you sure you want to log out?",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Logout",
-          style: "destructive",
-          onPress: async () => {
-            await logout();
-            router.replace('/(tabs)');
-          }
-        }
-      ]
-    );
+  const handleSave = async () => {
+    try {
+      setLoading(true);
+      await apiService.updateAccountDetails({
+        name: { firstname: formData.firstname, lastname: formData.lastname },
+        email: formData.email,
+        phone: formData.phone,
+      });
+      Alert.alert('Success', 'Profile updated successfully', [
+        { text: 'OK', onPress: () => router.back() }
+      ]);
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      Alert.alert('Error', 'Failed to update profile');
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (loading) {
@@ -79,13 +80,14 @@ export default function ProfileScreen() {
           <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
             <Ionicons name="arrow-back" size={24} color={colors.text} />
           </TouchableOpacity>
-          <Text style={[styles.title, { color: colors.text }]}>Profile</Text>
+          <Text style={[styles.title, { color: colors.text }]}>Edit Profile</Text>
+          <View style={{ width: 40 }} />
         </View>
 
         <View style={[styles.emptyContainer, { backgroundColor: colors.background }]}>
           <Ionicons name="person-circle-outline" size={80} color={colors.textSecondary} style={styles.emptyIcon} />
           <Text style={[styles.emptyTitle, { color: colors.text }]}>You are not logged in.</Text>
-          <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>Please log in to view and edit your profile.</Text>
+          <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>Please log in to edit your profile.</Text>
           <TouchableOpacity
             style={[styles.loginButton, { backgroundColor: colors.primary }]}
             onPress={() => router.push('/login')}
@@ -104,86 +106,105 @@ export default function ProfileScreen() {
   }
 
   return (
-    <ScrollView style={[styles.container, { backgroundColor: colors.background }]} showsVerticalScrollIndicator={false}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
           <Ionicons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
-        <Text style={[styles.title, { color: colors.text }]}>My Profile</Text>
-        <TouchableOpacity onPress={() => router.push('/edit-profile')}>
-          <Text style={{ color: colors.primary, fontSize: 16, fontWeight: '500' }}>
-            Edit
-          </Text>
+        <Text style={[styles.title, { color: colors.text }]}>Edit Profile</Text>
+        <TouchableOpacity onPress={handleSave} disabled={loading}>
+          {loading ? (
+            <ActivityIndicator size="small" color={colors.primary} />
+          ) : (
+            <Text style={{ color: colors.primary, fontSize: 16, fontWeight: '500' }}>
+              Save
+            </Text>
+          )}
         </TouchableOpacity>
       </View>
 
-      {/* Profile Info Card */}
-      <View style={[styles.profileCard, { backgroundColor: colors.surface }]}>
-        <View style={styles.profileHeader}>
-          <Image
-            source={{ uri: `https://ui-avatars.com/api/?name=${userData.firstname}+${userData.lastname}&background=007AFF&color=fff&size=128` }}
-            style={styles.profilePicture}
-          />
-          <View style={styles.profileTexts}>
-            <Text style={[styles.profileName, { color: colors.text }]}>
-              {userData.firstname} {userData.lastname}
-            </Text>
-            <Text style={[styles.profileEmail, { color: colors.textSecondary }]}>
-              {userData.email}
-            </Text>
+      <ScrollView showsVerticalScrollIndicator={false} style={styles.scrollContainer}>
+        {/* Profile Header */}
+        <View style={[styles.profileCard, { backgroundColor: colors.surface, margin: 20 }]}>
+          <View style={styles.profileHeader}>
+            <Image
+              source={{ uri: `https://ui-avatars.com/api/?name=${formData.firstname}+${formData.lastname}&background=007AFF&color=fff&size=128` }}
+              style={styles.profilePicture}
+            />
+            <View style={styles.profileTexts}>
+              <Text style={[styles.profileName, { color: colors.text }]}>
+                {formData.firstname} {formData.lastname}
+              </Text>
+              <Text style={[styles.profileEmail, { color: colors.textSecondary }]}>
+                {formData.email}
+              </Text>
+            </View>
           </View>
         </View>
 
-        <View style={styles.infoGrid}>
-          <View style={styles.infoItem}>
-            <Ionicons name="call-outline" size={20} color={colors.textSecondary} />
-            <Text style={[styles.infoText, { color: colors.text }]}>{userData.phone || user?.billing?.phone || user?.mobile || user?.phone_number || 'No phone number'}</Text>
+        {/* Edit Form */}
+        <View style={[styles.formContainer, { marginHorizontal: 20 }]}>
+          <View style={styles.inputGroup}>
+            <Text style={[styles.label, { color: colors.textSecondary }]}>First Name</Text>
+            <TextInput
+              style={[styles.input, { backgroundColor: colors.background, color: colors.text, borderColor: colors.border }]}
+              value={formData.firstname}
+              onChangeText={(text) => setFormData({ ...formData, firstname: text })}
+            />
           </View>
-        </View>
-      </View>
-
-          {/* Menu Options */}
-          <View style={styles.menuContainer}>
-            <TouchableOpacity style={[styles.menuItem, { backgroundColor: colors.surface }]} onPress={() => router.push('/orders')}>
-              <View style={[styles.menuIcon, { backgroundColor: '#E3F2FD' }]}>
-                <Ionicons name="cube-outline" size={22} color="#2196F3" />
-              </View>
-              <Text style={[styles.menuText, { color: colors.text }]}>My Orders</Text>
-              <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
-            </TouchableOpacity>
-
-            <TouchableOpacity style={[styles.menuItem, { backgroundColor: colors.surface }]} onPress={() => router.push('/addresses')}>
-              <View style={[styles.menuIcon, { backgroundColor: '#E8F5E9' }]}>
-                <Ionicons name="location-outline" size={22} color="#4CAF50" />
-              </View>
-              <Text style={[styles.menuText, { color: colors.text }]}>Shipping Addresses</Text>
-              <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
-            </TouchableOpacity>
-
-            <TouchableOpacity style={[styles.menuItem, { backgroundColor: colors.surface }]} onPress={() => router.push('/wishlist')}>
-              <View style={[styles.menuIcon, { backgroundColor: '#FFEBEE' }]}>
-                <Ionicons name="heart-outline" size={22} color="#F44336" />
-              </View>
-              <Text style={[styles.menuText, { color: colors.text }]}>My Wishlist</Text>
-              <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
-            </TouchableOpacity>
-
-            <TouchableOpacity style={[styles.menuItem, { backgroundColor: colors.surface, marginTop: 20 }]} onPress={handleLogout}>
-              <View style={[styles.menuIcon, { backgroundColor: '#FFEBEE' }]}>
-                <Ionicons name="log-out-outline" size={22} color="#D32F2F" />
-              </View>
-              <Text style={[styles.menuText, { color: '#D32F2F' }]}>Log Out</Text>
-            </TouchableOpacity>
+          <View style={styles.inputGroup}>
+            <Text style={[styles.label, { color: colors.textSecondary }]}>Last Name</Text>
+            <TextInput
+              style={[styles.input, { backgroundColor: colors.background, color: colors.text, borderColor: colors.border }]}
+              value={formData.lastname}
+              onChangeText={(text) => setFormData({ ...formData, lastname: text })}
+            />
           </View>
+          <View style={styles.inputGroup}>
+            <Text style={[styles.label, { color: colors.textSecondary }]}>Email</Text>
+            <TextInput
+              style={[styles.input, { backgroundColor: colors.background, color: colors.text, borderColor: colors.border }]}
+              value={formData.email}
+              onChangeText={(text) => setFormData({ ...formData, email: text })}
+              keyboardType="email-address"
+              editable={false} // Email shouldn't be editable from here
+            />
+          </View>
+          <View style={styles.inputGroup}>
+            <Text style={[styles.label, { color: colors.textSecondary }]}>Phone</Text>
+            <TextInput
+              style={[styles.input, { backgroundColor: colors.background, color: colors.text, borderColor: colors.border }]}
+              value={formData.phone}
+              onChangeText={(text) => setFormData({ ...formData, phone: text })}
+              keyboardType="phone-pad"
+            />
+          </View>
+
+          <TouchableOpacity
+            style={[styles.saveButton, { backgroundColor: colors.primary }]}
+            onPress={handleSave}
+            disabled={loading}
+          >
+            {loading ? (
+              <ActivityIndicator size="small" color="white" />
+            ) : (
+              <Text style={styles.saveButtonText}>Save Changes</Text>
+            )}
+          </TouchableOpacity>
         </View>
-      )}
-    </ScrollView>
+
+        <View style={{ height: 40 }} />
+      </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
+  },
+  scrollContainer: {
     flex: 1,
   },
   header: {
@@ -202,7 +223,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   profileCard: {
-    margin: 20,
     padding: 20,
     borderRadius: 16,
     shadowColor: '#000',
@@ -214,7 +234,7 @@ const styles = StyleSheet.create({
   profileHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 10,
   },
   profilePicture: {
     width: 70,
@@ -233,7 +253,7 @@ const styles = StyleSheet.create({
   profileEmail: {
     fontSize: 14,
   },
-  editForm: {
+  formContainer: {
     marginTop: 10,
   },
   inputGroup: {
@@ -261,42 +281,6 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 16,
     fontWeight: '600',
-  },
-  infoGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 16,
-  },
-  infoItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  infoText: {
-    fontSize: 14,
-  },
-  menuContainer: {
-    paddingHorizontal: 20,
-  },
-  menuItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 16,
-    borderRadius: 16,
-    marginBottom: 12,
-  },
-  menuIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 16,
-  },
-  menuText: {
-    flex: 1,
-    fontSize: 16,
-    fontWeight: '500',
   },
   emptyContainer: {
     flex: 1,
