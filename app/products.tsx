@@ -157,22 +157,29 @@ export default function ProductsScreen() {
         }
 
         // Check if the product belongs to the selected category
-        // Prioritize ID matching for the most accurate results
-        if (product.category_id === selectedCat.category_id) {
+        // Check by ID first (most reliable)
+        if (product.category_id && selectedCat.category_id &&
+            product.category_id === selectedCat.category_id) {
           return true;
         }
 
         // Check if product.categories array contains the selected category
         if (product.categories && Array.isArray(product.categories)) {
-          return product.categories.some((cat: any) =>
-            cat.id === selectedCat.category_id ||
-            cat.slug === selectedCategory ||
-            cat.name?.toLowerCase() === selectedCat.name?.toLowerCase()
+          const hasMatchingCategory = product.categories.some((cat: any) =>
+            (cat.id && selectedCat.category_id && cat.id === selectedCat.category_id) ||
+            (cat.slug && selectedCategory && cat.slug === selectedCategory) ||
+            (cat.name && selectedCat.name && cat.name?.toLowerCase() === selectedCat.name?.toLowerCase())
           );
+          if (hasMatchingCategory) return true;
         }
 
-        // Fallback to product.category name matching
-        return product.category?.toLowerCase() === selectedCat.name?.toLowerCase();
+        // Fallback to product.category name matching - but make it more specific
+        if (product.category && selectedCat.name) {
+          return product.category.toLowerCase() === selectedCat.name.toLowerCase();
+        }
+
+        // If none of the above match, then the product doesn't belong to selected category
+        return false;
       });
     }
 
@@ -216,7 +223,7 @@ export default function ProductsScreen() {
     }
 
     return filtered;
-  }, [products, searchQuery, filters, selectedCategory]);
+  }, [products, searchQuery, filters, selectedCategory, categories]);
 
   const renderGridView = () => (
     <View style={styles.gridContainer}>
