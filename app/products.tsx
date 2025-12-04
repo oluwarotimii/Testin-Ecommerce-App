@@ -156,23 +156,23 @@ export default function ProductsScreen() {
           return product.category?.toLowerCase() === selectedCategory.toLowerCase();
         }
 
-        // Match by multiple criteria:
-        // 1. Direct category ID match
-        // 2. Category name match
-        // 3. Category slug match
-        // 4. Check if product belongs to this category (by checking categories array in product)
-        return (
-          product.category_id === selectedCat.id ||
-          product.category?.toLowerCase() === selectedCat.name?.toLowerCase() ||
-          product.category?.toLowerCase() === selectedCat.slug?.toLowerCase() ||
-          // Check if product.categories array contains the selected category
-          (product.categories && Array.isArray(product.categories) &&
-           product.categories.some((cat: any) =>
-             cat.id === selectedCat.category_id ||
-             cat.name?.toLowerCase() === selectedCat.name?.toLowerCase() ||
-             cat.slug?.toLowerCase() === selectedCat.slug?.toLowerCase()
-           ))
-        );
+        // Check if the product belongs to the selected category
+        // Prioritize ID matching for the most accurate results
+        if (product.category_id === selectedCat.category_id) {
+          return true;
+        }
+
+        // Check if product.categories array contains the selected category
+        if (product.categories && Array.isArray(product.categories)) {
+          return product.categories.some((cat: any) =>
+            cat.id === selectedCat.category_id ||
+            cat.slug === selectedCategory ||
+            cat.name?.toLowerCase() === selectedCat.name?.toLowerCase()
+          );
+        }
+
+        // Fallback to product.category name matching
+        return product.category?.toLowerCase() === selectedCat.name?.toLowerCase();
       });
     }
 
