@@ -241,6 +241,9 @@ export default function HomeScreen() {
   };
 
   const addToCart = async (product: any) => {
+    // Optimistic update for faster UI response
+    setCartCount(prev => prev + 1);
+
     try {
       const result = await apiService.addToCart(product.id, 1);
       console.log(`Added ${product.title} to cart!`, result);
@@ -255,20 +258,16 @@ export default function HomeScreen() {
         });
       }, 1500); // Hide after 1.5 seconds
 
-      // Update cart count
-      try {
-        const cartResponse = await apiService.getCartContents();
-        if (cartResponse && cartResponse.products) {
-          const newCartCount = cartResponse.products.reduce((total: any, item: any) => total + item.quantity, 0);
-          setCartCount(newCartCount);
-        }
-      } catch (countError) {
-        console.error("Error updating cart count:", countError);
-        // Fallback: increment by 1
-        setCartCount(prevCount => prevCount + 1);
+      // Update cart count to actual value from server
+      const cartResponse = await apiService.getCartContents();
+      if (cartResponse && cartResponse.products) {
+        const newCartCount = cartResponse.products.reduce((total: any, item: any) => total + item.quantity, 0);
+        setCartCount(newCartCount);
       }
     } catch (error) {
       console.error("Add to cart error:", error);
+      // Revert optimistic update on error
+      setCartCount(prev => prev - 1);
     }
   };
 
