@@ -348,8 +348,11 @@ export default function HomeScreen() {
             <View style={styles.sectionTitleContainer}>
               <Text style={[styles.sectionTitle, { color: colors.text }]}>Featured Categories</Text>
             </View>
-            <TouchableOpacity onPress={() => router.push('/categories')}>
-              <Text style={[styles.seeAll, { color: colors.primary }]}>See All</Text>
+            <TouchableOpacity
+              style={[styles.seeAllButton, { backgroundColor: colors.primary }]}
+              onPress={() => router.push('/categories')}
+            >
+              <Text style={[styles.seeAllButtonText, { color: colors.white }]}>See All</Text>
             </TouchableOpacity>
           </View>
           <View style={styles.categoriesContainer}>
@@ -401,8 +404,11 @@ export default function HomeScreen() {
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={[styles.sectionTitle, { color: colors.text }]}>Latest Products</Text>
-            <TouchableOpacity onPress={handleSeeAllProducts}>
-              <Text style={[styles.seeAll, { color: colors.primary }]}>See All</Text>
+            <TouchableOpacity
+              style={[styles.seeAllButton, { backgroundColor: colors.primary }]}
+              onPress={handleSeeAllProducts}
+            >
+              <Text style={[styles.seeAllButtonText, { color: colors.white }]}>See All</Text>
             </TouchableOpacity>
           </View>
           {loadingProducts ? (
@@ -723,5 +729,14 @@ const styles = StyleSheet.create({
   productPrice: {
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  seeAllButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+  },
+  seeAllButtonText: {
+    fontSize: 14,
+    fontWeight: '500',
   },
 });
