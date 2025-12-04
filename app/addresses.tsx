@@ -52,8 +52,8 @@ export default function AddressesScreen() {
 
   const handleEditAddress = (address: any) => {
     setFormData({
-      firstName: address.firstName || user?.first_name || user?.name?.split(' ')[0] || '',
-      lastName: address.lastName || user?.last_name || user?.name?.split(' ').slice(1).join(' ') || user?.name || '',
+      firstName: address.firstName || '',
+      lastName: address.lastName || '',
       company: address.company || '',
       address: address.address || '',
       address2: address.address2 || '',
@@ -61,8 +61,8 @@ export default function AddressesScreen() {
       state: address.state || '',
       zipCode: address.zipCode || '',
       country: address.country || '',
-      phone: address.phone || user?.phone || '',
-      email: address.email || user?.email || '',
+      phone: address.phone || '',
+      email: address.email || '',
       isDefault: address.isDefault || false,
     });
     setIsEditing(true);
@@ -252,7 +252,7 @@ export default function AddressesScreen() {
                 style={[styles.input, { backgroundColor: colors.surface, color: colors.text }]}
                 value={formData.firstName}
                 onChangeText={(text) => setFormData({ ...formData, firstName: text })}
-                placeholder="First name"
+                placeholder="Name for this shipping address"
                 placeholderTextColor={colors.textSecondary}
               />
             </View>
@@ -263,7 +263,7 @@ export default function AddressesScreen() {
                 style={[styles.input, { backgroundColor: colors.surface, color: colors.text }]}
                 value={formData.lastName}
                 onChangeText={(text) => setFormData({ ...formData, lastName: text })}
-                placeholder="Last name"
+                placeholder="Last name for this shipping address"
                 placeholderTextColor={colors.textSecondary}
               />
             </View>
@@ -430,9 +430,11 @@ export default function AddressesScreen() {
               style={[styles.primaryButton, { backgroundColor: colors.primary }]}
               onPress={() => {
                 setFormData({
-                  firstName: user?.first_name || user?.first_name || user?.name?.split(' ')[0] || '',
-                  lastName: user?.last_name || user?.name?.split(' ').slice(1).join(' ') || user?.name || '',
+                  firstName: '',
+                  lastName: '',
+                  company: '',
                   address: '',
+                  address2: '',
                   city: '',
                   state: '',
                   zipCode: '',
@@ -476,12 +478,6 @@ export default function AddressesScreen() {
                   onPress={() => handleEditAddress(address)}
                 >
                   <Text style={[styles.actionButtonText, { color: colors.text }]}>Edit</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.actionButton, { borderColor: colors.error, backgroundColor: `${colors.error}10` }]}
-                  onPress={() => handleDeleteAddress(address.id)}
-                >
-                  <Text style={[styles.actionButtonText, { color: colors.error }]}>Delete</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -575,15 +571,14 @@ const styles = StyleSheet.create({
   },
   addressActions: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
+    gap: 12,
     paddingTop: 12,
     borderTopWidth: 1,
     borderTopColor: '#E5E5EA',
     marginTop: 10,
   },
   actionButton: {
-    minWidth: '30%', // Minimum width for each button
+    flex: 1,
     borderWidth: 1,
     borderRadius: 8,
     paddingVertical: 8,

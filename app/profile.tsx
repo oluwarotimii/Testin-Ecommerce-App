@@ -137,24 +137,24 @@ export default function ProfileScreen() {
         </TouchableOpacity>
       </View>
 
-      {/* Profile Info Card */}
-      <View style={[styles.profileCard, { backgroundColor: colors.surface }]}>
-        <View style={styles.profileHeader}>
-          <Image
-            source={{ uri: `https://ui-avatars.com/api/?name=${formData.firstname}+${formData.lastname}&background=007AFF&color=fff&size=128` }}
-            style={styles.profilePicture}
-          />
-          <View style={styles.profileTexts}>
-            <Text style={[styles.profileName, { color: colors.text }]}>
-              {formData.firstname} {formData.lastname}
-            </Text>
-            <Text style={[styles.profileEmail, { color: colors.textSecondary }]}>
-              {formData.email}
-            </Text>
+      {isEditing ? (
+        // Full-screen edit form when in edit mode
+        <View style={[styles.profileCard, { backgroundColor: colors.surface, margin: 20 }]}>
+          <View style={styles.profileHeader}>
+            <Image
+              source={{ uri: `https://ui-avatars.com/api/?name=${formData.firstname}+${formData.lastname}&background=007AFF&color=fff&size=128` }}
+              style={styles.profilePicture}
+            />
+            <View style={styles.profileTexts}>
+              <Text style={[styles.profileName, { color: colors.text }]}>
+                {formData.firstname} {formData.lastname}
+              </Text>
+              <Text style={[styles.profileEmail, { color: colors.textSecondary }]}>
+                {formData.email}
+              </Text>
+            </View>
           </View>
-        </View>
 
-        {isEditing ? (
           <View style={styles.editForm}>
             <View style={styles.inputGroup}>
               <Text style={[styles.label, { color: colors.textSecondary }]}>First Name</Text>
@@ -170,6 +170,16 @@ export default function ProfileScreen() {
                 style={[styles.input, { backgroundColor: colors.background, color: colors.text, borderColor: colors.border }]}
                 value={formData.lastname}
                 onChangeText={(text) => setFormData({ ...formData, lastname: text })}
+              />
+            </View>
+            <View style={styles.inputGroup}>
+              <Text style={[styles.label, { color: colors.textSecondary }]}>Email</Text>
+              <TextInput
+                style={[styles.input, { backgroundColor: colors.background, color: colors.text, borderColor: colors.border }]}
+                value={formData.email}
+                onChangeText={(text) => setFormData({ ...formData, email: text })}
+                keyboardType="email-address"
+                editable={false} // Email shouldn't be editable from here
               />
             </View>
             <View style={styles.inputGroup}>
@@ -189,53 +199,70 @@ export default function ProfileScreen() {
               <Text style={styles.saveButtonText}>Save Changes</Text>
             </TouchableOpacity>
           </View>
-        ) : (
-          <View style={styles.infoGrid}>
-            <View style={styles.infoItem}>
-              <Ionicons name="call-outline" size={20} color={colors.textSecondary} />
-              <Text style={[styles.infoText, { color: colors.text }]}>{formData.phone || user?.billing?.phone || user?.mobile || user?.phone_number || 'No phone number'}</Text>
+        </View>
+      ) : (
+        <>
+          {/* Profile Info Card */}
+          <View style={[styles.profileCard, { backgroundColor: colors.surface }]}>
+            <View style={styles.profileHeader}>
+              <Image
+                source={{ uri: `https://ui-avatars.com/api/?name=${formData.firstname}+${formData.lastname}&background=007AFF&color=fff&size=128` }}
+                style={styles.profilePicture}
+              />
+              <View style={styles.profileTexts}>
+                <Text style={[styles.profileName, { color: colors.text }]}>
+                  {formData.firstname} {formData.lastname}
+                </Text>
+                <Text style={[styles.profileEmail, { color: colors.textSecondary }]}>
+                  {formData.email}
+                </Text>
+              </View>
+            </View>
+
+            <View style={styles.infoGrid}>
+              <View style={styles.infoItem}>
+                <Ionicons name="call-outline" size={20} color={colors.textSecondary} />
+                <Text style={[styles.infoText, { color: colors.text }]}>{formData.phone || user?.billing?.phone || user?.mobile || user?.phone_number || 'No phone number'}</Text>
+              </View>
             </View>
           </View>
-        )}
-      </View>
 
-      {/* Menu Options */}
-      {!isEditing && (
-        <View style={styles.menuContainer}>
-          <TouchableOpacity style={[styles.menuItem, { backgroundColor: colors.surface }]} onPress={() => router.push('/orders')}>
-            <View style={[styles.menuIcon, { backgroundColor: '#E3F2FD' }]}>
-              <Ionicons name="cube-outline" size={22} color="#2196F3" />
-            </View>
-            <Text style={[styles.menuText, { color: colors.text }]}>My Orders</Text>
-            <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
-          </TouchableOpacity>
+          {/* Menu Options */}
+          <View style={styles.menuContainer}>
+            <TouchableOpacity style={[styles.menuItem, { backgroundColor: colors.surface }]} onPress={() => router.push('/orders')}>
+              <View style={[styles.menuIcon, { backgroundColor: '#E3F2FD' }]}>
+                <Ionicons name="cube-outline" size={22} color="#2196F3" />
+              </View>
+              <Text style={[styles.menuText, { color: colors.text }]}>My Orders</Text>
+              <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
+            </TouchableOpacity>
 
-          <TouchableOpacity style={[styles.menuItem, { backgroundColor: colors.surface }]} onPress={() => router.push('/addresses')}>
-            <View style={[styles.menuIcon, { backgroundColor: '#E8F5E9' }]}>
-              <Ionicons name="location-outline" size={22} color="#4CAF50" />
-            </View>
-            <Text style={[styles.menuText, { color: colors.text }]}>Shipping Addresses</Text>
-            <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
-          </TouchableOpacity>
+            <TouchableOpacity style={[styles.menuItem, { backgroundColor: colors.surface }]} onPress={() => router.push('/addresses')}>
+              <View style={[styles.menuIcon, { backgroundColor: '#E8F5E9' }]}>
+                <Ionicons name="location-outline" size={22} color="#4CAF50" />
+              </View>
+              <Text style={[styles.menuText, { color: colors.text }]}>Shipping Addresses</Text>
+              <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
+            </TouchableOpacity>
 
-          <TouchableOpacity style={[styles.menuItem, { backgroundColor: colors.surface }]} onPress={() => router.push('/wishlist')}>
-            <View style={[styles.menuIcon, { backgroundColor: '#FFEBEE' }]}>
-              <Ionicons name="heart-outline" size={22} color="#F44336" />
-            </View>
-            <Text style={[styles.menuText, { color: colors.text }]}>My Wishlist</Text>
-            <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
-          </TouchableOpacity>
+            <TouchableOpacity style={[styles.menuItem, { backgroundColor: colors.surface }]} onPress={() => router.push('/wishlist')}>
+              <View style={[styles.menuIcon, { backgroundColor: '#FFEBEE' }]}>
+                <Ionicons name="heart-outline" size={22} color="#F44336" />
+              </View>
+              <Text style={[styles.menuText, { color: colors.text }]}>My Wishlist</Text>
+              <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
+            </TouchableOpacity>
 
-          <TouchableOpacity style={[styles.menuItem, { backgroundColor: colors.surface, marginTop: 20 }]} onPress={handleLogout}>
-            <View style={[styles.menuIcon, { backgroundColor: '#FFEBEE' }]}>
-              <Ionicons name="log-out-outline" size={22} color="#D32F2F" />
-            </View>
-            <Text style={[styles.menuText, { color: '#D32F2F' }]}>Log Out</Text>
-          </TouchableOpacity>
-        </View>
+            <TouchableOpacity style={[styles.menuItem, { backgroundColor: colors.surface, marginTop: 20 }]} onPress={handleLogout}>
+              <View style={[styles.menuIcon, { backgroundColor: '#FFEBEE' }]}>
+                <Ionicons name="log-out-outline" size={22} color="#D32F2F" />
+              </View>
+              <Text style={[styles.menuText, { color: '#D32F2F' }]}>Log Out</Text>
+            </TouchableOpacity>
+          </View>
+        </>
       )}
-
-      <View style={{ height: 40 }} />
+      {!isEditing && <View style={{ height: 40 }} />}
     </ScrollView>
   );
 }
