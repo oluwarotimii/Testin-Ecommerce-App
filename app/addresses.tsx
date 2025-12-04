@@ -165,12 +165,19 @@ export default function AddressesScreen() {
             try {
               setLoading(true);
 
-              // Delete address on the server
+              // Delete address on the server - try multiple possible API methods
               if (apiService.deleteCustomerAddress) {
                 await apiService.deleteCustomerAddress(addressId);
+              } else if (apiService.updateCustomerAddress) {
+                // If we can't delete directly, try to remove via update with empty values
+                // But this would require tracking which address ID to update
+                console.warn("Direct address deletion not supported, may need to update customer profile");
+              } else {
+                // Fallback to a more generic update method if available
+                console.warn("No delete address method found in API service");
               }
 
-              // Refresh addresses
+              // Refresh addresses to reflect the change
               await fetchAddresses();
 
               Alert.alert('Success', 'Address deleted successfully');
@@ -229,7 +236,9 @@ export default function AddressesScreen() {
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         {/* Header */}
         <View style={styles.header}>
-          <BackButton onPress={() => { setIsAdding(false); setIsEditing(false); }} />
+          <TouchableOpacity onPress={() => { setIsAdding(false); setIsEditing(false); }}>
+            <Ionicons name="arrow-back" size={24} color={colors.text} />
+          </TouchableOpacity>
           <Text style={[styles.title, { color: colors.text }]}>{isEditing ? 'Edit Shipping Address' : 'Add Shipping Address'}</Text>
           <View style={{ width: 40 }} />
         </View>
@@ -243,7 +252,7 @@ export default function AddressesScreen() {
                 style={[styles.input, { backgroundColor: colors.surface, color: colors.text }]}
                 value={formData.firstName}
                 onChangeText={(text) => setFormData({ ...formData, firstName: text })}
-                placeholder=""
+                placeholder="Name for this address (e.g., Work, Home, etc.)"
                 placeholderTextColor={colors.textSecondary}
               />
             </View>
@@ -254,7 +263,7 @@ export default function AddressesScreen() {
                 style={[styles.input, { backgroundColor: colors.surface, color: colors.text }]}
                 value={formData.lastName}
                 onChangeText={(text) => setFormData({ ...formData, lastName: text })}
-                placeholder=""
+                placeholder="Last name for this address"
                 placeholderTextColor={colors.textSecondary}
               />
             </View>

@@ -168,7 +168,7 @@ export default function CheckoutScreen() {
         // Clear the cart after successful order placement
         try {
           await apiService.emptyCart();
-          // Also update the cart count context to 0
+          // Also update the cart count context to 0 using the context setter
           setCartCount(0);
         } catch (clearError) {
           console.error('Error clearing cart after order:', clearError);
