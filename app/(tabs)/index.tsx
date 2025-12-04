@@ -30,7 +30,7 @@ export default function HomeScreen() {
   const [products, setProducts] = useState<any[]>([]);
   const [loadingProducts, setLoadingProducts] = useState(true);
   const [errorProducts, setErrorProducts] = useState<string | null>(null);
-  const [productLimit, setProductLimit] = useState(20); // Initial limit
+  const [currentPage, setCurrentPage] = useState(1);
   const [hasMoreProducts, setHasMoreProducts] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
@@ -48,17 +48,18 @@ export default function HomeScreen() {
     }
   }, [apiService]);
 
-  const fetchProducts = useCallback(async (limit: number) => {
+  const fetchProducts = useCallback(async () => {
     if (!apiService) return;
     setLoadingProducts(true);
     setErrorProducts(null);
     try {
-      const response = await apiService.getProducts({ limit });
+      const response = await apiService.getProducts({ per_page: 20, page: 1 });
       // Transform WooCommerce API response using utility function
       const transformedProducts = transformProducts(response);
       setProducts(transformedProducts);
       // Check if we have more products available (assuming the API returns max available)
-      setHasMoreProducts(response.length >= limit);
+      setHasMoreProducts(response.length >= 20);
+      setCurrentPage(1); // Reset to page 1 on initial fetch
     } catch (err: any) {
       setErrorProducts(err.message || 'An unexpected error occurred');
     } finally {
@@ -71,19 +72,23 @@ export default function HomeScreen() {
 
     setIsLoadingMore(true);
     try {
-      const newLimit = productLimit + 20; // Load 20 more products
-      const response = await apiService.getProducts({ limit: newLimit });
+      const nextPage = currentPage + 1;
+      const response = await apiService.getProducts({ per_page: 20, page: nextPage });
       // Transform WooCommerce API response using utility function
       const transformedProducts = transformProducts(response);
-      setProducts(transformedProducts);
-      setHasMoreProducts(response.length >= newLimit);
-      setProductLimit(newLimit);
+
+      // Append new products to existing products
+      setProducts(prevProducts => [...prevProducts, ...transformedProducts]);
+
+      // Update pagination state
+      setHasMoreProducts(response.length >= 20);
+      setCurrentPage(nextPage);
     } catch (err: any) {
       setErrorProducts(err.message || 'An unexpected error occurred');
     } finally {
       setIsLoadingMore(false);
     }
-  }, [apiService, productLimit, hasMoreProducts, isLoadingMore]);
+  }, [apiService, currentPage, hasMoreProducts, isLoadingMore]);
 
   const fetchCarouselItems = useCallback(async () => {
     setLoadingCarousel(true);
@@ -119,7 +124,7 @@ export default function HomeScreen() {
     // Fetch products and categories regardless of user authentication (using WooCommerce API credentials)
     // Only fetch wishlist if authenticated
     if (apiService) {
-      fetchProducts(productLimit);
+      fetchProducts();
       fetchCategories();
       if (isAuthenticated) {
         fetchWishlist();
@@ -127,7 +132,7 @@ export default function HomeScreen() {
     }
     // Always fetch carousel (public endpoint)
     fetchCarouselItems();
-  }, [isAuthenticated, apiService, fetchProducts, fetchCategories, fetchWishlist, fetchCarouselItems, productLimit]);
+  }, [isAuthenticated, apiService, fetchProducts, fetchCategories, fetchWishlist, fetchCarouselItems]);
 
   // Handle push notifications
   useEffect(() => {
@@ -179,16 +184,15 @@ export default function HomeScreen() {
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await fetchProducts(productLimit);
+    await fetchProducts();
     await fetchCategories();
     await fetchWishlist();
     await fetchCarouselItems();
     setRefreshing(false);
-  }, [fetchProducts, fetchCategories, fetchWishlist, fetchCarouselItems, productLimit]);
+  }, [fetchProducts, fetchCategories, fetchWishlist, fetchCarouselItems]);
 
 
   const handleSeeAllProducts = () => {
-    setProductLimit(100); // Increase limit to 100
     router.push('/products'); // Navigate to the full products page
   };
 
@@ -414,7 +418,7 @@ export default function HomeScreen() {
             <Text style={[styles.noProductsText, { color: colors.textSecondary }]}>No products found.</Text>
           ) : (
             <View style={styles.productsGrid}>
-              {products.slice(0, productLimit).map((product) => (
+              {products.map((product) => (
                 <TouchableOpacity
                   key={product.id}
                   style={styles.productCard}

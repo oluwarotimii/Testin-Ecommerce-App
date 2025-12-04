@@ -10,10 +10,13 @@ interface ProductCardProps {
     onPress: () => void;
     isLiked: boolean;
     onToggleWishlist: () => void;
+    onAddToCart?: () => void;
+    addingToCart?: boolean;
+    cartSuccess?: boolean;
     style?: StyleProp<ViewStyle>;
 }
 
-export default function ProductCard({ product, onPress, isLiked, onToggleWishlist, style }: ProductCardProps) {
+export default function ProductCard({ product, onPress, isLiked, onToggleWishlist, onAddToCart, addingToCart, cartSuccess, style }: ProductCardProps) {
     const colors = useThemeColors();
 
     // Calculate discount percentage if original price exists and is higher than current price
@@ -49,12 +52,20 @@ export default function ProductCard({ product, onPress, isLiked, onToggleWishlis
                         style={[styles.addToCartButton, { backgroundColor: colors.primary }]}
                         onPress={(e) => {
                             e.stopPropagation();
-                            // Add to cart functionality would be implemented here if needed in this component
+                            if (onAddToCart) {
+                                onAddToCart();
+                            }
                         }}
                     >
-                        <Ionicons name="cart" size={18} color={colors.white} />
+                        <Ionicons name={addingToCart ? "checkmark" : "cart"} size={18} color={colors.white} />
                     </TouchableOpacity>
                 </View>
+
+                {cartSuccess && (
+                    <View style={styles.successOverlay}>
+                        <Ionicons name="checkmark-circle" size={24} color="#4CD964" />
+                    </View>
+                )}
             </View>
 
             <View style={styles.productDetails}>
@@ -141,5 +152,16 @@ const styles = StyleSheet.create({
         borderRadius: 18,
         alignItems: 'center',
         justifyContent: 'center',
+    },
+    successOverlay: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(0,0,0,0.5)',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 3,
     },
 });

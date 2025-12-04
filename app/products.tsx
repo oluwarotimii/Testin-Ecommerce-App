@@ -34,6 +34,7 @@ export default function ProductsScreen() {
   const [wishlist, setWishlist] = useState<number[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [cartSuccess, setCartSuccess] = useState<{ [key: number]: boolean }>({});
 
   const fetchWishlist = useCallback(async () => {
     if (!apiService) return;
@@ -105,6 +106,38 @@ export default function ProductsScreen() {
     }
   };
 
+  const addToCart = async (product: any) => {
+    try {
+      const result = await apiService.addToCart(product.id, 1);
+      console.log(`Added ${product.title} to cart!`, result);
+
+      // Show success indicator
+      setCartSuccess(prev => ({ ...prev, [product.id]: true }));
+      setTimeout(() => {
+        setCartSuccess(prev => {
+          const newCartSuccess = { ...prev };
+          delete newCartSuccess[product.id];
+          return newCartSuccess;
+        });
+      }, 1500); // Hide after 1.5 seconds
+
+      // Update cart count
+      try {
+        const cartResponse = await apiService.getCartContents();
+        if (cartResponse && cartResponse.products) {
+          const newCartCount = cartResponse.products.reduce((total: any, item: any) => total + item.quantity, 0);
+          setCartCount(newCartCount);
+        }
+      } catch (countError) {
+        console.error("Error updating cart count:", countError);
+        // Fallback: increment by 1
+        setCartCount(prevCount => prevCount + 1);
+      }
+    } catch (error) {
+      console.error("Add to cart error:", error);
+    }
+  };
+
   const filteredProducts = useMemo(() => {
     let filtered = products.filter(product =>
       product.title?.toLowerCase().includes(searchQuery.toLowerCase())
@@ -168,6 +201,8 @@ export default function ProductsScreen() {
           onPress={() => router.push(`/product/${product.id}` as any)}
           isLiked={wishlist.includes(product.id)}
           onToggleWishlist={() => toggleWishlist(product.id)}
+          onAddToCart={() => addToCart(product)}
+          cartSuccess={cartSuccess[product.id]}
         />
       ))}
     </View>
