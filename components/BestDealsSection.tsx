@@ -24,6 +24,7 @@ export default function BestDealsSection({ wishlist, toggleWishlist }: BestDeals
     const [featuredProducts, setFeaturedProducts] = useState<any[]>([]);
     const [loadingFeatured, setLoadingFeatured] = useState(true);
     const [featuredCategoryId, setFeaturedCategoryId] = useState<number | null>(null);
+    const [cartSuccess, setCartSuccess] = useState<{ [key: number]: boolean }>({});
 
     const fetchFeaturedCategory = useCallback(async () => {
         if (!apiService) return;
@@ -122,16 +123,32 @@ export default function BestDealsSection({ wishlist, toggleWishlist }: BestDeals
                                         style={[styles.addToCartButton, { backgroundColor: colors.primary }]}
                                         onPress={async (e) => {
                                             e.stopPropagation();
+                                            // Optimistic update for faster UI response
                                             setCartCount(prev => prev + 1);
+
                                             try {
-                                                await apiService.addToCart(product.id, 1);
+                                                const result = await apiService.addToCart(product.id, 1);
+                                                console.log(`Added ${product.title} to cart!`, result);
+
+                                                // Show success indicator
+                                                setCartSuccess(prev => ({ ...prev, [product.id]: true }));
+                                                setTimeout(() => {
+                                                    setCartSuccess(prev => {
+                                                        const newCartSuccess = { ...prev };
+                                                        delete newCartSuccess[product.id];
+                                                        return newCartSuccess;
+                                                    });
+                                                }, 1500); // Hide after 1.5 seconds
+
+                                                // Update cart count to actual value if needed
                                                 const cartResponse = await apiService.getCartContents();
                                                 if (cartResponse && cartResponse.products) {
                                                     const newCartCount = cartResponse.products.reduce((total: any, item: any) => total + item.quantity, 0);
                                                     setCartCount(newCartCount);
                                                 }
                                             } catch (error) {
-                                                console.error('Add to cart error:', error);
+                                                console.error("Add to cart error:", error);
+                                                // Revert optimistic update on error
                                                 setCartCount(prev => prev - 1);
                                             }
                                         }}
