@@ -111,12 +111,62 @@ export default function AddressesScreen() {
     }
   };
 
-  const handleSetDefault = async (id: number) => {
-    // In a real implementation, you would call the API to set default
-    setAddresses(addresses.map(addr => ({
-      ...addr,
-      isDefault: addr.id === id
-    })));
+  const handleSetDefault = async (addressId: number) => {
+    try {
+      setLoading(true);
+
+      // Update the default address on the server
+      if (apiService.updateDefaultAddress) {
+        await apiService.updateDefaultAddress(addressId);
+      }
+
+      // Update local state
+      setAddresses(addresses.map(addr => ({
+        ...addr,
+        isDefault: addr.id === addressId
+      })));
+
+      Alert.alert('Success', 'Default address updated successfully');
+    } catch (error) {
+      console.error('Error setting default address:', error);
+      Alert.alert('Error', 'Failed to update default address. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteAddress = async (addressId: number) => {
+    Alert.alert(
+      'Confirm Delete',
+      'Are you sure you want to delete this address?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              setLoading(true);
+
+              // Delete address on the server
+              if (apiService.deleteCustomerAddress) {
+                await apiService.deleteCustomerAddress(addressId);
+              }
+
+              // Refresh addresses
+              await fetchAddresses();
+
+              Alert.alert('Success', 'Address deleted successfully');
+            } catch (error) {
+              console.error('Error deleting address:', error);
+              Alert.alert('Error', 'Failed to delete address. Please try again.');
+            } finally {
+              setLoading(false);
+            }
+          }
+        }
+      ]
+    );
   };
 
   if (loading) {
@@ -401,6 +451,12 @@ export default function AddressesScreen() {
                 >
                   <Text style={[styles.actionButtonText, { color: colors.text }]}>Edit</Text>
                 </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.actionButton, { borderColor: colors.error, backgroundColor: `${colors.error}10` }]}
+                  onPress={() => handleDeleteAddress(address.id)}
+                >
+                  <Text style={[styles.actionButtonText, { color: colors.error }]}>Delete</Text>
+                </TouchableOpacity>
               </View>
             </View>
           ))
@@ -493,14 +549,15 @@ const styles = StyleSheet.create({
   },
   addressActions: {
     flexDirection: 'row',
-    gap: 12,
+    flexWrap: 'wrap',
+    gap: 8,
     paddingTop: 12,
     borderTopWidth: 1,
     borderTopColor: '#E5E5EA',
     marginTop: 10,
   },
   actionButton: {
-    flex: 1,
+    minWidth: '30%', // Minimum width for each button
     borderWidth: 1,
     borderRadius: 8,
     paddingVertical: 8,

@@ -2,6 +2,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, ActivityIn
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
+import { useCart } from '@/context/CartContext';
 import { useThemeColors } from '@/hooks/useColorScheme';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { formatPrice } from '@/utils/formatNumber';
@@ -13,6 +14,7 @@ export default function CheckoutScreen() {
   const router = useRouter();
   const colors = useThemeColors();
   const { apiService, isAuthenticated, loadingAuth } = useAuth();
+  const { setCartCount } = useCart();
   const [addresses, setAddresses] = useState<any[]>([]);
   const [cartItems, setCartItems] = useState<any[]>([]);
 
@@ -163,6 +165,16 @@ export default function CheckoutScreen() {
 
       const response = await apiService.createOrder(orderData);
       if (response.success || response.id) {
+        // Clear the cart after successful order placement
+        try {
+          await apiService.emptyCart();
+          // Also update the cart count context to 0
+          setCartCount(0);
+        } catch (clearError) {
+          console.error('Error clearing cart after order:', clearError);
+          // Continue to success page even if cart clear fails
+        }
+
         // Redirect to success screen
         const orderId = response.id || response.order?.id || 'Unknown';
         router.push({
