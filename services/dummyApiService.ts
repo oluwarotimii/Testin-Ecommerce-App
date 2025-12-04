@@ -500,7 +500,7 @@ const dummyOrders = [
     ],
     total: 1629.98,
     date_added: "2023-01-15T10:30:00Z",
-    status: "delivered"
+    status: "shipped"
   },
   {
     id: 2,

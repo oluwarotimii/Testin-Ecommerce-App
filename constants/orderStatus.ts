@@ -7,7 +7,7 @@ export const ORDER_STATUS_MAP: Record<string, OrderStatus> = {
     pending: { label: 'Pending', color: '#F1C40F' },
     processing: { label: 'Processing', color: '#3498DB' },
     'on-hold': { label: 'On Hold', color: '#95A5A6' },
-    completed: { label: 'Delivered', color: '#2ECC71' },
+    completed: { label: 'Shipped', color: '#2980B9' }, // Never show as delivered, always as shipped
     failed: { label: 'Failed', color: '#E74C3C' },
     cancelled: { label: 'Cancelled', color: '#E67E22' },
     refunded: { label: 'Refunded', color: '#8E44AD' },

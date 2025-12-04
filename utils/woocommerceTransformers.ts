@@ -180,6 +180,7 @@ export function getOrderStatusColor(status: string): string {
     switch (status.toLowerCase()) {
         case 'completed':
         case 'delivered':
+        case 'shipped':  // Add shipped as a success/green status
             return '#4CAF50'; // success green
         case 'processing':
             return '#FF9800'; // warning orange
@@ -200,7 +201,7 @@ export function getOrderStatusColor(status: string): string {
  */
 export function mapWooCommerceStatus(wcStatus: string): string {
     const statusMap: Record<string, string> = {
-        'completed': 'delivered',
+        'completed': 'shipped',  // Never show as delivered, always as shipped
         'processing': 'processing',
         'on-hold': 'processing',
         'pending': 'processing',
