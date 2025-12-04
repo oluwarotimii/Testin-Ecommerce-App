@@ -148,38 +148,58 @@ export default function ProductsScreen() {
     // Apply category filter
     if (selectedCategory !== 'all' && selectedCategory) {
       filtered = filtered.filter(product => {
-        // Find the category by slug from the available categories
-        const selectedCat = categories.find(cat => cat.slug === selectedCategory);
+        // Check if selectedCategory is a category ID (prefixed with 'cat_')
+        if (selectedCategory.startsWith('cat_')) {
+          const categoryId = parseInt(selectedCategory.replace('cat_', ''), 10);
 
-        if (!selectedCat) {
-          // If we can't find the category by slug, match by product's category name
-          return product.category?.toLowerCase() === selectedCategory.toLowerCase();
+          // Check if the product's category_id matches the selected category ID
+          if (product.category_id && product.category_id === categoryId) {
+            return true;
+          }
+
+          // Check if product.categories array contains the selected category ID
+          if (product.categories && Array.isArray(product.categories)) {
+            return product.categories.some((cat: any) =>
+              cat.id === categoryId
+            );
+          }
+
+          // If no match found, return false
+          return false;
+        } else {
+          // For backward compatibility, if somehow it's not an ID format
+          // Find the category by slug from the available categories
+          const selectedCat = categories.find(cat => cat.slug === selectedCategory);
+
+          if (!selectedCat) {
+            // If we can't find the category by slug, match by product's category name
+            return product.category?.toLowerCase() === selectedCategory.toLowerCase();
+          }
+
+          // Check if the product belongs to the selected category
+          if (product.category_id && selectedCat.category_id &&
+              product.category_id === selectedCat.category_id) {
+            return true;
+          }
+
+          // Check if product.categories array contains the selected category
+          if (product.categories && Array.isArray(product.categories)) {
+            const hasMatchingCategory = product.categories.some((cat: any) =>
+              (cat.id && selectedCat.category_id && cat.id === selectedCat.category_id) ||
+              (cat.slug && selectedCategory && cat.slug === selectedCategory) ||
+              (cat.name && selectedCat.name && cat.name?.toLowerCase() === selectedCat.name?.toLowerCase())
+            );
+            if (hasMatchingCategory) return true;
+          }
+
+          // Fallback to product.category name matching - but make it more specific
+          if (product.category && selectedCat.name) {
+            return product.category.toLowerCase() === selectedCat.name.toLowerCase();
+          }
+
+          // If none of the above match, then the product doesn't belong to selected category
+          return false;
         }
-
-        // Check if the product belongs to the selected category
-        // Check by ID first (most reliable)
-        if (product.category_id && selectedCat.category_id &&
-            product.category_id === selectedCat.category_id) {
-          return true;
-        }
-
-        // Check if product.categories array contains the selected category
-        if (product.categories && Array.isArray(product.categories)) {
-          const hasMatchingCategory = product.categories.some((cat: any) =>
-            (cat.id && selectedCat.category_id && cat.id === selectedCat.category_id) ||
-            (cat.slug && selectedCategory && cat.slug === selectedCategory) ||
-            (cat.name && selectedCat.name && cat.name?.toLowerCase() === selectedCat.name?.toLowerCase())
-          );
-          if (hasMatchingCategory) return true;
-        }
-
-        // Fallback to product.category name matching - but make it more specific
-        if (product.category && selectedCat.name) {
-          return product.category.toLowerCase() === selectedCat.name.toLowerCase();
-        }
-
-        // If none of the above match, then the product doesn't belong to selected category
-        return false;
       });
     }
 
@@ -416,17 +436,17 @@ export default function ProductsScreen() {
 
               {categories.map((category) => (
                 <TouchableOpacity
-                  key={category.id}
+                  key={category.category_id}
                   style={[
                     styles.categoryButton,
                     { backgroundColor: colors.surface },
-                    selectedCategory === category.slug ? { backgroundColor: colors.primary } : null
+                    selectedCategory === `cat_${category.category_id}` ? { backgroundColor: colors.primary } : null
                   ]}
-                  onPress={() => setSelectedCategory(category.slug)}
+                  onPress={() => setSelectedCategory(`cat_${category.category_id}`)}
                 >
                   <Text style={[
                     styles.categoryText,
-                    selectedCategory === category.slug ? { color: colors.white } : { color: colors.text }
+                    selectedCategory === `cat_${category.category_id}` ? { color: colors.white } : { color: colors.text }
                   ]}>
                     {category.name}
                   </Text>
