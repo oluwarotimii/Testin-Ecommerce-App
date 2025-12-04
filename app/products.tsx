@@ -402,7 +402,7 @@ export default function ProductsScreen() {
                 style={[
                   styles.categoryButton,
                   { backgroundColor: colors.surface },
-                  selectedCategory === 'all' && { backgroundColor: colors.primary }
+                  selectedCategory === 'all' ? { backgroundColor: colors.primary } : null
                 ]}
                 onPress={() => setSelectedCategory('all')}
               >
@@ -420,7 +420,7 @@ export default function ProductsScreen() {
                   style={[
                     styles.categoryButton,
                     { backgroundColor: colors.surface },
-                    selectedCategory === category.slug && { backgroundColor: colors.primary }
+                    selectedCategory === category.slug ? { backgroundColor: colors.primary } : null
                   ]}
                   onPress={() => setSelectedCategory(category.slug)}
                 >
