@@ -105,11 +105,15 @@ export default function CheckoutScreen() {
       return sum + (itemPrice * itemQuantity);
     }, 0);
 
-    // No tax, no shipping, no discount as per request
-    const total = subtotal;
+    // Calculate shipping and tax consistently with cart page
+    const shipping = subtotal > 50 ? 0 : 9.99;
+    const tax = subtotal * 0.08;
+    const total = subtotal + shipping + tax;
 
     setOrderSummary({
       subtotal,
+      shipping,
+      tax,
       total
     });
   }, [cartItems]);
@@ -157,7 +161,7 @@ export default function CheckoutScreen() {
         shipping_lines: [{
           method_id: 'flat_rate',
           method_title: 'Standard Shipping',
-          total: '0'
+          total: orderSummary.shipping.toFixed(2)
         }]
       };
 
@@ -347,7 +351,14 @@ export default function CheckoutScreen() {
               <Text style={[styles.summaryLabel, { color: colors.text }]}>Subtotal</Text>
               <Text style={[styles.summaryValue, { color: colors.text }]}>{formatPrice(orderSummary.subtotal)}</Text>
             </View>
-
+            <View style={styles.summaryRow}>
+              <Text style={[styles.summaryLabel, { color: colors.text }]}>Shipping</Text>
+              <Text style={[styles.summaryValue, { color: colors.text }]}>{formatPrice(orderSummary.shipping)}</Text>
+            </View>
+            <View style={styles.summaryRow}>
+              <Text style={[styles.summaryLabel, { color: colors.text }]}>Tax</Text>
+              <Text style={[styles.summaryValue, { color: colors.text }]}>{formatPrice(orderSummary.tax)}</Text>
+            </View>
             <View style={[styles.totalRow, { borderTopColor: colors.border }]}>
               <Text style={[styles.totalLabel, { color: colors.text }]}>Total</Text>
               <Text style={[styles.totalValue, { color: colors.text }]}>{formatPrice(orderSummary.total)}</Text>
