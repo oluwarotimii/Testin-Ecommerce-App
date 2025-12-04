@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
@@ -7,6 +7,7 @@ import { Ionicons } from '@expo/vector-icons';
 import SkeletonProductItem from '@/components/SkeletonProductItem';
 import SkeletonLoader from '@/components/SkeletonLoader';
 import BackButton from '@/components/BackButton';
+import SafeImage from '@/components/SafeImage';
 
 export default function WishlistScreen() {
   const router = useRouter();
@@ -126,7 +127,7 @@ export default function WishlistScreen() {
                   style={styles.gridImageContainer}
                   onPress={() => router.push(`/product/${item.id}`)}
                 >
-                  <Image source={{ uri: imageUrl }} style={styles.gridImage} resizeMode="cover" />
+                  <SafeImage source={{ uri: imageUrl }} style={styles.gridImage} resizeMode="cover" />
                   <TouchableOpacity
                     style={[styles.removeButtonAbsolute, { backgroundColor: 'rgba(255,255,255,0.8)' }]}
                     onPress={() => removeFromWishlist(item.id)}

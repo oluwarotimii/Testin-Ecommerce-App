@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, TextInput, ScrollView, TouchableOpacity, Image, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, TextInput, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
@@ -6,6 +6,7 @@ import { useThemeColors } from '@/hooks/useColorScheme';
 import { MaterialIcons, FontAwesome, Ionicons } from '@expo/vector-icons';
 import { formatPrice } from '@/utils/formatNumber';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import SafeImage from '@/components/SafeImage';
 
 export default function SearchScreen() {
   const router = useRouter();
@@ -177,7 +178,7 @@ export default function SearchScreen() {
                 onPress={() => router.push(`/product/${product.id}`)}
               >
                 <View style={styles.resultImageContainer}>
-                  <Image source={{ uri: product.image }} style={styles.resultImage} />
+                  <SafeImage source={{ uri: product.image }} style={styles.resultImage} />
                   <View style={styles.resultCartOverlay}>
                     <TouchableOpacity
                       style={[styles.resultAddToCartButton, { backgroundColor: colors.primary }]}

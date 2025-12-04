@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Image, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
@@ -6,6 +6,8 @@ import { useThemeColors } from '@/hooks/useColorScheme';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { formatPrice } from '@/utils/formatNumber';
 import SkeletonLoader from '@/components/SkeletonLoader';
+import BackButton from '@/components/BackButton';
+import SafeImage from '@/components/SafeImage';
 
 export default function CheckoutScreen() {
   const router = useRouter();
@@ -191,9 +193,7 @@ export default function CheckoutScreen() {
     return (
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={24} color={colors.text} />
-          </TouchableOpacity>
+          <BackButton />
           <Text style={[styles.title, { color: colors.text }]}>Checkout</Text>
           <View style={{ width: 40 }} />
         </View>
@@ -230,9 +230,7 @@ export default function CheckoutScreen() {
     return (
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={24} color={colors.text} />
-          </TouchableOpacity>
+          <BackButton />
           <Text style={[styles.title, { color: colors.text }]}>Checkout</Text>
           <View style={{ width: 40 }} />
         </View>
@@ -273,9 +271,7 @@ export default function CheckoutScreen() {
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color={colors.text} />
-        </TouchableOpacity>
+        <BackButton />
         <Text style={[styles.title, { color: colors.text }]}>Checkout</Text>
         <View style={{ width: 40 }} />
       </View>
@@ -289,7 +285,7 @@ export default function CheckoutScreen() {
             <View style={[styles.itemsContainer, { backgroundColor: colors.surface }]}>
               {cartItems.map((item, index) => (
                 <View key={item.id} style={[styles.cartItem, { borderBottomColor: colors.border, borderBottomWidth: index === cartItems.length - 1 ? 0 : 1 }]}>
-                  <Image source={{ uri: item.image }} style={[styles.itemImage, { backgroundColor: colors.surface }]} />
+                  <SafeImage source={{ uri: item.image }} style={[styles.itemImage, { backgroundColor: colors.surface }]} />
                   <View style={styles.itemDetails}>
                     <Text style={[styles.itemName, { color: colors.text }]} numberOfLines={2}>{item.title}</Text>
                     <Text style={[styles.itemPrice, { color: '#FFA500' }]}>{formatPrice(typeof item.price === 'number' ? item.price : parseFloat(item.price))}</Text>
@@ -389,11 +385,12 @@ const styles = StyleSheet.create({
   },
   header: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-start',
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingTop: 60,
     paddingBottom: 20,
+    gap: 12,
   },
   backButton: {
     padding: 8,

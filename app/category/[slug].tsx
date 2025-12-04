@@ -24,6 +24,8 @@ export default function CategoryScreen() {
     const [categoryName, setCategoryName] = useState('Category');
     const [searchQuery, setSearchQuery] = useState('');
     const [showSearch, setShowSearch] = useState(false);
+    const [cartSuccess, setCartSuccess] = useState<{ [key: number]: boolean }>({});
+    const [addingToCart, setAddingToCart] = useState<{ [key: number]: boolean }>({});
     const scrollY = useRef(new Animated.Value(0)).current;
 
     const formatPrice = (price: string | number) => {
@@ -140,24 +142,51 @@ export default function CategoryScreen() {
     };
 
     const handleAddToCart = async (productId: number) => {
-        if (!apiService) return;
-        // Optimistic update for faster UI response
-        setCartCount(prev => prev + 1);
+        // Prevent duplicate additions
+        if (addingToCart[productId]) {
+            console.log('Already adding to cart, please wait...');
+            return;
+        }
+
+        setAddingToCart(prev => ({ ...prev, [productId]: true }));
+
         try {
-            await apiService.addToCart(productId, 1);
-            // Fetch actual cart count to sync
-            const cartResponse = await apiService.getCartContents();
-            if (cartResponse && cartResponse.products) {
-                const newCartCount = cartResponse.products.reduce(
-                    (total: any, item: any) => total + item.quantity,
-                    0
-                );
-                setCartCount(newCartCount);
+            const result = await apiService.addToCart(productId, 1);
+            console.log(`Added product ${productId} to cart!`, result);
+
+            // Show success indicator
+            setCartSuccess(prev => ({ ...prev, [productId]: true }));
+            setTimeout(() => {
+                setCartSuccess(prev => {
+                    const newCartSuccess = { ...prev };
+                    delete newCartSuccess[productId];
+                    return newCartSuccess;
+                });
+            }, 1500); // Hide after 1.5 seconds
+
+            // Update cart count
+            try {
+                const cartResponse = await apiService.getCartContents();
+                if (cartResponse && cartResponse.products) {
+                    const newCartCount = cartResponse.products.reduce((total: any, item: any) => total + item.quantity, 0);
+                    setCartCount(newCartCount);
+                }
+            } catch (countError) {
+                console.error("Error updating cart count:", countError);
+                // Fallback: increment by 1
+                setCartCount(prevCount => prevCount + 1);
             }
         } catch (error) {
             console.error('Add to cart error:', error);
-            // Revert optimistic update on error
-            setCartCount(prev => prev - 1);
+        } finally {
+            // Remove from adding state after a short delay
+            setTimeout(() => {
+                setAddingToCart(prev => {
+                    const newAddingToCart = { ...prev };
+                    delete newAddingToCart[productId];
+                    return newAddingToCart;
+                });
+            }, 500);
         }
     };
 
@@ -251,6 +280,9 @@ export default function CategoryScreen() {
                                 onPress={() => router.push(`/product/${product.id}` as any)}
                                 isLiked={wishlist.includes(product.id)}
                                 onToggleWishlist={() => toggleWishlist(product.id)}
+                                onAddToCart={() => handleAddToCart(product.id)}
+                                addingToCart={addingToCart[product.id]}
+                                cartSuccess={cartSuccess[product.id]}
                             />
                         ))}
                     </View>

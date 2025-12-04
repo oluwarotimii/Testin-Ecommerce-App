@@ -35,10 +35,28 @@ export interface AppCategory {
  * Transform WooCommerce product to app format
  */
 export function transformProduct(wcProduct: any): AppProduct {
+    // Extract and validate image URL
+    let imageUrl = '';
+    if (wcProduct.images && wcProduct.images[0]) {
+        imageUrl = wcProduct.images[0].src || wcProduct.images[0];
+    } else if (wcProduct.image) {
+        imageUrl = typeof wcProduct.image === 'string' ? wcProduct.image : (wcProduct.image.src || '');
+    }
+
+    // Ensure image URL is properly formatted
+    if (imageUrl && !imageUrl.startsWith('http')) {
+        // If it's a relative URL, prepend the store URL
+        // Use WORDPRESS_URL as that's what's configured in the .env
+        const storeUrl = process.env.EXPO_PUBLIC_WORDPRESS_URL || '';
+        if (storeUrl && !imageUrl.startsWith('/')) {
+            imageUrl = `${storeUrl}/${imageUrl}`;
+        }
+    }
+
     return {
         id: wcProduct.id,
         title: wcProduct.name || wcProduct.title || 'Untitled Product',
-        image: wcProduct.images && wcProduct.images[0] ? wcProduct.images[0].src : (wcProduct.image || ''),
+        image: imageUrl,
         price: parseFloat(wcProduct.price || '0'),
         original_price: parseFloat(wcProduct.regular_price || wcProduct.price || '0'),
         description: wcProduct.description || wcProduct.short_description || '',
@@ -92,10 +110,31 @@ export function transformOrders(wcOrders: any[]): AppOrder[] {
  * Transform WooCommerce category to app format
  */
 export function transformCategory(wcCategory: any): AppCategory {
+    let imageUrl = '';
+
+    if (wcCategory.image) {
+        if (typeof wcCategory.image === 'string') {
+            imageUrl = wcCategory.image;
+        } else if (typeof wcCategory.image === 'object' && wcCategory.image.src) {
+            imageUrl = wcCategory.image.src;
+        } else if (typeof wcCategory.image === 'object' && wcCategory.image.url) {
+            imageUrl = wcCategory.image.url;
+        }
+    }
+
+    // Ensure image URL is properly formatted
+    if (imageUrl && !imageUrl.startsWith('http')) {
+        // If it's a relative URL, prepend the store URL
+        const storeUrl = process.env.EXPO_PUBLIC_WORDPRESS_URL || '';
+        if (storeUrl && !imageUrl.startsWith('/')) {
+            imageUrl = `${storeUrl}/${imageUrl}`;
+        }
+    }
+
     return {
         category_id: wcCategory.id || wcCategory.category_id,
         name: wcCategory.name || 'Uncategorized',
-        image: wcCategory.image?.src || wcCategory.image || undefined
+        image: imageUrl || undefined
     };
 }
 

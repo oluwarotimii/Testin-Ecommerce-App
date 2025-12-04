@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { useState, useEffect } from 'react';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useThemeColors } from '@/hooks/useColorScheme';
@@ -6,6 +6,7 @@ import { useAuth } from '@/context/AuthContext';
 import { Ionicons } from '@expo/vector-icons';
 import BackButton from '@/components/BackButton';
 import { getOrderStatus } from '@/constants/orderStatus';
+import SafeImage from '@/components/SafeImage';
 
 export default function OrderDetailsScreen() {
   const router = useRouter();
@@ -138,7 +139,7 @@ export default function OrderDetailsScreen() {
             {order.items.map((item: any, index: number) => (
               <View key={item.id}>
                 <View style={styles.itemRow}>
-                  <Image source={{ uri: item.image }} style={[styles.itemImage, { backgroundColor: colors.border }]} />
+                  <SafeImage source={{ uri: item.image }} style={[styles.itemImage, { backgroundColor: colors.border }]} />
                   <View style={styles.itemInfo}>
                     <Text style={[styles.itemTitle, { color: colors.text }]} numberOfLines={2}>{item.title}</Text>
                     <Text style={[styles.itemMeta, { color: colors.textSecondary }]}>
@@ -235,10 +236,11 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-start', // Changed from 'space-between' to 'flex-start' to align items to the left
     paddingHorizontal: 20,
     paddingTop: 60,
     paddingBottom: 20,
+    gap: 12, // Added gap for spacing between back button and title
   },
   backButton: {
     padding: 4,

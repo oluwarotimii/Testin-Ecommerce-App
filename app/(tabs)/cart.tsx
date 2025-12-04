@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
@@ -8,6 +8,7 @@ import { MaterialIcons, FontAwesome, Ionicons } from '@expo/vector-icons';
 import SkeletonCartItem from '@/components/SkeletonCartItem';
 import SkeletonLoader from '@/components/SkeletonLoader';
 import { useIsFocused } from '@react-navigation/native';
+import SafeImage from '@/components/SafeImage';
 import { formatPrice } from '@/utils/formatNumber';
 
 export default function CartScreen() {
@@ -131,7 +132,7 @@ export default function CartScreen() {
       <ScrollView style={[styles.content, { backgroundColor: colors.background }]} showsVerticalScrollIndicator={false}>
         {products.map((item) => (
           <View key={item.productId || item.id} style={[styles.cartItem, { borderBottomColor: colors.border }]}>
-            <Image source={{ uri: item.image }} style={styles.itemImage} />
+            <SafeImage source={{ uri: item.image }} style={styles.itemImage} />
             <View style={styles.itemDetails}>
               <Text style={[styles.itemName, { color: colors.text }]} numberOfLines={2}>{item.title}</Text>
               <Text style={[styles.itemPrice, { color: '#FFA500' }]}>{formatPrice(typeof item.price === 'number' ? item.price : parseFloat(item.price || '0'))}</Text>

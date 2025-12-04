@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Dimensions, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions, Alert } from 'react-native';
 import { useState, useEffect } from 'react';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
@@ -10,6 +10,7 @@ import { formatPrice } from '@/utils/formatNumber';
 import { stripHtml } from '@/utils/htmlUtils';
 import SkeletonProductDetail from '@/components/SkeletonProductDetail';
 import ProductCard from '@/components/ProductCard';
+import SafeImage from '@/components/SafeImage';
 
 const { width } = Dimensions.get('window');
 
@@ -270,7 +271,7 @@ export default function ProductDetailScreen() {
             onPress={() => setShowFullscreenImage(true)}
             activeOpacity={0.9}
           >
-            <Image source={{ uri: product.image }} style={[styles.productImage, { backgroundColor: colors.background }]} />
+            <SafeImage source={{ uri: product.image }} style={[styles.productImage, { backgroundColor: colors.background }]} />
           </TouchableOpacity>
         </View>
 
@@ -340,7 +341,7 @@ export default function ProductDetailScreen() {
                   onPress={() => router.push(`/product/${item.id}` as any)}
                 >
                   <View style={styles.similarProductImageContainer}>
-                    <Image source={{ uri: item.image }} style={[styles.similarProductImage, { backgroundColor: colors.background }]} />
+                    <SafeImage source={{ uri: item.image }} style={[styles.similarProductImage, { backgroundColor: colors.background }]} />
                     <View style={styles.similarWishlistOverlay}>
                       <TouchableOpacity
                         style={[styles.wishlistButton, { backgroundColor: colors.surface }]}
@@ -412,7 +413,7 @@ export default function ProductDetailScreen() {
             <TouchableOpacity
               onPress={() => setShowFullscreenImage(false)}
             >
-              <Image
+              <SafeImage
                 source={{ uri: product?.image }}
                 style={styles.fullscreenImage}
                 resizeMode="contain"
