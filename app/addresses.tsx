@@ -9,7 +9,7 @@ import BackButton from '@/components/BackButton';
 export default function AddressesScreen() {
   const router = useRouter();
   const colors = useThemeColors();
-  const { apiService, isAuthenticated } = useAuth();
+  const { apiService, isAuthenticated, user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [addresses, setAddresses] = useState<any[]>([]);
   const [isAdding, setIsAdding] = useState(false);
@@ -52,8 +52,8 @@ export default function AddressesScreen() {
 
   const handleEditAddress = (address: any) => {
     setFormData({
-      firstName: address.firstName || '',
-      lastName: address.lastName || '',
+      firstName: address.firstName || user?.first_name || user?.name?.split(' ')[0] || '',
+      lastName: address.lastName || user?.last_name || user?.name?.split(' ').slice(1).join(' ') || user?.name || '',
       company: address.company || '',
       address: address.address || '',
       address2: address.address2 || '',
@@ -61,8 +61,8 @@ export default function AddressesScreen() {
       state: address.state || '',
       zipCode: address.zipCode || '',
       country: address.country || '',
-      phone: address.phone || '',
-      email: address.email || '',
+      phone: address.phone || user?.phone || '',
+      email: address.email || user?.email || '',
       isDefault: address.isDefault || false,
     });
     setIsEditing(true);
@@ -252,7 +252,7 @@ export default function AddressesScreen() {
                 style={[styles.input, { backgroundColor: colors.surface, color: colors.text }]}
                 value={formData.firstName}
                 onChangeText={(text) => setFormData({ ...formData, firstName: text })}
-                placeholder="Name for this address (e.g., Work, Home, etc.)"
+                placeholder="First name"
                 placeholderTextColor={colors.textSecondary}
               />
             </View>
@@ -263,7 +263,7 @@ export default function AddressesScreen() {
                 style={[styles.input, { backgroundColor: colors.surface, color: colors.text }]}
                 value={formData.lastName}
                 onChangeText={(text) => setFormData({ ...formData, lastName: text })}
-                placeholder="Last name for this address"
+                placeholder="Last name"
                 placeholderTextColor={colors.textSecondary}
               />
             </View>
@@ -430,15 +430,15 @@ export default function AddressesScreen() {
               style={[styles.primaryButton, { backgroundColor: colors.primary }]}
               onPress={() => {
                 setFormData({
-                  firstName: '',
-                  lastName: '',
+                  firstName: user?.first_name || user?.first_name || user?.name?.split(' ')[0] || '',
+                  lastName: user?.last_name || user?.name?.split(' ').slice(1).join(' ') || user?.name || '',
                   address: '',
                   city: '',
                   state: '',
                   zipCode: '',
                   country: '',
-                  phone: '',
-                  email: '',
+                  phone: user?.phone || '',
+                  email: user?.email || '',
                   isDefault: false,
                 });
                 setIsAdding(true);
