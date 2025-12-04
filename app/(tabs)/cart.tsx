@@ -58,16 +58,14 @@ export default function CartScreen() {
     setCartCount(totalQuantity);
   }, [products, setCartCount]);
 
-  // Calculate subtotal consistently with checkout page
+  // Calculate subtotal consistently with checkout page (no shipping or tax)
   const subtotal = products.reduce((sum, item) => {
     const price = typeof item.price === 'number' ? item.price : parseFloat(item.price || '0');
     const quantity = typeof item.quantity === 'number' ? item.quantity : parseInt(item.quantity) || 1;
     return sum + (price * quantity);
   }, 0);
-  // Keep the same calculation to maintain consistency
-  const shipping = subtotal > 50 ? 0 : 9.99;
-  const tax = subtotal * 0.08;
-  const total = subtotal + shipping + tax;
+  // No shipping, no tax - total is same as subtotal
+  const total = subtotal;
 
   if (loading) {
     return (
