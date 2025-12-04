@@ -166,6 +166,9 @@ export default function CategoryScreen() {
                 });
             }, 1500); // Hide after 1.5 seconds
 
+            // Add a small delay before fetching updated cart to ensure the server processes the add
+            await new Promise(resolve => setTimeout(resolve, 300)); // 300ms delay
+
             // Update cart count to actual value from server with error handling
             try {
                 const cartResponse = await apiService.getCartContents();
