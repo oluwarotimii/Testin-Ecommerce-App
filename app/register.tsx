@@ -17,40 +17,43 @@ export default function RegisterScreen() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
 
   const handleRegister = async () => {
+    setError(''); // Clear previous errors
     if (password !== confirmPassword) {
-      Alert.alert("Passwords don't match", "Please make sure both passwords are the same.");
+      setError("Passwords don't match. Please make sure both passwords are the same.");
       return;
     }
 
     if (!firstName || !lastName || !email || !phone || !password) {
-      Alert.alert("Missing Information", "Please fill in all fields.");
+      setError("Please fill in all fields.");
       return;
     }
 
     try {
       await register(firstName, lastName, email, phone, password);
-      Alert.alert('Registration Successful', 'Account created successfully!');
-      router.push('/(tabs)');
+      setSuccess('Account created successfully!');
+      // Optional: automatically navigate after a delay or let user click to continue
+      setTimeout(() => {
+        router.push('/(tabs)');
+      }, 1500); // Navigate after 1.5 seconds
     } catch (error: any) {
       console.error("Registration error:", error);
 
       // Parse error message for user-friendly display
-      let errorTitle = 'Registration Error';
       let errorMessage = 'An unexpected error occurred. Please try again.';
 
       if (error?.code === 'registration-error-email-exists') {
-        errorTitle = 'Email Already Registered';
         errorMessage = 'This email is already registered. Please log in or use a different email address.';
       } else if (error?.code === 'registration-error-username-exists') {
-        errorTitle = 'Username Already Exists';
         errorMessage = 'This username is already taken. Please try a different email address.';
       } else if (error?.message) {
         errorMessage = error.message;
       }
 
-      Alert.alert(errorTitle, errorMessage);
+      setError(errorMessage);
     }
   };
 
@@ -72,6 +75,16 @@ export default function RegisterScreen() {
       </View>
 
       <View style={styles.form}>
+        {success ? (
+          <View style={[styles.successContainer, { backgroundColor: `${colors.success || '#4CD964'}20`, borderColor: colors.success || '#4CD964', borderWidth: 1, borderRadius: 8, padding: 12, marginBottom: 16 }]}>
+            <Text style={[styles.successText, { color: colors.success || '#4CD964', fontSize: 14 }]}>{success}</Text>
+          </View>
+        ) : null}
+        {error ? (
+          <View style={[styles.errorContainer, { backgroundColor: `${colors.error}20`, borderColor: colors.error, borderWidth: 1, borderRadius: 8, padding: 12, marginBottom: 16 }]}>
+            <Text style={[styles.errorText, { color: colors.error, fontSize: 14 }]}>{error}</Text>
+          </View>
+        ) : null}
         <View style={[styles.inputContainer, { backgroundColor: colors.surface }]}>
           <Ionicons name="person-outline" size={20} color={colors.textSecondary} style={styles.inputIcon} />
           <TextInput
@@ -261,6 +274,20 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   footerLink: {
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  errorContainer: {
+    marginVertical: 8,
+  },
+  errorText: {
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  successContainer: {
+    marginVertical: 8,
+  },
+  successText: {
     fontSize: 14,
     fontWeight: '500',
   },

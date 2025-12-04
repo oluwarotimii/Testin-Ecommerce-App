@@ -13,10 +13,12 @@ export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState('');
 
   const handleLogin = async () => {
+    setError(''); // Clear previous errors
     if (!email || !password) {
-      Alert.alert('Missing Information', 'Please enter both email and password.');
+      setError('Please enter both email and password.');
       return;
     }
 
@@ -27,20 +29,17 @@ export default function LoginScreen() {
       console.error("Login error:", error);
 
       // Parse error message for user-friendly display
-      let errorTitle = 'Login Error';
       let errorMessage = 'An unexpected error occurred. Please try again.';
 
       if (error?.code === '[jwt_auth] incorrect_password' || error?.code === 'invalid_username') {
-        errorTitle = 'Invalid Credentials';
         errorMessage = 'The email or password you entered is incorrect. Please try again.';
       } else if (error?.message?.includes('incorrect') || error?.message?.includes('invalid')) {
-        errorTitle = 'Invalid Credentials';
         errorMessage = 'The email or password you entered is incorrect. Please try again.';
       } else if (error?.message) {
         errorMessage = error.message;
       }
 
-      Alert.alert(errorTitle, errorMessage);
+      setError(errorMessage);
     }
   };
 
@@ -62,6 +61,11 @@ export default function LoginScreen() {
       </View>
 
       <View style={styles.form}>
+        {error ? (
+          <View style={[styles.errorContainer, { backgroundColor: `${colors.error}20`, borderColor: colors.error, borderWidth: 1, borderRadius: 8, padding: 12, marginBottom: 16 }]}>
+            <Text style={[styles.errorText, { color: colors.error, fontSize: 14 }]}>{error}</Text>
+          </View>
+        ) : null}
         <View style={[styles.inputContainer, { backgroundColor: colors.surface }]}>
           <Ionicons name="mail" size={20} color={colors.textSecondary} style={styles.inputIcon} />
           <TextInput
@@ -230,6 +234,13 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   footerLink: {
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  errorContainer: {
+    marginVertical: 8,
+  },
+  errorText: {
     fontSize: 14,
     fontWeight: '500',
   },
