@@ -679,6 +679,10 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '500',
   },
+  card: {
+    borderRadius: 12,
+    padding: 16,
+  },
   summaryCard: {
     borderRadius: 12,
     padding: 16,
