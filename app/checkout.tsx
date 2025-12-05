@@ -22,6 +22,15 @@ export default function CheckoutScreen() {
   const [loadingCart, setLoadingCart] = useState(true);
   const [placingOrder, setPlacingOrder] = useState(false);
 
+  // Dynamic payment and shipping state
+  const [paymentMethods, setPaymentMethods] = useState<any[]>([]);
+  const [shippingMethods, setShippingMethods] = useState<any[]>([]);
+  const [loadingPaymentMethods, setLoadingPaymentMethods] = useState(true);
+  const [loadingShippingMethods, setLoadingShippingMethods] = useState(true);
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string>('');
+  const [selectedShippingMethod, setSelectedShippingMethod] = useState<any>(null);
+  const [selectedPickupBranch, setSelectedPickupBranch] = useState<string>('');
+
   const [selectedAddress, setSelectedAddress] = useState(0);
   const [orderSummary, setOrderSummary] = useState({
     subtotal: 0,
@@ -93,10 +102,44 @@ export default function CheckoutScreen() {
     }
   }, [apiService, productId, quantity]);
 
+  // Fetch payment and shipping methods
+  const fetchPaymentAndShippingMethods = useCallback(async () => {
+    try {
+      setLoadingPaymentMethods(true);
+      const methods = await apiService.getPaymentMethods();
+      setPaymentMethods(methods);
+      // Auto-select first payment method if available
+      if (methods.length > 0) {
+        setSelectedPaymentMethod(methods[0].id);
+      }
+    } catch (error) {
+      console.error('Error fetching payment methods:', error);
+      setPaymentMethods([]);
+    } finally {
+      setLoadingPaymentMethods(false);
+    }
+
+    try {
+      setLoadingShippingMethods(true);
+      const methods = await apiService.getShippingMethods();
+      setShippingMethods(methods);
+      // Auto-select first shipping method if available
+      if (methods.length > 0) {
+        setSelectedShippingMethod(methods[0]);
+      }
+    } catch (error) {
+      console.error('Error fetching shipping methods:', error);
+      setShippingMethods([]);
+    } finally {
+      setLoadingShippingMethods(false);
+    }
+  }, [apiService]);
+
   // Check authentication status and fetch checkout data only if authenticated
   useEffect(() => {
     if (isAuthenticated) {
       fetchCheckoutData();
+      fetchPaymentAndShippingMethods();
     }
   }, [isAuthenticated, fetchCheckoutData]);
 
@@ -129,24 +172,26 @@ export default function CheckoutScreen() {
       // Format order data for WooCommerce
       // Using default/fallback values for payment and shipping as sections were removed
       const orderData = {
-        payment_method: 'bacs',
-        payment_method_title: 'Direct Bank Transfer',
+        payment_method: selectedPaymentMethod || 'bacs', // Use selected payment method
+        payment_method_title: paymentMethods.find(m => m.id === selectedPaymentMethod)?.title || 'Direct Bank Transfer',
         set_paid: false,
         billing: {
-          first_name: user?.first_name || user?.first_name || user?.name?.split(' ')[0] || 'Customer',
-          last_name: user?.last_name || user?.name?.split(' ').slice(1).join(' ') || user?.name || '',
+          first_name: selectedAddressData?.firstName || '',
+          last_name: selectedAddressData?.lastName || '',
           address_1: selectedAddressData?.address || '',
+          address_2: '',
           city: selectedAddressData?.city || '',
           state: selectedAddressData?.state || '',
           postcode: selectedAddressData?.zipCode || '',
           country: selectedAddressData?.country || '',
-          email: user?.email || selectedAddressData?.email || '',
-          phone: user?.phone || selectedAddressData?.phone || ''
+          email: user?.email || '',
+          phone: selectedAddressData?.phone || ''
         },
         shipping: {
-          first_name: selectedAddressData?.firstName || 'Customer',
+          first_name: selectedAddressData?.firstName || '',
           last_name: selectedAddressData?.lastName || '',
           address_1: selectedAddressData?.address || '',
+          address_2: '',
           city: selectedAddressData?.city || '',
           state: selectedAddressData?.state || '',
           postcode: selectedAddressData?.zipCode || '',
@@ -156,11 +201,20 @@ export default function CheckoutScreen() {
           product_id: item.id || item.productId,
           quantity: item.quantity || 1
         })),
-        shipping_lines: [{
+        shipping_lines: selectedShippingMethod ? [{
+          method_id: selectedShippingMethod.method_id || 'flat_rate',
+          method_title: selectedShippingMethod.title || 'Standard Shipping',
+          total: '0'
+        }] : [{
           method_id: 'flat_rate',
           method_title: 'Standard Shipping',
           total: '0'
-        }]
+        }],
+        // Add pickup branch as meta data if selected
+        meta_data: selectedPickupBranch ? [{
+          key: '_pickup_branch',
+          value: selectedPickupBranch
+        }] : []
       };
 
       const response = await apiService.createOrder(orderData);
@@ -350,6 +404,125 @@ export default function CheckoutScreen() {
             <Text style={[styles.addButtonText, { color: colors.primary }]}>+ Add New Address</Text>
           </TouchableOpacity>
         </View>
+
+        {/* Payment Method */}
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>Payment Method</Text>
+          {loadingPaymentMethods ? (
+            <View style={[styles.card, { backgroundColor: colors.surface }]}>
+              <ActivityIndicator color={colors.primary} />
+            </View>
+          ) : paymentMethods.length > 0 ? (
+            <View style={[styles.card, { backgroundColor: colors.surface }]}>
+              {paymentMethods.map((method, index) => (
+                <View key={method.id}>
+                  <TouchableOpacity
+                    style={styles.paymentMethodItem}
+                    onPress={() => setSelectedPaymentMethod(method.id)}
+                  >
+                    <View style={styles.radioOuter}>
+                      {selectedPaymentMethod === method.id && (
+                        <View style={[styles.radioInner, { backgroundColor: colors.primary }]} />
+                      )}
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={[styles.paymentMethodTitle, { color: colors.text }]}>
+                        {method.title}
+                      </Text>
+                      {method.description && (
+                        <Text style={[styles.paymentMethodDescription, { color: colors.textSecondary }]}>
+                          {method.description}
+                        </Text>
+                      )}
+                      {selectedPaymentMethod === method.id && method.instructions && (
+                        <View style={[styles.instructionsBox, { backgroundColor: colors.background, borderColor: colors.border }]}>
+                          <Ionicons name="information-circle" size={16} color={colors.primary} />
+                          <Text style={[styles.instructionsText, { color: colors.text }]}>
+                            {method.instructions}
+                          </Text>
+                        </View>
+                      )}
+                    </View>
+                  </TouchableOpacity>
+                  {index < paymentMethods.length - 1 && (
+                    <View style={[styles.divider, { backgroundColor: colors.border }]} />
+                  )}
+                </View>
+              ))}
+            </View>
+          ) : (
+            <View style={[styles.card, { backgroundColor: colors.surface }]}>
+              <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
+                No payment methods available
+              </Text>
+            </View>
+          )}
+        </View>
+
+        {/* Shipping/Delivery Method */}
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>Delivery Method</Text>
+          {loadingShippingMethods ? (
+            <View style={[styles.card, { backgroundColor: colors.surface }]}>
+              <ActivityIndicator color={colors.primary} />
+            </View>
+          ) : shippingMethods.length > 0 ? (
+            <View style={[styles.card, { backgroundColor: colors.surface }]}>
+              {shippingMethods.map((method, index) => (
+                <View key={`${method.id}-${method.instance_id}`}>
+                  <TouchableOpacity
+                    style={styles.paymentMethodItem}
+                    onPress={() => {
+                      setSelectedShippingMethod(method);
+                      // Clear pickup branch if switching away from pickup
+                      if (method.method_id !== 'local_pickup') {
+                        setSelectedPickupBranch('');
+                      }
+                    }}
+                  >
+                    <View style={styles.radioOuter}>
+                      {selectedShippingMethod?.instance_id === method.instance_id && (
+                        <View style={[styles.radioInner, { backgroundColor: colors.primary }]} />
+                      )}
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={[styles.paymentMethodTitle, { color: colors.text }]}>
+                        {method.title}
+                      </Text>
+                      {method.zone_name && (
+                        <Text style={[styles.paymentMethodDescription, { color: colors.textSecondary }]}>
+                          Zone: {method.zone_name}
+                        </Text>
+                      )}
+                    </View>
+                  </TouchableOpacity>
+                  {index < shippingMethods.length - 1 && (
+                    <View style={[styles.divider, { backgroundColor: colors.border }]} />
+                  )}
+                </View>
+              ))}
+            </View>
+          ) : (
+            <View style={[styles.card, { backgroundColor: colors.surface }]}>
+              <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
+                No shipping methods available
+              </Text>
+            </View>
+          )}
+        </View>
+
+        {/* Pickup Branch Selection (conditional) */}
+        {selectedShippingMethod?.method_id === 'local_pickup' && (
+          <View style={styles.section}>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>Select Pickup Branch</Text>
+            <View style={[styles.card, { backgroundColor: colors.surface }]}>
+              <Text style={[styles.infoText, { color: colors.textSecondary }]}>
+                Pickup branch selection will be available based on your WooCommerce configuration.
+                {selectedShippingMethod.zone_name && ` Available in: ${selectedShippingMethod.zone_name}`}
+              </Text>
+            </View>
+          </View>
+        )}
 
         {/* Order Summary */}
         <View style={[styles.section, { marginBottom: 100 }]}>
@@ -593,5 +766,63 @@ const styles = StyleSheet.create({
   signupButtonText: {
     fontSize: 14,
     fontWeight: '500',
+  },
+  // Payment and Shipping Method styles
+  paymentMethodItem: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    paddingVertical: 12,
+  },
+  radioOuter: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    borderWidth: 2,
+    borderColor: '#007AFF',
+    marginRight: 12,
+    marginTop: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  radioInner: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+  },
+  paymentMethodTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  paymentMethodDescription: {
+    fontSize: 14,
+    marginBottom: 4,
+  },
+  instructionsBox: {
+    flexDirection: 'row',
+    marginTop: 8,
+    padding: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    gap: 8,
+  },
+  instructionsText: {
+    flex: 1,
+    fontSize: 14,
+    lineHeight: 20,
+  },
+  divider: {
+    height: 1,
+    marginVertical: 8,
+  },
+  emptyText: {
+    fontSize: 14,
+    textAlign: 'center',
+    padding: 16,
+  },
+  infoText: {
+    fontSize: 14,
+    lineHeight: 20,
+    padding: 12,
   },
 });

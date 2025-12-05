@@ -793,31 +793,65 @@ class WordPressApiService {
 
   // Checkout
   async getPaymentMethods() {
-    // WooCommerce handles payment methods differently
-    // This returns available payment gateways
     try {
-      // Get available payment methods from WooCommerce
-      return [
-        { id: 'bacs', name: 'Direct Bank Transfer', icon: 'bank' },
-        { id: 'cheque', name: 'Check Payments', icon: 'dollar-sign' },
-        { id: 'cod', name: 'Cash on Delivery', icon: 'hand' },
-        { id: 'stripe', name: 'Credit Card (Stripe)', icon: 'credit-card' },
-        { id: 'paypal', name: 'PayPal', icon: 'paypal' }
-      ];
+      // Fetch payment gateways from WooCommerce
+      const response = await this.handleRequest('/payment_gateways');
+
+      // Filter to only enabled payment methods and format response
+      const enabledMethods = response.filter((method: any) => method.enabled === true);
+
+      return enabledMethods.map((method: any) => ({
+        id: method.id,
+        title: method.title,
+        description: method.description,
+        instructions: method.settings?.instructions?.value || '',
+        enabled: method.enabled,
+        method_title: method.method_title || method.title
+      }));
     } catch (error) {
       console.error('Error getting payment methods:', error);
+      // Return empty array on error - checkout will handle gracefully
       return [];
     }
   }
 
   async getShippingMethods() {
-    // WooCommerce calculates shipping methods dynamically based on cart and location
-    // This is a simplified response
-    return [
-      { id: 1, name: 'Standard Shipping', price: 0, estimated_days: 5 },
-      { id: 2, name: 'Express Shipping', price: 9.99, estimated_days: 2 },
-      { id: 3, name: 'Overnight Shipping', price: 19.99, estimated_days: 1 }
-    ];
+    try {
+      // Fetch shipping zones from WooCommerce
+      const zones = await this.handleRequest('/shipping/zones');
+
+      const allMethods: any[] = [];
+
+      // Fetch methods for each zone
+      for (const zone of zones) {
+        try {
+          const methods = await this.handleRequest(`/shipping/zones/${zone.id}/methods`);
+
+          // Add zone info to each method
+          methods.forEach((method: any) => {
+            allMethods.push({
+              id: method.id,
+              instance_id: method.instance_id,
+              title: method.title,
+              method_id: method.method_id,
+              method_title: method.method_title,
+              enabled: method.enabled,
+              settings: method.settings,
+              zone_id: zone.id,
+              zone_name: zone.name
+            });
+          });
+        } catch (error) {
+          console.error(`Error fetching methods for zone ${zone.id}:`, error);
+        }
+      }
+
+      // Filter to only enabled methods
+      return allMethods.filter(method => method.enabled);
+    } catch (error) {
+      console.error('Error getting shipping methods:', error);
+      return [];
+    }
   }
 
   async createOrder(orderData: any) {
