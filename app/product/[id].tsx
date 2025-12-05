@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions, Alert, Share } from 'react-native';
 import { useState, useEffect } from 'react';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
@@ -226,13 +226,28 @@ export default function ProductDetailScreen() {
 
   const handleShare = async () => {
     try {
-      await Share.share({
-        message: `Check out this product: ${product.title} - ₦${product.price}`,
-        url: `https://femtech.ng/product/${product.id}`, // Hypothetical URL
-        title: product.title,
+      const shareMessage = `🛍️ Check out this amazing product!\n\n${product.title}\n\n💰 Price: ${formatPrice(typeof product.price === 'number' ? product.price : parseFloat(product.price || '0'))}\n\n${stripHtml(product.description).substring(0, 150)}${stripHtml(product.description).length > 150 ? '...' : ''}\n\nShop now at Techin!`;
+
+      const result = await Share.share({
+        message: shareMessage,
+        title: `${product.title} - Techin`,
       });
+
+      if (result.action === Share.sharedAction) {
+        if (result.activityType) {
+          // Shared with activity type
+          console.log('Shared with activity type:', result.activityType);
+        } else {
+          // Shared
+          console.log('Product shared successfully');
+        }
+      } else if (result.action === Share.dismissedAction) {
+        // Dismissed
+        console.log('Share dismissed');
+      }
     } catch (error: any) {
-      Alert.alert(error.message);
+      console.error('Share error:', error);
+      Alert.alert('Error', 'Failed to share product. Please try again.');
     }
   };
 
