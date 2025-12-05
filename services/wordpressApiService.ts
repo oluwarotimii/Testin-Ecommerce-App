@@ -538,7 +538,9 @@ class WordPressApiService {
 
     try {
       const response = await this.api.get('/products', { params });
-      return response.data;
+      // Transform WooCommerce products to app format
+      const { transformProducts } = require('../utils/woocommerceTransformers');
+      return transformProducts(response.data);
     } catch (error: any) {
       console.error('Error searching products:', error.response?.data || error.message);
       throw error;
