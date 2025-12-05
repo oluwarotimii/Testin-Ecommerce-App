@@ -47,7 +47,7 @@ interface ApiService {
   getCategories: (params?: any) => Promise<any>;
   getCategory: (category_id: number | string) => Promise<any>;
   getCartContents: () => Promise<any>;
-  addToCart: (product_id: number, quantity?: number) => Promise<any>;
+  addToCart: (product_id: number, quantity?: number, productData?: any) => Promise<any>;
   updateCart: (cart_id: number, quantity: number) => Promise<any>;
   removeFromCart: (key: number) => Promise<any>;
   getWishlist: () => Promise<any>;

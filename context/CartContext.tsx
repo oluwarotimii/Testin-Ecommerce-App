@@ -12,27 +12,35 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [cartCount, setCartCount] = useState(0);
   const { apiService, isAuthenticated } = useAuth();
 
-  // Load cart count from API when service is available
+  // OPTIMIZED: Load cart count only once on mount, not every time apiService changes
   useEffect(() => {
+    let isMounted = true;
+
     const loadCartCount = async () => {
-      if (apiService) {
+      if (apiService && isMounted) {
         try {
           const cartResponse = await apiService.getCartContents();
-          if (cartResponse && cartResponse.products) {
+          if (cartResponse && cartResponse.products && isMounted) {
             const count = cartResponse.products.reduce((total: any, item: any) => total + item.quantity, 0);
             setCartCount(count);
           }
         } catch (error) {
           console.error('Error loading cart count:', error);
-          setCartCount(0);
+          if (isMounted) {
+            setCartCount(0);
+          }
         }
-      } else {
+      } else if (!apiService && isMounted) {
         setCartCount(0);
       }
     };
 
     loadCartCount();
-  }, [apiService]);
+
+    return () => {
+      isMounted = false;
+    };
+  }, []); // OPTIMIZED: Run only once on mount
 
   return (
     <CartContext.Provider value={{ cartCount, setCartCount }}>

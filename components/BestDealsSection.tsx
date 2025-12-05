@@ -30,10 +30,10 @@ export default function BestDealsSection({ wishlist, toggleWishlist }: BestDeals
         if (!apiService) return;
         setLoadingFeatured(true);
         try {
-            // Try to find 'trending' category first
+            // Try to find 'daily-deals' category first
             let categories = await apiService.getCategories({ slug: 'daily-deals' });
 
-            // If not found, fallback to 'clothing' or just the first category
+            // If not found, fallback to first category
             if (!categories || categories.length === 0) {
                 categories = await apiService.getCategories({ per_page: 1 });
             }
@@ -43,7 +43,7 @@ export default function BestDealsSection({ wishlist, toggleWishlist }: BestDeals
                 setFeaturedCategoryId(category.id);
 
                 // Fetch products for this category
-                const products = await apiService.getProducts({ category: category.id, limit: 4 });
+                const products = await apiService.getProducts({ category: category.id, per_page: 4 });
                 const transformed = transformProducts(products);
                 setFeaturedProducts(transformed);
             }
@@ -52,11 +52,14 @@ export default function BestDealsSection({ wishlist, toggleWishlist }: BestDeals
         } finally {
             setLoadingFeatured(false);
         }
-    }, [apiService]);
+    }, []); // OPTIMIZED: Removed apiService dependency
 
+    // OPTIMIZED: Fetch only once on mount
     useEffect(() => {
-        fetchFeaturedCategory();
-    }, [fetchFeaturedCategory]);
+        if (apiService) {
+            fetchFeaturedCategory();
+        }
+    }, [apiService, fetchFeaturedCategory]); // Added apiService to dependency array to ensure fetchFeaturedCategory is called when apiService becomes available
 
     if (loadingFeatured) {
         return (
@@ -127,7 +130,8 @@ export default function BestDealsSection({ wishlist, toggleWishlist }: BestDeals
                                             setCartCount(prev => prev + 1);
 
                                             try {
-                                                const result = await apiService.addToCart(product.id, 1);
+                                                // OPTIMIZED: Pass product data to avoid additional API call
+                                                const result = await apiService.addToCart(product.id, 1, product);
                                                 console.log(`Added ${product.title} to cart!`, result);
 
                                                 // Show success indicator
@@ -140,12 +144,7 @@ export default function BestDealsSection({ wishlist, toggleWishlist }: BestDeals
                                                     });
                                                 }, 1500); // Hide after 1.5 seconds
 
-                                                // Update cart count to actual value if needed
-                                                const cartResponse = await apiService.getCartContents();
-                                                if (cartResponse && cartResponse.products) {
-                                                    const newCartCount = cartResponse.products.reduce((total: any, item: any) => total + item.quantity, 0);
-                                                    setCartCount(newCartCount);
-                                                }
+                                                // OPTIMIZED: Removed cart contents fetch - trust optimistic update
                                             } catch (error) {
                                                 console.error("Add to cart error:", error);
                                                 // Revert optimistic update on error

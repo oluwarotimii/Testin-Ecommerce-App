@@ -176,8 +176,6 @@ export default function ProfileScreen() {
               <Text style={[styles.menuText, { color: '#D32F2F' }]}>Log Out</Text>
             </TouchableOpacity>
           </View>
-        </View>
-      )}
     </ScrollView>
   );
 }

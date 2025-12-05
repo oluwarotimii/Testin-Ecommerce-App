@@ -46,7 +46,7 @@ export default function HomeScreen() {
     } catch (error) {
       console.error('Error fetching wishlist:', error);
     }
-  }, [apiService]);
+  }, []); // OPTIMIZED: Removed apiService dependency to prevent re-fetches
 
   const fetchProducts = useCallback(async () => {
     if (!apiService) return;
@@ -65,7 +65,7 @@ export default function HomeScreen() {
     } finally {
       setLoadingProducts(false);
     }
-  }, [apiService]);
+  }, []); // OPTIMIZED: Removed apiService dependency to prevent re-fetches
 
   const loadMoreProducts = useCallback(async () => {
     if (!hasMoreProducts || isLoadingMore || !apiService) return;
@@ -88,7 +88,7 @@ export default function HomeScreen() {
     } finally {
       setIsLoadingMore(false);
     }
-  }, [apiService, currentPage, hasMoreProducts, isLoadingMore]);
+  }, [currentPage, hasMoreProducts, isLoadingMore]); // OPTIMIZED: Removed apiService dependency
 
   const fetchCarouselItems = useCallback(async () => {
     setLoadingCarousel(true);
@@ -102,7 +102,7 @@ export default function HomeScreen() {
     } finally {
       setLoadingCarousel(false);
     }
-  }, []);
+  }, []); // Already optimized
 
   const fetchCategories = useCallback(async () => {
     if (!apiService) return;
@@ -118,11 +118,10 @@ export default function HomeScreen() {
     } finally {
       setLoadingCategories(false);
     }
-  }, [apiService]);
+  }, []); // OPTIMIZED: Removed apiService dependency to prevent re-fetches
 
+  // OPTIMIZED: Fetch data only once when component mounts or when authentication changes
   useEffect(() => {
-    // Fetch products and categories regardless of user authentication (using WooCommerce API credentials)
-    // Only fetch wishlist if authenticated
     if (apiService) {
       fetchProducts();
       fetchCategories();
@@ -130,33 +129,22 @@ export default function HomeScreen() {
         fetchWishlist();
       }
     }
-    // Always fetch carousel (public endpoint)
     fetchCarouselItems();
-  }, [isAuthenticated, apiService, fetchProducts, fetchCategories, fetchWishlist, fetchCarouselItems]);
+  }, [isAuthenticated]); // OPTIMIZED: Only depend on isAuthenticated, not on functions
 
-  // Handle push notifications
+  // OPTIMIZED: Handle push notifications - run only once on mount
   useEffect(() => {
-    const setupNotifications = async () => {
-      // Register for push notifications
-      try {
-        // Import the notification service function
-        const { registerForPushNotificationsAsync } = await import('@/services/notificationService');
-        // Pass session token if available, though currently not strictly required by the public endpoint
-        await registerForPushNotificationsAsync(apiService?.sessionToken || undefined);
-      } catch (error) {
-        console.error('Error setting up push notifications:', error);
-      }
-    };
-
-    setupNotifications();
-
-    // Setup notification listeners
     let cleanupFn: (() => void) | null = null;
 
-    const setupNotificationListeners = async () => {
+    const setupNotifications = async () => {
       try {
-        const notificationService = await import('@/services/notificationService');
-        cleanupFn = notificationService.setupNotificationListeners((response) => {
+        const { registerForPushNotificationsAsync, setupNotificationListeners } = await import('@/services/notificationService');
+
+        // Register for push notifications
+        await registerForPushNotificationsAsync(apiService?.sessionToken || undefined);
+
+        // Setup notification listeners
+        cleanupFn = setupNotificationListeners((response) => {
           // Handle notification tap - could navigate to specific content
           const { linkType, linkValue } = response?.notification?.request?.content?.data || {};
           if (linkType && linkValue) {
@@ -168,11 +156,11 @@ export default function HomeScreen() {
           }
         });
       } catch (error) {
-        console.error('Error setting up notification listeners:', error);
+        console.error('Error setting up push notifications:', error);
       }
     };
 
-    setupNotificationListeners();
+    setupNotifications();
 
     // Cleanup listeners on unmount
     return () => {
@@ -180,16 +168,18 @@ export default function HomeScreen() {
         cleanupFn();
       }
     };
-  }, [apiService, router]);
+  }, []); // OPTIMIZED: Run only once on mount
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     await fetchProducts();
     await fetchCategories();
-    await fetchWishlist();
+    if (isAuthenticated) {
+      await fetchWishlist();
+    }
     await fetchCarouselItems();
     setRefreshing(false);
-  }, [fetchProducts, fetchCategories, fetchWishlist, fetchCarouselItems]);
+  }, [isAuthenticated]); // OPTIMIZED: Removed function dependencies
 
 
   const handleSeeAllProducts = () => {
@@ -245,7 +235,8 @@ export default function HomeScreen() {
     setCartCount(prev => prev + 1);
 
     try {
-      const result = await apiService.addToCart(product.id, 1);
+      // OPTIMIZED: Pass product data to avoid additional API call
+      const result = await apiService.addToCart(product.id, 1, product);
       console.log(`Added ${product.title} to cart!`, result);
 
       // Show success indicator
@@ -258,8 +249,8 @@ export default function HomeScreen() {
         });
       }, 1500); // Hide after 1.5 seconds
 
-      // Don't fetch cart contents immediately - trust the add operation result
-      // Cart sync will happen naturally on next page load or cart screen visit
+      // OPTIMIZED: Removed cart contents fetch - trust optimistic update
+      // Cart sync will happen naturally on cart screen visit
     } catch (error) {
       console.error("Add to cart error:", error);
       // Revert optimistic update on error

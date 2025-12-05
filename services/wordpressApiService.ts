@@ -503,37 +503,18 @@ class WordPressApiService {
   // Products
   async getProducts(params?: Record<string, any>) {
     try {
-      // WooCommerce default limit is 10, we need to fetch all products
-      // Set per_page to 100 (WooCommerce max) and implement pagination if needed
+      // OPTIMIZED: Only fetch the requested page, not all pages
+      // This dramatically reduces API calls and improves performance
       const defaultParams = {
-        per_page: 100, // Maximum allowed by WooCommerce
+        per_page: 20, // Reduced from 100 for faster initial load
         ...params
       };
 
       const response = await this.api.get('/products', { params: defaultParams });
 
-      // Check if there are more pages
-      const totalPages = parseInt(response.headers['x-wp-totalpages'] || '1');
-      let allProducts = response.data;
-
-      // If there are more pages, fetch them all
-      if (totalPages > 1) {
-        const pagePromises = [];
-        for (let page = 2; page <= totalPages; page++) {
-          pagePromises.push(
-            this.api.get('/products', {
-              params: { ...defaultParams, page }
-            })
-          );
-        }
-
-        const additionalPages = await Promise.all(pagePromises);
-        additionalPages.forEach(pageResponse => {
-          allProducts = allProducts.concat(pageResponse.data);
-        });
-      }
-
-      return allProducts;
+      // Return just the requested page
+      // The calling component can implement pagination if needed
+      return response.data;
     } catch (error: any) {
       console.error('Error fetching products:', error.response?.data || error.message);
       throw error;
@@ -646,7 +627,7 @@ class WordPressApiService {
     }
   }
 
-  async addToCart(product_id: number, quantity: number = 1) {
+  async addToCart(product_id: number, quantity: number = 1, productData?: any) {
     try {
       // Use AsyncStorage for ALL users for now
       const cartItems = await AsyncStorage.getItem('cartItems');
@@ -658,14 +639,18 @@ class WordPressApiService {
       if (existingItemIndex >= 0) {
         items[existingItemIndex].quantity += quantity;
       } else {
-        // We need to get product details to add to cart
-        const product = await this.getProduct(product_id);
+        // OPTIMIZED: Use provided product data if available, otherwise fetch
+        let product = productData;
+        if (!product) {
+          product = await this.getProduct(product_id);
+        }
+
         const cartItem = {
           key: `cart_${product_id}_${Date.now()}`,
           productId: product.id,
           id: product.id,
-          title: product.name,
-          image: product.images && product.images[0] ? product.images[0].src : '',
+          title: product.name || product.title,
+          image: product.images && product.images[0] ? product.images[0].src : (product.image || ''),
           price: parseFloat(product.price || '0'),
           quantity: quantity
         };
