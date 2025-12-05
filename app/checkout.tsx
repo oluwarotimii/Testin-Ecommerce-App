@@ -176,8 +176,8 @@ export default function CheckoutScreen() {
         payment_method_title: paymentMethods.find(m => m.id === selectedPaymentMethod)?.title || 'Direct Bank Transfer',
         set_paid: false,
         billing: {
-          first_name: selectedAddressData?.firstName || '',
-          last_name: selectedAddressData?.lastName || '',
+          first_name: user?.first_name || user?.name?.split(' ')[0] || 'Customer',
+          last_name: user?.last_name || user?.name?.split(' ').slice(1).join(' ') || '',
           address_1: selectedAddressData?.address || '',
           address_2: '',
           city: selectedAddressData?.city || '',
@@ -185,7 +185,7 @@ export default function CheckoutScreen() {
           postcode: selectedAddressData?.zipCode || '',
           country: selectedAddressData?.country || '',
           email: user?.email || '',
-          phone: selectedAddressData?.phone || ''
+          phone: user?.phone || selectedAddressData?.phone || ''
         },
         shipping: {
           first_name: selectedAddressData?.firstName || '',
