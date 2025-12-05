@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch, ActivityIndicator, Image, Linking, Modal } from 'react-native';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'expo-router';
 import updateService from '@/services/updateService';
@@ -12,6 +12,8 @@ export default function AccountScreen() {
   const colors = useThemeColors();
   const { colorScheme, toggleColorScheme, setColorScheme } = useTheme();
   const { isAuthenticated, apiService, signOut, loadingAuth } = useAuth();
+  const [showSignOutModal, setShowSignOutModal] = useState(false);
+  const [signingOut, setSigningOut] = useState(false);
   // console.log('isAuthenticated:', isAuthenticated, 'loadingAuth:', loadingAuth);
   const [darkMode, setDarkMode] = useState(colorScheme === 'dark');
 
@@ -141,8 +143,16 @@ export default function AccountScreen() {
   ];
 
   const handleLogout = async () => {
-    await signOut();
-    router.replace('/login');
+    setShowSignOutModal(false);
+    setSigningOut(true);
+    try {
+      await signOut();
+      router.replace('/login');
+    } catch (error) {
+      console.error('Sign out error:', error);
+    } finally {
+      setSigningOut(false);
+    }
   };
 
   const renderMenuItem = (item: any) => (
@@ -207,13 +217,13 @@ export default function AccountScreen() {
                   <View style={[styles.avatar, { backgroundColor: colors.primary }]}>
                     <Text style={[styles.avatarText, { color: colors.white }]}>
                       {userDetails.first_name ? userDetails.first_name.charAt(0) :
-                       userDetails.name?.firstname ? userDetails.name.firstname.charAt(0) :
-                       userDetails.firstname ? userDetails.firstname.charAt(0) :
-                       'U'}
+                        userDetails.name?.firstname ? userDetails.name.firstname.charAt(0) :
+                          userDetails.firstname ? userDetails.firstname.charAt(0) :
+                            'U'}
                       {userDetails.last_name ? userDetails.last_name.charAt(0) :
-                       userDetails.name?.lastname ? userDetails.name.lastname.charAt(0) :
-                       userDetails.lastname ? userDetails.lastname.charAt(0) :
-                       ''}
+                        userDetails.name?.lastname ? userDetails.name.lastname.charAt(0) :
+                          userDetails.lastname ? userDetails.lastname.charAt(0) :
+                            ''}
                     </Text>
                   </View>
                   <View style={styles.userDetails}>
@@ -254,7 +264,7 @@ export default function AccountScreen() {
 
               {/* Logout */}
               <View style={styles.section}>
-                <TouchableOpacity style={[styles.logoutButton, { backgroundColor: colors.surface }]} onPress={handleLogout}>
+                <TouchableOpacity style={[styles.logoutButton, { backgroundColor: colors.surface }]} onPress={() => setShowSignOutModal(true)}>
                   <Ionicons name="log-out" size={20} color={colors.error} />
                   <Text style={[styles.logoutText, { color: colors.error }]}>Sign Out</Text>
                 </TouchableOpacity>
@@ -288,6 +298,53 @@ export default function AccountScreen() {
       <View style={styles.footer}>
         <Text style={[styles.versionText, { color: colors.textSecondary }]}>Femtech Mobile v1.0.0</Text>
       </View>
+
+      {/* Sign Out Confirmation Modal */}
+      <Modal
+        visible={showSignOutModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowSignOutModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { backgroundColor: colors.surface }]}>
+            <View style={[styles.modalIconContainer, { backgroundColor: colors.error + '20' }]}>
+              <Ionicons name="log-out-outline" size={40} color={colors.error} />
+            </View>
+
+            <Text style={[styles.modalTitle, { color: colors.text }]}>Sign Out?</Text>
+            <Text style={[styles.modalMessage, { color: colors.textSecondary }]}>
+              Are you sure you want to sign out of your account?
+            </Text>
+
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.cancelButton, { backgroundColor: colors.background }]}
+                onPress={() => setShowSignOutModal(false)}
+              >
+                <Text style={[styles.modalButtonText, { color: colors.text }]}>Cancel</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.modalButton, styles.confirmButton, { backgroundColor: colors.error }]}
+                onPress={handleLogout}
+              >
+                <Text style={[styles.modalButtonText, { color: '#FFFFFF' }]}>Sign Out</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Activity Indicator Overlay */}
+      {signingOut && (
+        <View style={styles.loadingOverlay}>
+          <View style={[styles.loadingContainer, { backgroundColor: colors.surface }]}>
+            <ActivityIndicator size="large" color={colors.primary} />
+            <Text style={[styles.loadingText, { color: colors.text }]}>Signing out...</Text>
+          </View>
+        </View>
+      )}
     </ScrollView>
   );
 }
@@ -466,5 +523,86 @@ const styles = StyleSheet.create({
   registerButtonText: {
     fontSize: 18,
     fontWeight: 'bold',
+  },
+  // Modal styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  modalContent: {
+    width: '100%',
+    maxWidth: 340,
+    borderRadius: 20,
+    padding: 24,
+    alignItems: 'center',
+  },
+  modalIconContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  modalTitle: {
+    fontSize: 22,
+    fontWeight: '700',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  modalMessage: {
+    fontSize: 15,
+    textAlign: 'center',
+    marginBottom: 24,
+    lineHeight: 22,
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    gap: 12,
+    width: '100%',
+  },
+  modalButton: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cancelButton: {
+    borderWidth: 1,
+    borderColor: '#E5E5E5',
+  },
+  confirmButton: {
+    // backgroundColor set dynamically
+  },
+  modalButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  // Loading overlay styles
+  loadingOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 9999,
+  },
+  loadingContainer: {
+    padding: 30,
+    borderRadius: 16,
+    alignItems: 'center',
+    minWidth: 150,
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
+    fontWeight: '600',
   },
 });

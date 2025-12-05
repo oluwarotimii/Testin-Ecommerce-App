@@ -722,6 +722,20 @@ class WordPressApiService {
     }
   }
 
+  async emptyCart() {
+    try {
+      // Clear all cart items from AsyncStorage
+      await AsyncStorage.removeItem('cartItems');
+      return {
+        success: true,
+        message: 'Cart cleared successfully'
+      };
+    } catch (error) {
+      console.error('Error emptying cart:', error);
+      throw error;
+    }
+  }
+
   // Wishlist
   async getWishlist() {
     try {
