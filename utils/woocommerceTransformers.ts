@@ -11,6 +11,7 @@ export interface AppProduct {
     description: string;
     category: string;
     category_id?: number;
+    categories?: Array<{ id: number; name: string; slug: string }>; // Full categories array from WooCommerce
     rating?: {
         rate: number;
         count: number;
@@ -65,6 +66,14 @@ export function transformProduct(wcProduct: any): AppProduct {
             : 'General',
         category_id: wcProduct.categories && wcProduct.categories.length > 0
             ? wcProduct.categories[0].id
+            : undefined,
+        // Preserve full categories array for proper filtering
+        categories: wcProduct.categories && Array.isArray(wcProduct.categories)
+            ? wcProduct.categories.map((cat: any) => ({
+                id: cat.id,
+                name: cat.name,
+                slug: cat.slug
+            }))
             : undefined,
         rating: wcProduct.average_rating ? {
             rate: parseFloat(wcProduct.average_rating),
