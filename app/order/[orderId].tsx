@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Linking } from 'react-native';
 import { useState, useEffect } from 'react';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useThemeColors } from '@/hooks/useColorScheme';
@@ -184,16 +184,7 @@ export default function OrderDetailsScreen() {
 
         {/* Shipping Info */}
         <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={[styles.sectionTitle, { color: colors.text }]}>Shipping Details</Text>
-            <TouchableOpacity
-              style={[styles.editButton, { borderColor: colors.primary }]}
-              onPress={() => router.push('/addresses')}
-            >
-              <Ionicons name="pencil" size={16} color={colors.primary} />
-              <Text style={[styles.editButtonText, { color: colors.primary }]}>Edit Address</Text>
-            </TouchableOpacity>
-          </View>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>Shipping Details</Text>
           <View style={[styles.card, { backgroundColor: colors.surface }]}>
             <View style={styles.infoRow}>
               <Ionicons name="location-outline" size={20} color={colors.textSecondary} style={styles.infoIcon} />
@@ -215,7 +206,11 @@ export default function OrderDetailsScreen() {
 
         {/* Actions */}
         <View style={styles.actionButtons}>
-          <TouchableOpacity style={[styles.outlineButton, { borderColor: colors.border }]}>
+          <TouchableOpacity
+            style={[styles.outlineButton, { borderColor: colors.border }]}
+            onPress={() => Linking.openURL('https://wa.me/2348051516565')}
+          >
+            <Ionicons name="logo-whatsapp" size={20} color="#25D366" style={{ marginRight: 8 }} />
             <Text style={[styles.outlineButtonText, { color: colors.text }]}>Contact Support</Text>
           </TouchableOpacity>
           <TouchableOpacity style={[styles.primaryButton, { backgroundColor: colors.primary }]}>
@@ -388,6 +383,7 @@ const styles = StyleSheet.create({
   },
   outlineButton: {
     flex: 1,
+    flexDirection: 'row',
     paddingVertical: 16,
     borderRadius: 12,
     borderWidth: 1,
