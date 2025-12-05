@@ -213,9 +213,9 @@ export default function OrderDetailsScreen() {
             <Ionicons name="logo-whatsapp" size={20} color="#25D366" style={{ marginRight: 8 }} />
             <Text style={[styles.outlineButtonText, { color: colors.text }]}>Contact Support</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={[styles.primaryButton, { backgroundColor: colors.primary }]}>
+          {/* <TouchableOpacity style={[styles.primaryButton, { backgroundColor: colors.primary }]}>
             <Text style={[styles.primaryButtonText, { color: colors.white }]}>Track Order</Text>
-          </TouchableOpacity>
+          </TouchableOpacity> */}
         </View>
 
         <View style={{ height: 40 }} />

@@ -19,19 +19,19 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   const [colorScheme, setColorSchemeState] = useState<'light' | 'dark' | null>(null);
 
   useEffect(() => {
-    // Load theme preference from storage or default to device theme
+    // Load theme preference from storage or default to light mode
     const loadTheme = async () => {
       try {
         const savedTheme = await AsyncStorage.getItem('theme');
         if (savedTheme && (savedTheme === 'light' || savedTheme === 'dark')) {
           setColorSchemeState(savedTheme);
         } else {
-          // Default to device theme if no preference is saved
-          setColorSchemeState(deviceColorScheme || 'light');
+          // Default to light mode (not device theme)
+          setColorSchemeState('light');
         }
       } catch (error) {
         console.error('Failed to load theme preference:', error);
-        setColorSchemeState(deviceColorScheme || 'light');
+        setColorSchemeState('light'); // Default to light on error
       }
     };
 

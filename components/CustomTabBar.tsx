@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
 import { Tabs } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useThemeColors } from '@/hooks/useColorScheme';
 import { useCart } from '@/context/CartContext';
 import { useTheme } from '@/context/ThemeContext';
@@ -18,6 +19,7 @@ const CustomTabBar: React.FC<CustomTabBarProps> = ({ state, descriptors, navigat
   const colors = useThemeColors();
   const { colorScheme } = useTheme();
   const { cartCount } = useCart();
+  const insets = useSafeAreaInsets();
 
   // Check if we're on the cart screen
   const currentRoute = state.routes[state.index]?.name;
@@ -83,7 +85,11 @@ const CustomTabBar: React.FC<CustomTabBarProps> = ({ state, descriptors, navigat
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: tabBarBackgroundColor, borderTopColor: isDark ? '#424245' : '#C7C7CC' }]}>
+    <View style={[styles.container, {
+      backgroundColor: tabBarBackgroundColor,
+      borderTopColor: isDark ? '#424245' : '#C7C7CC',
+      bottom: Math.max(insets.bottom, 10) + 10 // Add safe area inset + 10px padding
+    }]}>
       {state.routes.map((route: any, index: number) => renderTab(route, index))}
     </View>
   );
@@ -96,7 +102,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-around',
     position: 'absolute',
-    bottom: 20,
+    // bottom is now set dynamically with safe area insets
     left: 20,
     right: 20,
     borderRadius: 30,

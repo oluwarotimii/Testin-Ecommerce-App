@@ -285,6 +285,7 @@ export default function HomeScreen() {
       <ScrollView
         style={[styles.container, { backgroundColor: colors.background }]}
         showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 100 }} // Add padding for floating tab bar
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
