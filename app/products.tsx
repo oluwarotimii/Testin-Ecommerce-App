@@ -173,7 +173,7 @@ export default function ProductsScreen() {
 
           // Check if the product belongs to the selected category
           if (product.category_id && selectedCat.category_id &&
-              product.category_id === selectedCat.category_id) {
+            product.category_id === selectedCat.category_id) {
             return true;
           }
 
@@ -402,7 +402,7 @@ export default function ProductsScreen() {
         </Animated.View>
 
         {/* Category Filter */}
-        <Animated.View style={{ opacity: headerOpacity }}>
+        {/* <Animated.View style={{ opacity: headerOpacity }}>
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
@@ -449,7 +449,7 @@ export default function ProductsScreen() {
               ))}
             </View>
           </ScrollView>
-        </Animated.View>
+        </Animated.View> */}
       </Animated.View>
 
       {/* Results Count */}
