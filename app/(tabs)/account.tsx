@@ -1,4 +1,5 @@
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch, ActivityIndicator, Image, Linking, Modal } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'expo-router';
 import updateService from '@/services/updateService';
@@ -191,117 +192,118 @@ export default function AccountScreen() {
   );
 
   return (
-    <ScrollView
-      style={[styles.container, { backgroundColor: colors.background }]}
-      showsVerticalScrollIndicator={false}
-      contentContainerStyle={{ paddingBottom: 100 }} // Add padding for floating tab bar
-    >
-      {/* Header */}
-      <View style={styles.header}>
-        <Text style={[styles.title, { color: colors.text }]}>Account</Text>
-      </View>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 100 }} // Add padding for floating tab bar
+      >
+        {/* Header */}
+        <View style={styles.header}>
+          <Text style={[styles.title, { color: colors.text }]}>Account</Text>
+        </View>
 
-      {loadingAuth || loading ? (
-        <ActivityIndicator size="large" color={colors.primary} style={styles.loadingIndicator} />
-      ) : (
-        <>
-          {/* Theme Settings - Always visible */}
-          <View style={styles.section}>
-            <Text style={[styles.sectionTitle, { color: colors.text }]}>Appearance</Text>
-            <View style={[styles.menuContainer, { backgroundColor: colors.surface }]}>
-              {themeItems.map(renderSettingsItem)}
+        {loadingAuth || loading ? (
+          <ActivityIndicator size="large" color={colors.primary} style={styles.loadingIndicator} />
+        ) : (
+          <>
+            {/* Theme Settings - Always visible */}
+            <View style={styles.section}>
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>Appearance</Text>
+              <View style={[styles.menuContainer, { backgroundColor: colors.surface }]}>
+                {themeItems.map(renderSettingsItem)}
+              </View>
             </View>
-          </View>
 
-          {isAuthenticated && userDetails ? (
-            <>
-              {/* User Profile */}
-              <View style={[styles.profileSection, { backgroundColor: colors.surface }]}>
-                <View style={styles.profileInfo}>
-                  <View style={[styles.avatar, { backgroundColor: colors.primary }]}>
-                    <Text style={[styles.avatarText, { color: colors.white }]}>
-                      {userDetails.first_name ? userDetails.first_name.charAt(0) :
-                        userDetails.name?.firstname ? userDetails.name.firstname.charAt(0) :
-                          userDetails.firstname ? userDetails.firstname.charAt(0) :
-                            'U'}
-                      {userDetails.last_name ? userDetails.last_name.charAt(0) :
-                        userDetails.name?.lastname ? userDetails.name.lastname.charAt(0) :
-                          userDetails.lastname ? userDetails.lastname.charAt(0) :
-                            ''}
-                    </Text>
+            {isAuthenticated && userDetails ? (
+              <>
+                {/* User Profile */}
+                <View style={[styles.profileSection, { backgroundColor: colors.surface }]}>
+                  <View style={styles.profileInfo}>
+                    <View style={[styles.avatar, { backgroundColor: colors.primary }]}>
+                      <Text style={[styles.avatarText, { color: colors.white }]}>
+                        {userDetails.first_name ? userDetails.first_name.charAt(0) :
+                          userDetails.name?.firstname ? userDetails.name.firstname.charAt(0) :
+                            userDetails.firstname ? userDetails.firstname.charAt(0) :
+                              'U'}
+                        {userDetails.last_name ? userDetails.last_name.charAt(0) :
+                          userDetails.name?.lastname ? userDetails.name.lastname.charAt(0) :
+                            userDetails.lastname ? userDetails.lastname.charAt(0) :
+                              ''}
+                      </Text>
+                    </View>
+                    <View style={styles.userDetails}>
+                      <Text style={[styles.userName, { color: colors.text }]}>
+                        {userDetails.first_name || userDetails.name?.firstname || userDetails.firstname || 'User'} {userDetails.last_name || userDetails.name?.lastname || userDetails.lastname || ''}
+                      </Text>
+                      <Text style={[styles.userEmail, { color: colors.textSecondary }]}>{userDetails.email}</Text>
+                    </View>
                   </View>
-                  <View style={styles.userDetails}>
-                    <Text style={[styles.userName, { color: colors.text }]}>
-                      {userDetails.first_name || userDetails.name?.firstname || userDetails.firstname || 'User'} {userDetails.last_name || userDetails.name?.lastname || userDetails.lastname || ''}
-                    </Text>
-                    <Text style={[styles.userEmail, { color: colors.textSecondary }]}>{userDetails.email}</Text>
+                  <TouchableOpacity style={[styles.editButton, { backgroundColor: colors.primary }]} onPress={() => router.push('/profile')}>
+                    <Text style={[styles.editButtonText, { color: colors.white }]}>Edit</Text>
+                  </TouchableOpacity>
+                </View>
+
+                {/* Account Menu */}
+                <View style={styles.section}>
+                  <Text style={[styles.sectionTitle, { color: colors.text }]}>Account</Text>
+                  <View style={[styles.menuContainer, { backgroundColor: colors.surface }]}>
+                    {menuItems.map(renderMenuItem)}
                   </View>
                 </View>
-                <TouchableOpacity style={[styles.editButton, { backgroundColor: colors.primary }]} onPress={() => router.push('/profile')}>
-                  <Text style={[styles.editButtonText, { color: colors.white }]}>Edit</Text>
-                </TouchableOpacity>
-              </View>
 
-              {/* Account Menu */}
-              <View style={styles.section}>
-                <Text style={[styles.sectionTitle, { color: colors.text }]}>Account</Text>
-                <View style={[styles.menuContainer, { backgroundColor: colors.surface }]}>
-                  {menuItems.map(renderMenuItem)}
+                {/* Settings */}
+                <View style={styles.section}>
+                  <Text style={[styles.sectionTitle, { color: colors.text }]}>Settings</Text>
+                  <View style={[styles.menuContainer, { backgroundColor: colors.surface }]}>
+                    {settingsItems.map(renderSettingsItem)}
+                  </View>
                 </View>
-              </View>
 
-              {/* Settings */}
-              <View style={styles.section}>
-                <Text style={[styles.sectionTitle, { color: colors.text }]}>Settings</Text>
-                <View style={[styles.menuContainer, { backgroundColor: colors.surface }]}>
-                  {settingsItems.map(renderSettingsItem)}
+                {/* Support */}
+                <View style={styles.section}>
+                  <Text style={[styles.sectionTitle, { color: colors.text }]}>Support</Text>
+                  <View style={[styles.menuContainer, { backgroundColor: colors.surface }]}>
+                    {supportItems.map(renderMenuItem)}
+                  </View>
                 </View>
-              </View>
 
-              {/* Support */}
-              <View style={styles.section}>
-                <Text style={[styles.sectionTitle, { color: colors.text }]}>Support</Text>
-                <View style={[styles.menuContainer, { backgroundColor: colors.surface }]}>
-                  {supportItems.map(renderMenuItem)}
+                {/* Logout */}
+                <View style={styles.section}>
+                  <TouchableOpacity style={[styles.logoutButton, { backgroundColor: colors.surface }]} onPress={() => setShowSignOutModal(true)}>
+                    <Ionicons name="log-out" size={20} color={colors.error} />
+                    <Text style={[styles.logoutText, { color: colors.error }]}>Sign Out</Text>
+                  </TouchableOpacity>
                 </View>
-              </View>
+              </>
+            ) : (
+              <>
+                <View style={[styles.emptyContainer, { backgroundColor: colors.background }]}>
+                  <Ionicons name="person-circle-outline" size={80} color={colors.textSecondary} style={styles.emptyIcon} />
+                  <Text style={[styles.emptyTitle, { color: colors.text }]}>You are not logged in.</Text>
+                  <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>Please log in or create an account to view your profile, orders, and more.</Text>
+                  <TouchableOpacity
+                    style={[styles.loginButton, { backgroundColor: colors.primary }]}
+                    onPress={() => router.push('/login')}
+                  >
+                    <Text style={[styles.loginButtonText, { color: colors.white }]}>Log In</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.registerButton, { borderColor: colors.primary }]}
+                    onPress={() => router.push('/register')}
+                  >
+                    <Text style={[styles.registerButtonText, { color: colors.primary }]}>Create Account</Text>
+                  </TouchableOpacity>
+                </View>
+              </>
+            )}
+          </>
+        )}
 
-              {/* Logout */}
-              <View style={styles.section}>
-                <TouchableOpacity style={[styles.logoutButton, { backgroundColor: colors.surface }]} onPress={() => setShowSignOutModal(true)}>
-                  <Ionicons name="log-out" size={20} color={colors.error} />
-                  <Text style={[styles.logoutText, { color: colors.error }]}>Sign Out</Text>
-                </TouchableOpacity>
-              </View>
-            </>
-          ) : (
-            <>
-              <View style={[styles.emptyContainer, { backgroundColor: colors.background }]}>
-                <Ionicons name="person-circle-outline" size={80} color={colors.textSecondary} style={styles.emptyIcon} />
-                <Text style={[styles.emptyTitle, { color: colors.text }]}>You are not logged in.</Text>
-                <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>Please log in or create an account to view your profile, orders, and more.</Text>
-                <TouchableOpacity
-                  style={[styles.loginButton, { backgroundColor: colors.primary }]}
-                  onPress={() => router.push('/login')}
-                >
-                  <Text style={[styles.loginButtonText, { color: colors.white }]}>Log In</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.registerButton, { borderColor: colors.primary }]}
-                  onPress={() => router.push('/register')}
-                >
-                  <Text style={[styles.registerButtonText, { color: colors.primary }]}>Create Account</Text>
-                </TouchableOpacity>
-              </View>
-            </>
-          )}
-        </>
-      )}
-
-      {/* App Version */}
-      <View style={styles.footer}>
-        <Text style={[styles.versionText, { color: colors.textSecondary }]}>Femtech Mobile v1.0.0</Text>
-      </View>
+        {/* App Version */}
+        <View style={styles.footer}>
+          <Text style={[styles.versionText, { color: colors.textSecondary }]}>Femtech Mobile v1.0.0</Text>
+        </View>
+      </ScrollView>
 
       {/* Sign Out Confirmation Modal */}
       <Modal
@@ -349,7 +351,7 @@ export default function AccountScreen() {
           </View>
         </View>
       )}
-    </ScrollView>
+    </SafeAreaView>
   );
 }
 

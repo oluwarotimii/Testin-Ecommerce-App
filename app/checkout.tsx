@@ -9,6 +9,8 @@ import { formatPrice } from '@/utils/formatNumber';
 import SkeletonLoader from '@/components/SkeletonLoader';
 import BackButton from '@/components/BackButton';
 import SafeImage from '@/components/SafeImage';
+import Dropdown from '@/components/Dropdown';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function CheckoutScreen() {
   const router = useRouter();
@@ -250,51 +252,55 @@ export default function CheckoutScreen() {
   if (!isAuthenticated) {
     if (loadingAuth) {
       return (
-        <View style={[styles.container, { backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center' }]}>
-          <ActivityIndicator size="large" color={colors.primary} />
-        </View>
+        <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+          <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+            <ActivityIndicator size="large" color={colors.primary} />
+          </View>
+        </SafeAreaView>
       );
     }
 
     return (
-      <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
         <View style={styles.header}>
           <BackButton />
           <Text style={[styles.title, { color: colors.text }]}>Checkout</Text>
           <View style={{ width: 40 }} />
         </View>
 
-        <View style={[styles.loginPromptContainer, { backgroundColor: colors.background }]}>
-          <View style={styles.loginIconContainer}>
-            <Ionicons name="lock-closed" size={64} color={colors.primary} />
+        <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+          <View style={[styles.loginPromptContainer, { backgroundColor: colors.background }]}>
+            <View style={styles.loginIconContainer}>
+              <Ionicons name="lock-closed" size={64} color={colors.primary} />
+            </View>
+
+            <Text style={[styles.loginPromptTitle, { color: colors.text }]}>Login Required</Text>
+            <Text style={[styles.loginPromptSubtitle, { color: colors.textSecondary }]}>
+              Please login to proceed with checkout and complete your purchase
+            </Text>
+
+            <TouchableOpacity
+              style={[styles.loginButton, { backgroundColor: colors.primary }]}
+              onPress={() => router.push('/login')}
+            >
+              <Text style={[styles.loginButtonText, { color: colors.white }]}>Login to Continue</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.signupButton}
+              onPress={() => router.push('/register')}
+            >
+              <Text style={[styles.signupButtonText, { color: colors.primary }]}>Create Account</Text>
+            </TouchableOpacity>
           </View>
-
-          <Text style={[styles.loginPromptTitle, { color: colors.text }]}>Login Required</Text>
-          <Text style={[styles.loginPromptSubtitle, { color: colors.textSecondary }]}>
-            Please login to proceed with checkout and complete your purchase
-          </Text>
-
-          <TouchableOpacity
-            style={[styles.loginButton, { backgroundColor: colors.primary }]}
-            onPress={() => router.push('/login')}
-          >
-            <Text style={[styles.loginButtonText, { color: colors.white }]}>Login to Continue</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.signupButton}
-            onPress={() => router.push('/register')}
-          >
-            <Text style={[styles.signupButtonText, { color: colors.primary }]}>Create Account</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
+        </ScrollView>
+      </SafeAreaView>
     );
   }
 
   if (loadingAddresses || loadingCart) {
     return (
-      <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
         <View style={styles.header}>
           <BackButton />
           <Text style={[styles.title, { color: colors.text }]}>Checkout</Text>
@@ -329,12 +335,12 @@ export default function CheckoutScreen() {
             <SkeletonLoader width="100%" height={120} borderRadius={12} />
           </View>
         </ScrollView>
-      </View>
+      </SafeAreaView>
     );
   }
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Header */}
       <View style={styles.header}>
         <BackButton />
@@ -467,41 +473,33 @@ export default function CheckoutScreen() {
               <ActivityIndicator color={colors.primary} />
             </View>
           ) : shippingMethods.length > 0 ? (
-            <View style={[styles.card, { backgroundColor: colors.surface }]}>
-              {shippingMethods.map((method, index) => (
-                <View key={`${method.id}-${method.instance_id}`}>
-                  <TouchableOpacity
-                    style={styles.paymentMethodItem}
-                    onPress={() => {
-                      setSelectedShippingMethod(method);
-                      // Clear pickup branch if switching away from pickup
-                      if (method.method_id !== 'local_pickup') {
-                        setSelectedPickupBranch('');
-                      }
-                    }}
-                  >
-                    <View style={styles.radioOuter}>
-                      {selectedShippingMethod?.instance_id === method.instance_id && (
-                        <View style={[styles.radioInner, { backgroundColor: colors.primary }]} />
-                      )}
-                    </View>
-                    <View style={{ flex: 1 }}>
-                      <Text style={[styles.paymentMethodTitle, { color: colors.text }]}>
-                        {method.title}
-                      </Text>
-                      {method.zone_name && (
-                        <Text style={[styles.paymentMethodDescription, { color: colors.textSecondary }]}>
-                          Zone: {method.zone_name}
-                        </Text>
-                      )}
-                    </View>
-                  </TouchableOpacity>
-                  {index < shippingMethods.length - 1 && (
-                    <View style={[styles.divider, { backgroundColor: colors.border }]} />
+            <Dropdown
+              options={shippingMethods}
+              selectedValue={selectedShippingMethod}
+              onValueChange={(method: any) => {
+                setSelectedShippingMethod(method);
+                // Clear pickup branch if switching away from pickup
+                if (method.method_id !== 'local_pickup') {
+                  setSelectedPickupBranch('');
+                }
+              }}
+              keyExtractor={(item: any) => `${item.id}-${item.instance_id}`}
+              renderItem={(item: any, isSelected: boolean) => (
+                <View style={{ flex: 1 }}>
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <Text style={[styles.paymentMethodTitle, { color: colors.text }, isSelected && { color: colors.primary }]}>
+                      {item.title}
+                    </Text>
+                    {isSelected && <Ionicons name="checkmark" size={20} color={colors.primary} />}
+                  </View>
+                  {item.zone_name && (
+                    <Text style={[styles.paymentMethodDescription, { color: colors.textSecondary }]}>
+                      Zone: {item.zone_name}
+                    </Text>
                   )}
                 </View>
-              ))}
-            </View>
+              )}
+            />
           ) : (
             <View style={[styles.card, { backgroundColor: colors.surface }]}>
               <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
@@ -560,7 +558,7 @@ export default function CheckoutScreen() {
           )}
         </TouchableOpacity>
       </View>
-    </View>
+    </SafeAreaView>
   );
 }
 

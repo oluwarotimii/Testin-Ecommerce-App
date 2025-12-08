@@ -1,5 +1,6 @@
 import { Tabs } from 'expo-router';
 import { View, Text } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useThemeColors } from '@/hooks/useColorScheme';
 import { useCart } from '@/context/CartContext';
 import { useTheme } from '@/context/ThemeContext';

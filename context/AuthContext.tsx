@@ -3,6 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import DummyApiService from '@/services/dummyApiService';
 import WordPressApiService from '@/services/wordpressApiService';
 import Constants from 'expo-constants';
+import notificationService, { updatePushTokenForUser } from '@/services/notificationService';
 
 // Configuration for API service type - using values from app.json extra section
 const { expoPublicApiServiceType, expoPublicWordpressUrl, expoPublicWordpressConsumerKey, expoPublicWordpressConsumerSecret } = Constants.expoConfig?.extra || {};
@@ -50,6 +51,7 @@ interface ApiService {
   addToCart: (product_id: number, quantity?: number, productData?: any) => Promise<any>;
   updateCart: (cart_id: number, quantity: number) => Promise<any>;
   removeFromCart: (key: number) => Promise<any>;
+  emptyCart: () => Promise<any>;
   getWishlist: () => Promise<any>;
   addToWishlist: (product_id: number) => Promise<any>;
   removeFromWishlist: (product_id: number) => Promise<any>;
@@ -190,6 +192,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           console.error("Error fetching user details after login:", e);
         }
 
+        // After successful login, register the push token if available
+        try {
+          const pushToken = await AsyncStorage.getItem('pushToken');
+          if (pushToken && apiService.updatePushToken) {
+            await updatePushTokenForUser(apiService, pushToken);
+          }
+        } catch (pushTokenError) {
+          console.error("Error registering push token after login:", pushTokenError);
+        }
+
         return true;
       } else {
         throw new Error('Login failed: No token received from server');
@@ -208,6 +220,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         await AsyncStorage.setItem('sessionToken', token);
         setSessionToken(token);
         setIsAuthenticated(true);
+
+        // After successful registration, register the push token if available
+        try {
+          const pushToken = await AsyncStorage.getItem('pushToken');
+          if (pushToken && apiService.updatePushToken) {
+            await updatePushTokenForUser(apiService, pushToken);
+          }
+        } catch (pushTokenError) {
+          console.error("Error registering push token after registration:", pushTokenError);
+        }
+
         return true;
       } else {
         throw new Error('Registration failed: No token received from server');
@@ -222,6 +245,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       await apiService.signOut();
       await AsyncStorage.removeItem('sessionToken');
       await AsyncStorage.removeItem('customerId');
+      await AsyncStorage.removeItem('pushToken'); // Remove push token on logout
       setSessionToken(null);
       setIsAuthenticated(false);
     } catch (error) {

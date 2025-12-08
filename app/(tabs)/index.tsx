@@ -1,4 +1,5 @@
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, ActivityIndicator, RefreshControl } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import SafeImage from '@/components/SafeImage';
 import { useRouter } from 'expo-router';
 import { useState, useEffect, useCallback } from 'react';
@@ -261,7 +262,7 @@ export default function HomeScreen() {
   const [scrollY, setScrollY] = useState(0);
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Sticky Header */}
       <View style={[styles.stickyHeader, {
         backgroundColor: colors.background,
@@ -470,7 +471,7 @@ export default function HomeScreen() {
           )}
         </View>
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 }
 

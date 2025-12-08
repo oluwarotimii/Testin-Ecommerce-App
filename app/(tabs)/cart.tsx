@@ -1,4 +1,5 @@
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
@@ -117,7 +118,7 @@ export default function CartScreen() {
   }
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerLeft}>
@@ -162,7 +163,7 @@ export default function CartScreen() {
                     }
                   }}
                 >
-                  <Ionicons name="remove" size={16} color={colors.text} />
+                  <Ionicons name="remove" size={20} color={colors.text} />
                 </TouchableOpacity>
                 <Text style={[styles.quantity, { color: colors.text }]}>{item.quantity}</Text>
                 <TouchableOpacity
@@ -185,7 +186,7 @@ export default function CartScreen() {
                     }
                   }}
                 >
-                  <Ionicons name="add" size={16} color={colors.text} />
+                  <Ionicons name="add" size={20} color={colors.text} />
                 </TouchableOpacity>
               </View>
               <TouchableOpacity
@@ -227,7 +228,7 @@ export default function CartScreen() {
           <Text style={[styles.checkoutButtonText, { color: colors.white }]}>Proceed to Checkout</Text>
         </TouchableOpacity>
       </View>
-    </View>
+    </SafeAreaView>
   );
 }
 

@@ -7,6 +7,7 @@ import { Ionicons } from '@expo/vector-icons';
 import SkeletonLoader from '@/components/SkeletonLoader';
 import BackButton from '@/components/BackButton';
 import { getOrderStatus } from '@/constants/orderStatus';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 
 export default function OrdersScreen() {
@@ -60,13 +61,13 @@ export default function OrdersScreen() {
 
   if (loading) {
     return (
-      <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
         <View style={styles.header}>
           <BackButton />
           <Text style={[styles.title, { color: colors.text }]}>Orders</Text>
           <View style={{ width: 40 }} />
         </View>
-        <View style={styles.content}>
+        <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
           {[1, 2, 3].map((i) => (
             <View key={i} style={[styles.skeletonCard, { backgroundColor: colors.surface }]}>
               <SkeletonLoader width={100} height={20} marginBottom={10} />
@@ -74,14 +75,14 @@ export default function OrdersScreen() {
               <SkeletonLoader width={80} height={16} />
             </View>
           ))}
-        </View>
-      </View>
+        </ScrollView>
+      </SafeAreaView>
     );
   }
 
   if (orders.length === 0) {
     return (
-      <View style={[styles.emptyContainer, { backgroundColor: colors.background }]}>
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
         <View style={styles.header}>
           <BackButton />
           <Text style={[styles.title, { color: colors.text }]}>Orders</Text>
@@ -100,12 +101,12 @@ export default function OrdersScreen() {
             <Text style={[styles.shopButtonText, { color: colors.white }]}>Start Shopping</Text>
           </TouchableOpacity>
         </View>
-      </View>
+      </SafeAreaView>
     );
   }
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={styles.header}>
         <BackButton />
         <Text style={[styles.title, { color: colors.text }]}>Orders</Text>
@@ -152,7 +153,7 @@ export default function OrdersScreen() {
           );
         })}
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 }
 

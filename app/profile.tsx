@@ -4,11 +4,13 @@ import { useRouter } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
 import { useThemeColors } from '@/hooks/useColorScheme';
 import { Ionicons } from '@expo/vector-icons';
+import notificationService from '@/services/notificationService';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function ProfileScreen() {
   const router = useRouter();
   const colors = useThemeColors();
-  const { apiService, isAuthenticated, logout } = useAuth();
+  const { apiService, isAuthenticated, signOut } = useAuth();
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<any>(null);
 
@@ -56,7 +58,7 @@ export default function ProfileScreen() {
           text: "Logout",
           style: "destructive",
           onPress: async () => {
-            await logout();
+            await signOut();
             router.replace('/(tabs)');
           }
         }
@@ -66,15 +68,17 @@ export default function ProfileScreen() {
 
   if (loading) {
     return (
-      <View style={[styles.container, { backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center' }]}>
-        <ActivityIndicator size="large" color={colors.primary} />
-      </View>
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+          <ActivityIndicator size="large" color={colors.primary} />
+        </View>
+      </SafeAreaView>
     );
   }
 
   if (!isAuthenticated) {
     return (
-      <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
             <Ionicons name="arrow-back" size={24} color={colors.text} />
@@ -99,84 +103,109 @@ export default function ProfileScreen() {
             <Text style={[styles.registerButtonText, { color: colors.primary }]}>Create Account</Text>
           </TouchableOpacity>
         </View>
-      </View>
+      </SafeAreaView>
     );
   }
 
   return (
-    <ScrollView style={[styles.container, { backgroundColor: colors.background }]} showsVerticalScrollIndicator={false}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color={colors.text} />
-        </TouchableOpacity>
-        <Text style={[styles.title, { color: colors.text }]}>My Profile</Text>
-        <TouchableOpacity onPress={() => router.push('/edit-profile')}>
-          <Text style={{ color: colors.primary, fontSize: 16, fontWeight: '500' }}>
-            Edit
-          </Text>
-        </TouchableOpacity>
-      </View>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+      <ScrollView showsVerticalScrollIndicator={false}>
+        {/* Header */}
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+            <Ionicons name="arrow-back" size={24} color={colors.text} />
+          </TouchableOpacity>
+          <Text style={[styles.title, { color: colors.text }]}>My Profile</Text>
+          <TouchableOpacity onPress={() => router.push('/edit-profile')}>
+            <Text style={{ color: colors.primary, fontSize: 16, fontWeight: '500' }}>
+              Edit
+            </Text>
+          </TouchableOpacity>
+        </View>
 
-      {/* Profile Info Card */}
-      <View style={[styles.profileCard, { backgroundColor: colors.surface }]}>
-        <View style={styles.profileHeader}>
-          <Image
-            source={{ uri: `https://ui-avatars.com/api/?name=${userData.firstname}+${userData.lastname}&background=007AFF&color=fff&size=128` }}
-            style={styles.profilePicture}
-          />
-          <View style={styles.profileTexts}>
-            <Text style={[styles.profileName, { color: colors.text }]}>
-              {userData.firstname} {userData.lastname}
-            </Text>
-            <Text style={[styles.profileEmail, { color: colors.textSecondary }]}>
-              {userData.email}
-            </Text>
+        {/* Profile Info Card */}
+        <View style={[styles.profileCard, { backgroundColor: colors.surface }]}>
+          <View style={styles.profileHeader}>
+            <Image
+              source={{ uri: `https://ui-avatars.com/api/?name=${userData.firstname}+${userData.lastname}&background=007AFF&color=fff&size=128` }}
+              style={styles.profilePicture}
+            />
+            <View style={styles.profileTexts}>
+              <Text style={[styles.profileName, { color: colors.text }]}>
+                {userData.firstname} {userData.lastname}
+              </Text>
+              <Text style={[styles.profileEmail, { color: colors.textSecondary }]}>
+                {userData.email}
+              </Text>
+            </View>
+          </View>
+
+          <View style={styles.infoGrid}>
+            <View style={styles.infoItem}>
+              <Ionicons name="call-outline" size={20} color={colors.textSecondary} />
+              <Text style={[styles.infoText, { color: colors.text }]}>{userData.phone || user?.billing?.phone || user?.mobile || user?.phone_number || 'No phone number'}</Text>
+            </View>
           </View>
         </View>
 
-        <View style={styles.infoGrid}>
-          <View style={styles.infoItem}>
-            <Ionicons name="call-outline" size={20} color={colors.textSecondary} />
-            <Text style={[styles.infoText, { color: colors.text }]}>{userData.phone || user?.billing?.phone || user?.mobile || user?.phone_number || 'No phone number'}</Text>
-          </View>
+        {/* Menu Options */}
+        <View style={styles.menuContainer}>
+          <TouchableOpacity style={[styles.menuItem, { backgroundColor: colors.surface }]} onPress={() => router.push('/orders')}>
+            <View style={[styles.menuIcon, { backgroundColor: '#E3F2FD' }]}>
+              <Ionicons name="cube-outline" size={22} color="#2196F3" />
+            </View>
+            <Text style={[styles.menuText, { color: colors.text }]}>My Orders</Text>
+            <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
+          </TouchableOpacity>
+
+          <TouchableOpacity style={[styles.menuItem, { backgroundColor: colors.surface }]} onPress={() => router.push('/addresses')}>
+            <View style={[styles.menuIcon, { backgroundColor: '#E8F5E9' }]}>
+              <Ionicons name="location-outline" size={22} color="#4CAF50" />
+            </View>
+            <Text style={[styles.menuText, { color: colors.text }]}>Shipping Addresses</Text>
+            <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
+          </TouchableOpacity>
+
+          <TouchableOpacity style={[styles.menuItem, { backgroundColor: colors.surface }]} onPress={() => router.push('/wishlist')}>
+            <View style={[styles.menuIcon, { backgroundColor: '#FFEBEE' }]}>
+              <Ionicons name="heart-outline" size={22} color="#F44336" />
+            </View>
+            <Text style={[styles.menuText, { color: colors.text }]}>My Wishlist</Text>
+            <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.menuItem, { backgroundColor: colors.surface }]}
+            onPress={async () => {
+              try {
+                await notificationService.registerForPushNotificationsAsync();
+                await notificationService.sendLocalNotification(
+                  "Test Notification",
+                  "This is a test notification to verify push notifications are working."
+                );
+                Alert.alert("Success", "Notification sent! Check your notification center.");
+              } catch (error) {
+                console.error("Notification error:", error);
+                Alert.alert("Error", "Failed to send notification. Check console for details.");
+              }
+            }}
+          >
+            <View style={[styles.menuIcon, { backgroundColor: '#E0F7FA' }]}>
+              <Ionicons name="notifications-outline" size={22} color="#00BCD4" />
+            </View>
+            <Text style={[styles.menuText, { color: colors.text }]}>Test Notification</Text>
+            <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
+          </TouchableOpacity>
+
+          <TouchableOpacity style={[styles.menuItem, { backgroundColor: colors.surface, marginTop: 20 }]} onPress={handleLogout}>
+            <View style={[styles.menuIcon, { backgroundColor: '#FFEBEE' }]}>
+              <Ionicons name="log-out-outline" size={22} color="#D32F2F" />
+            </View>
+            <Text style={[styles.menuText, { color: '#D32F2F' }]}>Log Out</Text>
+          </TouchableOpacity>
         </View>
-      </View>
-
-          {/* Menu Options */}
-          <View style={styles.menuContainer}>
-            <TouchableOpacity style={[styles.menuItem, { backgroundColor: colors.surface }]} onPress={() => router.push('/orders')}>
-              <View style={[styles.menuIcon, { backgroundColor: '#E3F2FD' }]}>
-                <Ionicons name="cube-outline" size={22} color="#2196F3" />
-              </View>
-              <Text style={[styles.menuText, { color: colors.text }]}>My Orders</Text>
-              <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
-            </TouchableOpacity>
-
-            <TouchableOpacity style={[styles.menuItem, { backgroundColor: colors.surface }]} onPress={() => router.push('/addresses')}>
-              <View style={[styles.menuIcon, { backgroundColor: '#E8F5E9' }]}>
-                <Ionicons name="location-outline" size={22} color="#4CAF50" />
-              </View>
-              <Text style={[styles.menuText, { color: colors.text }]}>Shipping Addresses</Text>
-              <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
-            </TouchableOpacity>
-
-            <TouchableOpacity style={[styles.menuItem, { backgroundColor: colors.surface }]} onPress={() => router.push('/wishlist')}>
-              <View style={[styles.menuIcon, { backgroundColor: '#FFEBEE' }]}>
-                <Ionicons name="heart-outline" size={22} color="#F44336" />
-              </View>
-              <Text style={[styles.menuText, { color: colors.text }]}>My Wishlist</Text>
-              <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
-            </TouchableOpacity>
-
-            <TouchableOpacity style={[styles.menuItem, { backgroundColor: colors.surface, marginTop: 20 }]} onPress={handleLogout}>
-              <View style={[styles.menuIcon, { backgroundColor: '#FFEBEE' }]}>
-                <Ionicons name="log-out-outline" size={22} color="#D32F2F" />
-              </View>
-              <Text style={[styles.menuText, { color: '#D32F2F' }]}>Log Out</Text>
-            </TouchableOpacity>
-          </View>
-    </ScrollView>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 

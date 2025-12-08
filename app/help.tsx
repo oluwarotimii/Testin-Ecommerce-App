@@ -41,14 +41,14 @@ export default function HelpScreen() {
       id: 'email',
       title: 'Email Support',
       icon: 'mail',
-      subtitle: 'support@femtech.com',
-      onPress: () => Linking.openURL('mailto:support@femtech.com')
+      subtitle: 'support@femtechit.com',
+      onPress: () => Linking.openURL('mailto:support@femtechit.com')
     },
     {
       id: 'phone',
       title: 'Phone Support',
       icon: 'call',
-      subtitle: '1-800-FEMTECH',
+      subtitle: '+2348051516565',
       onPress: () => Linking.openURL(`tel:${Platform.OS === 'ios' ? '+' : ''}1800FEMTECH`)
     },
     {

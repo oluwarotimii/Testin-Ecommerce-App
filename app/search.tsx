@@ -7,6 +7,7 @@ import { MaterialIcons, FontAwesome, Ionicons } from '@expo/vector-icons';
 import { formatPrice } from '@/utils/formatNumber';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import SafeImage from '@/components/SafeImage';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function SearchScreen() {
   const router = useRouter();
@@ -102,7 +103,7 @@ export default function SearchScreen() {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Search Header */}
       <View style={styles.searchHeader}>
         <View style={[styles.searchContainer, { backgroundColor: colors.surface }]}>
@@ -209,7 +210,7 @@ export default function SearchScreen() {
           </View>
         )}
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 }
 

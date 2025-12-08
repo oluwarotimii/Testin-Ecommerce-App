@@ -13,6 +13,7 @@ import { formatPrice } from '@/utils/formatNumber';
 import BackButton from '@/components/BackButton';
 import ProductCard from '@/components/ProductCard';
 import { Colors } from '@/constants/Colors';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function ProductsScreen() {
   const router = useRouter();
@@ -341,7 +342,7 @@ export default function ProductsScreen() {
   });
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <Animated.View
         style={[
           styles.headerContainer,
@@ -512,7 +513,7 @@ export default function ProductsScreen() {
         currentFilters={filters}
         maxPriceLimit={100000000}
       />
-    </View>
+    </SafeAreaView>
   );
 }
 

@@ -8,6 +8,8 @@ import { useThemeColors } from '@/hooks/useColorScheme';
 import { transformProduct } from '@/utils/woocommerceTransformers';
 import { formatPrice } from '@/utils/formatNumber';
 import { stripHtml } from '@/utils/htmlUtils';
+import Constants from 'expo-constants';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import SkeletonProductDetail from '@/components/SkeletonProductDetail';
 import ProductCard from '@/components/ProductCard';
 import SafeImage from '@/components/SafeImage';
@@ -226,11 +228,19 @@ export default function ProductDetailScreen() {
 
   const handleShare = async () => {
     try {
-      const shareMessage = `🛍️ Check out this amazing product!\n\n${product.title}\n\n💰 Price: ${formatPrice(typeof product.price === 'number' ? product.price : parseFloat(product.price || '0'))}\n\n${stripHtml(product.description).substring(0, 150)}${stripHtml(product.description).length > 150 ? '...' : ''}\n\nShop now at Techin!`;
+      // Get the app URL scheme from constants or use a default
+      const { expoPublicAppUrl } = Constants.expoConfig?.extra || {};
+      const appUrl = expoPublicAppUrl || process.env.EXPO_PUBLIC_APP_URL || 'https://femtech.ng/product';
+
+      // Create deep link to the specific product
+      const productLink = `${appUrl}/${product.id}`;
+
+      const shareMessage = `🛍️ Check out this amazing product!\n\n${product.title}\n\n💰 Price: ${formatPrice(typeof product.price === 'number' ? product.price : parseFloat(product.price || '0'))}\n\n${stripHtml(product.description).substring(0, 150)}${stripHtml(product.description).length > 150 ? '...' : ''}\n\n${productLink}`;
 
       const result = await Share.share({
         message: shareMessage,
-        title: `${product.title} - Techin`,
+        url: productLink, // Include the URL in the share
+        title: `${product.title} - Femtech`,
       });
 
       if (result.action === Share.sharedAction) {
@@ -252,7 +262,7 @@ export default function ProductDetailScreen() {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Header */}
       <View style={[styles.header, { backgroundColor: colors.surface }]}>
         <TouchableOpacity onPress={() => router.back()} style={styles.headerButton}>
@@ -440,7 +450,7 @@ export default function ProductDetailScreen() {
           </View>
         </View>
       )}
-    </View>
+    </SafeAreaView>
   );
 }
 

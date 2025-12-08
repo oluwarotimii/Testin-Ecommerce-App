@@ -38,6 +38,14 @@ export default function RootLayout() {
   useEffect(() => {
     // Check for updates on app start
     updateService.checkForUpdates();
+
+    // Initialize notifications
+    notificationService.initialize();
+    const cleanup = notificationService.setupNotificationListeners();
+
+    return () => {
+      cleanup();
+    };
   }, []);
 
   return (

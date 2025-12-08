@@ -5,6 +5,7 @@ import { useThemeColors } from '@/hooks/useColorScheme';
 import { Ionicons } from '@expo/vector-icons';
 import axios from 'axios';
 import Constants from 'expo-constants';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function ForgotPasswordScreen() {
     const router = useRouter();
@@ -30,13 +31,48 @@ export default function ForgotPasswordScreen() {
 
         setLoading(true);
         try {
-            // WordPress lost password endpoint
+            // WordPress built-in lost password functionality
             const cleanUrl = WORDPRESS_URL.endsWith('/') ? WORDPRESS_URL.slice(0, -1) : WORDPRESS_URL;
-            const response = await axios.post(`${cleanUrl}/wp-json/bdpwr/v1/reset-password`, {
-                email: email
-            });
 
-            if (response.data && response.data.data && response.data.data.status === 200) {
+            // First try the bdpwr plugin endpoint (if available)
+            try {
+                const response = await axios.post(`${cleanUrl}/wp-json/bdpwr/v1/reset-password`, {
+                    email: email
+                });
+
+                if (response.data && response.data.data && response.data.data.status === 200) {
+                    Alert.alert(
+                        'Success',
+                        'Password reset link has been sent to your email address. Please check your inbox.',
+                        [
+                            {
+                                text: 'OK',
+                                onPress: () => router.push('/login')
+                            }
+                        ]
+                    );
+                } else {
+                    Alert.alert('Error', response.data?.message || 'Unable to send reset link. Please try again.');
+                }
+            } catch (bdpwrError: any) {
+                // If bdpwr fails, try WordPress native endpoint with different method
+                console.log('BDPWR endpoint failed, trying WordPress native method');
+
+                // Try to send password reset email using WordPress native functionality
+                const formData = new FormData();
+                formData.append('user_login', email);
+                formData.append('wp-submit', 'Get New Password');
+
+                const response = await axios.post(`${cleanUrl}/wp-login.php?action=lostpassword`,
+                    formData,
+                    {
+                        headers: {
+                            'Content-Type': 'multipart/form-data',
+                        }
+                    }
+                );
+
+                // If we get here, it means the request was successful
                 Alert.alert(
                     'Success',
                     'Password reset link has been sent to your email address. Please check your inbox.',
@@ -47,8 +83,6 @@ export default function ForgotPasswordScreen() {
                         }
                     ]
                 );
-            } else {
-                Alert.alert('Error', response.data?.message || 'Unable to send reset link. Please try again.');
             }
         } catch (error: any) {
             console.error('Password reset error:', error.response?.data || error.message);
@@ -58,6 +92,8 @@ export default function ForgotPasswordScreen() {
                 errorMessage = error.response.data.message;
             } else if (error.response?.status === 404) {
                 errorMessage = 'Email address not found. Please check and try again.';
+            } else if (error.response?.status === 400 || error.response?.status === 401) {
+                errorMessage = 'Invalid email address or account not found.';
             }
 
             Alert.alert('Error', errorMessage);
@@ -67,60 +103,62 @@ export default function ForgotPasswordScreen() {
     };
 
     return (
-        <ScrollView style={[styles.container, { backgroundColor: colors.background }]} contentContainerStyle={styles.contentContainer}>
-            <TouchableOpacity
-                style={styles.backButton}
-                onPress={() => router.push('/login')}
-            >
-                <Ionicons name="arrow-back" size={24} color={colors.primary} />
-            </TouchableOpacity>
-
-            <View style={styles.header}>
-                <View style={styles.iconContainer}>
-                    <Image source={require('@/assets/images/icon.png')} style={styles.appIcon} />
-                </View>
-                <Text style={[styles.title, { color: colors.text }]}>Forgot Password?</Text>
-                <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-                    Enter your email address and we'll send you a link to reset your password.
-                </Text>
-            </View>
-
-            <View style={styles.form}>
-                <View style={[styles.inputContainer, { backgroundColor: colors.surface }]}>
-                    <Ionicons name="mail" size={20} color={colors.textSecondary} style={styles.inputIcon} />
-                    <TextInput
-                        style={[styles.input, { color: colors.text }]}
-                        placeholder="Email"
-                        placeholderTextColor={colors.textSecondary}
-                        value={email}
-                        onChangeText={setEmail}
-                        keyboardType="email-address"
-                        autoCapitalize="none"
-                        autoComplete="email"
-                    />
-                </View>
-
+        <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+            <ScrollView contentContainerStyle={styles.contentContainer}>
                 <TouchableOpacity
-                    style={[styles.resetButton, { backgroundColor: colors.primary }]}
-                    onPress={handleResetPassword}
-                    disabled={loading}
+                    style={styles.backButton}
+                    onPress={() => router.push('/login')}
                 >
-                    <View style={styles.buttonContent}>
-                        {loading && <ActivityIndicator size="small" color={colors.white} style={styles.buttonSpinner} />}
-                        <Text style={[styles.resetButtonText, { color: colors.white }]}>
-                            {loading ? 'Sending...' : 'Send Reset Link'}
-                        </Text>
-                    </View>
+                    <Ionicons name="arrow-back" size={24} color={colors.primary} />
                 </TouchableOpacity>
-            </View>
 
-            <View style={styles.footer}>
-                <Text style={[styles.footerText, { color: colors.textSecondary }]}>Remember your password? </Text>
-                <TouchableOpacity onPress={() => router.push('/login')}>
-                    <Text style={[styles.footerLink, { color: colors.primary }]}>Sign In</Text>
-                </TouchableOpacity>
-            </View>
-        </ScrollView>
+                <View style={styles.header}>
+                    <View style={styles.iconContainer}>
+                        <Image source={require('@/assets/images/icon.png')} style={styles.appIcon} />
+                    </View>
+                    <Text style={[styles.title, { color: colors.text }]}>Forgot Password?</Text>
+                    <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
+                        Enter your email address and we'll send you a link to reset your password.
+                    </Text>
+                </View>
+
+                <View style={styles.form}>
+                    <View style={[styles.inputContainer, { backgroundColor: colors.surface }]}>
+                        <Ionicons name="mail" size={20} color={colors.textSecondary} style={styles.inputIcon} />
+                        <TextInput
+                            style={[styles.input, { color: colors.text }]}
+                            placeholder="Email"
+                            placeholderTextColor={colors.textSecondary}
+                            value={email}
+                            onChangeText={setEmail}
+                            keyboardType="email-address"
+                            autoCapitalize="none"
+                            autoComplete="email"
+                        />
+                    </View>
+
+                    <TouchableOpacity
+                        style={[styles.resetButton, { backgroundColor: colors.primary }]}
+                        onPress={handleResetPassword}
+                        disabled={loading}
+                    >
+                        <View style={styles.buttonContent}>
+                            {loading && <ActivityIndicator size="small" color={colors.white} style={styles.buttonSpinner} />}
+                            <Text style={[styles.resetButtonText, { color: colors.white }]}>
+                                {loading ? 'Sending...' : 'Send Reset Link'}
+                            </Text>
+                        </View>
+                    </TouchableOpacity>
+                </View>
+
+                <View style={styles.footer}>
+                    <Text style={[styles.footerText, { color: colors.textSecondary }]}>Remember your password? </Text>
+                    <TouchableOpacity onPress={() => router.push('/login')}>
+                        <Text style={[styles.footerLink, { color: colors.primary }]}>Sign In</Text>
+                    </TouchableOpacity>
+                </View>
+            </ScrollView>
+        </SafeAreaView>
     );
 }
 

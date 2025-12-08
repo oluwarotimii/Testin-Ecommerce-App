@@ -2,6 +2,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useThemeColors } from '@/hooks/useColorScheme';
 import { Ionicons } from '@expo/vector-icons';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function OrderSuccessScreen() {
     const router = useRouter();
@@ -9,7 +10,7 @@ export default function OrderSuccessScreen() {
     const { orderId } = useLocalSearchParams();
 
     return (
-        <View style={[styles.container, { backgroundColor: colors.background }]}>
+        <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
             <View style={styles.content}>
                 <View style={styles.iconContainer}>
                     <Ionicons name="checkmark-circle" size={100} color={colors.success} />
@@ -40,7 +41,7 @@ export default function OrderSuccessScreen() {
                     <Text style={[styles.secondaryButtonText, { color: colors.primary }]}>View My Orders</Text>
                 </TouchableOpacity>
             </View>
-        </View>
+        </SafeAreaView>
     );
 }
 

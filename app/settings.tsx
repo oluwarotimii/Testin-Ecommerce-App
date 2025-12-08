@@ -6,6 +6,7 @@ import { useTheme } from '@/context/ThemeContext';
 import { useAuth } from '@/context/AuthContext';
 import { Ionicons } from '@expo/vector-icons';
 import updateService from '@/services/updateService';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function SettingsScreen() {
   const router = useRouter();
@@ -104,103 +105,105 @@ export default function SettingsScreen() {
   };
 
   return (
-    <ScrollView style={[styles.container, { backgroundColor: colors.background }]} showsVerticalScrollIndicator={false}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color={colors.text} />
-        </TouchableOpacity>
-        <Text style={[styles.title, { color: colors.text }]}>Settings</Text>
-        <View style={{ width: 24 }} /> {/* Spacer for alignment */}
-      </View>
-
-      {/* Settings Sections */}
-      <View style={styles.section}>
-        <Text style={[styles.sectionTitle, { color: colors.text }]}>Preferences</Text>
-        <View style={[styles.menuContainer, { backgroundColor: colors.surface }]}>
-          {settingsItems.map((item) => (
-            <View key={item.id} style={[styles.menuItem, { borderBottomColor: colors.border }]}>
-              <View style={styles.menuItemLeft}>
-                <View style={[styles.iconContainer, { backgroundColor: colors.surface }]}>
-                  <Ionicons name={item.icon} size={20} color={colors.primary} />
-                </View>
-                <Text style={[styles.menuItemText, { color: colors.text }]}>{item.title}</Text>
-              </View>
-              {item.type === 'switch' ? (
-                <Switch
-                  value={item.value}
-                  onValueChange={item.onToggle || (() => {
-                    const newScheme = darkMode ? 'light' : 'dark';
-                    setColorScheme(newScheme);
-                    setDarkMode(!darkMode);
-                  })}
-                  trackColor={{ false: colors.border, true: colors.primary }}
-                  thumbColor={colors.white}
-                />
-              ) : (
-                <TouchableOpacity onPress={item.onPress}>
-                  <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
-                </TouchableOpacity>
-              )}
-            </View>
-          ))}
-        </View>
-      </View>
-
-      <View style={styles.section}>
-        <Text style={[styles.sectionTitle, { color: colors.text }]}>App Settings</Text>
-        <View style={[styles.menuContainer, { backgroundColor: colors.surface }]}>
-          {appSettingsItems.map((item) => (
-            <TouchableOpacity
-              key={item.id}
-              style={[styles.menuItem, { borderBottomColor: colors.border }]}
-              onPress={item.onPress}
-            >
-              <View style={styles.menuItemLeft}>
-                <View style={[styles.iconContainer, { backgroundColor: colors.surface }]}>
-                  <Ionicons name={item.icon} size={20} color={colors.primary} />
-                </View>
-                <Text style={[styles.menuItemText, { color: colors.text }]}>{item.title}</Text>
-              </View>
-              <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
-            </TouchableOpacity>
-          ))}
-        </View>
-      </View>
-
-      <View style={styles.section}>
-        <Text style={[styles.sectionTitle, { color: colors.text }]}>Account</Text>
-        <View style={[styles.menuContainer, { backgroundColor: colors.surface }]}>
-          {accountItems.map((item) => (
-            <TouchableOpacity
-              key={item.id}
-              style={[styles.menuItem, { borderBottomColor: colors.border }]}
-              onPress={item.onPress}
-            >
-              <View style={styles.menuItemLeft}>
-                <View style={[styles.iconContainer, { backgroundColor: colors.surface }]}>
-                  <Ionicons name={item.icon} size={20} color={colors.primary} />
-                </View>
-                <Text style={[styles.menuItemText, { color: colors.text }]}>{item.title}</Text>
-              </View>
-              <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
-            </TouchableOpacity>
-          ))}
-          <TouchableOpacity
-            style={[styles.logoutButton, { backgroundColor: colors.surface }]}
-            onPress={handleLogout}
-          >
-            <Ionicons name="log-out" size={20} color={colors.error} />
-            <Text style={[styles.logoutText, { color: colors.error }]}>Sign Out</Text>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+      <ScrollView showsVerticalScrollIndicator={false}>
+        {/* Header */}
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+            <Ionicons name="arrow-back" size={24} color={colors.text} />
           </TouchableOpacity>
+          <Text style={[styles.title, { color: colors.text }]}>Settings</Text>
+          <View style={{ width: 24 }} /> {/* Spacer for alignment */}
         </View>
-      </View>
 
-      {/* App Version */}
-      <View style={styles.footer}>
-        <Text style={[styles.versionText, { color: colors.textSecondary }]}>Techin Mobile v1.0.0</Text>
-      </View>
-    </ScrollView>
+        {/* Settings Sections */}
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>Preferences</Text>
+          <View style={[styles.menuContainer, { backgroundColor: colors.surface }]}>
+            {settingsItems.map((item) => (
+              <View key={item.id} style={[styles.menuItem, { borderBottomColor: colors.border }]}>
+                <View style={styles.menuItemLeft}>
+                  <View style={[styles.iconContainer, { backgroundColor: colors.surface }]}>
+                    <Ionicons name={item.icon} size={20} color={colors.primary} />
+                  </View>
+                  <Text style={[styles.menuItemText, { color: colors.text }]}>{item.title}</Text>
+                </View>
+                {item.type === 'switch' ? (
+                  <Switch
+                    value={item.value}
+                    onValueChange={item.onToggle || (() => {
+                      const newScheme = darkMode ? 'light' : 'dark';
+                      setColorScheme(newScheme);
+                      setDarkMode(!darkMode);
+                    })}
+                    trackColor={{ false: colors.border, true: colors.primary }}
+                    thumbColor={colors.white}
+                  />
+                ) : (
+                  <TouchableOpacity onPress={item.onPress}>
+                    <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
+                  </TouchableOpacity>
+                )}
+              </View>
+            ))}
+          </View>
+        </View>
+
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>App Settings</Text>
+          <View style={[styles.menuContainer, { backgroundColor: colors.surface }]}>
+            {appSettingsItems.map((item) => (
+              <TouchableOpacity
+                key={item.id}
+                style={[styles.menuItem, { borderBottomColor: colors.border }]}
+                onPress={item.onPress}
+              >
+                <View style={styles.menuItemLeft}>
+                  <View style={[styles.iconContainer, { backgroundColor: colors.surface }]}>
+                    <Ionicons name={item.icon} size={20} color={colors.primary} />
+                  </View>
+                  <Text style={[styles.menuItemText, { color: colors.text }]}>{item.title}</Text>
+                </View>
+                <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>Account</Text>
+          <View style={[styles.menuContainer, { backgroundColor: colors.surface }]}>
+            {accountItems.map((item) => (
+              <TouchableOpacity
+                key={item.id}
+                style={[styles.menuItem, { borderBottomColor: colors.border }]}
+                onPress={item.onPress}
+              >
+                <View style={styles.menuItemLeft}>
+                  <View style={[styles.iconContainer, { backgroundColor: colors.surface }]}>
+                    <Ionicons name={item.icon} size={20} color={colors.primary} />
+                  </View>
+                  <Text style={[styles.menuItemText, { color: colors.text }]}>{item.title}</Text>
+                </View>
+                <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
+              </TouchableOpacity>
+            ))}
+            <TouchableOpacity
+              style={[styles.logoutButton, { backgroundColor: colors.surface }]}
+              onPress={handleLogout}
+            >
+              <Ionicons name="log-out" size={20} color={colors.error} />
+              <Text style={[styles.logoutText, { color: colors.error }]}>Sign Out</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* App Version */}
+        <View style={styles.footer}>
+          <Text style={[styles.versionText, { color: colors.textSecondary }]}>Techin Mobile v1.0.0</Text>
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 

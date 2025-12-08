@@ -660,6 +660,14 @@ class DummyApiService {
     };
   }
 
+  async emptyCart() {
+    cartItems = [];
+    return {
+      success: true,
+      message: 'Cart cleared successfully'
+    };
+  }
+
   // Wishlist
   async getWishlist() {
     return wishlistItems;
