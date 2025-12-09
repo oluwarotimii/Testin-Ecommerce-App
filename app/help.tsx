@@ -12,59 +12,54 @@ export default function HelpScreen() {
     {
       id: '1',
       question: 'How do I place an order?',
-      answer: 'To place an order, browse our products, select the items you want, add them to your cart, and proceed to checkout. Follow the steps to enter your shipping and payment information.'
+      answer: 'To place an order, browse our products, select the items you want, add them to your cart, and proceed to checkout. Follow the steps to enter your shipping and payment information. All orders are placed directly in the app.'
     },
     {
       id: '2',
       question: 'What payment methods do you accept?',
-      answer: 'We accept all major credit cards including Visa, Mastercard, and American Express. We also support digital payment methods like PayPal and Apple Pay.'
+      answer: 'We accept direct bank transfers and card payments. Choose your preferred payment method during checkout.'
     },
     {
       id: '3',
       question: 'How can I track my order?',
-      answer: 'Once your order is shipped, you will receive a tracking number via email. You can use this number on our website or in the app to track your shipment in real-time.'
+      answer: 'Once your order is placed, you can track its status in the app. The order status will be updated in real-time so you can monitor the progress. You can also call our support team to get updates on your order status.'
     },
     {
       id: '4',
-      question: 'What is your return policy?',
-      answer: 'We offer a 30-day return policy for all items. Items must be in original condition with tags attached. Contact our customer support for return instructions.'
+      question: 'When will I receive updates about my order?',
+      answer: 'Order status updates are displayed directly in the app. You will receive notifications and can check the status anytime in the Orders section. For additional support, you can call us to track the status of your order.'
     },
     {
       id: '5',
-      question: 'How do I contact customer support?',
-      answer: 'You can contact customer support via email at support@femtech.com or call us at 1-800-FEMTECH. Our support team is available 24/7.'
+      question: 'Can I get feedback about my order?',
+      answer: 'Yes! You can view order updates and feedback directly in the app. The order status will be updated as it progresses through processing, shipping, and delivery stages.'
     }
   ];
 
   const contactOptions = [
     {
+      id: 'whatsapp',
+      title: 'WhatsApp Support',
+      icon: 'chatbubbles',
+      subtitle: '+2348051516565',
+      onPress: () => Linking.openURL('https://wa.me/+2348051516565')
+    },
+    {
       id: 'email',
       title: 'Email Support',
       icon: 'mail',
-      subtitle: 'support@femtechit.com',
-      onPress: () => Linking.openURL('mailto:support@femtechit.com')
+      subtitle: 'support@femtech.ng',
+      onPress: () => Linking.openURL('mailto:support@femtech.ng')
     },
     {
       id: 'phone',
       title: 'Phone Support',
       icon: 'call',
       subtitle: '+2348051516565',
-      onPress: () => Linking.openURL(`tel:${Platform.OS === 'ios' ? '+' : ''}1800FEMTECH`)
+      onPress: () => Linking.openURL(`tel:${Platform.OS === 'ios' ? '+' : ''}+2348051516565`)
     },
-    {
-      id: 'livechat',
-      title: 'Live Chat',
-      icon: 'chatbubble',
-      subtitle: 'Chat with an agent',
-      onPress: () => console.log('Live chat pressed')
-    },
-    {
-      id: 'faq',
-      title: 'FAQ',
-      icon: 'help-circle',
-      subtitle: 'Frequently asked questions',
-      onPress: () => console.log('FAQ pressed')
-    }
+   
+   
   ];
 
   return (
@@ -123,7 +118,7 @@ export default function HelpScreen() {
           </View>
         </View>
 
-        {/* Additional Resources */}
+        {/* Additional Resources
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: colors.text }]}>Additional Resources</Text>
           <View style={[styles.menuContainer, { backgroundColor: colors.surface }]}>
@@ -166,7 +161,7 @@ export default function HelpScreen() {
               <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
             </TouchableOpacity>
           </View>
-        </View>
+        </View> */}
       </View>
     </ScrollView>
   );

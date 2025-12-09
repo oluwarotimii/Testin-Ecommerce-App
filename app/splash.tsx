@@ -40,7 +40,7 @@ export default function SplashScreen() {
           style={styles.logo}
           resizeMode="contain"
         />
-        <Text style={[styles.appName, { color: colors.text }]}>Femtech</Text>
+        <Text style={[styles.appName, { color: colors.text }]}>Femtech Mobile App</Text>
         <Text style={[styles.tagline, { color: colors.textSecondary }]}>Your Tech Shopping Destination</Text>
       </View>
 

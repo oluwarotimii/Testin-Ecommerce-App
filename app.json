@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "Femtech IT",
-    "slug": "femtech-it",
+    "name": "Femtech Mobile App",
+    "slug": "femtech-mobile-app",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/logo.png",
@@ -34,7 +34,7 @@
         "foregroundImage": "./assets/images/logo.png",
         "backgroundColor": "#FFFFFF"
       },
-      "package": "com.frobenius.femtechit"
+      "package": "com.frobenius.femtechmobileapp"
     },
     "web": {
       "bundler": "metro",

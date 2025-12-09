@@ -63,7 +63,7 @@ const SafeImage: React.FC<RNImageProps> = (props) => {
   }
 
   // Ensure the source is properly formatted
-  const processedSource = source.current;
+  let processedSource = source.current;
 
   // If source is an object with uri, ensure it's a proper URL
   if (processedSource && typeof processedSource === 'object' && processedSource.uri) {
@@ -75,8 +75,8 @@ const SafeImage: React.FC<RNImageProps> = (props) => {
       if (uri.startsWith('http://')) {
         uri = uri.replace('http://', 'https://');
       }
-      // Update the processed source
-      processedSource.uri = uri;
+      // Create a new source object instead of modifying the existing one
+      processedSource = { ...processedSource, uri };
     }
   }
 

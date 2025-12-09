@@ -240,7 +240,7 @@ export default function ProductDetailScreen() {
       const result = await Share.share({
         message: shareMessage,
         url: productLink, // Include the URL in the share
-        title: `${product.title} - Femtech`,
+        title: `${product.title} - Femtech Mobile App`,
       });
 
       if (result.action === Share.sharedAction) {
@@ -272,9 +272,9 @@ export default function ProductDetailScreen() {
           <TouchableOpacity style={styles.headerButton} onPress={() => router.push('/search')}>
             <Ionicons name="search" size={24} color={colors.text} />
           </TouchableOpacity>
-          <TouchableOpacity style={styles.headerButton} onPress={handleShare}>
+          {/* <TouchableOpacity style={styles.headerButton} onPress={handleShare}>
             <Ionicons name="share-social-outline" size={24} color={colors.text} />
-          </TouchableOpacity>
+          </TouchableOpacity> */}
           <TouchableOpacity style={styles.headerButton} onPress={toggleWishlist}>
             <Ionicons
               name={isInWishlist ? "heart" : "heart-outline"}

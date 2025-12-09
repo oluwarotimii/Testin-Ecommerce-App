@@ -38,8 +38,8 @@ const registerForPushNotificationsAsync = async () => {
   const projectId =
     Constants?.expoConfig?.extra?.eas?.projectId ?? Constants?.easConfig?.projectId;
 
-  const pushToken = (await Notifications.getExpoPushTokenAsync({ projectId })).data;
-  console.log('Expo push token:', pushToken);
+  const fullPushToken = (await Notifications.getExpoPushTokenAsync({ projectId })).data;
+  console.log('Full Expo push token:', fullPushToken);
 
   // Check if user is authenticated
   const sessionToken = await AsyncStorage.getItem('sessionToken');
@@ -50,41 +50,41 @@ const registerForPushNotificationsAsync = async () => {
     try {
       // We'll need to use the API service, but we need to import it properly later
       // For now, we'll store the token in AsyncStorage to be used when AuthContext is available
-      await AsyncStorage.setItem('pushToken', pushToken);
+      await AsyncStorage.setItem('pushToken', fullPushToken);
       console.log('Push token stored for authenticated user');
     } catch (error) {
       console.error('Error storing push token for authenticated user:', error);
     }
   } else {
     // If user is not authenticated, store the token to be used later
-    await AsyncStorage.setItem('pushToken', pushToken);
+    await AsyncStorage.setItem('pushToken', fullPushToken);
     console.log('Push token stored for later use');
   }
 
   // Send this token to your Next.js API (for server-side notifications)
+  // According to the new API format, no authentication is required
   try {
     const response = await fetch(`${DASHBOARD_API_BASE_URL}/api/expo/token`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ expoPushToken: pushToken }),
+      body: JSON.stringify({ expoPushToken: fullPushToken }), // Send the full token as expected
     });
 
     const data = await response.json();
 
     if (!response.ok) {
-      throw new Error(data.error || 'Failed to register push token');
+      console.error('Failed to register push token with server:', data.error || `HTTP ${response.status}`);
+    } else {
+      console.log('Push token registered successfully with server');
     }
-
-    console.log('Push token registered successfully');
-    return pushToken;
   } catch (error) {
-    console.error('Error registering push token:', error);
-    // throw error; // Optional: rethrow if you want to handle it upstream
+    console.error('Error registering push token with server:', error);
+    // Don't throw error - this is non-critical functionality
   }
 
-  return pushToken;
+  return fullPushToken;
 }
 
 const setupNotificationListeners = (navigationCallback?: (response: any) => void) => {

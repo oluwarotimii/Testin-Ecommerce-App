@@ -573,19 +573,29 @@ class WordPressApiService {
     }
   }
 
-  async getProductsByCategory(categorySlug: string, limit: number = 20) {
+  async getProductsByCategory(categoryIdOrSlug: string, limit: number = 20) {
     try {
-      // First, get the category by slug to find its ID
-      const categories = await this.getCategories({ slug: categorySlug });
+      let categoryId: number;
 
-      if (!categories || categories.length === 0) {
-        console.warn(`Category with slug "${categorySlug}" not found`);
-        return [];
+      // Check if the input is numeric (ID) or string (slug)
+      const numericId = parseInt(categoryIdOrSlug);
+      if (!isNaN(numericId)) {
+        // It's an ID, use directly
+        categoryId = numericId;
+      } else {
+        // It's a slug, need to get the ID first
+        const categories = await this.getCategories({ slug: categoryIdOrSlug });
+
+        if (!categories || categories.length === 0) {
+          console.warn(`Category with slug "${categoryIdOrSlug}" not found`);
+          return [];
+        }
+
+        categoryId = categories[0].id;
       }
 
-      const categoryId = categories[0].id;
-
-      // Fetch products for this category
+      // Fetch products for this category using the WooCommerce API
+      // The 'category' parameter accepts the category ID directly
       const response = await this.api.get('/products', {
         params: {
           category: categoryId,
@@ -597,7 +607,7 @@ class WordPressApiService {
 
       return response.data;
     } catch (error: any) {
-      console.error(`Error fetching products for category "${categorySlug}":`, error.response?.data || error.message);
+      console.error(`Error fetching products for category "${categoryIdOrSlug}":`, error.response?.data || error.message);
       throw error;
     }
   }

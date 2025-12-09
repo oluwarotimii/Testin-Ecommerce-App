@@ -18,7 +18,7 @@ export default function WelcomeScreen() {
             resizeMode="contain"
           />
         </View>
-        <Text style={[styles.title, { color: colors.text }]}>Welcome to Femtech</Text>
+        <Text style={[styles.title, { color: colors.text }]}>Welcome to Femtech Mobile App</Text>
         <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
           Discover cutting-edge technology and enjoy seamless shopping experience
         </Text>

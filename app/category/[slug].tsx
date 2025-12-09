@@ -65,35 +65,15 @@ export default function CategoryScreen() {
                     console.error('Error fetching category details:', catError);
                 }
 
-                // Fetch all products
-                const allProducts = await apiService.getProducts();
+                // Fetch products by category using the dedicated API method
+                // This ensures we get complete product data and better performance
+                // The method can now handle both category IDs and slugs
+                const categoryProducts = await apiService.getProductsByCategory(slugStr);
 
-                // Use transformation utility
-                const transformedProducts = transformProducts(allProducts);
+                // Transform the products to app format
+                const transformedProducts = transformProducts(categoryProducts);
 
-                // Filter products by category - handle both ID and slug
-                const filteredProducts = transformedProducts.filter((product: any) => {
-                    // Check if product has categories array
-                    if (product.categories && Array.isArray(product.categories)) {
-                        return product.categories.some((cat: any) =>
-                            cat.slug === slugStr || cat.id.toString() === slugStr
-                        );
-                    }
-
-                    // Fallback to old logic
-                    const isNumericSlug = !isNaN(Number(slugStr));
-                    if (isNumericSlug) {
-                        return product.category_id?.toString() === slugStr;
-                    } else {
-                        const categoryName = product.category?.toLowerCase() || '';
-                        const categorySlug = categoryName.replace(/\s+/g, '-');
-                        return categoryName.includes(slugStr.toLowerCase()) ||
-                            categorySlug === slugStr ||
-                            categoryName === slugStr.replace(/-/g, ' ');
-                    }
-                });
-
-                setProducts(filteredProducts);
+                setProducts(transformedProducts);
             } catch (err: any) {
                 setError(err.message || 'Failed to load products');
             } finally {
