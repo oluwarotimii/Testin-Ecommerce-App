@@ -1,9 +1,32 @@
 import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
+import * as Linking from 'expo-linking';
+import { Platform } from 'react-native';
 import Constants from 'expo-constants';
 import { DASHBOARD_API_BASE_URL } from './config';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '@/context/AuthContext';
+
+// Function to create notification channel for Android 13+
+const createNotificationChannel = async () => {
+  if (Platform.OS === 'android') {
+    await Notifications.setNotificationChannelAsync('default', {
+      name: 'default',
+      importance: Notifications.AndroidImportance.MAX,
+      vibrationPattern: [0, 250, 250, 250],
+      lightColor: '#FF231F7C',
+    });
+  }
+};
+
+// Function for pre-prompt before requesting notification permissions
+const showNotificationPrePrompt = (): Promise<boolean> => {
+  return new Promise((resolve) => {
+    // In a real implementation, you would show a custom modal here
+    // For now, we'll just return true to proceed with the native prompt
+    resolve(true);
+  });
+};
 
 // Set notification handler
 Notifications.setNotificationHandler({
@@ -22,25 +45,49 @@ const registerForPushNotificationsAsync = async () => {
     return null;
   }
 
+  // Create notification channel (required for Android 13+)
+  await createNotificationChannel();
+
+  // Check current permissions status
   const { status: existingStatus } = await Notifications.getPermissionsAsync();
-  let finalStatus = existingStatus;
 
-  if (existingStatus !== 'granted') {
-    const { status } = await Notifications.requestPermissionsAsync();
-    finalStatus = status;
-  }
-
-  if (finalStatus !== 'granted') {
-    console.log('Permission not granted for push notifications');
+  if (existingStatus === 'granted') {
+    // If already granted, proceed directly to getting the token
+    const projectId = Constants?.expoConfig?.extra?.eas?.projectId ?? Constants?.easConfig?.projectId;
+    const fullPushToken = (await Notifications.getExpoPushTokenAsync({ projectId })).data;
+    console.log('Full Expo push token (already granted):', fullPushToken);
+    return await processPushToken(fullPushToken);
+  } else if (existingStatus === 'denied') {
+    // If permission was denied, direct user to settings
+    console.log('Permission was previously denied for push notifications');
+    alert('To receive push notifications, please enable them in your device settings.');
     return null;
+  } else {
+    // Permission not yet requested - show pre-prompt then request
+    const shouldRequestPermission = await showNotificationPrePrompt();
+    if (!shouldRequestPermission) {
+      console.log('User declined to request notification permission');
+      return null;
+    }
+
+    // Request permission from the user
+    const { status } = await Notifications.requestPermissionsAsync();
+
+    if (status !== 'granted') {
+      console.log('Permission not granted for push notifications');
+      return null;
+    }
+
+    // If permission granted, get the token
+    const projectId = Constants?.expoConfig?.extra?.eas?.projectId ?? Constants?.easConfig?.projectId;
+    const fullPushToken = (await Notifications.getExpoPushTokenAsync({ projectId })).data;
+    console.log('Full Expo push token:', fullPushToken);
+    return await processPushToken(fullPushToken);
   }
+};
 
-  const projectId =
-    Constants?.expoConfig?.extra?.eas?.projectId ?? Constants?.easConfig?.projectId;
-
-  const fullPushToken = (await Notifications.getExpoPushTokenAsync({ projectId })).data;
-  console.log('Full Expo push token:', fullPushToken);
-
+// Function to process the push token after it's obtained
+const processPushToken = async (fullPushToken: string) => {
   // Check if user is authenticated
   const sessionToken = await AsyncStorage.getItem('sessionToken');
   const customerId = await AsyncStorage.getItem('customerId');
@@ -79,12 +126,14 @@ const registerForPushNotificationsAsync = async () => {
     } else {
       console.log('Push token registered successfully with server');
     }
+
+    // Return the token regardless of server registration success
+    return fullPushToken;
   } catch (error) {
     console.error('Error registering push token with server:', error);
-    // Don't throw error - this is non-critical functionality
+    // Still return the token even if server registration fails
+    return fullPushToken;
   }
-
-  return fullPushToken;
 }
 
 const setupNotificationListeners = (navigationCallback?: (response: any) => void) => {
@@ -142,6 +191,10 @@ const updatePushTokenForUser = async (apiService: any, pushToken: string) => {
 const initialize = async () => {
   // Initialize notifications if needed
   const token = await registerForPushNotificationsAsync();
+  // Log the result but don't throw error if registration fails
+  if (!token) {
+    console.log("Notification initialization failed - permissions denied or device not physical");
+  }
   return token;
 }
 

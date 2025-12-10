@@ -56,13 +56,13 @@ export function transformProduct(wcProduct: any): AppProduct {
 
     return {
         id: wcProduct.id,
-        title: wcProduct.name || wcProduct.title || 'Untitled Product',
+        title: decodeHtmlEntities(wcProduct.name || wcProduct.title || 'Untitled Product'),
         image: imageUrl,
         price: parseFloat(wcProduct.price || '0'),
         original_price: parseFloat(wcProduct.regular_price || wcProduct.price || '0'),
-        description: wcProduct.description || wcProduct.short_description || '',
+        description: decodeHtmlEntities(wcProduct.description || wcProduct.short_description || ''),
         category: wcProduct.categories && wcProduct.categories.length > 0
-            ? (wcProduct.categories[0].name || wcProduct.categories[0].slug || 'General')
+            ? decodeHtmlEntities(wcProduct.categories[0].name || wcProduct.categories[0].slug || 'General')
             : 'General',
         category_id: wcProduct.categories && wcProduct.categories.length > 0
             ? wcProduct.categories[0].id
@@ -71,7 +71,7 @@ export function transformProduct(wcProduct: any): AppProduct {
         categories: wcProduct.categories && Array.isArray(wcProduct.categories)
             ? wcProduct.categories.map((cat: any) => ({
                 id: cat.id,
-                name: cat.name,
+                name: decodeHtmlEntities(cat.name),
                 slug: cat.slug
             }))
             : undefined,
@@ -116,6 +116,21 @@ export function transformOrders(wcOrders: any[]): AppOrder[] {
 }
 
 /**
+ * Decode HTML entities in a string
+ */
+function decodeHtmlEntities(text: string): string {
+    if (!text) return '';
+    return text
+        .replace(/&amp;/g, '&')
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/&quot;/g, '"')
+        .replace(/&#39;/g, "'")
+        .replace(/&nbsp;/g, ' ')
+        .trim();
+}
+
+/**
  * Transform WooCommerce category to app format
  */
 export function transformCategory(wcCategory: any): AppCategory {
@@ -142,7 +157,7 @@ export function transformCategory(wcCategory: any): AppCategory {
 
     return {
         category_id: wcCategory.id || wcCategory.category_id,
-        name: wcCategory.name || 'Uncategorized',
+        name: decodeHtmlEntities(wcCategory.name || 'Uncategorized'),
         image: imageUrl || undefined
     };
 }

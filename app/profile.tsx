@@ -1,6 +1,7 @@
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, ActivityIndicator, Alert } from 'react-native';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'expo-router';
+import * as Linking from 'expo-linking';
 import { useAuth } from '@/context/AuthContext';
 import { useThemeColors } from '@/hooks/useColorScheme';
 import { Ionicons } from '@expo/vector-icons';
@@ -174,19 +175,39 @@ export default function ProfileScreen() {
             <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
           </TouchableOpacity>
 
-          <TouchableOpacity
+          {/* <TouchableOpacity
             style={[styles.menuItem, { backgroundColor: colors.surface }]}
             onPress={async () => {
               try {
-                await notificationService.registerForPushNotificationsAsync();
+                console.log("Attempting to register for push notifications...");
+                const token = await notificationService.registerForPushNotificationsAsync();
+
+                if (!token) {
+                  // Show alert prompting user to enable notifications in settings
+                  Alert.alert(
+                    "Enable Notifications",
+                    "To receive push notifications, please enable them in your device settings.",
+                    [
+                      { text: "Not now" },
+                      {
+                        text: "Open Settings",
+                        onPress: () => Linking.openSettings()
+                      }
+                    ]
+                  );
+                  return;
+                }
+
+                console.log("Sending local notification...");
                 await notificationService.sendLocalNotification(
                   "Test Notification",
                   "This is a test notification to verify push notifications are working."
                 );
+                console.log("Successfully sent notification");
                 Alert.alert("Success", "Notification sent! Check your notification center.");
               } catch (error) {
                 console.error("Notification error:", error);
-                Alert.alert("Error", "Failed to send notification. Check console for details.");
+                Alert.alert("Error", `Failed to send notification: ${error.message || 'Unknown error'}`);
               }
             }}
           >
@@ -195,7 +216,7 @@ export default function ProfileScreen() {
             </View>
             <Text style={[styles.menuText, { color: colors.text }]}>Test Notification</Text>
             <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
-          </TouchableOpacity>
+          </TouchableOpacity> */}
 
           <TouchableOpacity style={[styles.menuItem, { backgroundColor: colors.surface, marginTop: 20 }]} onPress={handleLogout}>
             <View style={[styles.menuIcon, { backgroundColor: '#FFEBEE' }]}>

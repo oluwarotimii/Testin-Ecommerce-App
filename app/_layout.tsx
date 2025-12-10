@@ -40,7 +40,15 @@ export default function RootLayout() {
     updateService.checkForUpdates();
 
     // Initialize notifications
-    notificationService.initialize();
+    const initNotifications = async () => {
+      const token = await notificationService.initialize();
+      // If token is null, it means permissions were denied
+      if (!token) {
+        console.log("Push notifications not enabled due to denied permissions");
+      }
+    };
+
+    initNotifications();
     const cleanup = notificationService.setupNotificationListeners();
 
     return () => {

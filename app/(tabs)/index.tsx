@@ -142,7 +142,12 @@ export default function HomeScreen() {
         const { registerForPushNotificationsAsync, setupNotificationListeners } = await import('@/services/notificationService');
 
         // Register for push notifications
-        await registerForPushNotificationsAsync(apiService?.sessionToken || undefined);
+        const token = await registerForPushNotificationsAsync(apiService?.sessionToken || undefined);
+
+        // If token is null, it means permissions were denied
+        if (!token) {
+          console.log("Push notifications not enabled due to denied permissions");
+        }
 
         // Setup notification listeners
         cleanupFn = setupNotificationListeners((response) => {
