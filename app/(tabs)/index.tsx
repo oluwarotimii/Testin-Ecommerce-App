@@ -133,7 +133,9 @@ export default function HomeScreen() {
     fetchCarouselItems();
   }, [isAuthenticated]); // OPTIMIZED: Only depend on isAuthenticated, not on functions
 
+  // Commenting out duplicate notification setup - now handled in _layout.tsx
   // OPTIMIZED: Handle push notifications - run only once on mount
+  /*
   useEffect(() => {
     let cleanupFn: (() => void) | null = null;
 
@@ -175,6 +177,7 @@ export default function HomeScreen() {
       }
     };
   }, []); // OPTIMIZED: Run only once on mount
+  */
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);

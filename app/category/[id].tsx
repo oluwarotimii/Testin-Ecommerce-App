@@ -12,7 +12,7 @@ import ProductCard from '@/components/ProductCard';
 
 export default function CategoryScreen() {
     const router = useRouter();
-    const { slug } = useLocalSearchParams();
+    const { id } = useLocalSearchParams();
     const colors = useThemeColors();
     const { apiService } = useAuth();
     const { setCartCount } = useCart();
@@ -45,18 +45,18 @@ export default function CategoryScreen() {
 
     useEffect(() => {
         const fetchCategoryProducts = async () => {
-            if (!apiService || !slug) return;
+            if (!apiService || !id) return;
             try {
                 setLoading(true);
                 setError(null);
 
-                const slugStr = slug.toString();
+                const idStr = id.toString();
 
                 // Try to fetch category details from WooCommerce
                 try {
                     const categories = await apiService.getCategories();
                     const category = categories.find((cat: any) =>
-                        cat.slug === slugStr || cat.id.toString() === slugStr
+                        cat.slug === idStr || cat.id.toString() === idStr
                     );
                     if (category) {
                         setCategoryName(category.name);
@@ -68,7 +68,7 @@ export default function CategoryScreen() {
                 // Fetch products by category using the dedicated API method
                 // This ensures we get complete product data and better performance
                 // The method can now handle both category IDs and slugs
-                const categoryProducts = await apiService.getProductsByCategory(slugStr);
+                const categoryProducts = await apiService.getProductsByCategory(idStr);
 
                 // Transform the products to app format
                 const transformedProducts = transformProducts(categoryProducts);
@@ -83,7 +83,7 @@ export default function CategoryScreen() {
 
         fetchCategoryProducts();
         fetchWishlist();
-    }, [apiService, slug, fetchWishlist]);
+    }, [apiService, id, fetchWishlist]);
 
     const filteredProducts = useMemo(() => {
         if (!searchQuery) return products;

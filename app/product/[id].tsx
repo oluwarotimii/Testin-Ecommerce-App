@@ -356,7 +356,7 @@ export default function ProductDetailScreen() {
               <Text style={[styles.sectionTitle, { color: colors.text }]}>Similar Items</Text>
               <TouchableOpacity
                 style={[styles.seeAllButton, { backgroundColor: colors.primary }]}
-                onPress={() => router.push(('/category/' + product.category) as any)}
+                onPress={() => router.push(`/category/${product.category_id}` as any)}
               >
                 <Text style={[styles.seeAllButtonText, { color: colors.white }]}>View All</Text>
               </TouchableOpacity>

@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { Stack } from 'expo-router';
 import { View } from 'react-native';
 import { usePathname } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useFrameworkReady } from '@/hooks/useFrameworkReady';
 import notificationService from '@/services/notificationService';
@@ -33,6 +34,7 @@ function AppContent() {
 }
 
 export default function RootLayout() {
+  const router = useRouter();
   useFrameworkReady();
 
   useEffect(() => {
@@ -49,12 +51,32 @@ export default function RootLayout() {
     };
 
     initNotifications();
-    const cleanup = notificationService.setupNotificationListeners();
+
+    // Setup notification listeners with navigation callback
+    const cleanup = notificationService.setupNotificationListeners((response) => {
+      // Handle notification tap - navigate to specific content
+      const { linkType, linkValue } = response?.notification?.request?.content?.data || {};
+      if (linkType && linkValue) {
+        if (linkType === 'category') {
+          // Handle both category ID and slug (name) - the category route supports both
+          router.push(`/category/${linkValue}`);
+        } else if (linkType === 'product') {
+          // Handle product ID - the product route expects an ID
+          router.push(`/product/${linkValue}`);
+        } else if (linkType === 'page') {
+          // Navigate to a specific page
+          router.push(`/${linkValue}`);
+        } else if (linkType === 'url') {
+          // For external URLs, you might want to open in a web view
+          console.log('External URL notification:', linkValue);
+        }
+      }
+    });
 
     return () => {
       cleanup();
     };
-  }, []);
+  }, [router]);
 
   return (
     <ThemeProvider>
