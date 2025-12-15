@@ -41,8 +41,7 @@ export default function RootLayout() {
     // Check for updates on app start
     updateService.checkForUpdates();
 
-    // Initialize notifications - commenting out for OTA update
-    /*
+    // Initialize notifications
     const initNotifications = async () => {
       const token = await notificationService.initialize();
       // If token is null, it means permissions were denied
@@ -101,7 +100,6 @@ export default function RootLayout() {
     return () => {
       cleanup();
     };
-    */
   }, [router]);
 
   return (

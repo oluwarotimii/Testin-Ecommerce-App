@@ -79,7 +79,7 @@ const FloatingCartButton: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     position: 'absolute',
-    bottom: 90, // Position above the tab bar
+    bottom: 190, // Position above the tab bar (moved up further)
     right: 20,
     zIndex: 999,
   },

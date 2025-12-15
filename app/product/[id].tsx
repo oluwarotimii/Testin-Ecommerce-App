@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions, Alert, Share } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions, Alert, Share, Image } from 'react-native';
 import { useState, useEffect } from 'react';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
@@ -10,6 +10,7 @@ import { formatPrice } from '@/utils/formatNumber';
 import { stripHtml } from '@/utils/htmlUtils';
 import Constants from 'expo-constants';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import SkeletonProductDetail from '@/components/SkeletonProductDetail';
 import ProductCard from '@/components/ProductCard';
 import SafeImage from '@/components/SafeImage';
@@ -22,6 +23,7 @@ export default function ProductDetailScreen() {
   const { apiService } = useAuth();
   const { setCartCount } = useCart();
   const colors = useThemeColors();
+  const insets = useSafeAreaInsets();
   const [quantity, setQuantity] = useState(1);
   const [selectedImage, setSelectedImage] = useState(0);
   const [isInWishlist, setIsInWishlist] = useState(false);
@@ -412,7 +414,11 @@ export default function ProductDetailScreen() {
       </ScrollView>
 
       {/* Bottom Action Bar */}
-      <View style={[styles.actionBar, { backgroundColor: colors.surface, borderTopColor: colors.border }]}>
+      <View style={[styles.actionBar, {
+        backgroundColor: colors.surface,
+        borderTopColor: colors.border,
+        paddingBottom: insets.bottom + 15 // Use actual safe area inset plus additional padding
+      }]}>
         <TouchableOpacity
           style={[styles.actionButton, { backgroundColor: colors.warning }]}
           onPress={buyNow}
@@ -428,28 +434,28 @@ export default function ProductDetailScreen() {
         </TouchableOpacity>
       </View>
 
-      {/* Fullscreen Image Overlay */}
-      {showFullscreenImage && (
+      {/* Fullscreen Image Overlay - temporarily disabled */}
+      {/* {showFullscreenImage && (
         <View style={styles.fullscreenOverlay}>
-          <TouchableOpacity
-            style={styles.overlayCloseButton}
-            onPress={() => setShowFullscreenImage(false)}
-          >
-            <Ionicons name="close" size={30} color="#FFFFFF" />
-          </TouchableOpacity>
           <View style={styles.fullscreenImageContainer}>
             <TouchableOpacity
               onPress={() => setShowFullscreenImage(false)}
             >
-              <SafeImage
+              <Image
                 source={{ uri: product?.image }}
                 style={styles.fullscreenImage}
                 resizeMode="contain"
               />
             </TouchableOpacity>
           </View>
+          <TouchableOpacity
+            style={styles.overlayCloseButton}
+            onPress={() => setShowFullscreenImage(false)}
+          >
+            <Ionicons name="close" size={30} color="#FFFFFF" />
+          </TouchableOpacity>
         </View>
-      )}
+      )} */}
     </SafeAreaView>
   );
 }
@@ -478,7 +484,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingBottom: 120,
+    paddingBottom: 100, // Reduced padding to account for properly positioned action bar
   },
   imageContainer: {
     padding: 20,
@@ -676,6 +682,7 @@ const styles = StyleSheet.create({
     paddingVertical: 15,
     borderTopWidth: 1,
     gap: 15,
+    // paddingBottom will be set dynamically using safe area insets
   },
   actionButton: {
     flex: 1,
@@ -718,12 +725,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     width: '100%',
-    height: '100%',
+    height: '90%',
   },
   fullscreenImage: {
-    width: '100%',
-    height: '100%',
-    flex: 1,
+    width: '90%',
+    height: '90%',
+    resizeMode: 'contain',
   },
   overlayCloseButton: {
     position: 'absolute',

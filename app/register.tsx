@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Alert, Image, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Alert, Image, ActivityIndicator, KeyboardAvoidingView, Platform, TouchableWithoutFeedback, Keyboard } from 'react-native';
 import { useState } from 'react';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
@@ -60,139 +60,146 @@ export default function RegisterScreen() {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-      <ScrollView contentContainerStyle={styles.contentContainer}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => router.push('/(tabs)')}
-        >
-          <Ionicons name="arrow-back" size={24} color={colors.primary} />
-        </TouchableOpacity>
-
-        <View style={styles.header}>
-          <View style={styles.iconContainer}>
-            <Image source={require('@/assets/images/icon.png')} style={styles.appIcon} />
-          </View>
-          <Text style={[styles.title, { color: colors.text }]}>Create Account</Text>
-          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>Join us and start shopping</Text>
-        </View>
-
-        <View style={styles.form}>
-          {success ? (
-            <View style={[styles.successContainer, { backgroundColor: `${colors.success || '#4CD964'}20`, borderColor: colors.success || '#4CD964', borderWidth: 1, borderRadius: 8, padding: 12, marginBottom: 16 }]}>
-              <Text style={[styles.successText, { color: colors.success || '#4CD964', fontSize: 14 }]}>{success}</Text>
-            </View>
-          ) : null}
-          {error ? (
-            <View style={[styles.errorContainer, { backgroundColor: `${colors.error}20`, borderColor: colors.error, borderWidth: 1, borderRadius: 8, padding: 12, marginBottom: 16 }]}>
-              <Text style={[styles.errorText, { color: colors.error, fontSize: 14 }]}>{error}</Text>
-            </View>
-          ) : null}
-          <View style={[styles.inputContainer, { backgroundColor: colors.surface }]}>
-            <Ionicons name="person-outline" size={20} color={colors.textSecondary} style={styles.inputIcon} />
-            <TextInput
-              style={[styles.input, { color: colors.text }]}
-              placeholder="First Name"
-              placeholderTextColor={colors.textSecondary}
-              value={firstName}
-              onChangeText={setFirstName}
-            />
-          </View>
-
-          <View style={[styles.inputContainer, { backgroundColor: colors.surface }]}>
-            <Ionicons name="person-outline" size={20} color={colors.textSecondary} style={styles.inputIcon} />
-            <TextInput
-              style={[styles.input, { color: colors.text }]}
-              placeholder="Last Name"
-              placeholderTextColor={colors.textSecondary}
-              value={lastName}
-              onChangeText={setLastName}
-            />
-          </View>
-
-          <View style={[styles.inputContainer, { backgroundColor: colors.surface }]}>
-            <Ionicons name="mail-outline" size={20} color={colors.textSecondary} style={styles.inputIcon} />
-            <TextInput
-              style={[styles.input, { color: colors.text }]}
-              placeholder="Email"
-              placeholderTextColor={colors.textSecondary}
-              value={email}
-              onChangeText={setEmail}
-              keyboardType="email-address"
-              autoCapitalize="none"
-            />
-          </View>
-
-          <View style={[styles.inputContainer, { backgroundColor: colors.surface }]}>
-            <Ionicons name="call-outline" size={20} color={colors.textSecondary} style={styles.inputIcon} />
-            <TextInput
-              style={[styles.input, { color: colors.text }]}
-              placeholder="Phone Number"
-              placeholderTextColor={colors.textSecondary}
-              value={phone}
-              onChangeText={setPhone}
-              keyboardType="phone-pad"
-            />
-          </View>
-
-          <View style={[styles.inputContainer, { backgroundColor: colors.surface }]}>
-            <Ionicons name="lock-closed-outline" size={20} color={colors.textSecondary} style={styles.inputIcon} />
-            <TextInput
-              style={[styles.input, { color: colors.text }]}
-              placeholder="Password"
-              placeholderTextColor={colors.textSecondary}
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry={!showPassword}
-            />
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        style={{ flex: 1 }}
+      >
+        <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
+          <ScrollView contentContainerStyle={styles.contentContainer}>
             <TouchableOpacity
-              onPress={() => setShowPassword(!showPassword)}
-              style={styles.eyeIcon}
+              style={styles.backButton}
+              onPress={() => router.push('/(tabs)')}
             >
-              {showPassword ? (
-                <Ionicons name="eye-off-outline" size={20} color={colors.textSecondary} />
-              ) : (
-                <Ionicons name="eye-outline" size={20} color={colors.textSecondary} />
-              )}
+              <Ionicons name="arrow-back" size={24} color={colors.primary} />
             </TouchableOpacity>
-          </View>
 
-          <View style={[styles.inputContainer, { backgroundColor: colors.surface }]}>
-            <Ionicons name="lock-closed-outline" size={20} color={colors.textSecondary} style={styles.inputIcon} />
-            <TextInput
-              style={[styles.input, { color: colors.text }]}
-              placeholder="Confirm Password"
-              placeholderTextColor={colors.textSecondary}
-              value={confirmPassword}
-              onChangeText={setConfirmPassword}
-              secureTextEntry={!showConfirmPassword}
-            />
-            <TouchableOpacity
-              onPress={() => setShowConfirmPassword(!showConfirmPassword)}
-              style={styles.eyeIcon}
-            >
-              {showConfirmPassword ? (
-                <Ionicons name="eye-off-outline" size={20} color={colors.textSecondary} />
-              ) : (
-                <Ionicons name="eye-outline" size={20} color={colors.textSecondary} />
-              )}
-            </TouchableOpacity>
-          </View>
-
-          <TouchableOpacity style={[styles.registerButton, { backgroundColor: colors.primary }]} onPress={handleRegister} disabled={loadingAuth}>
-            <View style={styles.buttonContent}>
-              {loadingAuth && <ActivityIndicator size="small" color={colors.white} style={styles.buttonSpinner} />}
-              <Text style={[styles.registerButtonText, { color: colors.white }]}>{loadingAuth ? 'Registering...' : 'Create Account'}</Text>
+            <View style={styles.header}>
+              <View style={styles.iconContainer}>
+                <Image source={require('@/assets/images/icon.png')} style={styles.appIcon} />
+              </View>
+              <Text style={[styles.title, { color: colors.text }]}>Create Account</Text>
+              <Text style={[styles.subtitle, { color: colors.textSecondary }]}>Join us and start shopping</Text>
             </View>
-          </TouchableOpacity>
-        </View>
 
-        <View style={styles.footer}>
-          <Text style={[styles.footerText, { color: colors.textSecondary }]}>Already have an account? </Text>
-          <TouchableOpacity onPress={() => router.push('/login')}>
-            <Text style={[styles.footerLink, { color: colors.primary }]}>Sign In</Text>
-          </TouchableOpacity>
-        </View>
-      </ScrollView>
+            <View style={styles.form}>
+              {success ? (
+                <View style={[styles.successContainer, { backgroundColor: `${colors.success || '#4CD964'}20`, borderColor: colors.success || '#4CD964', borderWidth: 1, borderRadius: 8, padding: 12, marginBottom: 16 }]}>
+                  <Text style={[styles.successText, { color: colors.success || '#4CD964', fontSize: 14 }]}>{success}</Text>
+                </View>
+              ) : null}
+              {error ? (
+                <View style={[styles.errorContainer, { backgroundColor: `${colors.error}20`, borderColor: colors.error, borderWidth: 1, borderRadius: 8, padding: 12, marginBottom: 16 }]}>
+                  <Text style={[styles.errorText, { color: colors.error, fontSize: 14 }]}>{error}</Text>
+                </View>
+              ) : null}
+              <View style={[styles.inputContainer, { backgroundColor: colors.surface }]}>
+                <Ionicons name="person-outline" size={20} color={colors.textSecondary} style={styles.inputIcon} />
+                <TextInput
+                  style={[styles.input, { color: colors.text }]}
+                  placeholder="First Name"
+                  placeholderTextColor={colors.textSecondary}
+                  value={firstName}
+                  onChangeText={setFirstName}
+                />
+              </View>
+
+              <View style={[styles.inputContainer, { backgroundColor: colors.surface }]}>
+                <Ionicons name="person-outline" size={20} color={colors.textSecondary} style={styles.inputIcon} />
+                <TextInput
+                  style={[styles.input, { color: colors.text }]}
+                  placeholder="Last Name"
+                  placeholderTextColor={colors.textSecondary}
+                  value={lastName}
+                  onChangeText={setLastName}
+                />
+              </View>
+
+              <View style={[styles.inputContainer, { backgroundColor: colors.surface }]}>
+                <Ionicons name="mail-outline" size={20} color={colors.textSecondary} style={styles.inputIcon} />
+                <TextInput
+                  style={[styles.input, { color: colors.text }]}
+                  placeholder="Email"
+                  placeholderTextColor={colors.textSecondary}
+                  value={email}
+                  onChangeText={setEmail}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                />
+              </View>
+
+              <View style={[styles.inputContainer, { backgroundColor: colors.surface }]}>
+                <Ionicons name="call-outline" size={20} color={colors.textSecondary} style={styles.inputIcon} />
+                <TextInput
+                  style={[styles.input, { color: colors.text }]}
+                  placeholder="Phone Number"
+                  placeholderTextColor={colors.textSecondary}
+                  value={phone}
+                  onChangeText={setPhone}
+                  keyboardType="phone-pad"
+                />
+              </View>
+
+              <View style={[styles.inputContainer, { backgroundColor: colors.surface }]}>
+                <Ionicons name="lock-closed-outline" size={20} color={colors.textSecondary} style={styles.inputIcon} />
+                <TextInput
+                  style={[styles.input, { color: colors.text }]}
+                  placeholder="Password"
+                  placeholderTextColor={colors.textSecondary}
+                  value={password}
+                  onChangeText={setPassword}
+                  secureTextEntry={!showPassword}
+                />
+                <TouchableOpacity
+                  onPress={() => setShowPassword(!showPassword)}
+                  style={styles.eyeIcon}
+                >
+                  {showPassword ? (
+                    <Ionicons name="eye-off-outline" size={20} color={colors.textSecondary} />
+                  ) : (
+                    <Ionicons name="eye-outline" size={20} color={colors.textSecondary} />
+                  )}
+                </TouchableOpacity>
+              </View>
+
+              <View style={[styles.inputContainer, { backgroundColor: colors.surface }]}>
+                <Ionicons name="lock-closed-outline" size={20} color={colors.textSecondary} style={styles.inputIcon} />
+                <TextInput
+                  style={[styles.input, { color: colors.text }]}
+                  placeholder="Confirm Password"
+                  placeholderTextColor={colors.textSecondary}
+                  value={confirmPassword}
+                  onChangeText={setConfirmPassword}
+                  secureTextEntry={!showConfirmPassword}
+                />
+                <TouchableOpacity
+                  onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+                  style={styles.eyeIcon}
+                >
+                  {showConfirmPassword ? (
+                    <Ionicons name="eye-off-outline" size={20} color={colors.textSecondary} />
+                  ) : (
+                    <Ionicons name="eye-outline" size={20} color={colors.textSecondary} />
+                  )}
+                </TouchableOpacity>
+              </View>
+
+              <TouchableOpacity style={[styles.registerButton, { backgroundColor: colors.primary }]} onPress={handleRegister} disabled={loadingAuth}>
+                <View style={styles.buttonContent}>
+                  {loadingAuth && <ActivityIndicator size="small" color={colors.white} style={styles.buttonSpinner} />}
+                  <Text style={[styles.registerButtonText, { color: colors.white }]}>{loadingAuth ? 'Registering...' : 'Create Account'}</Text>
+                </View>
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.footer}>
+              <Text style={[styles.footerText, { color: colors.textSecondary }]}>Already have an account? </Text>
+              <TouchableOpacity onPress={() => router.push('/login')}>
+                <Text style={[styles.footerLink, { color: colors.primary }]}>Sign In</Text>
+              </TouchableOpacity>
+            </View>
+          </ScrollView>
+        </TouchableWithoutFeedback>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   )
 };

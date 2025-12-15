@@ -13,7 +13,7 @@ const createNotificationChannel = async () => {
     await Notifications.setNotificationChannelAsync('default', {
       name: 'default',
       importance: Notifications.AndroidImportance.MAX,
-      vibrationPattern: [0, 250, 250, 250],
+      vibrationPattern: [0, 500, 250, 500], // More noticeable vibration pattern
       lightColor: '#FF231F7C',
     });
   }
@@ -35,6 +35,7 @@ Notifications.setNotificationHandler({
     shouldSetBadge: true,
     shouldShowBanner: true,
     shouldShowList: true,
+    priority: Notifications.AndroidNotificationPriority.HIGH, // Ensure high priority for vibration
   }),
 });
 

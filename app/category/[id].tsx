@@ -257,6 +257,7 @@ export default function CategoryScreen() {
                                 onAddToCart={() => handleAddToCart(product.id)}
                                 addingToCart={addingToCart[product.id]}
                                 cartSuccess={cartSuccess[product.id]}
+                                style={{ marginBottom: 8 }} // Reduced margin to minimize whitespace
                             />
                         ))}
                     </View>
@@ -321,7 +322,7 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     scrollContent: {
-        paddingBottom: 100, // Reduced from 120
+        paddingBottom: 80, // Further reduced to minimize whitespace
     },
     centerContainer: {
         flex: 1,
@@ -347,8 +348,8 @@ const styles = StyleSheet.create({
     gridContainer: {
         flexDirection: 'row',
         flexWrap: 'wrap',
-        paddingHorizontal: 12, // Reduced from 16
-        gap: 10, // Reduced from 12
+        paddingHorizontal: 4, // Minimized further to reduce whitespace
+        gap: 8, // Reduced to minimize whitespace
     },
 
 });
