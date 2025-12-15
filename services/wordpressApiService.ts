@@ -531,6 +531,24 @@ class WordPressApiService {
     }
   }
 
+  async getProductBySlug(slug: string) {
+    try {
+      // Use the getProducts method with slug parameter
+      const response = await this.api.get('/products', { params: { slug } });
+      const products = response.data;
+
+      if (Array.isArray(products) && products.length > 0) {
+        // Return the first product if multiple are returned
+        return products[0];
+      } else {
+        throw new Error(`Product with slug "${slug}" not found`);
+      }
+    } catch (error: any) {
+      console.error(`Error fetching product by slug "${slug}":`, error.response?.data || error.message);
+      throw error;
+    }
+  }
+
   async searchProducts(search: string, page?: number, limit?: number) {
     const params: Record<string, any> = { search };
     if (page) params.page = page;

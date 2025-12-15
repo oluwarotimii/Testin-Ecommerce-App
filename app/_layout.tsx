@@ -41,7 +41,8 @@ export default function RootLayout() {
     // Check for updates on app start
     updateService.checkForUpdates();
 
-    // Initialize notifications
+    // Initialize notifications - commenting out for OTA update
+    /*
     const initNotifications = async () => {
       const token = await notificationService.initialize();
       // If token is null, it means permissions were denied
@@ -55,12 +56,31 @@ export default function RootLayout() {
     // Setup notification listeners with navigation callback
     const cleanup = notificationService.setupNotificationListeners((response) => {
       // Handle notification tap - navigate to specific content
-      const { linkType, linkValue } = response?.notification?.request?.content?.data || {};
+      // Check both the expected format and the format from your logs
+      const notificationData = response?.notification?.request?.content?.data || {};
+
+      // First, try the expected format (using linkType/linkValue)
+      let { linkType, linkValue } = notificationData;
+
+      // If not found, check for the format mentioned in logs (deepLinkType/deepLinkValue)
+      if (!linkType && !linkValue) {
+        linkType = notificationData.deepLinkType;
+        linkValue = notificationData.deepLinkValue;
+      }
+
+      // Also check for fallback in case notificationId is present
+      if (!linkType && !linkValue && notificationData.notificationId) {
+        // If there's just a notificationId, you might want to handle it differently
+        // For now, we'll log it but not navigate
+        console.log('Notification with ID only, no navigation data:', notificationData.notificationId);
+        return;
+      }
+
       if (linkType && linkValue) {
-        if (linkType === 'category') {
+        if (linkType === 'category' || linkType === 'category_id') {
           // Handle both category ID and slug (name) - the category route supports both
           router.push(`/category/${linkValue}`);
-        } else if (linkType === 'product') {
+        } else if (linkType === 'product' || linkType === 'product_id') {
           // Handle product ID - the product route expects an ID
           router.push(`/product/${linkValue}`);
         } else if (linkType === 'page') {
@@ -69,13 +89,19 @@ export default function RootLayout() {
         } else if (linkType === 'url') {
           // For external URLs, you might want to open in a web view
           console.log('External URL notification:', linkValue);
+        } else {
+          console.log('Unknown link type in notification:', linkType);
         }
+      } else {
+        // If there's no navigation data, don't do anything special
+        console.log('Notification tapped but no navigation data found');
       }
     });
 
     return () => {
       cleanup();
     };
+    */
   }, [router]);
 
   return (

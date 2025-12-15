@@ -32,7 +32,7 @@ export default function DevToolsScreen() {
       { name: 'Payment Methods', path: '/payment-methods' },
       { name: 'Profile', path: '/profile' },
       { name: 'Settings', path: '/settings' },
-      { name: 'Notifications', path: '/notifications' },
+      // { name: 'Notifications', path: '/notifications' }, // Commenting out for OTA update
       { name: 'Help', path: '/help' },
     ],
     'Product Screens': [

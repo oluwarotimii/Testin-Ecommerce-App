@@ -286,9 +286,11 @@ export default function HomeScreen() {
             onFocus={() => router.push('/search')}
           />
         </View>
+        {/* Commenting out notification icon for OTA update
         <TouchableOpacity style={styles.iconButton} onPress={() => router.push('/notifications')}>
           <Ionicons name="notifications" size={24} color={colors.text} />
         </TouchableOpacity>
+        */}
       </View>
 
       <ScrollView
@@ -326,9 +328,11 @@ export default function HomeScreen() {
             <TouchableOpacity style={styles.iconButton} onPress={() => router.push('/search')}>
               <Ionicons name="search" size={24} color={colors.text} />
             </TouchableOpacity>
+            {/* Commenting out notification icon for OTA update
             <TouchableOpacity style={styles.iconButton} onPress={() => router.push('/notifications')}>
               <Ionicons name="notifications" size={24} color={colors.text} />
             </TouchableOpacity>
+            */}
           </View>
         </View>
 

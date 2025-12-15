@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "Femtech Mobile App",
-    "slug": "femtech-it",
+    "name": "Femtech IT",
+    "slug": "femtech-mobile-app",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/logo.png",
@@ -14,7 +14,7 @@
       "backgroundColor": "#FFFFFF"
     },
     "updates": {
-      "url": "https://u.expo.dev/3b709fd7-ceb1-44d6-acca-0286fcea7af4"
+      "url": "https://u.expo.dev/1cb5d51a-5191-48d4-9ed9-b38b3467045b"
     },
     "runtimeVersion": {
       "policy": "sdkVersion"
@@ -35,7 +35,7 @@
         "backgroundColor": "#FFFFFF"
       },
       "googleServicesFile": "./google-services.json",
-      "package": "com.frobenius.femtechmobileapp"
+      "package": "com.femtech.femtechmobileapp"
     },
     "web": {
       "bundler": "metro",
@@ -75,7 +75,7 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "3b709fd7-ceb1-44d6-acca-0286fcea7af4"
+        "projectId": "1cb5d51a-5191-48d4-9ed9-b38b3467045b"
       },
       "expoPublicWordpressConsumerKey": "ck_03fa4b83972b0bffeed920fa435b36c5ce2da7d4",
       "expoPublicWordpressConsumerSecret": "cs_dba4839b4024395a99b4d06ab554650b60dedd6b",
@@ -83,6 +83,6 @@
       "expoPublicWordpressUrl": "https://femtech.ng/",
       "expoPublicDashboardUrl": "https://femapp.vercel.app"
     },
-    "owner": "frobenius"
+    "owner": "femtechitwebs-organization"
   }
 }

@@ -81,7 +81,7 @@ export default function InstagramCarousel({ data, onItemPress }: InstagramCarous
       >
         {data.map((item, index) => (
           <CarouselItem
-            key={item.id}
+            key={`${item.id || 'carousel-item'}-${index}`}
             item={item}
             onPress={() => onItemPress(item)}
           />
@@ -92,7 +92,7 @@ export default function InstagramCarousel({ data, onItemPress }: InstagramCarous
       <View style={styles.pagination}>
         {data.map((_, index) => (
           <View
-            key={index}
+            key={`pagination-dot-${index}`}
             style={[
               styles.dot,
               {

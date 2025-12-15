@@ -1,21 +1,21 @@
 {
   "project_info": {
-    "project_number": "778091556754",
-    "project_id": "femtech-it-app",
-    "storage_bucket": "femtech-it-app.firebasestorage.app"
+    "project_number": "976710928214",
+    "project_id": "femtech-app-26711",
+    "storage_bucket": "femtech-app-26711.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:778091556754:android:8641abd6ac633fa866db4b",
+        "mobilesdk_app_id": "1:976710928214:android:e15f391ac7f50f548b38f7",
         "android_client_info": {
-          "package_name": "com.frobenius.femtechmobileapp"
+          "package_name": "com.femtech.femtechmobileapp"
         }
       },
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyBY2kFAiC7YtdYDeuNFgB0LewDMhTEwuMQ"
+          "current_key": "AIzaSyDj_9-i6vxTvsxfjlQbYB5zqZ0irBsE17A"
         }
       ],
       "services": {
