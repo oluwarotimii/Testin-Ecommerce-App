@@ -32,6 +32,7 @@ const showNotificationPrePrompt = (): Promise<boolean> => {
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
     shouldPlaySound: true,
+    sound: 'default', // Custom notification sound (to use custom sounds, see documentation)
     shouldSetBadge: true,
     shouldShowBanner: true,
     shouldShowList: true,
