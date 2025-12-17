@@ -104,13 +104,13 @@ export default function AccountScreen() {
     //   value: notifications,
     //   onToggle: setNotifications,
     // },
-    {
-      id: 'settings',
-      title: 'App Settings',
-      icon: () => <Ionicons name="settings" size={20} color={colors.primary} />,
-      type: 'navigation',
-      onPress: () => router.push('/settings'),
-    },
+    // {
+    //   id: 'settings',
+    //   title: 'App Settings',
+    //   icon: () => <Ionicons name="settings" size={20} color={colors.primary} />,
+    //   type: 'navigation',
+    //   onPress: () => router.push('/settings'),
+    // },
     // {
     //   id: 'updates',
     //   title: 'Check for Updates',

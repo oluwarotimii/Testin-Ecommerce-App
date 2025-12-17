@@ -515,7 +515,7 @@ export default function CheckoutScreen() {
             <Text style={[styles.sectionTitle, { color: colors.text }]}>Select Pickup Branch</Text>
             <View style={[styles.card, { backgroundColor: colors.surface }]}>
               <Text style={[styles.infoText, { color: colors.textSecondary }]}>
-                Pickup branch selection will be available based on your WooCommerce configuration.
+              
                 {selectedShippingMethod.zone_name && ` Available in: ${selectedShippingMethod.zone_name}`}
               </Text>
             </View>
@@ -541,9 +541,7 @@ export default function CheckoutScreen() {
 
       {/* Place Order Button */}
       <View style={[styles.bottomBar, { backgroundColor: colors.background, borderTopColor: colors.border }]}>
-        <Text style={[styles.contactNotice, { color: colors.error }]}>
-          Place your order, we will contact you for details
-        </Text>
+    
         <TouchableOpacity
           style={[styles.placeOrderButton, { backgroundColor: colors.primary }]}
           onPress={handlePlaceOrder}

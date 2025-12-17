@@ -180,17 +180,6 @@ export default function SearchScreen() {
               >
                 <View style={styles.resultImageContainer}>
                   <SafeImage source={{ uri: product.image }} style={styles.resultImage} />
-                  <View style={styles.resultCartOverlay}>
-                    <TouchableOpacity
-                      style={[styles.resultAddToCartButton, { backgroundColor: colors.primary }]}
-                      onPress={(e) => {
-                        e.stopPropagation();
-                        // Add to cart functionality can be added here
-                      }}
-                    >
-                      <Ionicons name="cart" size={18} color={colors.white} />
-                    </TouchableOpacity>
-                  </View>
                 </View>
                 <View style={styles.resultInfo}>
                   <View>
@@ -301,19 +290,6 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     backgroundColor: '#F2F2F7',
     marginRight: 12,
-  },
-  resultCartOverlay: {
-    position: 'absolute',
-    bottom: 4,
-    right: 4,
-    zIndex: 2,
-  },
-  resultAddToCartButton: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   resultInfo: {
     flex: 1,

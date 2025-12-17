@@ -48,8 +48,8 @@ export default function HelpScreen() {
       id: 'email',
       title: 'Email Support',
       icon: 'mail',
-      subtitle: 'support@femtech.ng',
-      onPress: () => Linking.openURL('mailto:support@femtech.ng')
+      subtitle: 'support@femtechit.com',
+      onPress: () => Linking.openURL('mailto:support@femtechit.com')
     },
     {
       id: 'phone',

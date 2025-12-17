@@ -7,6 +7,7 @@ import { Ionicons } from '@expo/vector-icons';
 import BackButton from '@/components/BackButton';
 import { getOrderStatus } from '@/constants/orderStatus';
 import SafeImage from '@/components/SafeImage';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function OrderDetailsScreen() {
   const router = useRouter();
@@ -107,7 +108,7 @@ export default function OrderDetailsScreen() {
   const orderStatus = getOrderStatus(order.status);
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={styles.header}>
         <BackButton />
         <Text style={[styles.title, { color: colors.text }]}>Order Details</Text>
@@ -220,7 +221,7 @@ export default function OrderDetailsScreen() {
 
         <View style={{ height: 40 }} />
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 }
 
