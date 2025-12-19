@@ -320,9 +320,9 @@ export default function HomeScreen() {
         <View style={[styles.header, { backgroundColor: colors.background, opacity: scrollY > 50 ? 0 : 1 }]}>
           <View>
             <Text style={[styles.greeting, { color: colors.textSecondary }]}>
-              {isAuthenticated && user ? `Good morning, ${user.first_name || 'User'}` : 'Good morning'}
+              {isAuthenticated && user ? `Hello, ${user.first_name || 'User'}` : 'Hello'}
             </Text>
-            <Text style={[styles.title, { color: colors.text }]}>Discover</Text>
+            <Text style={[styles.title, { color: colors.text }]}>Discover the best tech!</Text>
           </View>
           <View style={styles.headerIcons}>
             <TouchableOpacity style={styles.iconButton} onPress={() => router.push('/search')}>

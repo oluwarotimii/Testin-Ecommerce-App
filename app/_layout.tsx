@@ -54,8 +54,7 @@ export default function RootLayout() {
 
     // Setup notification listeners with navigation callback
     const cleanup = notificationService.setupNotificationListeners((response) => {
-      // Handle notification tap - navigate to specific content
-      // Check both the expected format and the format from your logs
+     
       const notificationData = response?.notification?.request?.content?.data || {};
 
       // First, try the expected format (using linkType/linkValue)

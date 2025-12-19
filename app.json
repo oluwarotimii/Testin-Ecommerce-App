@@ -34,7 +34,8 @@
         "backgroundColor": "#FFFFFF"
       },
       "googleServicesFile": "./google-services.json",
-      "package": "com.femtech.femtechmobileapp"
+      "package": "com.femtech.femtechmobileapp",
+      "permissions": ["android.permission.POST_NOTIFICATIONS"]
     },
     "web": {
       "bundler": "metro",

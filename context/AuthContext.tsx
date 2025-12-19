@@ -110,6 +110,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       try {
         const storedToken = await AsyncStorage.getItem('sessionToken');
         if (storedToken) {
+          // Set the token on the API service before validating
+          apiService.setSessionToken(storedToken);
+
           // Validate token if service supports it
           if (apiService.validateToken) {
             const isValid = await apiService.validateToken(storedToken);
@@ -140,6 +143,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               setSessionToken(null);
               setIsAuthenticated(false);
               setUser(null);
+              // Make sure to clear the token from the API service too
+              apiService.setSessionToken(null);
             }
           } else {
             // Fallback for services without validation (e.g. dummy)
@@ -181,32 +186,41 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setSessionToken(token);
         setIsAuthenticated(true);
 
-        // Fetch and set user details immediately after login
-        try {
-          if (apiService.getAccountDetails) {
-            // Force update service immediately
-            apiService.setSessionToken(token);
-            const userDetails = await apiService.getAccountDetails();
-            setUser(userDetails);
-          }
-        } catch (e) {
-          console.error("Error fetching user details after login:", e);
-        }
+        // Update API service with new token
+        apiService.setSessionToken(token);
 
-        // After successful login, register the push token if available
-        try {
-          const pushToken = await AsyncStorage.getItem('pushToken');
-          if (pushToken && apiService.updatePushToken) {
-            await updatePushTokenForUser(apiService, pushToken);
+        // Fetch and set user details - do this after setting the session to return early
+        const fetchUserDetails = async () => {
+          try {
+            if (apiService.getAccountDetails) {
+              const userDetails = await apiService.getAccountDetails();
+              setUser(userDetails);
+            }
+          } catch (e) {
+            console.error("Error fetching user details after login:", e);
           }
-        } catch (pushTokenError) {
-          console.error("Error registering push token after login:", pushTokenError);
-        }
+
+          // After successful login, register the push token if available
+          try {
+            const pushToken = await AsyncStorage.getItem('pushToken');
+            if (pushToken && apiService.updatePushToken) {
+              await updatePushTokenForUser(apiService, pushToken);
+            }
+          } catch (pushTokenError) {
+            console.error("Error registering push token after login:", pushTokenError);
+          }
+        };
+
+        // Call fetchUserDetails asynchronously so login completes immediately
+        fetchUserDetails();
 
         return true;
       } else {
         throw new Error('Login failed: No token received from server');
       }
+    } catch (error) {
+      // Re-throw the error so the login screen can show appropriate message
+      throw error;
     } finally {
       setLoadingAuth(false);
     }
@@ -222,20 +236,41 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setSessionToken(token);
         setIsAuthenticated(true);
 
-        // After successful registration, register the push token if available
-        try {
-          const pushToken = await AsyncStorage.getItem('pushToken');
-          if (pushToken && apiService.updatePushToken) {
-            await updatePushTokenForUser(apiService, pushToken);
+        // Update API service with new token
+        apiService.setSessionToken(token);
+
+        // Fetch and set user details - do this after setting the session to return early
+        const fetchUserDetails = async () => {
+          try {
+            if (apiService.getAccountDetails) {
+              const userDetails = await apiService.getAccountDetails();
+              setUser(userDetails);
+            }
+          } catch (e) {
+            console.error("Error fetching user details after registration:", e);
           }
-        } catch (pushTokenError) {
-          console.error("Error registering push token after registration:", pushTokenError);
-        }
+
+          // After successful registration, register the push token if available
+          try {
+            const pushToken = await AsyncStorage.getItem('pushToken');
+            if (pushToken && apiService.updatePushToken) {
+              await updatePushTokenForUser(apiService, pushToken);
+            }
+          } catch (pushTokenError) {
+            console.error("Error registering push token after registration:", pushTokenError);
+          }
+        };
+
+        // Call fetchUserDetails asynchronously so registration completes immediately
+        fetchUserDetails();
 
         return true;
       } else {
         throw new Error('Registration failed: No token received from server');
       }
+    } catch (error) {
+      // Re-throw the error so the registration screen can show appropriate message
+      throw error;
     } finally {
       setLoadingAuth(false);
     }

@@ -487,3 +487,166 @@ You can easily switch between different API backends by changing the environment
 - Set `EXPO_PUBLIC_API_SERVICE_TYPE=dummy` to use local dummy data (default)
 
 The application's architecture allows for seamless switching between different API services without code changes.
+
+## Notification Troubleshooting
+
+### Issue Summary
+Notifications were not working in preview and production builds of the mobile app. The primary cause was that notification initialization code was commented out in the main layout file.
+
+### Root Cause
+In `app/_layout.tsx`, the notification initialization code was commented out, preventing the app from registering for push notifications and setting up proper listeners.
+
+### Fix Applied
+The notification initialization code was uncommented in `app/_layout.tsx`:
+
+```typescript
+// Initialize notifications
+const initNotifications = async () => {
+  const token = await notificationService.initialize();
+  // If token is null, it means permissions were denied
+  if (!token) {
+    console.log("Push notifications not enabled due to denied permissions");
+  }
+};
+
+initNotifications();
+```
+
+### Additional Configuration Requirements
+
+#### 1. Build Configuration
+Make sure your `app.json` contains the proper notification configuration:
+
+```json
+{
+  "expo": {
+    "plugins": [
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/logo.png",
+          "color": "#007AFF"
+        }
+      ]
+    ],
+    "ios": {
+      "infoPlist": {
+        "UIBackgroundModes": [
+          "background-fetch",
+          "remote-notification"
+        ]
+      }
+    },
+    "android": {
+      "permissions": ["android.permission.POST_NOTIFICATIONS"]
+    }
+  }
+}
+```
+
+#### 2. Environment Variables
+Ensure your environment variables are properly set:
+
+```env
+EXPO_PUBLIC_API_SERVICE_TYPE=wordpress  # or dummy
+EXPO_PUBLIC_WORDPRESS_URL=https://your-wordpress-site.com
+EXPO_PUBLIC_WORDPRESS_CONSUMER_KEY=your_consumer_key
+EXPO_PUBLIC_WORDPRESS_CONSUMER_SECRET=your_consumer_secret
+EXPO_PUBLIC_DASHBOARD_URL=https://your-dashboard-url.com
+```
+
+#### 3. Server-Side Token Registration
+The app attempts to register the Expo push token with your server at `${DASHBOARD_API_BASE_URL}/api/expo/token`. Make sure this endpoint exists on your server.
+
+### Testing Notifications
+
+#### For Development (Preview Builds)
+1. Notifications only work on physical devices, not in simulators/emulators
+2. When testing in Expo Go, make sure you've granted notification permissions
+3. For preview builds, ensure the build was created with the proper configuration
+
+#### For Production Builds
+1. Physical device is required for testing
+2. Ensure notification permissions are granted
+3. Check that the push token is successfully registered with your server
+
+### Notification Payload Format
+To make notifications navigate to specific screens when tapped, use this format:
+
+```json
+{
+  "title": "Your Notification Title",
+  "body": "Your Notification Body",
+  "data": {
+    "linkType": "category|product|page|url",
+    "linkValue": "category-id|product-id|page-name|url"
+  }
+}
+```
+
+### Common Issues and Solutions
+
+#### Issue: Notifications don't appear
+- **Cause**: Permissions not granted
+- **Solution**: Check device notification settings and app permissions
+
+#### Issue: App doesn't navigate when notification is tapped
+- **Cause**: Incorrect data payload format
+- **Solution**: Ensure notification contains proper `linkType` and `linkValue` in the data field
+
+#### Issue: Push token not registered with server
+- **Cause**: Server endpoint doesn't exist or network issue
+- **Solution**: Verify that `${DASHBOARD_API_BASE_URL}/api/expo/token` endpoint exists and is accessible
+
+#### Issue: Notifications work in development but not production
+- **Cause**: Different API endpoints or build configurations
+- **Solution**: Verify that production build uses correct server URLs and credentials
+
+### Build Commands for Different Environments
+
+#### Development
+```bash
+npx expo start
+```
+
+#### Preview Build
+```bash
+eas build --profile preview --platform all
+```
+
+#### Production Build
+```bash
+eas build --profile production --platform all
+```
+
+### Important Note About OTA Updates and Native Permissions
+
+**Native configuration changes (like the new Android permission) will NOT be applied through OTA updates.**
+
+If you make changes to:
+- Android permissions in app.json
+- iOS Info.plist settings
+- Native plugins configurations
+- Build properties
+
+You must create a new native build using:
+```bash
+eas build --profile preview --platform all  # For preview
+# or
+eas build --profile production --platform all  # For production
+```
+
+OTA updates only work for JavaScript/TypeScript code changes, assets, and configuration that doesn't require native code changes.
+
+For the notification permissions fix to work properly:
+1. You must create a new native build with `eas build`
+2. Users will need to download the updated app from the app store
+3. Only after the native build with the correct permissions will OTA updates work properly for notification functionality
+
+### Debugging Tips
+
+1. Check the device logs for notification-related messages
+2. Verify that the Expo push token is obtained and logged in the console
+3. Confirm that the token is sent to your server successfully
+4. Test notification delivery using Expo's push notification tool
+5. Ensure the notification payload contains the expected data structure

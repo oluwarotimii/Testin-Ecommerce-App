@@ -46,14 +46,14 @@ const registerForPushNotificationsAsync = async () => {
     return null;
   }
 
-  // Create notification channel (required for Android 13+)
-  await createNotificationChannel();
-
-  // Check current permissions status
+  // Check current permissions status first
   const { status: existingStatus } = await Notifications.getPermissionsAsync();
 
   if (existingStatus === 'granted') {
     // If already granted, proceed directly to getting the token
+    // Still create notification channel for Android 13+
+    await createNotificationChannel();
+
     const projectId = Constants?.expoConfig?.extra?.eas?.projectId ?? Constants?.easConfig?.projectId;
     const fullPushToken = (await Notifications.getExpoPushTokenAsync({ projectId })).data;
     console.log('Full Expo push token (already granted):', fullPushToken);
@@ -64,7 +64,10 @@ const registerForPushNotificationsAsync = async () => {
     alert('To receive push notifications, please enable them in your device settings.');
     return null;
   } else {
-    // Permission not yet requested - show pre-prompt then request
+    // Permission not yet requested - create notification channel first (required for Android 13+)
+    await createNotificationChannel();
+
+    // Show pre-prompt then request
     const shouldRequestPermission = await showNotificationPrePrompt();
     if (!shouldRequestPermission) {
       console.log('User declined to request notification permission');
