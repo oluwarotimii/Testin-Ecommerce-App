@@ -230,9 +230,9 @@ export default function ProductDetailScreen() {
 
   const handleShare = async () => {
     try {
-      // Get the app URL scheme from constants or use a default
+      // Get the app URL scheme from constants - using centralized config approach
       const { expoPublicAppUrl } = Constants.expoConfig?.extra || {};
-      const appUrl = expoPublicAppUrl || process.env.EXPO_PUBLIC_APP_URL || 'https://femtech.ng/product';
+      const appUrl = expoPublicAppUrl || 'https://invalid-url-for-testing.com/product';
 
       // Create deep link to the specific product
       const productLink = `${appUrl}/${product.id}`;

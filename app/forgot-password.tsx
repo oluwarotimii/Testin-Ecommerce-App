@@ -13,8 +13,8 @@ export default function ForgotPasswordScreen() {
     const [email, setEmail] = useState('');
     const [loading, setLoading] = useState(false);
 
-    const { expoPublicWordpressUrl } = Constants.expoConfig?.extra || {};
-    const WORDPRESS_URL = expoPublicWordpressUrl || process.env.EXPO_PUBLIC_WORDPRESS_URL || 'https://femtech.ng/';
+    const { WORDPRESS_URL } = Constants.expoConfig?.extra || {};
+    const FINAL_WORDPRESS_URL = WORDPRESS_URL || 'https://invalid-url-for-testing.com/';
 
     const handleResetPassword = async () => {
         if (!email) {
@@ -32,7 +32,7 @@ export default function ForgotPasswordScreen() {
         setLoading(true);
         try {
             // WordPress built-in lost password functionality
-            const cleanUrl = WORDPRESS_URL.endsWith('/') ? WORDPRESS_URL.slice(0, -1) : WORDPRESS_URL;
+            const cleanUrl = FINAL_WORDPRESS_URL.endsWith('/') ? FINAL_WORDPRESS_URL.slice(0, -1) : FINAL_WORDPRESS_URL;
 
             // First try the bdpwr plugin endpoint (if available)
             try {

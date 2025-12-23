@@ -2,19 +2,23 @@
   "expo": {
     "name": "Femtech IT",
     "slug": "femtech-mobile-app",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "orientation": "portrait",
-    "icon": "./assets/images/logo.png",
+    "icon": "./assets/images/icon.png",
     "scheme": "myapp",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
+    "owner": "femtechitwebs-organization",
     "splash": {
-      "image": "./assets/images/logo.png",
+      "image": "./assets/images/icon.png",
       "resizeMode": "contain",
       "backgroundColor": "#FFFFFF"
     },
     "updates": {
-      "url": "https://u.expo.dev/1cb5d51a-5191-48d4-9ed9-b38b3467045b"
+      "url": "https://u.expo.dev/1cb5d51a-5191-48d4-9ed9-b38b3467045b",
+      "enabled": true,
+      "checkAutomatically": "ON_LOAD",
+      "fallbackToCacheTimeout": 5000
     },
     "runtimeVersion": {
       "policy": "sdkVersion"
@@ -30,12 +34,14 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/logo.png",
+        "foregroundImage": "./assets/images/icon.png",
         "backgroundColor": "#FFFFFF"
       },
       "googleServicesFile": "./google-services.json",
       "package": "com.femtech.femtechmobileapp",
-      "permissions": ["android.permission.POST_NOTIFICATIONS"]
+      "permissions": [
+        "android.permission.POST_NOTIFICATIONS"
+      ]
     },
     "web": {
       "bundler": "metro",
@@ -49,7 +55,7 @@
       [
         "expo-notifications",
         {
-          "icon": "./assets/images/logo.png",
+          "icon": "./assets/images/icon.png",
           "color": "#007AFF"
         }
       ],
@@ -82,7 +88,6 @@
       "expoPublicApiServiceType": "wordpress",
       "expoPublicWordpressUrl": "https://femtech.ng/",
       "expoPublicDashboardUrl": "https://femapp.vercel.app"
-    },
-    "owner": "femtechitwebs-organization"
+    }
   }
 }

@@ -2,19 +2,16 @@ import React, { createContext, useState, useEffect, useContext, useMemo } from '
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import DummyApiService from '@/services/dummyApiService';
 import WordPressApiService from '@/services/wordpressApiService';
+import { API_SERVICE_TYPE, WORDPRESS_URL } from '@/services/config';
 import Constants from 'expo-constants';
 import notificationService, { updatePushTokenForUser } from '@/services/notificationService';
 
-// Configuration for API service type - using values from app.json extra section
+// Configuration for API service type - using centralized config
 const { expoPublicApiServiceType, expoPublicWordpressUrl, expoPublicWordpressConsumerKey, expoPublicWordpressConsumerSecret } = Constants.expoConfig?.extra || {};
 
-// Fallback for when Constants.expoConfig?.extra is not available (e.g., during development builds)
-// Try using process.env for development scenarios
-const API_SERVICE_TYPE = expoPublicApiServiceType || process.env.EXPO_PUBLIC_API_SERVICE_TYPE || 'wordpress'; // 'dummy' or 'wordpress' - default to wordpress if not set
-
-// WordPress configuration - using values from app.json extra section with fallbacks
+// WordPress configuration - using centralized config with direct fallbacks for credentials only
 const WORDPRESS_CONFIG = {
-  url: expoPublicWordpressUrl || process.env.EXPO_PUBLIC_WORDPRESS_URL || 'https://femtech.ng/',
+  url: WORDPRESS_URL, // Single source of truth from centralized config
   consumerKey: expoPublicWordpressConsumerKey || process.env.EXPO_PUBLIC_WORDPRESS_CONSUMER_KEY || '',
   consumerSecret: expoPublicWordpressConsumerSecret || process.env.EXPO_PUBLIC_WORDPRESS_CONSUMER_SECRET || '',
 };

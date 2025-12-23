@@ -1,11 +1,9 @@
-import Constants from 'expo-constants';
+import appConfig from '@/hooks/useAppConfig';
 
-// Access environment variables from app.json extra section
-const { expoPublicWordpressUrl, expoPublicApiServiceType, expoPublicDashboardUrl } = Constants.expoConfig?.extra || {};
-
-export const API_SERVICE_TYPE = expoPublicApiServiceType || 'wordpress'; // 'dummy' or 'wordpress'
-export const WORDPRESS_URL = expoPublicWordpressUrl || 'https://femtech.ng/';
-export const DASHBOARD_URL = expoPublicDashboardUrl || 'https://femapp.vercel.app'; // Dashboard API URL for banners and carousels
+// Centralized configuration - single source of truth from useAppConfig
+export const API_SERVICE_TYPE = appConfig.apiServiceType; // 'dummy' or 'wordpress'
+export const WORDPRESS_URL = appConfig.wordpressUrl;
+export const DASHBOARD_URL = appConfig.dashboardUrl; // Dashboard API URL for banners and carousels
 export const API_BASE_URL = WORDPRESS_URL; // Use the WordPress URL as the base API URL for products, etc.
 
 // Separate base URL for dashboard services (banners, carousels, etc.)
