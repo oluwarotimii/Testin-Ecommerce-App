@@ -19,14 +19,6 @@ const createNotificationChannel = async () => {
   }
 };
 
-// Function for pre-prompt before requesting notification permissions
-const showNotificationPrePrompt = (): Promise<boolean> => {
-  return new Promise((resolve) => {
-    // In a real implementation, you would show a custom modal here
-    // For now, we'll just return true to proceed with the native prompt
-    resolve(true);
-  });
-};
 
 // Set notification handler
 Notifications.setNotificationHandler({
@@ -46,48 +38,42 @@ const registerForPushNotificationsAsync = async () => {
     return null;
   }
 
-  // Check current permissions status first
-  const { status: existingStatus } = await Notifications.getPermissionsAsync();
-
-  if (existingStatus === 'granted') {
-    // If already granted, proceed directly to getting the token
-    // Still create notification channel for Android 13+
-    await createNotificationChannel();
-
-    const projectId = Constants?.expoConfig?.extra?.eas?.projectId ?? Constants?.easConfig?.projectId;
-    const fullPushToken = (await Notifications.getExpoPushTokenAsync({ projectId })).data;
-    console.log('Full Expo push token (already granted):', fullPushToken);
-    return await processPushToken(fullPushToken);
-  } else if (existingStatus === 'denied') {
-    // If permission was denied, direct user to settings
-    console.log('Permission was previously denied for push notifications');
-    alert('To receive push notifications, please enable them in your device settings.');
-    return null;
-  } else {
-    // Permission not yet requested - create notification channel first (required for Android 13+)
-    await createNotificationChannel();
-
-    // Show pre-prompt then request
-    const shouldRequestPermission = await showNotificationPrePrompt();
-    if (!shouldRequestPermission) {
-      console.log('User declined to request notification permission');
-      return null;
-    }
-
-    // Request permission from the user
-    const { status } = await Notifications.requestPermissionsAsync();
-
-    if (status !== 'granted') {
-      console.log('Permission not granted for push notifications');
-      return null;
-    }
-
-    // If permission granted, get the token
-    const projectId = Constants?.expoConfig?.extra?.eas?.projectId ?? Constants?.easConfig?.projectId;
-    const fullPushToken = (await Notifications.getExpoPushTokenAsync({ projectId })).data;
-    console.log('Full Expo push token:', fullPushToken);
-    return await processPushToken(fullPushToken);
+  // IMPORTANT: For Android 13+, the channel must exist for the prompt to trigger
+  if (Platform.OS === 'android') {
+    await Notifications.setNotificationChannelAsync('default', {
+      name: 'default',
+      importance: Notifications.AndroidImportance.MAX,
+      vibrationPattern: [0, 500, 250, 500], // More noticeable vibration pattern
+      lightColor: '#FF231F7C',
+    });
   }
+
+  // 1. Check if we already have permission
+  const { status: existingStatus } = await Notifications.getPermissionsAsync();
+  console.log('Current notification permission status:', existingStatus);
+  let finalStatus = existingStatus;
+
+  // 2. If not granted (including null, undefined, denied, or undetermined), trigger the NATIVE SYSTEM PROMPT
+  if (existingStatus !== 'granted') {
+    console.log('Requesting notification permissions from user...');
+    const { status } = await Notifications.requestPermissionsAsync();
+    finalStatus = status;
+    console.log('Notification permission request result:', status);
+  } else {
+    console.log('Notification permissions already granted');
+  }
+
+  // 3. Only if the user REJECTS the native prompt do we stop
+  if (finalStatus !== 'granted') {
+    console.log('Permission not granted by user. Status:', finalStatus);
+    return null;
+  }
+
+  // 4. Get the token now that permission is confirmed
+  const projectId = Constants?.expoConfig?.extra?.eas?.projectId ?? Constants?.easConfig?.projectId;
+  const fullPushToken = (await Notifications.getExpoPushTokenAsync({ projectId })).data;
+  console.log('Full Expo push token:', fullPushToken);
+  return await processPushToken(fullPushToken);
 };
 
 // Function to process the push token after it's obtained
