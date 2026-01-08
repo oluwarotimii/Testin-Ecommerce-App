@@ -5,6 +5,7 @@ import { useRouter } from 'expo-router';
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useCart } from '@/context/CartContext';
+import { useNetwork } from '@/context/NetworkContext';
 import InstagramCarousel from '@/components/InstagramCarousel';
 import { useThemeColors } from '@/hooks/useColorScheme';
 import { useTheme } from '@/context/ThemeContext';
@@ -17,12 +18,14 @@ import MarketingBanner from '@/components/MarketingBanner';
 import { fetchCarousels } from '@/services/carousel';
 import BestDealsSection from '@/components/BestDealsSection';
 import ProductCard from '@/components/ProductCard';
+import NetworkError from '@/components/NetworkError';
 
 export default function HomeScreen() {
   const router = useRouter();
   const colors = useThemeColors();
   const { apiService, user, isAuthenticated } = useAuth();
   const { setCartCount } = useCart();
+  const { isConnected, isInternetReachable, checkConnectivity } = useNetwork();
   const [loadingCarousel, setLoadingCarousel] = useState(true);
   const [carouselItems, setCarouselItems] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
@@ -51,6 +54,15 @@ export default function HomeScreen() {
 
   const fetchProducts = useCallback(async () => {
     if (!apiService) return;
+
+    // Check connectivity first
+    const isOnline = await checkConnectivity();
+    if (!isOnline) {
+      setErrorProducts('No internet connection. Please check your connection and try again.');
+      setLoadingProducts(false);
+      return;
+    }
+
     setLoadingProducts(true);
     setErrorProducts(null);
     try {
@@ -62,14 +74,28 @@ export default function HomeScreen() {
       setHasMoreProducts(response.length >= 20);
       setCurrentPage(1); // Reset to page 1 on initial fetch
     } catch (err: any) {
-      setErrorProducts(err.message || 'An unexpected error occurred');
+      // Check if it's a network error
+      const isOnline = await checkConnectivity();
+      if (!isOnline) {
+        setErrorProducts('No internet connection. Please check your connection and try again.');
+      } else {
+        setErrorProducts(err.message || 'An unexpected error occurred');
+      }
     } finally {
       setLoadingProducts(false);
     }
-  }, []); // OPTIMIZED: Removed apiService dependency to prevent re-fetches
+  }, [checkConnectivity]); // Added checkConnectivity dependency
 
   const loadMoreProducts = useCallback(async () => {
     if (!hasMoreProducts || isLoadingMore || !apiService) return;
+
+    // Check connectivity first
+    const isOnline = await checkConnectivity();
+    if (!isOnline) {
+      setErrorProducts('No internet connection. Please check your connection and try again.');
+      setIsLoadingMore(false);
+      return;
+    }
 
     setIsLoadingMore(true);
     try {
@@ -85,28 +111,58 @@ export default function HomeScreen() {
       setHasMoreProducts(response.length >= 20);
       setCurrentPage(nextPage);
     } catch (err: any) {
-      setErrorProducts(err.message || 'An unexpected error occurred');
+      // Check if it's a network error
+      const isOnline = await checkConnectivity();
+      if (!isOnline) {
+        setErrorProducts('No internet connection. Please check your connection and try again.');
+      } else {
+        setErrorProducts(err.message || 'An unexpected error occurred');
+      }
     } finally {
       setIsLoadingMore(false);
     }
-  }, [currentPage, hasMoreProducts, isLoadingMore]); // OPTIMIZED: Removed apiService dependency
+  }, [currentPage, hasMoreProducts, isLoadingMore, checkConnectivity]); // Added checkConnectivity dependency
 
   const fetchCarouselItems = useCallback(async () => {
     setLoadingCarousel(true);
     setCarouselError(null);
+
+    // Check connectivity first
+    const isOnline = await checkConnectivity();
+    if (!isOnline) {
+      setCarouselError('No internet connection. Please check your connection and try again.');
+      setLoadingCarousel(false);
+      return;
+    }
+
     try {
       const items = await fetchCarousels();
       setCarouselItems(items);
     } catch (err: any) {
-      console.error('Error fetching carousel items:', err);
-      setCarouselError(err.message || 'Failed to load carousel');
+      // Check if it's a network error
+      const isOnline = await checkConnectivity();
+      if (!isOnline) {
+        setCarouselError('No internet connection. Please check your connection and try again.');
+      } else {
+        console.error('Error fetching carousel items:', err);
+        setCarouselError(err.message || 'Failed to load carousel');
+      }
     } finally {
       setLoadingCarousel(false);
     }
-  }, []); // Already optimized
+  }, [checkConnectivity]); // Added checkConnectivity dependency
 
   const fetchCategories = useCallback(async () => {
     if (!apiService) return;
+
+    // Check connectivity first
+    const isOnline = await checkConnectivity();
+    if (!isOnline) {
+      setErrorCategories('No internet connection. Please check your connection and try again.');
+      setLoadingCategories(false);
+      return;
+    }
+
     setLoadingCategories(true);
     setErrorCategories(null);
     try {
@@ -115,11 +171,17 @@ export default function HomeScreen() {
       const formattedCategories = transformCategories(response);
       setCategories(formattedCategories);
     } catch (err: any) {
-      setErrorCategories(err.message || 'An unexpected error occurred');
+      // Check if it's a network error
+      const isOnline = await checkConnectivity();
+      if (!isOnline) {
+        setErrorCategories('No internet connection. Please check your connection and try again.');
+      } else {
+        setErrorCategories(err.message || 'An unexpected error occurred');
+      }
     } finally {
       setLoadingCategories(false);
     }
-  }, []); // OPTIMIZED: Removed apiService dependency to prevent re-fetches
+  }, [checkConnectivity]); // Added checkConnectivity dependency
 
   // OPTIMIZED: Fetch data only once when component mounts or when authentication changes
   useEffect(() => {
@@ -181,14 +243,20 @@ export default function HomeScreen() {
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await fetchProducts();
-    await fetchCategories();
-    if (isAuthenticated) {
-      await fetchWishlist();
+    // Check connectivity first
+    const isOnline = await checkConnectivity();
+    if (isOnline) {
+      await fetchProducts();
+      await fetchCategories();
+      if (isAuthenticated) {
+        await fetchWishlist();
+      }
+      await fetchCarouselItems();
+    } else {
+      setErrorProducts('No internet connection. Please check your connection and try again.');
     }
-    await fetchCarouselItems();
     setRefreshing(false);
-  }, [isAuthenticated]); // OPTIMIZED: Removed function dependencies
+  }, [isAuthenticated, checkConnectivity]); // Added checkConnectivity dependency
 
 
   const handleSeeAllProducts = () => {
@@ -419,7 +487,24 @@ export default function HomeScreen() {
               <SkeletonProductItem viewMode="grid" />
             </View>
           ) : errorProducts ? (
-            <Text style={[styles.errorText, { color: colors.error }]}>Error loading products: {errorProducts}</Text>
+            // Check if the error is related to network connectivity
+            errorProducts.includes('internet connection') || errorProducts.includes('No internet') ? (
+              <NetworkError
+                title="No Internet Connection"
+                message="Please check your connection and try again"
+                onRetry={onRefresh}
+              />
+            ) : (
+              <View style={styles.errorContainer}>
+                <Text style={[styles.errorText, { color: colors.error }]}>Error loading products: {errorProducts}</Text>
+                <TouchableOpacity
+                  style={[styles.retryButton, { backgroundColor: colors.primary }]}
+                  onPress={onRefresh}
+                >
+                  <Text style={[styles.retryButtonText, { color: colors.white }]}>Retry</Text>
+                </TouchableOpacity>
+              </View>
+            )
           ) : products.length === 0 ? (
             <Text style={[styles.noProductsText, { color: colors.textSecondary }]}>No products found.</Text>
           ) : (
@@ -740,5 +825,24 @@ const styles = StyleSheet.create({
   seeAllButtonText: {
     fontSize: 14,
     fontWeight: '500',
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+    width: '100%',
+  },
+  retryButton: {
+    marginTop: 15,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 8,
+    minWidth: 120,
+    alignItems: 'center',
+  },
+  retryButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
   },
 });

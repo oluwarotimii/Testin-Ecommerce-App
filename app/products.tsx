@@ -1,8 +1,9 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, TextInput, ActivityIndicator, Animated, useWindowDimensions } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, TextInput, ActivityIndicator, useWindowDimensions } from 'react-native';
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
 import { useCart } from '@/context/CartContext';
+import { useNetwork } from '@/context/NetworkContext';
 import { MaterialIcons, FontAwesome, Ionicons } from '@expo/vector-icons';
 import SkeletonProductItem from '@/components/SkeletonProductItem';
 import { useThemeColors } from '@/hooks/useColorScheme';
@@ -12,6 +13,7 @@ import { transformProducts, transformCategories } from '@/utils/woocommerceTrans
 import { formatPrice } from '@/utils/formatNumber';
 import BackButton from '@/components/BackButton';
 import ProductCard from '@/components/ProductCard';
+import NetworkError from '@/components/NetworkError';
 import { Colors } from '@/constants/Colors';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -19,6 +21,7 @@ export default function ProductsScreen() {
   const router = useRouter();
   const { apiService } = useAuth();
   const { setCartCount } = useCart();
+  const { isConnected, isInternetReachable, checkConnectivity } = useNetwork();
   const colors = useThemeColors();
   const scrollViewRef = useRef();
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
@@ -65,6 +68,15 @@ export default function ProductsScreen() {
   useEffect(() => {
     const fetchProducts = async () => {
       if (!apiService) return; // Ensure apiService is available
+
+      // Check connectivity first
+      const isOnline = await checkConnectivity();
+      if (!isOnline) {
+        setError('No internet connection. Please check your connection and try again.');
+        setLoading(false);
+        return;
+      }
+
       try {
         setLoading(true);
         // For initial load, we'll fetch with search and filters applied
@@ -79,7 +91,13 @@ export default function ProductsScreen() {
         setHasMore(response.length === 20); // If we got 20, there might be more
         setCurrentPage(1);
       } catch (err: any) {
-        setError(err.message || 'An unexpected error occurred');
+        // Check if it's a network error
+        const isOnline = await checkConnectivity();
+        if (!isOnline) {
+          setError('No internet connection. Please check your connection and try again.');
+        } else {
+          setError(err.message || 'An unexpected error occurred');
+        }
       } finally {
         setLoading(false);
       }
@@ -88,7 +106,7 @@ export default function ProductsScreen() {
     fetchProducts();
     fetchWishlist();
     fetchCategories();
-  }, [apiService, fetchWishlist, fetchCategories, searchQuery]); // Added searchQuery dependency
+  }, [apiService, fetchWishlist, fetchCategories, searchQuery, checkConnectivity]); // Added checkConnectivity dependency
 
   const toggleWishlist = async (productId: number) => {
     if (!apiService) return;
@@ -122,6 +140,14 @@ export default function ProductsScreen() {
   const loadMoreProducts = async () => {
     if (!hasMore || loadingMore || !apiService) return;
 
+    // Check connectivity first
+    const isOnline = await checkConnectivity();
+    if (!isOnline) {
+      setError('No internet connection. Please check your connection and try again.');
+      setLoadingMore(false);
+      return;
+    }
+
     setLoadingMore(true);
     try {
       const nextPage = currentPage + 1;
@@ -140,7 +166,13 @@ export default function ProductsScreen() {
       setHasMore(response.length === 20);
       setCurrentPage(nextPage);
     } catch (err: any) {
-      setError(err.message || 'An unexpected error occurred while loading more products');
+      // Check if it's a network error
+      const isOnline = await checkConnectivity();
+      if (!isOnline) {
+        setError('No internet connection. Please check your connection and try again.');
+      } else {
+        setError(err.message || 'An unexpected error occurred while loading more products');
+      }
     } finally {
       setLoadingMore(false);
     }
@@ -528,7 +560,56 @@ export default function ProductsScreen() {
             )}
           </View>
         ) : error ? (
-          <Text style={[styles.errorText, { color: colors.error }]}>Error loading products: {error}</Text>
+          // Check if the error is related to network connectivity
+          error.includes('internet connection') || error.includes('No internet') ? (
+            <NetworkError
+              title="No Internet Connection"
+              message="Please check your connection and try again"
+              onRetry={async () => {
+                const isOnline = await checkConnectivity();
+                if (isOnline) {
+                  // Retry the fetch
+                  const params: any = { per_page: 20, page: 1 };
+                  if (searchQuery) params.search = searchQuery;
+
+                  const response = await apiService.getProducts(params);
+                  const transformedProducts = transformProducts(response);
+                  setProducts(transformedProducts);
+                  setHasMore(response.length === 20);
+                  setCurrentPage(1);
+                  setError(null);
+                } else {
+                  setError('Still no internet connection. Please check your connection and try again.');
+                }
+              }}
+            />
+          ) : (
+            <View style={styles.errorContainer}>
+              <Text style={[styles.errorText, { color: colors.error }]}>Error loading products: {error}</Text>
+              <TouchableOpacity
+                style={[styles.retryButton, { backgroundColor: colors.primary }]}
+                onPress={async () => {
+                  const isOnline = await checkConnectivity();
+                  if (isOnline) {
+                    // Retry the fetch
+                    const params: any = { per_page: 20, page: 1 };
+                    if (searchQuery) params.search = searchQuery;
+
+                    const response = await apiService.getProducts(params);
+                    const transformedProducts = transformProducts(response);
+                    setProducts(transformedProducts);
+                    setHasMore(response.length === 20);
+                    setCurrentPage(1);
+                    setError(null);
+                  } else {
+                    setError('No internet connection. Please check your connection and try again.');
+                  }
+                }}
+              >
+                <Text style={[styles.retryButtonText, { color: colors.white }]}>Retry</Text>
+              </TouchableOpacity>
+            </View>
+          )
         ) : filteredProducts.length === 0 ? (
           <Text style={[styles.noProductsText, { color: colors.textSecondary }]}>No products found.</Text>
         ) : (
@@ -739,5 +820,23 @@ const styles = StyleSheet.create({
     padding: 20,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  retryButton: {
+    marginTop: 15,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 8,
+    minWidth: 120,
+    alignItems: 'center',
+  },
+  retryButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
