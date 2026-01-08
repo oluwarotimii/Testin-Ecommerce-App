@@ -1,8 +1,9 @@
 import * as Updates from 'expo-updates';
-import { Alert, Platform } from 'react-native';
+import { Alert, Platform, AppState } from 'react-native';
 
 class UpdateService {
   private isChecking = false;
+  private hasPendingUpdate = false;
 
   async checkForUpdates(showAlert: boolean = false) {
     if (Platform.OS === 'web' || __DEV__) {
@@ -21,26 +22,28 @@ class UpdateService {
       const update = await Updates.checkForUpdateAsync();
 
       if (update.isAvailable) {
-        console.log('Update available');
-        
+        console.log('Update available, downloading silently...');
+
+        // Download the update silently in the background
+        await Updates.fetchUpdateAsync();
+        this.hasPendingUpdate = true;
+        console.log('Update downloaded. It will apply on next cold start.');
+
         if (showAlert) {
           Alert.alert(
-            'Update Available',
-            'A new version of the app is available. Would you like to update now?',
+            'Update Ready',
+            'A new version of the app has been downloaded. Restart to apply the update?',
             [
               {
                 text: 'Later',
                 style: 'cancel',
               },
               {
-                text: 'Update',
-                onPress: () => this.downloadAndRestart(),
+                text: 'Restart Now',
+                onPress: () => this.restartApp(),
               },
             ]
           );
-        } else {
-          // Auto-download in background
-          await this.downloadAndRestart();
         }
       } else {
         console.log('No updates available');
@@ -62,12 +65,21 @@ class UpdateService {
     try {
       console.log('Downloading update...');
       await Updates.fetchUpdateAsync();
-      
+      this.hasPendingUpdate = true;
+
       console.log('Update downloaded, restarting...');
-      await Updates.reloadAsync();
+      await this.restartApp();
     } catch (error) {
       console.log('Error downloading update:', error);
       Alert.alert('Update Error', 'Failed to download update. Please try again later.');
+    }
+  }
+
+  async restartApp() {
+    try {
+      await Updates.reloadAsync();
+    } catch (error) {
+      console.log('Error restarting app:', error);
     }
   }
 
@@ -84,6 +96,39 @@ class UpdateService {
       isEmbeddedLaunch: Updates.isEmbeddedLaunch,
       isEmergencyLaunch: Updates.isEmergencyLaunch,
     };
+  }
+
+  /**
+   * Initialize silent updates that run in the background
+   * without interrupting the user experience
+   */
+  initializeSilentUpdates() {
+    if (Platform.OS === 'web' || __DEV__) {
+      console.log('Silent updates not available in development or web');
+      return;
+    }
+
+    // Check for updates on initialization
+    this.checkForUpdates(false);
+
+    // Listen for app state changes to check for updates when app becomes active
+    const subscription = AppState.addEventListener('change', (nextAppState) => {
+      if (nextAppState === 'active') {
+        // Check for updates when the app becomes active again
+        setTimeout(() => {
+          this.checkForUpdates(false);
+        }, 5000); // Delay slightly to ensure app is fully loaded
+      }
+    });
+
+    return subscription;
+  }
+
+  /**
+   * Check if there's a pending update that will apply on next restart
+   */
+  hasUpdatePending(): boolean {
+    return this.hasPendingUpdate;
   }
 }
 

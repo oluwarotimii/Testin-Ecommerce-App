@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { Stack } from 'expo-router';
 import { View } from 'react-native';
 import { usePathname } from 'expo-router';
@@ -38,11 +38,12 @@ function AppContent() {
 
 export default function RootLayout() {
   const router = useRouter();
+  const updateSubscriptionRef = useRef<any>(null);
   useFrameworkReady();
 
   useEffect(() => {
-    // Check for updates on app start
-    updateService.checkForUpdates();
+    // Initialize silent updates that run in the background
+    updateSubscriptionRef.current = updateService.initializeSilentUpdates();
 
     // Initialize notifications
     const initNotifications = async () => {
@@ -57,7 +58,7 @@ export default function RootLayout() {
 
     // Setup notification listeners with navigation callback
     const cleanup = notificationService.setupNotificationListeners((response) => {
-     
+
       const notificationData = response?.notification?.request?.content?.data || {};
 
       // First, try the expected format (using linkType/linkValue)
@@ -100,6 +101,9 @@ export default function RootLayout() {
     });
 
     return () => {
+      if (updateSubscriptionRef.current) {
+        updateSubscriptionRef.current.remove();
+      }
       cleanup();
     };
   }, [router]);

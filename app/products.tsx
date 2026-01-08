@@ -344,12 +344,13 @@ export default function ProductsScreen() {
           </View>
           <View style={styles.listProductInfo}>
             <Text style={[styles.listProductName, { color: colors.text }]} numberOfLines={2}>{product.title}</Text>
-            <Text style={[styles.categoryText, { color: colors.textSecondary }]} numberOfLines={1}>{product.category?.replace('-', ' ')}</Text>
-            <View style={styles.ratingContainer}>
+            {/* <Text style={[styles.categoryText, { color: colors.textSecondary }]} numberOfLines={1}>{product.category?.replace('-', ' ')}</Text> */}
+            {/* Commenting out reviews section from list view */}
+            {/* <View style={styles.ratingContainer}>
               <Ionicons name="star" size={12} color="#FFD700" />
               <Text style={[styles.ratingText, { color: colors.text }]}>{product.rating ? product.rating.rate : 0}</Text>
               <Text style={[styles.reviewsText, { color: colors.textSecondary }]}>({product.rating ? product.rating.count : 0})</Text>
-            </View>
+            </View> */}
             <View style={styles.priceContainer}>
               <Text style={[styles.originalPrice, { color: colors.textSecondary }]}>{formatPrice((typeof product.price === 'number' ? product.price : parseFloat(product.price || '0')) * 1.3)}</Text>
               <Text style={[styles.price, { color: '#FFA500' }]}>{formatPrice(typeof product.price === 'number' ? product.price : parseFloat(product.price || '0'))}</Text>
@@ -665,6 +666,7 @@ const styles = StyleSheet.create({
   headerCenter: {
     flex: 1,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   title: {
     fontSize: 28,
@@ -691,15 +693,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginHorizontal: 16,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
     borderRadius: 12,
-    marginBottom: 12,
+    marginBottom: 10,
   },
   searchInput: {
     flex: 1,
-    marginLeft: 8,
-    fontSize: 14,
+    marginLeft: 6,
+    fontSize: 13,
   },
   resultsContainer: {
     paddingHorizontal: 16,
@@ -767,6 +769,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
+  },
+  originalPrice: {
+    fontSize: 12,
+    textDecorationLine: 'line-through',
   },
   price: {
     fontSize: 18,

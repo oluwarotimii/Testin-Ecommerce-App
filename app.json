@@ -18,10 +18,10 @@
       "url": "https://u.expo.dev/1cb5d51a-5191-48d4-9ed9-b38b3467045b",
       "enabled": true,
       "checkAutomatically": "ON_LOAD",
-      "fallbackToCacheTimeout": 5000
+      "fallbackToCacheTimeout": 0
     },
     "runtimeVersion": {
-      "policy": "sdkVersion"
+      "policy": "appVersion"
     },
     "ios": {
       "supportsTablet": true,

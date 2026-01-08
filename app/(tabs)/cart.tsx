@@ -241,7 +241,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 20,
-    paddingTop: 60,
+    paddingTop: 30,
     paddingBottom: 20,
   },
   headerLeft: {
@@ -324,7 +324,7 @@ const styles = StyleSheet.create({
   },
   summary: {
     padding: 20,
-    paddingBottom: 40,
+    paddingBottom: 20,
   },
   summaryRow: {
     flexDirection: 'row',
