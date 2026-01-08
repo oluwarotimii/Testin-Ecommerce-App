@@ -20,12 +20,15 @@ export default function ProductsScreen() {
   const { apiService } = useAuth();
   const { setCartCount } = useCart();
   const colors = useThemeColors();
-  const scrollY = useRef(new Animated.Value(0)).current;
+  const scrollViewRef = useRef();
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [searchQuery, setSearchQuery] = useState('');
   const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [filters, setFilters] = useState<FilterOptions>({
     minPrice: 0,
@@ -64,10 +67,17 @@ export default function ProductsScreen() {
       if (!apiService) return; // Ensure apiService is available
       try {
         setLoading(true);
-        const response = await apiService.getProducts();
+        // For initial load, we'll fetch with search and filters applied
+        const params: any = { per_page: 20, page: 1 };
+        if (searchQuery) params.search = searchQuery;
+
+        const response = await apiService.getProducts(params);
         // Use transformation utility
         const transformedProducts = transformProducts(response);
         setProducts(transformedProducts);
+        // Check if there are more products available
+        setHasMore(response.length === 20); // If we got 20, there might be more
+        setCurrentPage(1);
       } catch (err: any) {
         setError(err.message || 'An unexpected error occurred');
       } finally {
@@ -78,7 +88,7 @@ export default function ProductsScreen() {
     fetchProducts();
     fetchWishlist();
     fetchCategories();
-  }, [apiService, fetchWishlist, fetchCategories]);
+  }, [apiService, fetchWishlist, fetchCategories, searchQuery]); // Added searchQuery dependency
 
   const toggleWishlist = async (productId: number) => {
     if (!apiService) return;
@@ -106,6 +116,33 @@ export default function ProductsScreen() {
       } else {
         setWishlist(prev => prev.filter(id => id !== productId));
       }
+    }
+  };
+
+  const loadMoreProducts = async () => {
+    if (!hasMore || loadingMore || !apiService) return;
+
+    setLoadingMore(true);
+    try {
+      const nextPage = currentPage + 1;
+      // Include search and filters when loading more products
+      const params: any = { per_page: 20, page: nextPage };
+      if (searchQuery) params.search = searchQuery;
+
+      const response = await apiService.getProducts(params);
+      // Use transformation utility
+      const transformedProducts = transformProducts(response);
+
+      // Append new products to existing products
+      setProducts(prev => [...prev, ...transformedProducts]);
+
+      // Check if there are more products available
+      setHasMore(response.length === 20);
+      setCurrentPage(nextPage);
+    } catch (err: any) {
+      setError(err.message || 'An unexpected error occurred while loading more products');
+    } finally {
+      setLoadingMore(false);
     }
   };
 
@@ -137,9 +174,14 @@ export default function ProductsScreen() {
   };
 
   const filteredProducts = useMemo(() => {
-    let filtered = products.filter(product =>
-      product.title?.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    let filtered = [...products]; // Work with all loaded products
+
+    // Apply search filter
+    if (searchQuery) {
+      filtered = filtered.filter(product =>
+        product.title?.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
 
     // Apply category filter
     if (selectedCategory !== 'all' && selectedCategory) {
@@ -324,31 +366,14 @@ export default function ProductsScreen() {
     </View>
   );
 
-  // Calculate header collapse
-  const headerHeight = 120; // Approximate header height (header + search + category)
-  const minHeaderHeight = 60; // Minimum height when collapsed
-  const headerHeightDiff = headerHeight - minHeaderHeight;
-
-  const headerOpacity = scrollY.interpolate({
-    inputRange: [0, 100],
-    outputRange: [1, 0.5],
-    extrapolate: 'clamp',
-  });
-
-  const headerTranslateY = scrollY.interpolate({
-    inputRange: [0, headerHeightDiff],
-    outputRange: [0, -60],  // Move header up by 60px when collapsed
-    extrapolate: 'clamp',
-  });
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-      <Animated.View
+      <View
         style={[
           styles.headerContainer,
           {
             backgroundColor: colors.background,
-            transform: [{ translateY: headerTranslateY }],
           }
         ]}
       >
@@ -362,45 +387,46 @@ export default function ProductsScreen() {
               <Ionicons name="arrow-back" size={24} color={colors.text} />
             </TouchableOpacity>
           </View>
-          <Animated.View style={[styles.headerCenter, { opacity: headerOpacity }]}>
+          <View style={styles.headerCenter}>
             <Text style={[styles.title, { color: colors.text }]}>Products</Text>
-          </Animated.View>
-          <Animated.View style={{ opacity: headerOpacity }}>
-            <View style={styles.headerActions}>
-              <TouchableOpacity style={styles.filterButton} onPress={() => setShowFilterModal(true)}>
-                <Ionicons name="filter" size={20} color={colors.primary} />
+          </View>
+          <View style={styles.headerActions}>
+            <TouchableOpacity style={styles.filterButton} onPress={() => setShowFilterModal(true)}>
+              <Ionicons name="filter" size={20} color={colors.primary} />
+            </TouchableOpacity>
+            <View style={[styles.viewToggle, { backgroundColor: colors.surface }]}>
+              <TouchableOpacity
+                style={[styles.toggleButton, viewMode === 'grid' && { backgroundColor: colors.primary }]}
+                onPress={() => setViewMode('grid')}
+              >
+                <Ionicons name="grid" size={16} color={viewMode === 'grid' ? colors.white : colors.textSecondary} />
               </TouchableOpacity>
-              <View style={[styles.viewToggle, { backgroundColor: colors.surface }]}>
-                <TouchableOpacity
-                  style={[styles.toggleButton, viewMode === 'grid' && { backgroundColor: colors.primary }]}
-                  onPress={() => setViewMode('grid')}
-                >
-                  <Ionicons name="grid" size={16} color={viewMode === 'grid' ? colors.white : colors.textSecondary} />
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.toggleButton, viewMode === 'list' && { backgroundColor: colors.primary }]}
-                  onPress={() => setViewMode('list')}
-                >
-                  <Ionicons name="list" size={16} color={viewMode === 'list' ? colors.white : colors.textSecondary} />
-                </TouchableOpacity>
-              </View>
+              <TouchableOpacity
+                style={[styles.toggleButton, viewMode === 'list' && { backgroundColor: colors.primary }]}
+                onPress={() => setViewMode('list')}
+              >
+                <Ionicons name="list" size={16} color={viewMode === 'list' ? colors.white : colors.textSecondary} />
+              </TouchableOpacity>
             </View>
-          </Animated.View>
+          </View>
         </View>
 
         {/* Search Bar */}
-        <Animated.View style={{ opacity: headerOpacity }}>
-          <View style={[styles.searchContainer, { backgroundColor: colors.surface }]}>
-            <Ionicons name="search" size={20} color={colors.textSecondary} />
-            <TextInput
-              style={[styles.searchInput, { color: colors.text }]}
-              placeholder="Search products..."
-              placeholderTextColor={colors.textSecondary}
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-            />
-          </View>
-        </Animated.View>
+        <View style={[styles.searchContainer, { backgroundColor: colors.surface }]}>
+          <Ionicons name="search" size={20} color={colors.textSecondary} />
+          <TextInput
+            style={[styles.searchInput, { color: colors.text }]}
+            placeholder="Search products..."
+            placeholderTextColor={colors.textSecondary}
+            value={searchQuery}
+            onChangeText={(text) => {
+              setSearchQuery(text);
+              // Reset pagination when search changes
+              setCurrentPage(1);
+              setHasMore(true);
+            }}
+          />
+        </View>
 
         {/* Category Filter */}
         {/* <Animated.View style={{ opacity: headerOpacity }}>
@@ -450,8 +476,8 @@ export default function ProductsScreen() {
               ))}
             </View>
           </ScrollView>
-        </Animated.View> */}
-      </Animated.View>
+        </View> */}
+      </View>
 
       {/* Results Count */}
       <View style={styles.resultsContainer}>
@@ -465,14 +491,19 @@ export default function ProductsScreen() {
       </View>
 
       {/* Products */}
-      <Animated.ScrollView
+      <ScrollView
+        ref={scrollViewRef}
         style={styles.content}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
-        onScroll={Animated.event(
-          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
-          { useNativeDriver: true }
-        )}
+        onScroll={(event) => {
+          const { layoutMeasurement, contentOffset, contentSize } = event.nativeEvent;
+          const isCloseToBottom = layoutMeasurement.height + contentOffset.y >= contentSize.height - 500;
+
+          if (isCloseToBottom && hasMore && !loadingMore) {
+            loadMoreProducts();
+          }
+        }}
         scrollEventThrottle={16}
       >
         {loading ? (
@@ -501,15 +532,27 @@ export default function ProductsScreen() {
         ) : filteredProducts.length === 0 ? (
           <Text style={[styles.noProductsText, { color: colors.textSecondary }]}>No products found.</Text>
         ) : (
-          viewMode === 'grid' ? renderGridView() : renderListView()
+          <>
+            {viewMode === 'grid' ? renderGridView() : renderListView()}
+            {loadingMore && (
+              <View style={styles.loadingMoreContainer}>
+                <ActivityIndicator size="small" color={colors.primary} />
+              </View>
+            )}
+          </>
         )}
-      </Animated.ScrollView>
+      </ScrollView>
 
       {/* Filter Modal */}
       <FilterModal
         visible={showFilterModal}
         onClose={() => setShowFilterModal(false)}
-        onApply={(newFilters) => setFilters(newFilters)}
+        onApply={(newFilters) => {
+          setFilters(newFilters);
+          // Reset pagination when filters change
+          setCurrentPage(1);
+          setHasMore(true);
+        }}
         currentFilters={filters}
         maxPriceLimit={100000000}
       />
@@ -529,8 +572,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingTop: 30,
-    paddingBottom: 8,
+    paddingTop: 15,
+    paddingBottom: 6,
   },
   headerLeft: {
     flex: 1,
@@ -567,15 +610,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginHorizontal: 16,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
     borderRadius: 12,
-    marginBottom: 16,
+    marginBottom: 12,
   },
   searchInput: {
     flex: 1,
-    marginLeft: 12,
-    fontSize: 16,
+    marginLeft: 8,
+    fontSize: 14,
   },
   resultsContainer: {
     paddingHorizontal: 16,
@@ -690,5 +733,11 @@ const styles = StyleSheet.create({
   categoryText: {
     fontSize: 10,
     fontWeight: '500',
+  },
+  loadingMoreContainer: {
+    width: '100%',
+    padding: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

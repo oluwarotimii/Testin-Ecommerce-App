@@ -500,8 +500,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingTop: 60, // Adjust based on safe area
-    paddingBottom: 16,
+    paddingTop: 20, // Reduced from 60 to 20
+    paddingBottom: 12,
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(0,0,0,0.05)',
   },
@@ -510,8 +510,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingTop: 60,
-    paddingBottom: 16,
+    paddingTop: 20,
+    paddingBottom: 12,
   },
   greeting: {
     fontSize: 14,
@@ -530,15 +530,17 @@ const styles = StyleSheet.create({
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginHorizontal: 20,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    marginHorizontal: 16,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
     borderRadius: 12,
-    marginBottom: 20,
+    marginBottom: 0,
+    flex: 1,
+    marginRight: 12,
   },
   searchPlaceholder: {
-    marginLeft: 12,
-    fontSize: 16,
+    marginLeft: 8,
+    fontSize: 14,
     flex: 1,
   },
   section: {

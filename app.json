@@ -86,7 +86,7 @@
       "expoPublicWordpressConsumerKey": "ck_03fa4b83972b0bffeed920fa435b36c5ce2da7d4",
       "expoPublicWordpressConsumerSecret": "cs_dba4839b4024395a99b4d06ab554650b60dedd6b",
       "expoPublicApiServiceType": "wordpress",
-      "expoPublicWordpressUrl": "https://femtech.ng/",
+      "expoPublicWordpressUrl": "https://femtechit.com/",
       "expoPublicDashboardUrl": "https://femapp.vercel.app"
     }
   }
