@@ -2,7 +2,7 @@
   "expo": {
     "name": "Femtech IT",
     "slug": "femtech-mobile-app",
-    "version": "1.0.1",
+    "version": "1.1.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "myapp",
@@ -87,7 +87,8 @@
       "expoPublicWordpressConsumerSecret": "cs_dba4839b4024395a99b4d06ab554650b60dedd6b",
       "expoPublicApiServiceType": "wordpress",
       "expoPublicWordpressUrl": "https://femtechit.com/",
-      "expoPublicDashboardUrl": "https://femapp.vercel.app"
+      "expoPublicDashboardUrl": "https://femapp.vercel.app",
+      "expoPublicPrivacyPolicyUrl": "https://femtechit.com/privacy-policy"
     }
   }
 }

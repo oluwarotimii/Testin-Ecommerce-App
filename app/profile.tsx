@@ -103,6 +103,14 @@ export default function ProfileScreen() {
           >
             <Text style={[styles.registerButtonText, { color: colors.primary }]}>Create Account</Text>
           </TouchableOpacity>
+
+          {/* Privacy Policy Link */}
+          <TouchableOpacity
+            style={styles.privacyLink}
+            onPress={() => router.push('/privacy-policy')}
+          >
+            <Text style={[styles.privacyLinkText, { color: colors.textSecondary }]}>Privacy Policy</Text>
+          </TouchableOpacity>
         </View>
       </SafeAreaView>
     );
@@ -223,6 +231,11 @@ export default function ProfileScreen() {
               <Ionicons name="log-out-outline" size={22} color="#D32F2F" />
             </View>
             <Text style={[styles.menuText, { color: '#D32F2F' }]}>Log Out</Text>
+          </TouchableOpacity>
+
+          {/* Privacy Policy Link */}
+          <TouchableOpacity style={styles.privacyLink} onPress={() => router.push('/privacy-policy')}>
+            <Text style={[styles.privacyLinkText, { color: colors.text }]}>Privacy Policy</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
@@ -389,5 +402,33 @@ const styles = StyleSheet.create({
   registerButtonText: {
     fontSize: 18,
     fontWeight: 'bold',
+  },
+  privacyButton: {
+    width: '100%',
+    paddingVertical: 15,
+    // borderRadius: 10,
+    alignItems: 'center',
+    // borderWidth: 1,
+    marginTop: 15,
+  },
+  privacyButtonText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  privacyLink: {
+    marginTop: 15,
+    alignSelf: 'flex-start',
+    paddingHorizontal: 20,
+  },
+  privacyLinkText: {
+    fontSize: 16,
+    textDecorationLine: 'underline',
+  },
+  privacyMenuLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    borderRadius: 16,
+    marginBottom: 12,
   },
 });

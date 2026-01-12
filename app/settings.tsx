@@ -80,7 +80,7 @@ export default function SettingsScreen() {
       id: 'privacy',
       title: 'Privacy Policy',
       icon: 'shield-checkmark',
-      onPress: () => console.log('Privacy Policy pressed'),
+      onPress: () => router.push('/privacy-policy'),
     },
     {
       id: 'terms',

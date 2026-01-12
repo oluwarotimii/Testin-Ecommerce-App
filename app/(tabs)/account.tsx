@@ -267,6 +267,13 @@ export default function AccountScreen() {
                   </View>
                 </View>
 
+                {/* Privacy Policy Link */}
+                <View style={styles.section}>
+                  <TouchableOpacity style={styles.privacyLink} onPress={() => router.push('/privacy-policy')}>
+                    <Text style={[styles.privacyLinkText, { color: colors.text }]}>Privacy Policy</Text>
+                  </TouchableOpacity>
+                </View>
+
                 {/* Logout */}
                 <View style={styles.section}>
                   <TouchableOpacity style={[styles.logoutButton, { backgroundColor: colors.surface }]} onPress={() => setShowSignOutModal(true)}>
@@ -292,6 +299,14 @@ export default function AccountScreen() {
                     onPress={() => router.push('/register')}
                   >
                     <Text style={[styles.registerButtonText, { color: colors.primary }]}>Create Account</Text>
+                  </TouchableOpacity>
+
+                  {/* Privacy Policy Link for non-authenticated users */}
+                  <TouchableOpacity
+                    style={styles.privacyLink}
+                    onPress={() => router.push('/privacy-policy')}
+                  >
+                    <Text style={[styles.privacyLinkText, { color: colors.textSecondary }]}>Privacy Policy</Text>
                   </TouchableOpacity>
                 </View>
               </>
@@ -529,6 +544,26 @@ const styles = StyleSheet.create({
   registerButtonText: {
     fontSize: 18,
     fontWeight: 'bold',
+  },
+  privacyButton: {
+    width: '100%',
+    paddingVertical: 15,
+    borderRadius: 10,
+    alignItems: 'center',
+    borderWidth: 1,
+    marginTop: 15,
+  },
+  privacyButtonText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  privacyLink: {
+    marginTop: 15,
+    alignSelf: 'center',
+  },
+  privacyLinkText: {
+    fontSize: 16,
+    textDecorationLine: 'underline',
   },
   // Modal styles
   modalOverlay: {
