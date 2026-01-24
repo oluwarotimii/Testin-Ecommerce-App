@@ -292,14 +292,67 @@ export default function ProductDetailScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
-        {/* Product Image */}
+        {/* Product Images Gallery */}
         <View style={[styles.imageContainer, { backgroundColor: colors.surface }]}>
+          {/* Main image display */}
           <TouchableOpacity
             onPress={() => setShowFullscreenImage(true)}
             activeOpacity={0.9}
           >
-            <SafeImage source={{ uri: product.image }} style={[styles.productImage, { backgroundColor: colors.background }]} />
+            <SafeImage
+              source={{
+                uri: (product.image && selectedImage === 0)
+                  ? product.image
+                  : (product.gallery_images && product.gallery_images[selectedImage - (product.image ? 1 : 0)])
+              }}
+              style={[styles.productImage, { backgroundColor: colors.background }]}
+            />
           </TouchableOpacity>
+
+          {/* Thumbnail Images */}
+          {((product.gallery_images && product.gallery_images.length > 0) || product.image) && (
+            <View style={styles.thumbnailContainer}>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.thumbnailScroll}
+              >
+                {/* Main image thumbnail */}
+                {product.image && (
+                  <TouchableOpacity
+                    key="main-image"
+                    style={[
+                      styles.thumbnail,
+                      selectedImage === 0 && styles.selectedThumbnail
+                    ]}
+                    onPress={() => setSelectedImage(0)}
+                  >
+                    <SafeImage
+                      source={{ uri: product.image }}
+                      style={[styles.thumbnailImage, { backgroundColor: colors.background }]}
+                    />
+                  </TouchableOpacity>
+                )}
+
+                {/* Gallery images thumbnails */}
+                {product.gallery_images && product.gallery_images.map((image: string, index: number) => (
+                  <TouchableOpacity
+                    key={`gallery-${index}`}
+                    style={[
+                      styles.thumbnail,
+                      selectedImage === index + (product.image ? 1 : 0) && styles.selectedThumbnail
+                    ]}
+                    onPress={() => setSelectedImage(index + (product.image ? 1 : 0))}
+                  >
+                    <SafeImage
+                      source={{ uri: image }}
+                      style={[styles.thumbnailImage, { backgroundColor: colors.background }]}
+                    />
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>
+          )}
         </View>
 
         {/* Product Info */}
@@ -434,15 +487,19 @@ export default function ProductDetailScreen() {
         </TouchableOpacity>
       </View>
 
-      {/* Fullscreen Image Overlay - temporarily disabled */}
-      {/* {showFullscreenImage && (
+      {/* Fullscreen Image Overlay */}
+      {showFullscreenImage && (
         <View style={styles.fullscreenOverlay}>
           <View style={styles.fullscreenImageContainer}>
             <TouchableOpacity
               onPress={() => setShowFullscreenImage(false)}
             >
               <Image
-                source={{ uri: product?.image }}
+                source={{
+                  uri: product.gallery_images && product.gallery_images.length > 0
+                    ? product.gallery_images[selectedImage]
+                    : product.image
+                }}
                 style={styles.fullscreenImage}
                 resizeMode="contain"
               />
@@ -455,7 +512,7 @@ export default function ProductDetailScreen() {
             <Ionicons name="close" size={30} color="#FFFFFF" />
           </TouchableOpacity>
         </View>
-      )} */}
+      )}
     </SafeAreaView>
   );
 }
@@ -497,6 +554,30 @@ const styles = StyleSheet.create({
     maxHeight: 350,
     resizeMode: 'contain',
     borderRadius: 12,
+  },
+  thumbnailContainer: {
+    marginTop: 15,
+    width: '100%',
+  },
+  thumbnailScroll: {
+    paddingHorizontal: 20,
+    gap: 10,
+  },
+  thumbnail: {
+    width: 60,
+    height: 60,
+    borderRadius: 8,
+    overflow: 'hidden',
+    borderWidth: 2,
+    borderColor: 'transparent',
+  },
+  selectedThumbnail: {
+    borderColor: '#007AFF', // iOS blue selection color
+  },
+  thumbnailImage: {
+    width: '100%',
+    height: '100%',
+    resizeMode: 'cover',
   },
   productInfoContainer: {
     marginTop: 10,
