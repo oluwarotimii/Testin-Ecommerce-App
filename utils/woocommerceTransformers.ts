@@ -6,6 +6,7 @@ export interface AppProduct {
     id: number;
     title: string;
     image: string;
+    gallery_images?: string[];
     price: number;
     original_price: number;
     description: string;
@@ -54,10 +55,27 @@ export function transformProduct(wcProduct: any): AppProduct {
         }
     }
 
+    // Extract gallery images from WooCommerce product
+    let galleryImages: string[] = [];
+    if (wcProduct.images && Array.isArray(wcProduct.images)) {
+        galleryImages = wcProduct.images
+            .slice(1) // Skip the first image since it's already used as the main image
+            .map((img: any) => {
+                if (typeof img === 'string') {
+                    return img;
+                } else if (typeof img === 'object' && img.src) {
+                    return img.src;
+                }
+                return '';
+            })
+            .filter(img => img !== ''); // Remove empty strings
+    }
+
     return {
         id: wcProduct.id,
         title: decodeHtmlEntities(wcProduct.name || wcProduct.title || 'Untitled Product'),
         image: imageUrl,
+        gallery_images: galleryImages,
         price: parseFloat(wcProduct.price || '0'),
         original_price: parseFloat(wcProduct.regular_price || wcProduct.price || '0'),
         description: decodeHtmlEntities(wcProduct.description || wcProduct.short_description || ''),
@@ -89,7 +107,13 @@ export function transformProducts(wcProducts: any[]): AppProduct[] {
     if (!Array.isArray(wcProducts)) {
         return [];
     }
-    return wcProducts.map(transformProduct);
+
+    // Filter products to only include published ones
+    const publishedProducts = wcProducts.filter((product: any) =>
+        product.status === 'publish' || product.status === 'published'
+    );
+
+    return publishedProducts.map(transformProduct);
 }
 
 /**

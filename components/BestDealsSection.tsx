@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, FlatList } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import SafeImage from '@/components/SafeImage';
@@ -23,12 +23,24 @@ export default function BestDealsSection({ wishlist, toggleWishlist }: BestDeals
 
     const [featuredProducts, setFeaturedProducts] = useState<any[]>([]);
     const [loadingFeatured, setLoadingFeatured] = useState(true);
+    const [loadingMore, setLoadingMore] = useState(false);
     const [featuredCategoryId, setFeaturedCategoryId] = useState<number | null>(null);
+    const [hasMore, setHasMore] = useState(true);
+    const [page, setPage] = useState(1);
     const [cartSuccess, setCartSuccess] = useState<{ [key: number]: boolean }>({});
+    const isFetching = useRef(false);
 
-    const fetchFeaturedCategory = useCallback(async () => {
-        if (!apiService) return;
-        setLoadingFeatured(true);
+    const fetchFeaturedCategory = useCallback(async (reset: boolean = false) => {
+        if (!apiService || isFetching.current) return;
+
+        isFetching.current = true;
+
+        if (reset) {
+            setLoadingFeatured(true);
+        } else if (!reset) {
+            setLoadingMore(true);
+        }
+
         try {
             // Try to find 'daily-deals' category first
             let categories = await apiService.getCategories({ slug: 'daily-deals' });
@@ -40,26 +52,152 @@ export default function BestDealsSection({ wishlist, toggleWishlist }: BestDeals
 
             if (categories && categories.length > 0) {
                 const category = categories[0];
-                setFeaturedCategoryId(category.id);
 
-                // Fetch products for this category
-                const products = await apiService.getProducts({ category: category.id, per_page: 4 });
+                if (reset) {
+                    setFeaturedCategoryId(category.id);
+                }
+
+                // Fetch products for this category with pagination
+                const products = await apiService.getProducts({
+                    category: category.id,
+                    per_page: 10,
+                    page: reset ? 1 : page
+                });
+
                 const transformed = transformProducts(products);
-                setFeaturedProducts(transformed);
+
+                if (reset) {
+                    setFeaturedProducts(transformed);
+                    setPage(1);
+                    setHasMore(products.length >= 10);
+                } else {
+                    setFeaturedProducts(prev => {
+                        // Create a map of existing product IDs for quick lookup
+                        const existingIds = new Set(prev.map(p => p.id));
+                        // Filter out any products that already exist in the list
+                        const uniqueNewProducts = transformed.filter(p => !existingIds.has(p.id));
+                        return [...prev, ...uniqueNewProducts];
+                    });
+                    setHasMore(products.length >= 10);
+                    setPage(prev => prev + 1);
+                }
+            } else {
+                // If no category is found, fetch all products
+                const products = await apiService.getProducts({
+                    per_page: 10,
+                    page: reset ? 1 : page
+                });
+
+                const transformed = transformProducts(products);
+
+                if (reset) {
+                    setFeaturedProducts(transformed);
+                    setPage(1);
+                    setHasMore(products.length >= 10);
+                } else {
+                    setFeaturedProducts(prev => {
+                        // Create a map of existing product IDs for quick lookup
+                        const existingIds = new Set(prev.map(p => p.id));
+                        // Filter out any products that already exist in the list
+                        const uniqueNewProducts = transformed.filter(p => !existingIds.has(p.id));
+                        return [...prev, ...uniqueNewProducts];
+                    });
+                    setHasMore(products.length >= 10);
+                    setPage(prev => prev + 1);
+                }
             }
         } catch (error) {
             console.error('Error fetching featured category:', error);
         } finally {
             setLoadingFeatured(false);
+            setLoadingMore(false);
+            isFetching.current = false;
         }
-    }, []); // OPTIMIZED: Removed apiService dependency
+    }, [apiService, page]); // Include page in dependency array
+
+    // Load more products when reaching end of list
+    const loadMoreProducts = useCallback(() => {
+        if (hasMore && !loadingMore && !isFetching.current) {
+            fetchFeaturedCategory(false); // Load more (not reset)
+        }
+    }, [hasMore, loadingMore, fetchFeaturedCategory]);
 
     // OPTIMIZED: Fetch only once on mount
     useEffect(() => {
         if (apiService) {
-            fetchFeaturedCategory();
+            fetchFeaturedCategory(true); // Reset and load first page
         }
-    }, [apiService, fetchFeaturedCategory]); // Added apiService to dependency array to ensure fetchFeaturedCategory is called when apiService becomes available
+    }, [apiService]); // Only apiService as dependency
+
+    // Render individual product item
+    const renderProductItem = ({ item }: { item: any }) => (
+        <TouchableOpacity
+            key={item.id}
+            style={styles.productCard}
+            onPress={() => router.push(`/product/${item.id}` as any)}
+        >
+            <View style={styles.productImageContainer}>
+                <SafeImage source={{ uri: item.image }} style={[styles.productImage, { backgroundColor: colors.background }]} />
+                <View style={styles.wishlistOverlay}>
+                    <TouchableOpacity
+                        style={[styles.wishlistButton, { backgroundColor: colors.surface }]}
+                        onPress={(e) => {
+                            e.stopPropagation();
+                            toggleWishlist(item.id);
+                        }}
+                    >
+                        <Ionicons
+                            name={wishlist.includes(item.id) ? "heart" : "heart-outline"}
+                            size={16}
+                            color={wishlist.includes(item.id) ? "#FF3B30" : colors.text}
+                        />
+                    </TouchableOpacity>
+                </View>
+                <View style={styles.cartOverlayBottom}>
+                    <TouchableOpacity
+                        style={[styles.addToCartButton, { backgroundColor: colors.primary }]}
+                        onPress={async (e) => {
+                            e.stopPropagation();
+                            // Optimistic update for faster UI response
+                            setCartCount(prev => prev + 1);
+
+                            try {
+                                // OPTIMIZED: Pass product data to avoid additional API call
+                                const result = await apiService.addToCart(item.id, 1, item);
+                                console.log(`Added ${item.title} to cart!`, result);
+
+                                // Show success indicator
+                                setCartSuccess(prev => ({ ...prev, [item.id]: true }));
+                                setTimeout(() => {
+                                    setCartSuccess(prev => {
+                                        const newCartSuccess = { ...prev };
+                                        delete newCartSuccess[item.id];
+                                        return newCartSuccess;
+                                    });
+                                }, 1500); // Hide after 1.5 seconds
+
+                                // OPTIMIZED: Removed cart contents fetch - trust optimistic update
+                            } catch (error) {
+                                console.error("Add to cart error:", error);
+                                // Revert optimistic update on error
+                                setCartCount(prev => prev - 1);
+                            }
+                        }}
+                    >
+                        <Ionicons name="cart" size={18} color={colors.white} />
+                    </TouchableOpacity>
+                </View>
+            </View>
+
+            <View style={styles.productInfo}>
+                <Text style={[styles.productName, { color: colors.text }]} numberOfLines={2}>{item.title}</Text>
+                <View style={styles.priceRow}>
+                    <Text style={[styles.originalPrice, { color: colors.textSecondary }]}>{formatPrice((typeof item.price === 'number' ? item.price : parseFloat(item.price || '0')) * 1.3)}</Text>
+                    <Text style={[styles.productPrice, { color: '#FFA500' }]}>{formatPrice(typeof item.price === 'number' ? item.price : parseFloat(item.price || '0'))}</Text>
+                </View>
+            </View>
+        </TouchableOpacity>
+    );
 
     if (loadingFeatured) {
         return (
@@ -78,8 +216,7 @@ export default function BestDealsSection({ wishlist, toggleWishlist }: BestDeals
     }
 
     if (featuredProducts.length === 0) {
-        return null; // Or return a message if preferred, but user asked to show nothing if empty? "should show No trending products if nothing is there" -> user said "No trending products if nothing is there in the categories" - wait, "should show No trending products if nothing is there" implies showing the text "No trending products".
-        // Actually, let's stick to the previous implementation which showed "No trending products found."
+        return null;
     }
 
     return (
@@ -97,76 +234,24 @@ export default function BestDealsSection({ wishlist, toggleWishlist }: BestDeals
             {featuredProducts.length === 0 ? (
                 <Text style={[styles.noProductsText, { color: colors.textSecondary }]}>No trending products found.</Text>
             ) : (
-                <View style={styles.productsGrid}>
-                    {featuredProducts.map((product) => (
-                        <TouchableOpacity
-                            key={product.id}
-                            style={styles.productCard}
-                            onPress={() => router.push(`/product/${product.id}` as any)}
-                        >
-                            <View style={styles.productImageContainer}>
-                                <SafeImage source={{ uri: product.image }} style={[styles.productImage, { backgroundColor: colors.background }]} />
-                                <View style={styles.wishlistOverlay}>
-                                    <TouchableOpacity
-                                        style={[styles.wishlistButton, { backgroundColor: colors.surface }]}
-                                        onPress={(e) => {
-                                            e.stopPropagation();
-                                            toggleWishlist(product.id);
-                                        }}
-                                    >
-                                        <Ionicons
-                                            name={wishlist.includes(product.id) ? "heart" : "heart-outline"}
-                                            size={16}
-                                            color={wishlist.includes(product.id) ? "#FF3B30" : colors.text}
-                                        />
-                                    </TouchableOpacity>
-                                </View>
-                                <View style={styles.cartOverlayBottom}>
-                                    <TouchableOpacity
-                                        style={[styles.addToCartButton, { backgroundColor: colors.primary }]}
-                                        onPress={async (e) => {
-                                            e.stopPropagation();
-                                            // Optimistic update for faster UI response
-                                            setCartCount(prev => prev + 1);
-
-                                            try {
-                                                // OPTIMIZED: Pass product data to avoid additional API call
-                                                const result = await apiService.addToCart(product.id, 1, product);
-                                                console.log(`Added ${product.title} to cart!`, result);
-
-                                                // Show success indicator
-                                                setCartSuccess(prev => ({ ...prev, [product.id]: true }));
-                                                setTimeout(() => {
-                                                    setCartSuccess(prev => {
-                                                        const newCartSuccess = { ...prev };
-                                                        delete newCartSuccess[product.id];
-                                                        return newCartSuccess;
-                                                    });
-                                                }, 1500); // Hide after 1.5 seconds
-
-                                                // OPTIMIZED: Removed cart contents fetch - trust optimistic update
-                                            } catch (error) {
-                                                console.error("Add to cart error:", error);
-                                                // Revert optimistic update on error
-                                                setCartCount(prev => prev - 1);
-                                            }
-                                        }}
-                                    >
-                                        <Ionicons name="cart" size={18} color={colors.white} />
-                                    </TouchableOpacity>
-                                </View>
+                <FlatList
+                    data={featuredProducts}
+                    renderItem={renderProductItem}
+                    keyExtractor={(item) => item.id.toString()}
+                    numColumns={2}
+                    horizontal={false}
+                    showsVerticalScrollIndicator={false}
+                    onEndReached={loadMoreProducts}
+                    onEndReachedThreshold={0.1}
+                    ListFooterComponent={() =>
+                        loadingMore ? (
+                            <View style={styles.loadingMoreContainer}>
+                                <ActivityIndicator size="small" color={colors.primary} />
                             </View>
-
-                            <View style={styles.productInfo}>
-                                <Text style={[styles.productName, { color: colors.text }]} numberOfLines={2}>{product.title}</Text>
-                                <View style={styles.priceRow}>
-                                    <Text style={[styles.originalPrice, { color: colors.textSecondary }]}>{formatPrice((typeof product.price === 'number' ? product.price : parseFloat(product.price || '0')) * 1.3)}</Text>
-                                    <Text style={[styles.productPrice, { color: '#FFA500' }]}>{formatPrice(typeof product.price === 'number' ? product.price : parseFloat(product.price || '0'))}</Text>
-                                </View>
-                            </View>
-                        </TouchableOpacity>
-                    ))}
-                </View>
+                        ) : null
+                    }
+                    contentContainerStyle={styles.productsGrid}
+                />
             )}
         </View>
     );
@@ -182,6 +267,8 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         paddingHorizontal: 16,
         marginBottom: 12,
+        // borderColor: 'red',
+        // borderWidth: 2,
     },
     sectionTitle: {
         fontSize: 20,
@@ -196,11 +283,12 @@ const styles = StyleSheet.create({
         flexWrap: 'wrap',
         paddingHorizontal: 16,
         gap: 12,
+        justifyContent: 'space-between', // Distribute items evenly
     },
     productCard: {
-        width: '47%',
+        width: '47%', // Two items per row with proper spacing
         borderRadius: 16,
-        overflow: 'hidden',
+        // overflow: 'hidden',
         marginBottom: 16,
     },
     productImageContainer: {
@@ -273,5 +361,11 @@ const styles = StyleSheet.create({
     seeAllButtonText: {
         fontSize: 14,
         fontWeight: '500',
+    },
+    loadingMoreContainer: {
+        width: '100%',
+        padding: 20,
+        alignItems: 'center',
+        justifyContent: 'center',
     },
 });

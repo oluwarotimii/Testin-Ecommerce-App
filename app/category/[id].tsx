@@ -276,8 +276,8 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         alignItems: 'center',
         paddingHorizontal: 16,
-        paddingTop: 50, // Reduced from 60
-        paddingBottom: 12, // Reduced from 16
+        paddingTop: 30, // Reduced from 50
+        paddingBottom: 8, // Reduced from 12
     },
     backButton: {
         padding: 8,
@@ -294,7 +294,7 @@ const styles = StyleSheet.create({
     },
     stickySearchContainer: {
         paddingHorizontal: 16,
-        paddingVertical: 8,
+        paddingVertical: 4,
         borderBottomWidth: 1,
         borderBottomColor: 'rgba(0,0,0,0.1)',
     },
@@ -309,11 +309,12 @@ const styles = StyleSheet.create({
     searchInput: {
         flex: 1,
         fontSize: 14,
+        height: 36,
     },
     countContainer: {
-        paddingHorizontal: 20,
-        paddingBottom: 8, // Reduced from 12
-        paddingTop: 4,
+        paddingHorizontal: 16,
+        paddingBottom: 4, // Reduced from 8
+        paddingTop: 2,
     },
     countText: {
         fontSize: 14,

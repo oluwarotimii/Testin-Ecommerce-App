@@ -104,8 +104,14 @@ export default function HomeScreen() {
       // Transform WooCommerce API response using utility function
       const transformedProducts = transformProducts(response);
 
-      // Append new products to existing products
-      setProducts(prevProducts => [...prevProducts, ...transformedProducts]);
+      // Append new products to existing products, ensuring uniqueness
+      setProducts(prevProducts => {
+        // Create a map of existing product IDs for quick lookup
+        const existingIds = new Set(prevProducts.map(p => p.id));
+        // Filter out any products that already exist in the list
+        const uniqueNewProducts = transformedProducts.filter(p => !existingIds.has(p.id));
+        return [...prevProducts, ...uniqueNewProducts];
+      });
 
       // Update pagination state
       setHasMoreProducts(response.length >= 20);
@@ -585,8 +591,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingTop: 30, 
-    paddingBottom: 12,
+    paddingTop: 25,
+    paddingBottom: 8,
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(0,0,0,0.05)',
   },
@@ -595,8 +601,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingTop: 20,
-    paddingBottom: 12,
+    paddingTop: 10,
+    paddingBottom: 8,
   },
   greeting: {
     fontSize: 14,
@@ -629,14 +635,20 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   section: {
-    marginBottom: 24,
+    marginBottom: 16,
+    // borderColor: 'red',
+    // borderWidth: 2,
   },
+
   sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 16,
-    marginBottom: 12,
+    marginBottom: 8,
+    // borderColor: 'red',
+    // borderWidth: 2,
+    
   },
   sectionTitleContainer: {
     flexDirection: 'row',
@@ -663,7 +675,9 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     paddingHorizontal: 16,
     gap: 12,
-    paddingBottom: 20, // Add padding to ensure last row is not hidden behind tab bar
+    paddingBottom: 20,
+    //    borderColor: 'red',
+    // borderWidth: 2,
   },
   loadingMoreContainer: {
     width: '100%',

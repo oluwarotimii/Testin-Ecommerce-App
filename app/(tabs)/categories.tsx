@@ -220,7 +220,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 20,
-    paddingTop: 60,
+    paddingTop: 10,
     paddingBottom: 20,
   },
   headerLeft: {
@@ -251,11 +251,13 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderRadius: 12,
     marginBottom: 20,
+    height: 10,
   },
   searchInput: {
     flex: 1,
-    marginLeft: 12,
+    // marginLeft: 0,
     fontSize: 16,
+    height: 10,
   },
   content: {
     flex: 1,

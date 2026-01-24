@@ -507,6 +507,7 @@ class WordPressApiService {
       // This dramatically reduces API calls and improves performance
       const defaultParams = {
         per_page: 20, // Reduced from 100 for faster initial load
+        status: 'publish', // Only fetch published products by default
         ...params
       };
 
@@ -550,7 +551,10 @@ class WordPressApiService {
   }
 
   async searchProducts(search: string, page?: number, limit?: number) {
-    const params: Record<string, any> = { search };
+    const params: Record<string, any> = {
+      search,
+      status: 'publish' // Only search published products
+    };
     if (page) params.page = page;
     if (limit) params.per_page = limit;
 
@@ -618,6 +622,7 @@ class WordPressApiService {
         params: {
           category: categoryId,
           per_page: limit,
+          status: 'publish', // Only fetch published products
           orderby: 'date',
           order: 'desc'
         }

@@ -167,10 +167,37 @@ export default function CheckoutScreen() {
       return;
     }
 
+    // Validate required shipping address fields
+    const selectedAddressData = addresses[selectedAddress];
+    if (!selectedAddressData) {
+      Alert.alert('Address Required', 'Please select a shipping address to proceed.');
+      return;
+    }
+
+    // Check for required address fields
+    const requiredFields = [
+      { field: 'firstName', label: 'First Name' },
+      { field: 'lastName', label: 'Last Name' },
+      { field: 'address', label: 'Street Address' },
+      { field: 'city', label: 'City' },
+      { field: 'state', label: 'State' },
+      { field: 'zipCode', label: 'ZIP Code' },
+      { field: 'country', label: 'Country' }
+    ];
+
+    const missingFields = requiredFields.filter(reqField => {
+      const value = selectedAddressData[reqField.field];
+      return !value || String(value).trim() === '';
+    });
+
+    if (missingFields.length > 0) {
+      const fieldLabels = missingFields.map(field => field.label).join(', ');
+      Alert.alert('Missing Information', `Please fill in the following required address fields: ${fieldLabels}`);
+      return;
+    }
+
     setPlacingOrder(true);
     try {
-      const selectedAddressData = addresses[selectedAddress];
-
       // Format order data for WooCommerce
       // Using default/fallback values for payment and shipping as sections were removed
       const orderData = {

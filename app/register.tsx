@@ -210,7 +210,7 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     paddingHorizontal: 32,
-    paddingTop: 60,
+    paddingTop: 10,
     paddingBottom: 32,
   },
   backButton: {

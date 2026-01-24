@@ -654,8 +654,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingTop: 15,
-    paddingBottom: 6,
+    paddingTop: 10,
+    paddingBottom: 4,
   },
   headerLeft: {
     flex: 1,
@@ -694,9 +694,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginHorizontal: 16,
     paddingHorizontal: 10,
-    paddingVertical: 6,
+    paddingVertical: 4,
     borderRadius: 12,
-    marginBottom: 10,
+    marginBottom: 6,
   },
   searchInput: {
     flex: 1,
@@ -705,7 +705,7 @@ const styles = StyleSheet.create({
   },
   resultsContainer: {
     paddingHorizontal: 16,
-    marginBottom: 4,
+    marginBottom: 2,
   },
   resultsText: {
     fontSize: 14,
