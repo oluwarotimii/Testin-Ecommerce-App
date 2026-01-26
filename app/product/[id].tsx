@@ -496,9 +496,9 @@ export default function ProductDetailScreen() {
             >
               <Image
                 source={{
-                  uri: product.gallery_images && product.gallery_images.length > 0
-                    ? product.gallery_images[selectedImage]
-                    : product.image
+                  uri: (product.image && selectedImage === 0)
+                    ? product.image
+                    : (product.gallery_images && product.gallery_images[selectedImage - (product.image ? 1 : 0)])
                 }}
                 style={styles.fullscreenImage}
                 resizeMode="contain"
