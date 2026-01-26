@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, FlatList } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import SafeImage from '@/components/SafeImage';
@@ -60,7 +60,7 @@ export default function BestDealsSection({ wishlist, toggleWishlist }: BestDeals
                 // Fetch products for this category with pagination
                 const products = await apiService.getProducts({
                     category: category.id,
-                    per_page: 10,
+                    per_page: 20,  // Increased to load more products per page
                     page: reset ? 1 : page
                 });
 
@@ -69,7 +69,7 @@ export default function BestDealsSection({ wishlist, toggleWishlist }: BestDeals
                 if (reset) {
                     setFeaturedProducts(transformed);
                     setPage(1);
-                    setHasMore(products.length >= 10);
+                    setHasMore(products.length >= 20);  // Updated to match new page size
                 } else {
                     setFeaturedProducts(prev => {
                         // Create a map of existing product IDs for quick lookup
@@ -78,13 +78,13 @@ export default function BestDealsSection({ wishlist, toggleWishlist }: BestDeals
                         const uniqueNewProducts = transformed.filter(p => !existingIds.has(p.id));
                         return [...prev, ...uniqueNewProducts];
                     });
-                    setHasMore(products.length >= 10);
+                    setHasMore(products.length >= 20);  // Updated to match new page size
                     setPage(prev => prev + 1);
                 }
             } else {
                 // If no category is found, fetch all products
                 const products = await apiService.getProducts({
-                    per_page: 10,
+                    per_page: 20,  // Increased to load more products per page
                     page: reset ? 1 : page
                 });
 
@@ -93,7 +93,7 @@ export default function BestDealsSection({ wishlist, toggleWishlist }: BestDeals
                 if (reset) {
                     setFeaturedProducts(transformed);
                     setPage(1);
-                    setHasMore(products.length >= 10);
+                    setHasMore(products.length >= 20);  // Updated to match new page size
                 } else {
                     setFeaturedProducts(prev => {
                         // Create a map of existing product IDs for quick lookup
@@ -102,7 +102,7 @@ export default function BestDealsSection({ wishlist, toggleWishlist }: BestDeals
                         const uniqueNewProducts = transformed.filter(p => !existingIds.has(p.id));
                         return [...prev, ...uniqueNewProducts];
                     });
-                    setHasMore(products.length >= 10);
+                    setHasMore(products.length >= 20);  // Updated to match new page size
                     setPage(prev => prev + 1);
                 }
             }
@@ -130,7 +130,7 @@ export default function BestDealsSection({ wishlist, toggleWishlist }: BestDeals
     }, [apiService]); // Only apiService as dependency
 
     // Render individual product item
-    const renderProductItem = ({ item }: { item: any }) => (
+    const renderProductItem = (item: any) => (
         <TouchableOpacity
             key={item.id}
             style={styles.productCard}
@@ -234,24 +234,14 @@ export default function BestDealsSection({ wishlist, toggleWishlist }: BestDeals
             {featuredProducts.length === 0 ? (
                 <Text style={[styles.noProductsText, { color: colors.textSecondary }]}>No trending products found.</Text>
             ) : (
-                <FlatList
-                    data={featuredProducts}
-                    renderItem={renderProductItem}
-                    keyExtractor={(item) => item.id.toString()}
-                    numColumns={2}
-                    horizontal={false}
-                    showsVerticalScrollIndicator={false}
-                    onEndReached={loadMoreProducts}
-                    onEndReachedThreshold={0.1}
-                    ListFooterComponent={() =>
-                        loadingMore ? (
-                            <View style={styles.loadingMoreContainer}>
-                                <ActivityIndicator size="small" color={colors.primary} />
-                            </View>
-                        ) : null
-                    }
-                    contentContainerStyle={styles.productsGrid}
-                />
+                <View style={styles.productsGrid}>
+                    {featuredProducts.map(renderProductItem)}
+                    {loadingMore && (
+                        <View style={styles.loadingMoreContainer}>
+                            <ActivityIndicator size="small" color={colors.primary} />
+                        </View>
+                    )}
+                </View>
             )}
         </View>
     );
@@ -260,11 +250,13 @@ export default function BestDealsSection({ wishlist, toggleWishlist }: BestDeals
 const styles = StyleSheet.create({
     section: {
         marginBottom: 24,
+        width: '100%',
     },
     sectionHeader: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
+        width: '100%',
         paddingHorizontal: 16,
         marginBottom: 12,
         // borderColor: 'red',
@@ -283,12 +275,13 @@ const styles = StyleSheet.create({
         flexWrap: 'wrap',
         paddingHorizontal: 16,
         gap: 12,
-        justifyContent: 'space-between', // Distribute items evenly
+        paddingBottom: 20,
     },
     productCard: {
         width: '47%', // Two items per row with proper spacing
         borderRadius: 16,
-        // overflow: 'hidden',
+        overflow: 'hidden',
+        position: 'relative',
         marginBottom: 16,
     },
     productImageContainer: {
