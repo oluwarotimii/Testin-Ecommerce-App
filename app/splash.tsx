@@ -3,6 +3,7 @@ import { useEffect } from 'react';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
 import { useThemeColors } from '@/hooks/useColorScheme';
+import { hasSeenWelcomeScreen } from '@/utils/welcomeState';
 
 export default function SplashScreen() {
   const router = useRouter();
@@ -24,8 +25,15 @@ export default function SplashScreen() {
         // User is authenticated, go to main app
         router.replace('/(tabs)');
       } else {
-        // No valid session, go to welcome/login
-        router.replace('/welcome');
+        // Check if user has seen welcome screen before
+        const seenWelcome = await hasSeenWelcomeScreen();
+        if (seenWelcome) {
+          // User has seen welcome screen, go directly to tabs
+          router.replace('/(tabs)');
+        } else {
+          // No valid session and hasn't seen welcome, go to welcome/login
+          router.replace('/welcome');
+        }
       }
     };
 

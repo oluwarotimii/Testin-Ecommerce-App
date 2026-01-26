@@ -14,7 +14,22 @@ export interface CarouselItem {
 
 export async function fetchCarousels(limit: number = 10): Promise<CarouselItem[]> {
     try {
-        const response = await fetch(`${DASHBOARD_API_BASE_URL}/api/carousel/public?limit=${limit}`);
+        // Add timeout to prevent hanging requests
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
+        const response = await fetch(`${DASHBOARD_API_BASE_URL}/api/carousel/public?limit=${limit}`, {
+            signal: controller.signal,
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+                'Cache-Control': 'no-cache',
+            }
+        });
+
+        clearTimeout(timeoutId);
+
         console.log('Carousel API Response Status:', response.status);
 
         if (!response.ok) {
@@ -24,13 +39,16 @@ export async function fetchCarousels(limit: number = 10): Promise<CarouselItem[]
         const data = await response.json();
         console.log('Carousel API Data:', JSON.stringify(data, null, 2));
 
-        if (!response.ok) {
-            throw new Error(data.error || 'Failed to fetch carousels');
-        }
-
         return data.data || [];
     } catch (error: any) {
         console.error('Error fetching carousels:', error.message, error.stack);
+
+        // Check if it's a network error specifically
+        if (error.name === 'AbortError') {
+            console.log('Carousel request timed out');
+        } else if (error.message?.includes('Network request failed')) {
+            console.log('Network error occurred while fetching carousels');
+        }
 
         // Return fallback carousel items if API fails
         console.log('Returning fallback carousel items');

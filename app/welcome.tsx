@@ -3,10 +3,26 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useThemeColors } from '@/hooks/useColorScheme';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { markWelcomeScreenAsSeen } from '@/utils/welcomeState';
 
 export default function WelcomeScreen() {
   const router = useRouter();
   const colors = useThemeColors();
+
+  const handleLogin = () => {
+    markWelcomeScreenAsSeen();
+    router.push('/login');
+  };
+
+  const handleRegister = () => {
+    markWelcomeScreenAsSeen();
+    router.push('/register');
+  };
+
+  const handleContinueAsGuest = () => {
+    markWelcomeScreenAsSeen();
+    router.push('/(tabs)');
+  };
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
@@ -27,7 +43,7 @@ export default function WelcomeScreen() {
       <View style={styles.buttonContainer}>
         <TouchableOpacity
           style={[styles.primaryButton, { backgroundColor: colors.primary }]}
-          onPress={() => router.push('/login')}
+          onPress={handleLogin}
         >
           <Ionicons name="person" size={20} color={colors.white} />
           <Text style={[styles.primaryButtonText, { color: colors.white }]}>Login</Text>
@@ -35,7 +51,7 @@ export default function WelcomeScreen() {
 
         <TouchableOpacity
           style={[styles.secondaryButton, { backgroundColor: colors.surface }]}
-          onPress={() => router.push('/register')}
+          onPress={handleRegister}
         >
           <Ionicons name="person-add" size={20} color={colors.primary} />
           <Text style={[styles.secondaryButtonText, { color: colors.primary }]}>Register</Text>
@@ -43,7 +59,7 @@ export default function WelcomeScreen() {
 
         <TouchableOpacity
           style={styles.guestButton}
-          onPress={() => router.push('/(tabs)')}
+          onPress={handleContinueAsGuest}
         >
           <Text style={[styles.guestButtonText, { color: colors.textSecondary }]}>Continue as Guest</Text>
         </TouchableOpacity>

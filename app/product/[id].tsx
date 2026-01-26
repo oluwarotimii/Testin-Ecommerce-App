@@ -29,6 +29,31 @@ export default function ProductDetailScreen() {
   const [isInWishlist, setIsInWishlist] = useState(false);
   const [showFullscreenImage, setShowFullscreenImage] = useState(false);
 
+  // Helper function to get all product images (main image + gallery images)
+  const getAllProductImages = () => {
+    if (!product) return [];
+
+    const allImages = [];
+    if (product.image) {
+      allImages.push(product.image);
+    }
+    if (product.gallery_images && product.gallery_images.length > 0) {
+      allImages.push(...product.gallery_images);
+    }
+
+    return allImages;
+  };
+
+  // Helper function to get the current image URL based on selected index
+  const getCurrentImageUrl = () => {
+    if (!product) return '';
+
+    const allImages = getAllProductImages();
+
+    // Return the image at the selected index, or the first image if invalid
+    return allImages[selectedImage] || allImages[0] || '';
+  };
+
   const [product, setProduct] = useState<any>(null);
   const [similarProducts, setSimilarProducts] = useState<any[]>([]);
   const [similarProductsInWishlist, setSimilarProductsInWishlist] = useState<Set<number>>(new Set());
@@ -300,12 +325,8 @@ export default function ProductDetailScreen() {
             activeOpacity={0.9}
           >
             <SafeImage
-              source={{
-                uri: (product.image && selectedImage === 0)
-                  ? product.image
-                  : (product.gallery_images && product.gallery_images[selectedImage - (product.image ? 1 : 0)])
-              }}
-              style={[styles.productImage, { backgroundColor: colors.background }]}
+              source={{ uri: getCurrentImageUrl() }}
+              style={[styles.mainProductImage, { backgroundColor: colors.background }]}
             />
           </TouchableOpacity>
 
@@ -495,15 +516,18 @@ export default function ProductDetailScreen() {
               onPress={() => setShowFullscreenImage(false)}
             >
               <Image
-                source={{
-                  uri: (product.image && selectedImage === 0)
-                    ? product.image
-                    : (product.gallery_images && product.gallery_images[selectedImage - (product.image ? 1 : 0)])
-                }}
+                source={{ uri: getCurrentImageUrl() }}
                 style={styles.fullscreenImage}
                 resizeMode="contain"
               />
             </TouchableOpacity>
+
+            {/* Image counter */}
+            <View style={styles.imageCounter}>
+              <Text style={styles.imageCounterText}>
+                {selectedImage + 1} / {getAllProductImages().length}
+              </Text>
+            </View>
           </View>
           <TouchableOpacity
             style={styles.overlayCloseButton}
@@ -526,7 +550,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 20,
-    paddingTop: 30,
+    paddingTop: 7,
     paddingBottom: 5,
     zIndex: 10,
   },
@@ -548,6 +572,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   productImage: {
+    width: width * 0.85,
+    height: width * 0.85,
+    maxWidth: 350,
+    maxHeight: 350,
+    resizeMode: 'contain',
+    borderRadius: 12,
+  },
+  mainProductImage: {
     width: width * 0.85,
     height: width * 0.85,
     maxWidth: 350,
@@ -819,6 +851,21 @@ const styles = StyleSheet.create({
     right: 20,
     zIndex: 101,
     padding: 10,
+  },
+  imageCounter: {
+    position: 'absolute',
+    top: 60,
+    left: 20,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    zIndex: 101,
+  },
+  imageCounterText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '500',
   },
   sectionHeader: {
     flexDirection: 'row',
