@@ -50,7 +50,7 @@ export default function HomeScreen() {
     } catch (error) {
       console.error('Error fetching wishlist:', error);
     }
-  }, []); // OPTIMIZED: Removed apiService dependency to prevent re-fetches
+  }, []); 
 
   const fetchProducts = useCallback(async () => {
     if (!apiService) return;

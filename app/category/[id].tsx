@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, TextInput, Animated } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, TextInput, Animated } from 'react-native';
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
@@ -19,6 +19,7 @@ export default function CategoryScreen() {
 
     const [products, setProducts] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const [loadingMore, setLoadingMore] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [wishlist, setWishlist] = useState<number[]>([]);
     const [categoryName, setCategoryName] = useState('Category');
@@ -26,6 +27,8 @@ export default function CategoryScreen() {
     const [showSearch, setShowSearch] = useState(false);
     const [cartSuccess, setCartSuccess] = useState<{ [key: number]: boolean }>({});
     const [addingToCart, setAddingToCart] = useState<{ [key: number]: boolean }>({});
+    const [hasMore, setHasMore] = useState(true);
+    const [page, setPage] = useState(1);
     const scrollY = useRef(new Animated.Value(0)).current;
 
     const formatPrice = (price: string | number) => {
@@ -43,47 +46,72 @@ export default function CategoryScreen() {
         }
     }, [apiService]);
 
-    useEffect(() => {
-        const fetchCategoryProducts = async () => {
-            if (!apiService || !id) return;
-            try {
+    const fetchCategoryProducts = useCallback(async (reset: boolean = false) => {
+        if (!apiService || !id) return;
+
+        try {
+            if (reset) {
                 setLoading(true);
                 setError(null);
-
-                const idStr = id.toString();
-
-                // Try to fetch category details from WooCommerce
-                try {
-                    const categories = await apiService.getCategories();
-                    const category = categories.find((cat: any) =>
-                        cat.slug === idStr || cat.id.toString() === idStr
-                    );
-                    if (category) {
-                        setCategoryName(category.name);
-                    }
-                } catch (catError) {
-                    console.error('Error fetching category details:', catError);
-                }
-
-                // Fetch products by category using the dedicated API method
-                // This ensures we get complete product data and better performance
-                // The method can now handle both category IDs and slugs
-                const categoryProducts = await apiService.getProductsByCategory(idStr);
-
-                // Transform the products to app format
-                const transformedProducts = transformProducts(categoryProducts);
-
-                setProducts(transformedProducts);
-            } catch (err: any) {
-                setError(err.message || 'Failed to load products');
-            } finally {
-                setLoading(false);
+            } else {
+                setLoadingMore(true);
             }
-        };
 
-        fetchCategoryProducts();
+            const idStr = id.toString();
+
+            // Try to fetch category details from WooCommerce
+            try {
+                const categories = await apiService.getCategories();
+                const category = categories.find((cat: any) =>
+                    cat.slug === idStr || cat.id.toString() === idStr
+                );
+                if (category) {
+                    setCategoryName(category.name);
+                }
+            } catch (catError) {
+                console.error('Error fetching category details:', catError);
+            }
+
+            // Fetch products by category with pagination
+            const params: any = {
+                category: idStr,
+                per_page: 20,
+                page: reset ? 1 : page
+            };
+
+            // Fetch products using the general getProducts method with category filter
+            const categoryProducts = await apiService.getProducts(params);
+
+            // Transform the products to app format
+            const transformedProducts = transformProducts(categoryProducts);
+
+            if (reset) {
+                setProducts(transformedProducts);
+                setPage(1);
+                setHasMore(categoryProducts.length >= 20);
+            } else {
+                // Filter out duplicates and append new products
+                const existingIds = new Set(products.map(p => p.id));
+                const uniqueNewProducts = transformedProducts.filter(p => !existingIds.has(p.id));
+                setProducts(prev => [...prev, ...uniqueNewProducts]);
+                setHasMore(categoryProducts.length >= 20);
+                setPage(prev => prev + 1);
+            }
+        } catch (err: any) {
+            setError(err.message || 'Failed to load products');
+        } finally {
+            if (reset) {
+                setLoading(false);
+            } else {
+                setLoadingMore(false);
+            }
+        }
+    }, [apiService, id, page]); // Only depend on apiService, id, and page
+
+    useEffect(() => {
+        fetchCategoryProducts(true); // Reset and load first page
         fetchWishlist();
-    }, [apiService, id, fetchWishlist]);
+    }, [id]); // Only re-run if the category ID actually changes
 
     const filteredProducts = useMemo(() => {
         if (!searchQuery) return products;
@@ -91,6 +119,12 @@ export default function CategoryScreen() {
             product.title?.toLowerCase().includes(searchQuery.toLowerCase())
         );
     }, [products, searchQuery]);
+
+    const loadMoreProducts = useCallback(() => {
+        if (hasMore && !loadingMore) {
+            fetchCategoryProducts(false); // Load more (not reset)
+        }
+    }, [hasMore, loadingMore, fetchCategoryProducts]);
 
     const toggleWishlist = async (productId: number) => {
         if (!apiService) return;
@@ -175,6 +209,66 @@ export default function CategoryScreen() {
         }
     );
 
+    // Render item for FlatList
+    const renderItem = ({ item }: { item: any }) => (
+        <ProductCard
+            key={item.id}
+            product={item}
+            onPress={() => router.push(`/product/${item.id}` as any)}
+            isLiked={wishlist.includes(item.id)}
+            onToggleWishlist={() => toggleWishlist(item.id)}
+            onAddToCart={() => handleAddToCart(item.id)}
+            addingToCart={addingToCart[item.id]}
+            cartSuccess={cartSuccess[item.id]}
+            style={{ marginBottom: 8 }} // Reduced margin to minimize whitespace
+        />
+    );
+
+    // Key extractor for FlatList
+    const keyExtractor = (item: any) => item.id.toString();
+
+    // Render loading more indicator
+    const renderFooter = () => {
+        if (!loadingMore) return null;
+        return (
+            <View style={styles.loadingMoreContainer}>
+                <ActivityIndicator size="small" color={colors.primary} />
+            </View>
+        );
+    };
+
+    // Render empty state
+    const renderEmpty = () => {
+        if (loading) {
+            return (
+                <View style={styles.centerContainer}>
+                    <ActivityIndicator size="large" color={colors.primary} />
+                    <Text style={[styles.loadingText, { color: colors.textSecondary }]}>
+                        Loading products...
+                    </Text>
+                </View>
+            );
+        }
+
+        if (error) {
+            return (
+                <View style={styles.centerContainer}>
+                    <Ionicons name="alert-circle" size={64} color={colors.error} />
+                    <Text style={[styles.errorText, { color: colors.error }]}>{error}</Text>
+                </View>
+            );
+        }
+
+        return (
+            <View style={styles.centerContainer}>
+                <Ionicons name="cube-outline" size={64} color={colors.textSecondary} />
+                <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
+                    No products found in this category
+                </Text>
+            </View>
+        );
+    };
+
     return (
         <View style={[styles.container, { backgroundColor: colors.background }]}>
             {/* Header */}
@@ -219,50 +313,22 @@ export default function CategoryScreen() {
             )}
 
             {/* Content */}
-            <Animated.ScrollView
+            <Animated.FlatList
+                data={filteredProducts}
+                renderItem={renderItem}
+                keyExtractor={keyExtractor}
                 style={styles.content}
-                showsVerticalScrollIndicator={false}
                 contentContainerStyle={styles.scrollContent}
+                showsVerticalScrollIndicator={false}
                 onScroll={handleScroll}
                 scrollEventThrottle={16}
-            >
-                {loading ? (
-                    <View style={styles.centerContainer}>
-                        <ActivityIndicator size="large" color={colors.primary} />
-                        <Text style={[styles.loadingText, { color: colors.textSecondary }]}>
-                            Loading products...
-                        </Text>
-                    </View>
-                ) : error ? (
-                    <View style={styles.centerContainer}>
-                        <Ionicons name="alert-circle" size={64} color={colors.error} />
-                        <Text style={[styles.errorText, { color: colors.error }]}>{error}</Text>
-                    </View>
-                ) : filteredProducts.length === 0 ? (
-                    <View style={styles.centerContainer}>
-                        <Ionicons name="cube-outline" size={64} color={colors.textSecondary} />
-                        <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
-                            No products found in this category
-                        </Text>
-                    </View>
-                ) : (
-                    <View style={styles.gridContainer}>
-                        {filteredProducts.map((product) => (
-                            <ProductCard
-                                key={product.id}
-                                product={product}
-                                onPress={() => router.push(`/product/${product.id}` as any)}
-                                isLiked={wishlist.includes(product.id)}
-                                onToggleWishlist={() => toggleWishlist(product.id)}
-                                onAddToCart={() => handleAddToCart(product.id)}
-                                addingToCart={addingToCart[product.id]}
-                                cartSuccess={cartSuccess[product.id]}
-                                style={{ marginBottom: 8 }} // Reduced margin to minimize whitespace
-                            />
-                        ))}
-                    </View>
-                )}
-            </Animated.ScrollView>
+                onEndReached={loadMoreProducts}
+                onEndReachedThreshold={0.1}
+                ListFooterComponent={renderFooter}
+                ListEmptyComponent={renderEmpty}
+                numColumns={2}
+                columnWrapperStyle={styles.columnWrapper}
+            />
         </View>
     );
 }
@@ -324,6 +390,7 @@ const styles = StyleSheet.create({
     },
     scrollContent: {
         paddingBottom: 80, // Further reduced to minimize whitespace
+        paddingHorizontal: 4, // Consistent with previous grid padding
     },
     centerContainer: {
         flex: 1,
@@ -346,11 +413,16 @@ const styles = StyleSheet.create({
         fontSize: 16,
         textAlign: 'center',
     },
-    gridContainer: {
-        flexDirection: 'row',
-        flexWrap: 'wrap',
-        paddingHorizontal: 4, // Minimized further to reduce whitespace
-        gap: 8, // Reduced to minimize whitespace
+    columnWrapper: {
+        justifyContent: 'space-between',
+        gap: 8, // Consistent spacing between columns
+        paddingHorizontal: 8, // Add horizontal padding
+    },
+    loadingMoreContainer: {
+        width: '100%',
+        padding: 20,
+        alignItems: 'center',
+        justifyContent: 'center',
     },
 
 });
