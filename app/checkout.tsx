@@ -596,7 +596,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-start',
     alignItems: 'center',
     paddingHorizontal: 20,
-    paddingTop: 60,
+    paddingTop: 10,
     paddingBottom: 20,
     gap: 12,
   },

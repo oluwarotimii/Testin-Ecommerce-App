@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, TextInput, Animated } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, TextInput, Animated, RefreshControl } from 'react-native';
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
@@ -86,14 +86,25 @@ export default function CategoryScreen() {
             const transformedProducts = transformProducts(categoryProducts);
 
             if (reset) {
-                setProducts(transformedProducts);
+                // Remove duplicates from the initial set
+                const uniqueProducts = transformedProducts.filter((product, index, self) =>
+                    index === self.findIndex(p => p.id === product.id)
+                );
+                setProducts(uniqueProducts);
                 setPage(1);
                 setHasMore(categoryProducts.length >= 20);
             } else {
                 // Filter out duplicates and append new products
                 const existingIds = new Set(products.map(p => p.id));
                 const uniqueNewProducts = transformedProducts.filter(p => !existingIds.has(p.id));
-                setProducts(prev => [...prev, ...uniqueNewProducts]);
+                const combinedProducts = [...products, ...uniqueNewProducts];
+
+                // Double-check for any duplicates between existing and new products
+                const finalUniqueProducts = combinedProducts.filter((product, index, self) =>
+                    index === self.findIndex(p => p.id === product.id)
+                );
+
+                setProducts(finalUniqueProducts);
                 setHasMore(categoryProducts.length >= 20);
                 setPage(prev => prev + 1);
             }
@@ -114,17 +125,22 @@ export default function CategoryScreen() {
     }, [id]); // Only re-run if the category ID actually changes
 
     const filteredProducts = useMemo(() => {
-        if (!searchQuery) return products;
-        return products.filter(product =>
+        // Remove duplicates by ID before applying search filter
+        const uniqueProducts = products.filter((product, index, self) =>
+            index === self.findIndex(p => p.id === product.id)
+        );
+
+        if (!searchQuery) return uniqueProducts;
+        return uniqueProducts.filter(product =>
             product.title?.toLowerCase().includes(searchQuery.toLowerCase())
         );
     }, [products, searchQuery]);
 
     const loadMoreProducts = useCallback(() => {
-        if (hasMore && !loadingMore) {
+        if (hasMore && !loadingMore && !loading) {
             fetchCategoryProducts(false); // Load more (not reset)
         }
-    }, [hasMore, loadingMore, fetchCategoryProducts]);
+    }, [hasMore, loadingMore, loading, fetchCategoryProducts]);
 
     const toggleWishlist = async (productId: number) => {
         if (!apiService) return;
@@ -212,7 +228,6 @@ export default function CategoryScreen() {
     // Render item for FlatList
     const renderItem = ({ item }: { item: any }) => (
         <ProductCard
-            key={item.id}
             product={item}
             onPress={() => router.push(`/product/${item.id}` as any)}
             isLiked={wishlist.includes(item.id)}
@@ -224,7 +239,7 @@ export default function CategoryScreen() {
         />
     );
 
-    // Key extractor for FlatList
+    // Key extractor for FlatList - ensure uniqueness
     const keyExtractor = (item: any) => item.id.toString();
 
     // Render loading more indicator
@@ -272,30 +287,35 @@ export default function CategoryScreen() {
     return (
         <View style={[styles.container, { backgroundColor: colors.background }]}>
             {/* Header */}
-            <View style={[styles.header, { backgroundColor: colors.background }]}>
+            <View style={[styles.header, { backgroundColor: colors.background, alignItems: 'center' }]}>
                 <BackButton />
                 <View style={styles.headerCenter}>
                     <Text style={[styles.title, { color: colors.text }]} numberOfLines={1}>
                         {categoryName}
                     </Text>
                 </View>
-                <View style={{ width: 40 }} />
+                <TouchableOpacity
+                    style={styles.searchButton}
+                    onPress={() => setShowSearch(!showSearch)}
+                >
+                    <Ionicons name={showSearch ? "close" : "search"} size={24} color={colors.text} />
+                </TouchableOpacity>
             </View>
 
             {/* Sticky Search Bar */}
             {showSearch && (
-                <View style={[styles.stickySearchContainer, { backgroundColor: colors.background }]}>
-                    <View style={[styles.searchBar, { backgroundColor: colors.surface }]}>
-                        <Ionicons name="search" size={20} color={colors.textSecondary} />
+                <View style={[styles.stickySearchContainer, { backgroundColor: colors.background, paddingTop: 10 }]}>
+                    <View style={[styles.searchBar, { backgroundColor: colors.surface, borderRadius: 24, marginHorizontal: 16 }]}>
+                        <Ionicons name="search" size={20} color={colors.textSecondary} style={{ marginLeft: 12 }} />
                         <TextInput
-                            style={[styles.searchInput, { color: colors.text }]}
+                            style={[styles.searchInput, { color: colors.text, flex: 1 }]}
                             placeholder="Search products..."
                             placeholderTextColor={colors.textSecondary}
                             value={searchQuery}
                             onChangeText={setSearchQuery}
                         />
                         {searchQuery.length > 0 && (
-                            <TouchableOpacity onPress={() => setSearchQuery('')}>
+                            <TouchableOpacity onPress={() => setSearchQuery('')} style={{ marginRight: 12 }}>
                                 <Ionicons name="close-circle" size={20} color={colors.textSecondary} />
                             </TouchableOpacity>
                         )}
@@ -328,6 +348,14 @@ export default function CategoryScreen() {
                 ListEmptyComponent={renderEmpty}
                 numColumns={2}
                 columnWrapperStyle={styles.columnWrapper}
+                refreshControl={
+                    <RefreshControl
+                        refreshing={loading}
+                        onRefresh={() => fetchCategoryProducts(true)}
+                        colors={[colors.primary]} // Use theme color
+                        tintColor={colors.primary} // For iOS
+                    />
+                }
             />
         </View>
     );
@@ -346,6 +374,9 @@ const styles = StyleSheet.create({
         paddingBottom: 8, // Reduced from 12
     },
     backButton: {
+        padding: 8,
+    },
+    searchButton: {
         padding: 8,
     },
     headerCenter: {

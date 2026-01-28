@@ -27,7 +27,7 @@ export default function ProductDetailScreen() {
   const [quantity, setQuantity] = useState(1);
   const [selectedImage, setSelectedImage] = useState(0);
   const [isInWishlist, setIsInWishlist] = useState(false);
-  const [showFullscreenImage, setShowFullscreenImage] = useState(false);
+  // Removed fullscreen image functionality due to issues
 
   // Helper function to get all product images (main image + gallery images)
   const getAllProductImages = () => {
@@ -51,7 +51,17 @@ export default function ProductDetailScreen() {
     const allImages = getAllProductImages();
 
     // Return the image at the selected index, or the first image if invalid
-    return allImages[selectedImage] || allImages[0] || '';
+    const imageUrl = allImages[selectedImage] || allImages[0] || '';
+
+    // Ensure the URL is properly formatted
+    if (imageUrl && typeof imageUrl === 'string') {
+      if (imageUrl.startsWith('http://')) {
+        return imageUrl.replace('http://', 'https://');
+      }
+      return imageUrl;
+    }
+
+    return '';
   };
 
   const [product, setProduct] = useState<any>(null);
@@ -319,16 +329,15 @@ export default function ProductDetailScreen() {
       >
         {/* Product Images Gallery */}
         <View style={[styles.imageContainer, { backgroundColor: colors.surface }]}>
-          {/* Main image display */}
-          <TouchableOpacity
-            onPress={() => setShowFullscreenImage(true)}
-            activeOpacity={0.9}
-          >
+          {/* Main image display - removed fullscreen functionality */}
+          <View style={styles.mainImageContainer}>
             <SafeImage
               source={{ uri: getCurrentImageUrl() }}
               style={[styles.mainProductImage, { backgroundColor: colors.background }]}
+              // Add error handling to log issues
+              onError={(error) => console.error("Main image error:", error)}
             />
-          </TouchableOpacity>
+          </View>
 
           {/* Thumbnail Images */}
           {((product.gallery_images && product.gallery_images.length > 0) || product.image) && (
@@ -372,6 +381,7 @@ export default function ProductDetailScreen() {
                   </TouchableOpacity>
                 ))}
               </ScrollView>
+
             </View>
           )}
         </View>
@@ -384,22 +394,13 @@ export default function ProductDetailScreen() {
             <Text style={[styles.productName, { color: colors.text }]}>{product.title}</Text>
           </View>
 
-          {/* Rating - Commented out as requested */}
-          {/* <View style={styles.ratingSection}>
-            <View style={styles.rating}>
-              <Ionicons name="star" size={16} color="#FFD700" />
-              <Text style={[styles.ratingText, { color: colors.text }]}>{product.rating ? product.rating.rate : 0}</Text>
-              <Text style={[styles.reviewsText, { color: colors.textSecondary }]}>({product.rating ? product.rating.count : 0} reviews)</Text>
-            </View>
-          </View> */}
-
           {/* Price */}
           <View style={styles.priceSection}>
             <Text style={[styles.currentPrice, { color: '#FFA500' }]}>{formatPrice(typeof product.price === 'number' ? product.price : parseFloat(product.price || '0'))}</Text>
           </View>
 
           {/* Description */}
-          <View style={[styles.descriptionSection, { backgroundColor: colors.surface, borderRadius: 12, padding: 16 }]}>
+          <View style={[styles.descriptionSection, { backgroundColor: colors.surface, borderRadius: 12, padding: 16, marginTop: 10 }]}>
             <Text style={[styles.sectionTitle, { color: colors.text, marginBottom: 10 }]}>Description</Text>
             <Text style={[styles.description, { color: colors.text }]}>{stripHtml(product.description)}</Text>
           </View>
@@ -407,7 +408,7 @@ export default function ProductDetailScreen() {
           {/* Quantity Selector */}
           <View style={styles.quantitySection}>
             <Text style={[styles.sectionTitle, { color: colors.text }]}>Quantity</Text>
-            <View style={[styles.quantityContainer, { backgroundColor: colors.background }]}>
+            <View style={[styles.quantityContainer, { backgroundColor: colors.background, borderRadius: 12 }]}>
               <TouchableOpacity
                 style={styles.quantityButton}
                 onPress={() => updateQuantity(-1)}
@@ -427,21 +428,25 @@ export default function ProductDetailScreen() {
 
         {/* Similar Products */}
         {similarProducts.length > 0 && (
-          <View style={[styles.similarProductsSection, { backgroundColor: colors.surface, borderRadius: 12, padding: 16, marginTop: 16 }]}>
+          <View style={[styles.similarProductsSection, { backgroundColor: colors.surface, marginTop: 16 }]}>
             <View style={styles.sectionHeader}>
               <Text style={[styles.sectionTitle, { color: colors.text }]}>Similar Items</Text>
               <TouchableOpacity
                 style={[styles.seeAllButton, { backgroundColor: colors.primary }]}
                 onPress={() => router.push(`/category/${product.category_id}` as any)}
               >
-                <Text style={[styles.seeAllButtonText, { color: colors.white }]}>View All</Text>
+                <Text style={[styles.seeAllButtonText, { color: colors.white }]}>See All</Text>
               </TouchableOpacity>
             </View>
-            <View style={styles.similarProductsGrid}>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.similarProductsScroll}
+            >
               {similarProducts.map((item) => (
                 <TouchableOpacity
                   key={item.id}
-                  style={styles.similarProductCard}
+                  style={styles.similarProductCardHorizontal}
                   onPress={() => router.push(`/product/${item.id}` as any)}
                 >
                   <View style={styles.similarProductImageContainer}>
@@ -461,28 +466,14 @@ export default function ProductDetailScreen() {
                         />
                       </TouchableOpacity>
                     </View>
-                    <View style={styles.cartOverlayBottom}>
-                      <TouchableOpacity
-                        style={[styles.addToCartButton, { backgroundColor: colors.primary }]}
-                        onPress={(e) => {
-                          e.stopPropagation();
-                          // Add to cart functionality can be added here
-                        }}
-                      >
-                        <Ionicons name="cart" size={18} color={colors.white} />
-                      </TouchableOpacity>
-                    </View>
                   </View>
-                  <View style={styles.similarProductInfo}>
+                  <View style={styles.similarProductInfoHorizontal}>
                     <Text style={[styles.similarProductName, { color: colors.text }]} numberOfLines={2}>{item.title}</Text>
-                    <View style={styles.priceRow}>
-                      <Text style={[styles.originalPrice, { color: colors.textSecondary }]}>{formatPrice((typeof item.price === 'number' ? item.price : parseFloat(item.price || '0')) * 1.3)}</Text>
-                      <Text style={[styles.similarProductPrice, { color: '#FFA500' }]}>{formatPrice(typeof item.price === 'number' ? item.price : parseFloat(item.price || '0'))}</Text>
-                    </View>
+                    <Text style={[styles.similarProductPrice, { color: '#FFA500' }]}>{formatPrice(typeof item.price === 'number' ? item.price : parseFloat(item.price || '0'))}</Text>
                   </View>
                 </TouchableOpacity>
               ))}
-            </View>
+            </ScrollView>
           </View>
         )}
       </ScrollView>
@@ -508,35 +499,6 @@ export default function ProductDetailScreen() {
         </TouchableOpacity>
       </View>
 
-      {/* Fullscreen Image Overlay */}
-      {showFullscreenImage && (
-        <View style={styles.fullscreenOverlay}>
-          <View style={styles.fullscreenImageContainer}>
-            <TouchableOpacity
-              onPress={() => setShowFullscreenImage(false)}
-            >
-              <Image
-                source={{ uri: getCurrentImageUrl() }}
-                style={styles.fullscreenImage}
-                resizeMode="contain"
-              />
-            </TouchableOpacity>
-
-            {/* Image counter */}
-            <View style={styles.imageCounter}>
-              <Text style={styles.imageCounterText}>
-                {selectedImage + 1} / {getAllProductImages().length}
-              </Text>
-            </View>
-          </View>
-          <TouchableOpacity
-            style={styles.overlayCloseButton}
-            onPress={() => setShowFullscreenImage(false)}
-          >
-            <Ionicons name="close" size={30} color="#FFFFFF" />
-          </TouchableOpacity>
-        </View>
-      )}
     </SafeAreaView>
   );
 }
@@ -571,6 +533,10 @@ const styles = StyleSheet.create({
     padding: 20,
     alignItems: 'center',
   },
+  mainImageContainer: {
+    width: '100%',
+    alignItems: 'center',
+  },
   productImage: {
     width: width * 0.85,
     height: width * 0.85,
@@ -590,6 +556,7 @@ const styles = StyleSheet.create({
   thumbnailContainer: {
     marginTop: 15,
     width: '100%',
+    position: 'relative',
   },
   thumbnailScroll: {
     paddingHorizontal: 20,
@@ -726,6 +693,13 @@ const styles = StyleSheet.create({
     position: 'relative',
     marginBottom: 16,
   },
+  similarProductCardHorizontal: {
+    width: 150,
+    marginRight: 15,
+    borderRadius: 12,
+    overflow: 'hidden',
+    position: 'relative',
+  },
   similarProductImageContainer: {
     position: 'relative',
     width: '100%',
@@ -764,6 +738,9 @@ const styles = StyleSheet.create({
     paddingTop: 8,
     paddingHorizontal: 4,
   },
+  similarProductInfoHorizontal: {
+    padding: 10,
+  },
   similarProductName: {
     fontSize: 14,
     fontWeight: '500',
@@ -783,6 +760,10 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
   },
+  similarProductsScroll: {
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+  },
   // Note: similarCartOverlay was removed as we're using cartOverlayBottom now
 
   actionBar: {
@@ -794,23 +775,28 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 15,
     borderTopWidth: 1,
-    gap: 15,
+    gap: 12,
+    elevation: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
     // paddingBottom will be set dynamically using safe area insets
   },
   actionButton: {
     flex: 1,
-    paddingVertical: 16,
-    borderRadius: 12,
+    paddingVertical: 18,
+    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
   },
   cartButton: {
-    flex: 1,
+    flex: 1.5, // Make cart button slightly wider
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 16,
-    borderRadius: 12,
+    paddingVertical: 18,
+    borderRadius: 14,
     gap: 8,
   },
   actionButtonText: {
@@ -821,51 +807,6 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  fullscreenOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: '#000',
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 100,
-  },
-  fullscreenImageContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    width: '100%',
-    height: '90%',
-  },
-  fullscreenImage: {
-    width: '90%',
-    height: '90%',
-    resizeMode: 'contain',
-  },
-  overlayCloseButton: {
-    position: 'absolute',
-    top: 60,
-    right: 20,
-    zIndex: 101,
-    padding: 10,
-  },
-  imageCounter: {
-    position: 'absolute',
-    top: 60,
-    left: 20,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    zIndex: 101,
-  },
-  imageCounterText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '500',
   },
   sectionHeader: {
     flexDirection: 'row',

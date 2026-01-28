@@ -369,20 +369,16 @@ export default function HomeScreen() {
         opacity: fadeAnim,
         transform: [{ translateY: scrollY > 50 ? 0 : -20 }], // Subtle slide-in effect
       }]}>
-        <View style={[styles.searchContainer, { backgroundColor: colors.surface, marginBottom: 0, flex: 1, marginRight: 12 }]}>
-          <Ionicons name="search" size={20} color={colors.textSecondary} />
-          <TextInput
-            style={[styles.searchPlaceholder, { color: colors.text }]}
-            placeholder="Search products..."
-            placeholderTextColor={colors.textSecondary}
-            onFocus={() => router.push('/search')}
-          />
+        <View style={styles.headerIcons}>
+          <TouchableOpacity style={styles.iconButton} onPress={() => router.push('/search')}>
+            <Ionicons name="search" size={24} color={colors.text} />
+          </TouchableOpacity>
+          {/* Commenting out notification icon for OTA update
+          <TouchableOpacity style={styles.iconButton} onPress={() => router.push('/notifications')}>
+            <Ionicons name="notifications" size={24} color={colors.text} />
+          </TouchableOpacity>
+          */}
         </View>
-        {/* Commenting out notification icon for OTA update
-        <TouchableOpacity style={styles.iconButton} onPress={() => router.push('/notifications')}>
-          <Ionicons name="notifications" size={24} color={colors.text} />
-        </TouchableOpacity>
-        */}
       </Animated.View>
 
       <ScrollView
@@ -438,6 +434,17 @@ export default function HomeScreen() {
             */}
           </View>
         </Animated.View>
+
+        {/* Search Bar */}
+        <View style={[styles.searchContainer, { backgroundColor: colors.surface, marginHorizontal: 16, borderRadius: 24 }]}>
+          <Ionicons name="search" size={20} color={colors.textSecondary} style={{ marginLeft: 12 }} />
+          <TextInput
+            style={[styles.searchPlaceholder, { color: colors.text, flex: 1 }]}
+            placeholder="Search products..."
+            placeholderTextColor={colors.textSecondary}
+            onFocus={() => router.push('/search')}
+          />
+        </View>
 
         {/* Carousel */}
         <InstagramCarousel
@@ -620,7 +627,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingTop: 25, 
+    paddingTop: 25,
     paddingBottom: 8,
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(0,0,0,0.05)',
@@ -654,7 +661,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 24,
-    marginBottom: 0,
+    marginBottom: 16,
     flex: 1,
     marginRight: 12,
   },
@@ -749,6 +756,12 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     position: 'relative',
     marginBottom: 16,
+    backgroundColor: colors.surface,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
   },
   categoryImageContainer: {
     position: 'relative',
@@ -791,6 +804,12 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     position: 'relative',
     marginBottom: 16,
+    backgroundColor: colors.surface,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
   },
   productImageContainer: {
     position: 'relative',

@@ -104,7 +104,9 @@ export default function CartScreen() {
   if (products.length === 0) {
     return (
       <View style={[styles.emptyContainer, { backgroundColor: colors.background }]}>
-        <Ionicons name="cart-outline" size={80} color={colors.textSecondary} />
+        <View style={[styles.emptyIconContainer, { backgroundColor: colors.surface }]}>
+          <Ionicons name="cart-outline" size={80} color={colors.textSecondary} />
+        </View>
         <Text style={[styles.emptyTitle, { color: colors.text }]}>Your cart is empty</Text>
         <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>Add some products to get started</Text>
         <TouchableOpacity
@@ -133,14 +135,14 @@ export default function CartScreen() {
       {/* Cart Items */}
       <ScrollView style={[styles.content, { backgroundColor: colors.background }]} showsVerticalScrollIndicator={false}>
         {products.map((item) => (
-          <View key={item.productId || item.id} style={[styles.cartItem, { borderBottomColor: colors.border }]}>
+          <View key={item.productId || item.id} style={[styles.cartItem, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
             <SafeImage source={{ uri: item.image }} style={styles.itemImage} />
             <View style={styles.itemDetails}>
               <Text style={[styles.itemName, { color: colors.text }]} numberOfLines={2}>{item.title}</Text>
               <Text style={[styles.itemPrice, { color: '#FFA500' }]}>{formatPrice(typeof item.price === 'number' ? item.price : parseFloat(item.price || '0'))}</Text>
             </View>
             <View style={styles.itemActions}>
-              <View style={[styles.quantityContainer, { backgroundColor: colors.surface }]}>
+              <View style={[styles.quantityContainer, { backgroundColor: colors.background, borderColor: colors.border }]}>
                 <TouchableOpacity
                   style={styles.quantityButton}
                   onPress={async () => {
@@ -267,6 +269,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     paddingVertical: 16,
     borderBottomWidth: 1,
+    borderRadius: 12,
+    marginBottom: 12,
+    elevation: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
   },
   itemImage: {
     width: 80,
@@ -305,15 +314,16 @@ const styles = StyleSheet.create({
   quantityContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 8,
+    borderRadius: 20,
     padding: 4,
+    borderWidth: 1,
   },
   quantityButton: {
     width: 32,
     height: 32,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 6,
+    borderRadius: 16,
   },
   quantity: {
     fontSize: 16,
@@ -325,6 +335,11 @@ const styles = StyleSheet.create({
   summary: {
     padding: 20,
     paddingBottom: 20,
+    elevation: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
   },
   summaryRow: {
     flexDirection: 'row',
@@ -343,9 +358,14 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   checkoutButton: {
-    paddingVertical: 16,
-    borderRadius: 12,
+    paddingVertical: 18,
+    borderRadius: 14,
     alignItems: 'center',
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
   },
   checkoutButtonText: {
     fontSize: 16,
@@ -356,6 +376,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 40,
+  },
+  emptyIconContainer: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 24,
   },
   emptyTitle: {
     fontSize: 24,
