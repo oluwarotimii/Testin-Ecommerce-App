@@ -94,7 +94,7 @@ const styles = StyleSheet.create({
     },
     productImage: {
         width: '100%',
-        height: 160,
+        height: 200, // Increased height to prevent image cutoff
     },
     wishlistOverlay: {
         position: 'absolute',

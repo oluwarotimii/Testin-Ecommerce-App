@@ -756,12 +756,12 @@ const styles = StyleSheet.create({
   },
   categoryItemImage: {
     width: '100%',
-    height: 100, // Adjusted height for category card
+    height: 120, // Increased height for category card
     borderRadius: 8,
   },
   categoryItemImagePlaceholder: {
     width: '100%',
-    height: 100,
+    height: 120,
     borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
@@ -798,7 +798,7 @@ const styles = StyleSheet.create({
   },
   productImage: {
     width: '100%',
-    height: 160,
+    height: 200, // Increased height to prevent image cutoff
   },
   wishlistOverlay: {
     position: 'absolute',

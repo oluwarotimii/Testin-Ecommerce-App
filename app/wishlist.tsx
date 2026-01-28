@@ -204,7 +204,7 @@ const styles = StyleSheet.create({
   },
   gridImageContainer: {
     width: '100%',
-    height: 150,
+    height: 200, // Increased height to prevent image cutoff
     position: 'relative',
   },
   wishlistAddToCartButton: {

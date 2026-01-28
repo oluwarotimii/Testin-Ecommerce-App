@@ -143,7 +143,7 @@ export default function BestDealsSection({ wishlist, toggleWishlist }: BestDeals
                                     });
                                 }, 1500); // Hide after 1.5 seconds
 
-                                // OPTIMIZED: Removed cart contents fetch - trust optimistic update
+                                
                             } catch (error) {
                                 console.error("Add to cart error:", error);
                                 // Revert optimistic update on error
@@ -252,7 +252,7 @@ const styles = StyleSheet.create({
     },
     productImage: {
         width: '100%',
-        height: 160,
+        height: 200, // Increased height to prevent image cutoff
     },
     saleBadge: {
         position: 'absolute',
