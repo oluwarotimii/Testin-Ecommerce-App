@@ -481,7 +481,7 @@ export default function HomeScreen() {
                 {categories.slice(0, 3).map((category) => (
                   <TouchableOpacity
                     key={category.category_id}
-                    style={styles.categoryCard}
+                    style={[styles.categoryCard, { backgroundColor: colors.surface }]}
                     onPress={() => router.push(`/category/${category.category_id}` as any)}
                   >
                     <View style={styles.categoryImageContainer}>
@@ -554,7 +554,7 @@ export default function HomeScreen() {
               {products.map((product) => (
                 <TouchableOpacity
                   key={product.id}
-                  style={styles.productCard}
+                  style={[styles.productCard, { backgroundColor: colors.surface }]}
                   onPress={() => router.push(`/product/${product.id}` as any)}
                 >
                   <View style={styles.productImageContainer}>
@@ -756,7 +756,6 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     position: 'relative',
     marginBottom: 16,
-    backgroundColor: colors.surface,
     elevation: 2,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -804,7 +803,6 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     position: 'relative',
     marginBottom: 16,
-    backgroundColor: colors.surface,
     elevation: 2,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },

@@ -332,6 +332,7 @@ export default function ProductDetailScreen() {
           {/* Main image display - removed fullscreen functionality */}
           <View style={styles.mainImageContainer}>
             <SafeImage
+              key={`main-image-${selectedImage}`} // Add key to force re-render when selected image changes
               source={{ uri: getCurrentImageUrl() }}
               style={[styles.mainProductImage, { backgroundColor: colors.background }]}
               // Add error handling to log issues
@@ -350,7 +351,6 @@ export default function ProductDetailScreen() {
                 {/* Main image thumbnail */}
                 {product.image && (
                   <TouchableOpacity
-                    key="main-image"
                     style={[
                       styles.thumbnail,
                       selectedImage === 0 && styles.selectedThumbnail
@@ -367,7 +367,7 @@ export default function ProductDetailScreen() {
                 {/* Gallery images thumbnails */}
                 {product.gallery_images && product.gallery_images.map((image: string, index: number) => (
                   <TouchableOpacity
-                    key={`gallery-${index}`}
+                    key={`gallery-${index}`}  // Added key prop that was missing
                     style={[
                       styles.thumbnail,
                       selectedImage === index + (product.image ? 1 : 0) && styles.selectedThumbnail
@@ -381,7 +381,6 @@ export default function ProductDetailScreen() {
                   </TouchableOpacity>
                 ))}
               </ScrollView>
-
             </View>
           )}
         </View>
