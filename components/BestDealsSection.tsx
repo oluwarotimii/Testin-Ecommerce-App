@@ -23,10 +23,7 @@ export default function BestDealsSection({ wishlist, toggleWishlist }: BestDeals
 
     const [featuredProducts, setFeaturedProducts] = useState<any[]>([]);
     const [loadingFeatured, setLoadingFeatured] = useState(true);
-    const [loadingMore, setLoadingMore] = useState(false);
     const [featuredCategoryId, setFeaturedCategoryId] = useState<number | null>(null);
-    const [hasMore, setHasMore] = useState(true);
-    const [page, setPage] = useState(1);
     const [cartSuccess, setCartSuccess] = useState<{ [key: number]: boolean }>({});
     const isFetching = useRef(false);
 
@@ -37,8 +34,6 @@ export default function BestDealsSection({ wishlist, toggleWishlist }: BestDeals
 
         if (reset) {
             setLoadingFeatured(true);
-        } else if (!reset) {
-            setLoadingMore(true);
         }
 
         try {
@@ -57,70 +52,36 @@ export default function BestDealsSection({ wishlist, toggleWishlist }: BestDeals
                     setFeaturedCategoryId(category.id);
                 }
 
-                // Fetch products for this category with pagination
+                // Fetch ALL products for this category (no pagination)
                 const products = await apiService.getProducts({
                     category: category.id,
-                    per_page: 20,  // Increased to load more products per page
-                    page: reset ? 1 : page
+                    per_page: 100,  // Fetch all products in one request
                 });
 
                 const transformed = transformProducts(products);
 
                 if (reset) {
                     setFeaturedProducts(transformed);
-                    setPage(1);
-                    setHasMore(products.length >= 20);  // Updated to match new page size
-                } else {
-                    setFeaturedProducts(prev => {
-                        // Create a map of existing product IDs for quick lookup
-                        const existingIds = new Set(prev.map(p => p.id));
-                        // Filter out any products that already exist in the list
-                        const uniqueNewProducts = transformed.filter(p => !existingIds.has(p.id));
-                        return [...prev, ...uniqueNewProducts];
-                    });
-                    setHasMore(products.length >= 20);  // Updated to match new page size
-                    setPage(prev => prev + 1);
                 }
             } else {
-                // If no category is found, fetch all products
+                // If no category is found, fetch all products (no pagination)
                 const products = await apiService.getProducts({
-                    per_page: 20,  // Increased to load more products per page
-                    page: reset ? 1 : page
+                    per_page: 100,  // Fetch all products in one request
                 });
 
                 const transformed = transformProducts(products);
 
                 if (reset) {
                     setFeaturedProducts(transformed);
-                    setPage(1);
-                    setHasMore(products.length >= 20);  // Updated to match new page size
-                } else {
-                    setFeaturedProducts(prev => {
-                        // Create a map of existing product IDs for quick lookup
-                        const existingIds = new Set(prev.map(p => p.id));
-                        // Filter out any products that already exist in the list
-                        const uniqueNewProducts = transformed.filter(p => !existingIds.has(p.id));
-                        return [...prev, ...uniqueNewProducts];
-                    });
-                    setHasMore(products.length >= 20);  // Updated to match new page size
-                    setPage(prev => prev + 1);
                 }
             }
         } catch (error) {
             console.error('Error fetching featured category:', error);
         } finally {
             setLoadingFeatured(false);
-            setLoadingMore(false);
             isFetching.current = false;
         }
-    }, [apiService, page]); // Include page in dependency array
-
-    // Load more products when reaching end of list
-    const loadMoreProducts = useCallback(() => {
-        if (hasMore && !loadingMore && !isFetching.current) {
-            fetchFeaturedCategory(false); // Load more (not reset)
-        }
-    }, [hasMore, loadingMore, fetchFeaturedCategory]);
+    }, [apiService]); // Simplified dependency array
 
     // OPTIMIZED: Fetch only once on mount
     useEffect(() => {
@@ -138,6 +99,12 @@ export default function BestDealsSection({ wishlist, toggleWishlist }: BestDeals
         >
             <View style={styles.productImageContainer}>
                 <SafeImage source={{ uri: item.image }} style={[styles.productImage, { backgroundColor: colors.background }]} />
+
+                {/* Sales Badge */}
+                <View style={styles.saleBadge}>
+                    <Text style={styles.saleBadgeText}>SALE</Text>
+                </View>
+
                 <View style={styles.wishlistOverlay}>
                     <TouchableOpacity
                         style={[styles.wishlistButton, { backgroundColor: colors.surface }]}
@@ -236,11 +203,6 @@ export default function BestDealsSection({ wishlist, toggleWishlist }: BestDeals
             ) : (
                 <View style={styles.productsGrid}>
                     {featuredProducts.map(renderProductItem)}
-                    {loadingMore && (
-                        <View style={styles.loadingMoreContainer}>
-                            <ActivityIndicator size="small" color={colors.primary} />
-                        </View>
-                    )}
                 </View>
             )}
         </View>
@@ -291,6 +253,21 @@ const styles = StyleSheet.create({
     productImage: {
         width: '100%',
         height: 160,
+    },
+    saleBadge: {
+        position: 'absolute',
+        top: 8,
+        right: 8,
+        backgroundColor: '#FF3B30', // Red color for sale
+        paddingHorizontal: 6,
+        paddingVertical: 3,
+        borderRadius: 4,
+        zIndex: 3,
+    },
+    saleBadgeText: {
+        color: 'white',
+        fontSize: 10,
+        fontWeight: 'bold',
     },
     wishlistOverlay: {
         position: 'absolute',

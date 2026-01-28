@@ -1,8 +1,8 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, ActivityIndicator, RefreshControl } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, ActivityIndicator, RefreshControl, Animated } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import SafeImage from '@/components/SafeImage';
 import { useRouter } from 'expo-router';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useCart } from '@/context/CartContext';
 import { useNetwork } from '@/context/NetworkContext';
@@ -342,14 +342,32 @@ export default function HomeScreen() {
   };
 
   const [scrollY, setScrollY] = useState(0);
+  const fadeAnim = useRef(new Animated.Value(0)).current; // Initial value for opacity: 0
+
+  // Update the fade animation based on scroll position
+  useEffect(() => {
+    if (scrollY > 50) {
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 200, // Smooth transition over 200ms
+        useNativeDriver: true,
+      }).start();
+    } else {
+      Animated.timing(fadeAnim, {
+        toValue: 0,
+        duration: 200, // Smooth transition over 200ms
+        useNativeDriver: true,
+      }).start();
+    }
+  }, [scrollY, fadeAnim]);
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Sticky Header */}
-      <View style={[styles.stickyHeader, {
+      <Animated.View style={[styles.stickyHeader, {
         backgroundColor: colors.background,
-        opacity: scrollY > 50 ? 1 : 0,
-        pointerEvents: scrollY > 50 ? 'auto' : 'none',
+        opacity: fadeAnim,
+        transform: [{ translateY: scrollY > 50 ? 0 : -20 }], // Subtle slide-in effect
       }]}>
         <View style={[styles.searchContainer, { backgroundColor: colors.surface, marginBottom: 0, flex: 1, marginRight: 12 }]}>
           <Ionicons name="search" size={20} color={colors.textSecondary} />
@@ -365,7 +383,7 @@ export default function HomeScreen() {
           <Ionicons name="notifications" size={24} color={colors.text} />
         </TouchableOpacity>
         */}
-      </View>
+      </Animated.View>
 
       <ScrollView
         style={[styles.container, { backgroundColor: colors.background }]}
@@ -381,7 +399,14 @@ export default function HomeScreen() {
         }
         onScroll={(event) => {
           const { layoutMeasurement, contentOffset, contentSize } = event.nativeEvent;
-          setScrollY(contentOffset.y);
+          const scrollYValue = contentOffset.y;
+
+          // Update scroll position for header animation
+          if (scrollYValue !== scrollY) {
+            setScrollY(scrollYValue);
+          }
+
+          // Check if we're near the bottom to load more products
           const isCloseToBottom = layoutMeasurement.height + contentOffset.y >= contentSize.height - 500;
 
           if (isCloseToBottom && hasMoreProducts && !isLoadingMore) {
@@ -391,7 +416,11 @@ export default function HomeScreen() {
         scrollEventThrottle={16}
       >
         {/* Header (Hidden when scrolled) */}
-        <View style={[styles.header, { backgroundColor: colors.background, opacity: scrollY > 50 ? 0 : 1 }]}>
+        <Animated.View style={[styles.header, {
+          backgroundColor: colors.background,
+          opacity: scrollY > 50 ? 0 : 1,
+          transform: [{ translateY: scrollY > 50 ? -20 : 0 }], // Subtle slide-out effect
+        }]}>
           <View>
             <Text style={[styles.greeting, { color: colors.textSecondary }]}>
               {isAuthenticated && user ? `Hello, ${user.first_name || 'User'}` : 'Hello'}
@@ -408,7 +437,7 @@ export default function HomeScreen() {
             </TouchableOpacity>
             */}
           </View>
-        </View>
+        </Animated.View>
 
         {/* Carousel */}
         <InstagramCarousel
@@ -584,14 +613,14 @@ const styles = StyleSheet.create({
   },
   stickyHeader: {
     position: 'absolute',
-    top: 0,
+    top: 10, // Moved down from the very top
     left: 0,
     right: 0,
     zIndex: 100,
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingTop: 25,
+    paddingTop: 25, 
     paddingBottom: 8,
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(0,0,0,0.05)',

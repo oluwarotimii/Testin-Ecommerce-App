@@ -182,7 +182,7 @@ export default function CategoriesScreen() {
       </View>
 
       {/* Search Bar */}
-      <View style={[styles.searchContainer, { backgroundColor: colors.surface }]}>
+      {/* <View style={[styles.searchContainer, { backgroundColor: colors.surface }]}>
         <Ionicons name="search" size={20} color={colors.textSecondary} />
         <TextInput
           style={[styles.searchInput, { color: colors.text }]}
@@ -191,7 +191,7 @@ export default function CategoriesScreen() {
           value={searchQuery}
           onChangeText={setSearchQuery}
         />
-      </View>
+      </View> */}
 
       {/* Categories */}
       <ScrollView
@@ -231,7 +231,7 @@ const styles = StyleSheet.create({
     padding: 8,
   },
   title: {
-    fontSize: 28,
+    fontSize: 23,
     fontWeight: 'bold',
   },
   viewToggle: {
@@ -251,19 +251,17 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderRadius: 12,
     marginBottom: 20,
-    height: 10,
   },
   searchInput: {
     flex: 1,
-    // marginLeft: 0,
+    marginLeft: 12,
     fontSize: 16,
-    height: 10,
   },
   content: {
     flex: 1,
   },
   scrollContent: {
-    paddingBottom: 100,
+    paddingBottom: 2, // Proper padding to ensure content doesn't get cut off
   },
   gridContainer: {
     flexDirection: 'row',
