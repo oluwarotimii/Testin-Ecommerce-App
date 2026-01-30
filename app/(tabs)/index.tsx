@@ -424,9 +424,9 @@ export default function HomeScreen() {
             <Text style={[styles.title, { color: colors.text }]}>Discover the best tech!</Text>
           </View>
           <View style={styles.headerIcons}>
-            <TouchableOpacity style={styles.iconButton} onPress={() => router.push('/search')}>
+            {/* <TouchableOpacity style={styles.iconButton} onPress={() => router.push('/search')}>
               <Ionicons name="search" size={24} color={colors.text} />
-            </TouchableOpacity>
+            </TouchableOpacity> */}
             {/* Commenting out notification icon for OTA update
             <TouchableOpacity style={styles.iconButton} onPress={() => router.push('/notifications')}>
               <Ionicons name="notifications" size={24} color={colors.text} />
