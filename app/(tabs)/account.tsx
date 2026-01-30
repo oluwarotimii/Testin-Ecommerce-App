@@ -333,8 +333,8 @@ export default function AccountScreen() {
               <Ionicons name="log-out-outline" size={40} color={colors.error} />
             </View>
 
-            <Text style={[styles.modalTitle, { color: colors.text }]}>Sign Out?</Text>
-            <Text style={[styles.modalMessage, { color: colors.textSecondary }]}>
+            <Text style={[styles.modalTitle, { color: '#FF0000' }]}>Sign Out?</Text>
+            <Text style={[styles.modalMessage, { color: '#0000FF' }]}>
               Are you sure you want to sign out of your account?
             </Text>
 
@@ -343,7 +343,7 @@ export default function AccountScreen() {
                 style={[styles.modalButton, styles.cancelButton, { backgroundColor: colors.background }]}
                 onPress={() => setShowSignOutModal(false)}
               >
-                <Text style={[styles.modalButtonText, { color: colors.text }]}>Cancel</Text>
+                <Text style={[styles.modalButtonText, { color: '#FF0000' }]}>Cancel</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
@@ -378,10 +378,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 10,
     paddingBottom: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   title: {
     fontSize: 28,
     fontWeight: 'bold',
+    flex: 1,
   },
   profileSection: {
     flexDirection: 'row',

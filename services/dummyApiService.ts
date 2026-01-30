@@ -760,6 +760,22 @@ class DummyApiService {
     return order || { error: "Order not found" };
   }
 
+  async cancelOrder(order_id: number) {
+    const orderIndex = dummyOrders.findIndex(o => o.id === order_id);
+    if (orderIndex !== -1) {
+      dummyOrders[orderIndex].status = 'cancelled';
+      return dummyOrders[orderIndex];
+    }
+
+    const orderIndexByOrderId = dummyOrders.findIndex(o => o.order_id === `ORD${String(order_id).padStart(3, '0')}`);
+    if (orderIndexByOrderId !== -1) {
+      dummyOrders[orderIndexByOrderId].status = 'cancelled';
+      return dummyOrders[orderIndexByOrderId];
+    }
+
+    return { error: "Order not found" };
+  }
+
   // User Account
   async getAccountDetails() {
     if (!this.isUserLoggedIn) {
@@ -775,6 +791,26 @@ class DummyApiService {
 
     Object.assign(dummyUser, details);
     return dummyUser;
+  }
+
+  async deleteAccount(userId: number) {
+    if (!this.isUserLoggedIn) {
+      throw new Error("User not authenticated");
+    }
+
+    // In a real implementation, this would delete the user account
+    // For the dummy service, we'll just simulate the operation
+    console.log(`Account with ID ${userId} has been marked for deletion`);
+
+    // Clear the dummy user data
+    Object.keys(dummyUser).forEach(key => {
+      if (key !== 'id') { // Keep the ID for reference
+        delete dummyUser[key as keyof typeof dummyUser];
+      }
+    });
+
+    // Simulate a successful deletion response
+    return { success: true, message: 'Account deleted successfully' };
   }
 
   async getAddressBook() {

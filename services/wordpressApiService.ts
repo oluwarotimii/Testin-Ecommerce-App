@@ -962,6 +962,18 @@ class WordPressApiService {
     }
   }
 
+  async cancelOrder(order_id: number) {
+    try {
+      const response = await this.api.put(`/orders/${order_id}`, {
+        status: 'cancelled'
+      });
+      return response.data;
+    } catch (error: any) {
+      console.error('Error cancelling order:', error.response?.data || error.message);
+      throw error;
+    }
+  }
+
   // User Account
   async getAccountDetails() {
     if (!this.isUserLoggedIn) {
@@ -1038,6 +1050,20 @@ class WordPressApiService {
       return response.data;
     } catch (error: any) {
       console.error('Error updating account details:', error.response?.data || error.message);
+      throw error;
+    }
+  }
+
+  async deleteAccount(userId: number) {
+    if (!this.isUserLoggedIn) {
+      throw new Error("User not authenticated");
+    }
+
+    try {
+      const response = await this.api.delete(`/customers/${userId}`);
+      return response.data;
+    } catch (error: any) {
+      console.error('Error deleting account:', error.response?.data || error.message);
       throw error;
     }
   }

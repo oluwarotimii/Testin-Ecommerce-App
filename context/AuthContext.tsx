@@ -58,6 +58,7 @@ interface ApiService {
   createOrder: (orderData: any) => Promise<any>;
   getOrders: () => Promise<any>;
   getOrderInfo: (order_id: number) => Promise<any>;
+  cancelOrder: (order_id: number) => Promise<any>;
   getAccountDetails: () => Promise<any>;
   updateAccountDetails: (details: Record<string, any>) => Promise<any>;
   getAddressBook: () => Promise<any>;
@@ -66,6 +67,7 @@ interface ApiService {
   setSessionToken: (token: string | null) => void;
   validateToken?: (token: string) => Promise<boolean>;
   updateCustomerAddress?: (addressData: any) => Promise<any>;
+  deleteAccount: (userId: number) => Promise<any>;
 }
 
 interface AuthContextType {

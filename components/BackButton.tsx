@@ -3,11 +3,14 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useThemeColors } from '@/hooks/useColorScheme';
 
+
+
 interface BackButtonProps {
     onPress?: () => void;
+    style?: ViewStyle;
 }
 
-export default function BackButton({ onPress }: BackButtonProps) {
+export default function BackButton({ onPress, style }: BackButtonProps) {
     const router = useRouter();
     const colors = useThemeColors();
 
@@ -20,7 +23,7 @@ export default function BackButton({ onPress }: BackButtonProps) {
     };
 
     return (
-        <TouchableOpacity onPress={handlePress} style={styles.button}>
+        <TouchableOpacity onPress={handlePress} style={[styles.button, style]}>
             <Ionicons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
     );

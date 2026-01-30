@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
@@ -16,6 +16,8 @@ export default function OrdersScreen() {
   const { apiService, isAuthenticated } = useAuth();
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [cancellingOrderId, setCancellingOrderId] = useState<number | null>(null);
+  const [showCancelModal, setShowCancelModal] = useState<number | null>(null); // Track which order ID the modal is for
 
   useEffect(() => {
     // Redirect to login if not authenticated
@@ -59,13 +61,113 @@ export default function OrdersScreen() {
     return numPrice.toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   };
 
+  const handleCancelOrder = (orderId: number) => {
+    console.log('handleCancelOrder called for order:', orderId);
+    console.log('Current orders array:', orders);
+    console.log('Looking for order with ID:', orderId);
+
+    // Show the confirmation modal instead of Alert
+    setShowCancelModal(orderId);
+    console.log('Showed cancel confirmation modal for order:', orderId);
+  };
+
+  const confirmCancelOrder = async (orderId: number) => {
+    console.log('Confirming cancellation for order:', orderId);
+    setShowCancelModal(null); // Close the modal
+
+    try {
+      console.log('Setting cancellingOrderId to:', orderId);
+      setCancellingOrderId(orderId);
+      console.log('cancellingOrderId state set to:', orderId);
+
+      // Find the order to preserve its original status in case of failure
+      console.log('Finding order to cancel...');
+      const orderToCancel = orders.find(order => order.order_id === orderId);
+      console.log('Found order to cancel:', orderToCancel);
+
+      if (!orderToCancel) {
+        console.log('Order not found, throwing error');
+        throw new Error('Order not found');
+      }
+
+      // Update the order status in the local state instantly
+      console.log('Updating order status to cancelled in local state for order:', orderId);
+      setOrders(prevOrders => {
+        console.log('Updating orders state...');
+        return prevOrders.map(order =>
+          order.order_id === orderId
+            ? { ...order, status: 'cancelled' }
+            : order
+        );
+      });
+
+      // Make the API call
+      console.log('Making API call to cancel order with ID:', orderId);
+      await apiService.cancelOrder(orderId);
+      console.log('API call to cancel order completed successfully');
+
+      // Refresh the orders list after successful API call
+      console.log('Refreshing orders list after successful cancellation...');
+      const response = await apiService.getOrders();
+      console.log('Received updated orders list:', response);
+
+      if (Array.isArray(response)) {
+        console.log('Transforming orders data...');
+        const transformedOrders = response.map((order: any) => ({
+          order_id: order.id || order.order_id,
+          date_added: order.date_created || order.date_added,
+          status: order.status,
+          total: order.total,
+          products: order.line_items || order.products || []
+        }));
+
+        console.log('Setting updated orders state...');
+        setOrders(transformedOrders);
+        console.log('Orders list refreshed with', transformedOrders.length, 'orders');
+      } else {
+        console.log('Response is not an array, response:', response);
+      }
+    } catch (error) {
+      console.error('Error cancelling order:', error);
+      console.error('Error details:', error.message, error.stack);
+
+      // If the API call fails, refresh the orders to get the correct status
+      try {
+        console.log('Refreshing orders after failed cancellation...');
+        const response = await apiService.getOrders();
+        if (Array.isArray(response)) {
+          const transformedOrders = response.map((order: any) => ({
+            order_id: order.id || order.order_id,
+            date_added: order.date_created || order.date_added,
+            status: order.status,
+            total: order.total,
+            products: order.line_items || order.products || []
+          }));
+          setOrders(transformedOrders);
+          console.log('Orders list refreshed after failed cancellation');
+        }
+      } catch (refreshError) {
+        console.error('Error refreshing orders after failed cancellation:', refreshError);
+      }
+      Alert.alert('Error', 'Failed to cancel order. Please try again.');
+    } finally {
+      console.log('In finally block, resetting cancellingOrderId...');
+      setCancellingOrderId(null);
+      console.log('cancellingOrderId reset to null');
+    }
+  };
+
+  const cancelCancelOrder = () => {
+    console.log('User cancelled the cancellation');
+    setShowCancelModal(null);
+  };
+
   if (loading) {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
         <View style={styles.header}>
-          <BackButton />
+          <BackButton style={{ marginRight: 12 }} />
           <Text style={[styles.title, { color: colors.text }]}>Orders</Text>
-          <View style={{ width: 40 }} />
         </View>
         <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
           {[1, 2, 3].map((i) => (
@@ -84,9 +186,8 @@ export default function OrdersScreen() {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
         <View style={styles.header}>
-          <BackButton />
+          <BackButton style={{ marginRight: 12 }} />
           <Text style={[styles.title, { color: colors.text }]}>Orders</Text>
-          <View style={{ width: 40 }} />
         </View>
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 40 }}>
           <Ionicons name="bag-handle-outline" size={80} color={colors.textSecondary} />
@@ -108,9 +209,8 @@ export default function OrdersScreen() {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={styles.header}>
-        <BackButton />
+        <BackButton style={{ marginRight: 12 }} />
         <Text style={[styles.title, { color: colors.text }]}>Orders</Text>
-        <View style={{ width: 40 }} />
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
@@ -149,6 +249,30 @@ export default function OrdersScreen() {
                   </Text>
                 </View>
               </View>
+
+              {/* Show cancel button for pending/processing orders
+              {order && order.status && ['pending', 'processing'].includes(order.status.toLowerCase()) && (
+                <View style={styles.cancelButtonContainer}>
+                  <TouchableOpacity
+                    style={[styles.cancelButton, { backgroundColor: colors.danger }]}
+                    onPress={() => {
+                      console.log('Cancel button pressed for order:', order.order_id);
+                      handleCancelOrder(order.order_id);
+                    }}
+                    disabled={cancellingOrderId === order.order_id}
+                  >
+                    {cancellingOrderId === order.order_id ? (
+                      <View style={styles.loadingContainer}>
+                        <ActivityIndicator size="small" color={colors.white} />
+                      </View>
+                    ) : (
+                      <Text style={[styles.cancelButtonText, { color: colors.white }]}>
+                        Cancel Order
+                      </Text>
+                    )}
+                  </TouchableOpacity>
+                </View>
+              )} */}
             </TouchableOpacity>
           );
         })}
@@ -165,10 +289,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 10,
     paddingBottom: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   title: {
-    fontSize: 28,
+    fontSize: 23,
     fontWeight: 'bold',
+    flex: 1,
   },
   content: {
     flex: 1,
@@ -259,5 +386,24 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 16,
     marginBottom: 16,
+  },
+  cancelButtonContainer: {
+    marginTop: 12,
+    alignItems: 'flex-start', // Align the button to the start
+  },
+  cancelButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 8,
+    backgroundColor: '#ff4757', // Red background
+  },
+  loadingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cancelButtonText: {
+    fontSize: 12,
+    fontWeight: '600',
   },
 });

@@ -67,6 +67,46 @@ export default function ProfileScreen() {
     );
   };
 
+  const handleDeleteAccount = async () => {
+    Alert.alert(
+      "Delete Account",
+      "⚠️ Warning: This action cannot be undone. All your account data, order history, and personal information will be permanently deleted. Are you sure you want to delete your account?",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete Account",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              // Get user ID first
+              const userDetails = await apiService.getAccountDetails();
+              const userId = userDetails.id;
+
+              if (!userId) {
+                Alert.alert("Error", "Could not retrieve user information. Please try again.");
+                return;
+              }
+
+              // Call the API to delete the account
+              await apiService.deleteAccount(userId);
+
+              // Sign out the user after successful deletion
+              await signOut();
+
+              // Navigate to home screen
+              router.replace('/(tabs)');
+
+              Alert.alert("Account Deleted", "Your account has been successfully deleted.");
+            } catch (error: any) {
+              console.error('Error deleting account:', error);
+              Alert.alert("Error", error.message || "Failed to delete account. Please try again.");
+            }
+          }
+        }
+      ]
+    );
+  };
+
   if (loading) {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
@@ -231,6 +271,17 @@ export default function ProfileScreen() {
               <Ionicons name="log-out-outline" size={22} color="#D32F2F" />
             </View>
             <Text style={[styles.menuText, { color: '#D32F2F' }]}>Log Out</Text>
+          </TouchableOpacity>
+
+          {/* Delete Account Button */}
+          <TouchableOpacity
+            style={[styles.menuItem, { backgroundColor: colors.surface, marginTop: 10 }]}
+            onPress={() => handleDeleteAccount()}
+          >
+            <View style={[styles.menuIcon, { backgroundColor: '#FFEBEE' }]}>
+              <Ionicons name="trash-outline" size={22} color="#F44336" />
+            </View>
+            <Text style={[styles.menuText, { color: '#D32F2F' }]}>Delete Account</Text>
           </TouchableOpacity>
 
           {/* Privacy Policy Link */}
