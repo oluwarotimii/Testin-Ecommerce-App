@@ -1,9 +1,9 @@
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Alert, Image, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Alert, Image, ActivityIndicator, Linking } from 'react-native';
 import { useState } from 'react';
 import { useRouter } from 'expo-router';
 import { useThemeColors } from '@/hooks/useColorScheme';
 import { Ionicons } from '@expo/vector-icons';
-import axios from 'axios';
+import { useAuth } from '@/context/AuthContext';
 import Constants from 'expo-constants';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -11,11 +11,12 @@ export default function ForgotPasswordScreen() {
     const router = useRouter();
     const colors = useThemeColors();
     const [email, setEmail] = useState('');
-    const [loading, setLoading] = useState(false);
+    const { apiService } = useAuth();
 
-    const { WORDPRESS_URL } = Constants.expoConfig?.extra || {};
-    const FINAL_WORDPRESS_URL = WORDPRESS_URL || 'https://invalid-url-for-testing.com/';
+    const { expoPublicWordpressUrl } = Constants.expoConfig?.extra || {};
+    const FINAL_WORDPRESS_URL = expoPublicWordpressUrl || 'https://femtechit.com/';
 
+    /* Commenting out the password reset function since the backend endpoints are not available
     const handleResetPassword = async () => {
         if (!email) {
             Alert.alert('Missing Information', 'Please enter your email address.');
@@ -30,77 +31,108 @@ export default function ForgotPasswordScreen() {
         }
 
         setLoading(true);
+
         try {
-            // WordPress built-in lost password functionality
+            // Clean the URL to prevent double slashes
             const cleanUrl = FINAL_WORDPRESS_URL.endsWith('/') ? FINAL_WORDPRESS_URL.slice(0, -1) : FINAL_WORDPRESS_URL;
 
-            // First try the bdpwr plugin endpoint (if available)
-            try {
-                const response = await axios.post(`${cleanUrl}/wp-json/bdpwr/v1/reset-password`, {
+            // Try to make the password reset request to the WordPress site
+            const response = await fetch(`${cleanUrl}/wp-json/bdpwr/v1/reset-password`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
                     email: email
-                });
+                })
+            });
 
-                if (response.data && response.data.data && response.data.data.status === 200) {
+            if (response.ok) {
+                const data = await response.json();
+
+                if (data.success || (data.data && data.data.status === 200)) {
                     Alert.alert(
                         'Success',
                         'Password reset link has been sent to your email address. Please check your inbox.',
+                        [{
+                            text: 'OK',
+                            onPress: () => router.push('/login')
+                        }]
+                    );
+                } else {
+                    // Even if API response indicates issues, inform user
+                    Alert.alert(
+                        'Check your email',
+                        'If your email is registered with us, you will receive a password reset link shortly.',
+                        [{
+                            text: 'OK',
+                            style: 'cancel'
+                        }]
+                    );
+                }
+            } else {
+                // Handle different response statuses
+                const status = response.status;
+                if (status === 404) {
+                    Alert.alert(
+                        'Email not found',
+                        'The email address you entered is not registered with us. Please check and try again.',
+                        [{
+                            text: 'OK',
+                            style: 'cancel'
+                        }]
+                    );
+                } else {
+                    // For other errors, fall back to website guidance
+                    Alert.alert(
+                        'Password Reset',
+                        'To reset your password, please visit our website. Due to security restrictions, password resets must be initiated from our website.',
                         [
                             {
+                                text: 'Visit Website',
+                                onPress: () => {
+                                    const resetUrl = `${FINAL_WORDPRESS_URL}/my-account/lost-password/`;
+                                    Linking.openURL(resetUrl).catch(() => {
+                                        Alert.alert('Error', 'Could not open the website. Please visit it directly in your browser.');
+                                    });
+                                }
+                            },
+                            {
                                 text: 'OK',
-                                onPress: () => router.push('/login')
+                                style: 'cancel'
                             }
                         ]
                     );
-                } else {
-                    Alert.alert('Error', response.data?.message || 'Unable to send reset link. Please try again.');
                 }
-            } catch (bdpwrError: any) {
-                // If bdpwr fails, try WordPress native endpoint with different method
-                console.log('BDPWR endpoint failed, trying WordPress native method');
+            }
+        } catch (error) {
+            console.error('Password reset error:', error);
 
-                // Try to send password reset email using WordPress native functionality
-                const formData = new FormData();
-                formData.append('user_login', email);
-                formData.append('wp-submit', 'Get New Password');
-
-                const response = await axios.post(`${cleanUrl}/wp-login.php?action=lostpassword`,
-                    formData,
+            // On network error or other issues, guide user to website
+            Alert.alert(
+                'Password Reset',
+                'To reset your password, please visit our website. Due to security restrictions, password resets must be initiated from our website.',
+                [
                     {
-                        headers: {
-                            'Content-Type': 'multipart/form-data',
+                        text: 'Visit Website',
+                        onPress: () => {
+                            const resetUrl = `${FINAL_WORDPRESS_URL}/my-account/lost-password/`;
+                            Linking.openURL(resetUrl).catch(() => {
+                                Alert.alert('Error', 'Could not open the website. Please visit it directly in your browser.');
+                            });
                         }
+                    },
+                    {
+                        text: 'OK',
+                        style: 'cancel'
                     }
-                );
-
-                // If we get here, it means the request was successful
-                Alert.alert(
-                    'Success',
-                    'Password reset link has been sent to your email address. Please check your inbox.',
-                    [
-                        {
-                            text: 'OK',
-                            onPress: () => router.push('/login')
-                        }
-                    ]
-                );
-            }
-        } catch (error: any) {
-            console.error('Password reset error:', error.response?.data || error.message);
-
-            let errorMessage = 'An error occurred. Please try again.';
-            if (error.response?.data?.message) {
-                errorMessage = error.response.data.message;
-            } else if (error.response?.status === 404) {
-                errorMessage = 'Email address not found. Please check and try again.';
-            } else if (error.response?.status === 400 || error.response?.status === 401) {
-                errorMessage = 'Invalid email address or account not found.';
-            }
-
-            Alert.alert('Error', errorMessage);
+                ]
+            );
         } finally {
             setLoading(false);
         }
     };
+    */
 
     return (
         <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
@@ -118,7 +150,7 @@ export default function ForgotPasswordScreen() {
                     </View>
                     <Text style={[styles.title, { color: colors.text }]}>Forgot Password?</Text>
                     <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-                        Enter your email address and we'll send you a link to reset your password.
+                        Password reset is available on our website. Please visit femtechit.com to reset your password.
                     </Text>
                 </View>
 
@@ -137,17 +169,25 @@ export default function ForgotPasswordScreen() {
                         />
                     </View>
 
+                    {/* Information message about password reset */}
+                    <View style={[styles.infoBox, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+                        <Ionicons name="information-circle-outline" size={24} color={colors.primary} style={styles.infoIcon} />
+                        <Text style={[styles.infoText, { color: colors.text }]}>
+                            Password reset functionality is available on our website. Please visit femtechit.com to reset your password.
+                        </Text>
+                    </View>
+
                     <TouchableOpacity
-                        style={[styles.resetButton, { backgroundColor: colors.primary }]}
-                        onPress={handleResetPassword}
-                        disabled={loading}
+                        style={[styles.visitWebsiteButton, { backgroundColor: colors.primary }]}
+                        onPress={() => {
+                            Linking.openURL('https://femtechit.com/my-account/lost-password/').catch(() => {
+                                Alert.alert('Error', 'Could not open the website. Please visit it directly in your browser.');
+                            });
+                        }}
                     >
-                        <View style={styles.buttonContent}>
-                            {loading && <ActivityIndicator size="small" color={colors.white} style={styles.buttonSpinner} />}
-                            <Text style={[styles.resetButtonText, { color: colors.white }]}>
-                                {loading ? 'Sending...' : 'Send Reset Link'}
-                            </Text>
-                        </View>
+                        <Text style={[styles.visitWebsiteButtonText, { color: colors.white }]}>
+                            Visit Website to Reset Password
+                        </Text>
                     </TouchableOpacity>
                 </View>
 
@@ -168,18 +208,18 @@ const styles = StyleSheet.create({
     },
     contentContainer: {
         paddingHorizontal: 32,
-        paddingTop: 10,
+        paddingTop: 20,
         paddingBottom: 32,
     },
     backButton: {
-        marginBottom: 100,
+        marginBottom: 20,
     },
     header: {
         marginBottom: 40,
     },
     iconContainer: {
         alignItems: 'center',
-        marginBottom: 24,
+        marginBottom: 27,
     },
     appIcon: {
         width: 80,
@@ -241,5 +281,32 @@ const styles = StyleSheet.create({
     footerLink: {
         fontSize: 14,
         fontWeight: '500',
+    },
+    infoBox: {
+        flexDirection: 'row',
+        alignItems: 'flex-start',
+        padding: 16,
+        borderRadius: 12,
+        borderWidth: 1,
+        marginBottom: 24,
+    },
+    infoIcon: {
+        marginRight: 12,
+        marginTop: 4,
+    },
+    infoText: {
+        flex: 1,
+        fontSize: 14,
+        lineHeight: 20,
+    },
+    visitWebsiteButton: {
+        paddingVertical: 16,
+        borderRadius: 12,
+        alignItems: 'center',
+        marginBottom: 24,
+    },
+    visitWebsiteButtonText: {
+        fontSize: 16,
+        fontWeight: '600',
     },
 });
