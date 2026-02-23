@@ -132,13 +132,13 @@ export default function AccountScreen() {
     //   type: 'navigation',
     //   onPress: () => router.push('/devtools'),
     // },
-    {
-      id: 'test-notifications',
-      title: 'Test Push Notifications',
-      icon: () => <Ionicons name="bug" size={20} color={colors.primary} />,
-      type: 'navigation',
-      onPress: () => router.push('/test-notifications'),
-    },
+    // {
+    //   id: 'test-notifications',
+    //   title: 'Test Push Notifications',
+    //   icon: () => <Ionicons name="bug" size={20} color={colors.primary} />,
+    //   type: 'navigation',
+    //   onPress: () => router.push('/test-notifications'),
+    // },
   ];
 
   const supportItems = [
@@ -331,7 +331,7 @@ export default function AccountScreen() {
 
         {/* App Version */}
         <View style={styles.footer}>
-          <Text style={[styles.versionText, { color: colors.textSecondary }]}>Femtech Mobile App v1.0.0</Text>
+          <Text style={[styles.versionText, { color: colors.textSecondary }]}>Femtech Mobile App v2.0.0</Text>
         </View>
       </ScrollView>
 
