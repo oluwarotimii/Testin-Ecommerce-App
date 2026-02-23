@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Image, StyleSheet, TouchableOpacity, Text, ActivityIndicator, Linking } from 'react-native';
+import { View, Image, StyleSheet, TouchableOpacity, ActivityIndicator, Linking } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useThemeColors } from '@/hooks/useColorScheme';
 import { fetchBanner, BannerItem } from '@/services/banner';
@@ -68,14 +68,15 @@ const MarketingBanner: React.FC<MarketingBannerProps> = () => {
                 style={styles.image}
                 resizeMode="cover"
             />
-            <View style={styles.overlay}>
+            {/* Commented out overlay text - only show image */}
+            {/* <View style={styles.overlay}>
                 <View style={styles.textContainer}>
                     <Text style={styles.title}>{bannerData.title}</Text>
                     {bannerData.subtitle && (
                         <Text style={styles.subtitle}>{bannerData.subtitle}</Text>
                     )}
                 </View>
-            </View>
+            </View> */}
         </TouchableOpacity>
     );
 };

@@ -40,7 +40,7 @@ export default function InstagramCarousel({ data, onItemPress }: InstagramCarous
         scrollViewRef.current?.scrollTo({ x: nextIndex * (ITEM_WIDTH + 16), animated: true });
         return nextIndex;
       });
-    }, 3000);
+    }, 3000) as any; // Type assertion to fix Timeout type mismatch
   };
 
   const stopAutoPlay = () => {

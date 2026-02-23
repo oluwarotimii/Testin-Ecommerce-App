@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useThemeColors } from '@/hooks/useColorScheme';
 import SafeImage from './SafeImage';
@@ -9,7 +9,7 @@ const ITEM_HEIGHT = 200;
 
 interface CarouselItemProps {
   item: {
-    id: string;
+    id: string | number;
     title: string;
     subtitle: string;
     imageUrl: string;
@@ -40,12 +40,13 @@ export default function CarouselItem({ item, onPress }: CarouselItemProps) {
       </View>
 
       <View style={styles.content}>
-        <Text style={[styles.title, { color: colors.white }]} numberOfLines={2}>
+        {/* Commented out text elements - only show image */}
+        {/* <Text style={[styles.title, { color: colors.white }]} numberOfLines={2}>
           {item.title}
         </Text>
         <Text style={[styles.subtitle, { color: colors.white }]} numberOfLines={2}>
           {item.subtitle}
-        </Text>
+        </Text> */}
       </View>
     </TouchableOpacity>
   );
