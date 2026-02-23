@@ -29,9 +29,7 @@
       "supportsTablet": true,
       "infoPlist": {
         "UIBackgroundModes": [
-          "background-fetch",
-          "remote-notification",
-          "background-fetch",
+          "fetch",
           "remote-notification"
         ],
         "ITSAppUsesNonExemptEncryption": false

@@ -59,7 +59,9 @@ export default function CategoryScreen() {
 
             const idStr = id.toString();
 
-            // Try to fetch category details from WooCommerce
+            // WooCommerce REST API v3 only accepts category ID (not slug) for the 'category' parameter
+            // So we need to first find the category to get its ID
+            let categoryId: string | null = null;
             try {
                 const categories = await apiService.getCategories();
                 const category = categories.find((cat: any) =>
@@ -67,14 +69,23 @@ export default function CategoryScreen() {
                 );
                 if (category) {
                     setCategoryName(category.name);
+                    categoryId = category.id.toString();
+                } else {
+                    console.error(`Category "${idStr}" not found - invalid slug or ID`);
+                    setError('Category not found');
+                    setLoading(false);
+                    return;
                 }
             } catch (catError) {
                 console.error('Error fetching category details:', catError);
+                setError('Failed to load category');
+                setLoading(false);
+                return;
             }
 
-            // Fetch products by category with pagination
+            // Fetch products by category - MUST use numeric ID, slug won't work
             const params: any = {
-                category: idStr,
+                category: categoryId, // Use the numeric ID we found
                 per_page: 20,
                 page: reset ? 1 : page
             };

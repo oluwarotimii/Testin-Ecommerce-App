@@ -132,6 +132,13 @@ export default function AccountScreen() {
     //   type: 'navigation',
     //   onPress: () => router.push('/devtools'),
     // },
+    {
+      id: 'test-notifications',
+      title: 'Test Push Notifications',
+      icon: () => <Ionicons name="bug" size={20} color={colors.primary} />,
+      type: 'navigation',
+      onPress: () => router.push('/test-notifications'),
+    },
   ];
 
   const supportItems = [
@@ -211,6 +218,14 @@ export default function AccountScreen() {
               <Text style={[styles.sectionTitle, { color: colors.text }]}>Appearance</Text>
               <View style={[styles.menuContainer, { backgroundColor: colors.surface }]}>
                 {themeItems.map(renderSettingsItem)}
+              </View>
+            </View>
+
+            {/* Developer Tools - Always visible */}
+            <View style={styles.section}>
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>Developer Tools</Text>
+              <View style={[styles.menuContainer, { backgroundColor: colors.surface }]}>
+                {settingsItems.map(renderSettingsItem)}
               </View>
             </View>
 

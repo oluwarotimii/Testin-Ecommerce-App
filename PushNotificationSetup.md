@@ -35,11 +35,11 @@ This will navigate to `/category/electronics` or `/category/5`. The category rou
 {
   "data": {
     "linkType": "product",
-    "linkValue": "123" // product ID (the product route expects an ID)
+    "linkValue": "123" // product ID or product slug (e.g., "my-product-name")
   }
 }
 ```
-This will navigate to `/product/123`
+This will navigate to `/product/123` or `/product/my-product-name`. The product route ([id].tsx) now handles both numeric IDs and slugs by checking the format of the value and using the appropriate API method.
 
 ### 3. Page Navigation
 ```json

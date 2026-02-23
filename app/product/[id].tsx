@@ -76,7 +76,19 @@ export default function ProductDetailScreen() {
       const fetchProduct = async () => {
         try {
           setLoading(true);
-          const fetchedProduct = await apiService.getProduct(Number(id));
+          const idStr = id.toString();
+          let fetchedProduct;
+
+          // Check if the id is a numeric ID or a slug
+          const numericId = Number(idStr);
+          if (!isNaN(numericId) && idStr === numericId.toString()) {
+            // It's a numeric ID, fetch directly
+            fetchedProduct = await apiService.getProduct(numericId);
+          } else {
+            // It's a slug, fetch by slug
+            fetchedProduct = await apiService.getProductBySlug(idStr);
+          }
+
           // Use transformation utility
           const transformedProduct = transformProduct(fetchedProduct);
 
