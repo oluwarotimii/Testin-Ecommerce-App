@@ -579,6 +579,14 @@ class DummyApiService {
       { error: "Product not found" };
   }
 
+  async getProductBySlug(slug: string) {
+    // For dummy API, we'll search by title (slugified)
+    const slugifiedTitle = slug.replace(/-/g, ' ').toLowerCase();
+    return dummyElectronicsProducts.find(product =>
+      product.title.toLowerCase().includes(slugifiedTitle)
+    ) || { error: "Product not found" };
+  }
+
   async searchProducts(search: string, page?: number, limit?: number) {
     const filteredProducts = dummyElectronicsProducts.filter(product =>
       product.title.toLowerCase().includes(search.toLowerCase()) ||
@@ -586,6 +594,21 @@ class DummyApiService {
     );
 
     return filteredProducts.slice(0, limit || filteredProducts.length);
+  }
+
+  /**
+   * Extended search - searches in both title and description
+   * Returns all matching products (no artificial limit)
+   */
+  async searchProductsExtended(search: string, page?: number, limit?: number) {
+    const filteredProducts = dummyElectronicsProducts.filter(product =>
+      product.title.toLowerCase().includes(search.toLowerCase()) ||
+      product.description.toLowerCase().includes(search.toLowerCase())
+    );
+
+    // Return all matching products, or up to the specified limit
+    const maxResults = limit || filteredProducts.length;
+    return filteredProducts.slice(0, maxResults);
   }
 
   // Categories

@@ -42,6 +42,7 @@ interface ApiService {
   getProducts: (params?: Record<string, any>) => Promise<any>;
   getProduct: (product_id: number) => Promise<any>;
   searchProducts: (search: string, page?: number, limit?: number) => Promise<any>;
+  searchProductsExtended: (search: string, page?: number, limit?: number) => Promise<any>;
   getProductBySlug: (slug: string) => Promise<any>;
   getCategories: (params?: any) => Promise<any>;
   getCategory: (category_id: number | string) => Promise<any>;

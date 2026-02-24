@@ -553,14 +553,37 @@ class WordPressApiService {
   async searchProducts(search: string, page?: number, limit?: number) {
     const params: Record<string, any> = {
       search,
-      status: 'publish' // Only search published products
+      status: 'publish', // Only search published products
+      per_page: limit || 50, // Default to 50 products per page (max is 100)
+      page: page || 1
     };
-    if (page) params.page = page;
-    if (limit) params.per_page = limit;
 
     try {
       const response = await this.api.get('/products', { params });
       // Transform WooCommerce products to app format
+      const { transformProducts } = require('../utils/woocommerceTransformers');
+      return transformProducts(response.data);
+    } catch (error: any) {
+      console.error('Error searching products:', error.response?.data || error.message);
+      throw error;
+    }
+  }
+
+  /**
+   * Extended search - searches in both title and description
+   * This provides more comprehensive search results
+   */
+  async searchProductsExtended(search: string, page?: number, limit?: number) {
+    const params: Record<string, any> = {
+      search,
+      search_exclude: '', // Include all fields (title, description, excerpt, SKU)
+      status: 'publish',
+      per_page: limit || 50,
+      page: page || 1
+    };
+
+    try {
+      const response = await this.api.get('/products', { params });
       const { transformProducts } = require('../utils/woocommerceTransformers');
       return transformProducts(response.data);
     } catch (error: any) {

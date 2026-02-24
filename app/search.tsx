@@ -17,7 +17,11 @@ export default function SearchScreen() {
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [hasMore, setHasMore] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalResults, setTotalResults] = useState(0);
 
   // Load recent searches from storage
   useEffect(() => {
@@ -41,26 +45,56 @@ export default function SearchScreen() {
   useEffect(() => {
     const debounceTimer = setTimeout(() => {
       if (searchQuery.trim()) {
-        performSearch(searchQuery.trim());
+        performSearch(searchQuery.trim(), true); // Reset to page 1
       } else {
         setSearchResults([]);
+        setHasMore(true);
+        setCurrentPage(1);
       }
-    }, 300); // 300ms debounce
+    }, 500); // Increased to 500ms debounce
 
     return () => clearTimeout(debounceTimer);
   }, [searchQuery]);
 
-  const performSearch = async (query: string) => {
+  const performSearch = async (query: string, reset: boolean = false) => {
     try {
-      setLoading(true);
+      if (reset) {
+        setLoading(true);
+        setCurrentPage(1);
+      } else {
+        setLoadingMore(true);
+      }
+
       setError(null);
-      const results = await apiService.searchProducts(query);
-      setSearchResults(results);
+      const page = reset ? 1 : currentPage + 1;
+      const results = await apiService.searchProductsExtended(query, page, 100); // Fetch 100 products per page (max)
+
+      if (reset) {
+        setSearchResults(results);
+      } else {
+        // Append new results, avoiding duplicates
+        const existingIds = new Set(searchResults.map((p: any) => p.id));
+        const newResults = results.filter((p: any) => !existingIds.has(p.id));
+        setSearchResults(prev => [...prev, ...newResults]);
+      }
+
+      setHasMore(results.length === 100); // If we got 100 results, there might be more
+      setCurrentPage(page);
+      setTotalResults(prev => reset ? results.length : prev + results.length);
     } catch (err: any) {
       setError(err.message || 'An error occurred during search');
-      setSearchResults([]);
+      if (reset) {
+        setSearchResults([]);
+      }
     } finally {
       setLoading(false);
+      setLoadingMore(false);
+    }
+  };
+
+  const loadMoreResults = () => {
+    if (!loading && !loadingMore && hasMore && searchQuery.trim()) {
+      performSearch(searchQuery.trim(), false);
     }
   };
 
@@ -128,7 +162,18 @@ export default function SearchScreen() {
         </TouchableOpacity>
       </View>
 
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView 
+        style={styles.content} 
+        showsVerticalScrollIndicator={false}
+        onScroll={(event) => {
+          const { layoutMeasurement, contentOffset, contentSize } = event.nativeEvent;
+          const paddingToBottom = 100; // Load more when user is 100px from bottom
+          if (layoutMeasurement.height + contentOffset.y >= contentSize.height - paddingToBottom) {
+            loadMoreResults();
+          }
+        }}
+        scrollEventThrottle={400}
+      >
         {searchQuery.length === 0 ? (
           <>
             {/* Recent Searches */}
@@ -162,7 +207,7 @@ export default function SearchScreen() {
               </View>
             )}
           </>
-        ) : loading ? (
+        ) : loading && !loadingMore ? (
           <ActivityIndicator size="large" color={colors.primary} style={styles.loadingIndicator} />
         ) : error ? (
           <Text style={[styles.errorText, { color: colors.error }]}>Error: {error}</Text>
@@ -170,7 +215,8 @@ export default function SearchScreen() {
           /* Search Results */
           <View style={styles.section}>
             <Text style={[styles.sectionTitle, { color: colors.text }]}>
-              {searchResults.length} results for "{searchQuery}"
+              {searchResults.length}+ results for "{searchQuery}"
+              {hasMore && ' (scroll for more)'}
             </Text>
             {searchResults.map((product) => (
               <TouchableOpacity
@@ -192,10 +238,24 @@ export default function SearchScreen() {
                 </View>
               </TouchableOpacity>
             ))}
+            {loadingMore && (
+              <View style={styles.loadingMoreContainer}>
+                <ActivityIndicator size="small" color={colors.primary} />
+                <Text style={[styles.loadingMoreText, { color: colors.textSecondary }]}>Loading more products...</Text>
+              </View>
+            )}
+            {!hasMore && searchResults.length > 0 && (
+              <Text style={[styles.noMoreResultsText, { color: colors.textSecondary }]}>
+                No more products to load
+              </Text>
+            )}
           </View>
         ) : (
           <View style={styles.section}>
             <Text style={styles.noResultsText}>No products found matching "{searchQuery}"</Text>
+            <Text style={[styles.noResultsSubtext, { color: colors.textSecondary }]}>
+              Try searching with different keywords or check the spelling
+            </Text>
           </View>
         )}
       </ScrollView>
@@ -331,6 +391,29 @@ const styles = StyleSheet.create({
   },
   loadingIndicator: {
     marginTop: 40,
+  },
+  loadingMoreContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 20,
+    gap: 8,
+  },
+  loadingMoreText: {
+    fontSize: 14,
+    fontStyle: 'italic',
+  },
+  noMoreResultsText: {
+    textAlign: 'center',
+    marginTop: 20,
+    fontSize: 14,
+    fontStyle: 'italic',
+  },
+  noResultsSubtext: {
+    textAlign: 'center',
+    marginTop: 8,
+    fontSize: 14,
+    paddingHorizontal: 20,
   },
   errorText: {
     textAlign: 'center',
