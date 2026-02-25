@@ -1,5 +1,4 @@
 import { View, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useThemeColors } from '@/hooks/useColorScheme';
 import SafeImage from './SafeImage';
 
@@ -33,20 +32,6 @@ export default function CarouselItem({ item, onPress }: CarouselItemProps) {
         ) : (
           <View style={[styles.placeholderImage, { backgroundColor: colors.surface }]} />
         )}
-        <LinearGradient
-          colors={['transparent', 'rgba(0,0,0,0.7)']}
-          style={styles.gradient}
-        />
-      </View>
-
-      <View style={styles.content}>
-        {/* Commented out text elements - only show image */}
-        {/* <Text style={[styles.title, { color: colors.white }]} numberOfLines={2}>
-          {item.title}
-        </Text>
-        <Text style={[styles.subtitle, { color: colors.white }]} numberOfLines={2}>
-          {item.subtitle}
-        </Text> */}
       </View>
     </TouchableOpacity>
   );
@@ -79,34 +64,5 @@ const styles = StyleSheet.create({
   placeholderImage: {
     width: '100%',
     height: '100%',
-  },
-  gradient: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    bottom: 0,
-    height: '60%',
-  },
-  content: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    padding: 20,
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 4,
-    textShadowColor: 'rgba(0, 0, 0, 0.75)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 3,
-  },
-  subtitle: {
-    fontSize: 14,
-    opacity: 0.9,
-    textShadowColor: 'rgba(0, 0, 0, 0.75)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 3,
   },
 });
