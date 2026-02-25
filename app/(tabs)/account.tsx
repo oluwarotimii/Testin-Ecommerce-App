@@ -95,7 +95,7 @@ export default function AccountScreen() {
     },
   ];
 
-  const settingsItems = [
+  // const settingsItems = [
     // {
     //   id: 'notifications',
     //   title: 'Push Notifications',
@@ -139,7 +139,7 @@ export default function AccountScreen() {
     //   type: 'navigation',
     //   onPress: () => router.push('/test-notifications'),
     // },
-  ];
+  // ];
 
   const supportItems = [
     {
@@ -222,12 +222,12 @@ export default function AccountScreen() {
             </View>
 
             {/* Developer Tools - Always visible */}
-            <View style={styles.section}>
+            {/* <View style={styles.section}>
               <Text style={[styles.sectionTitle, { color: colors.text }]}>Developer Tools</Text>
               <View style={[styles.menuContainer, { backgroundColor: colors.surface }]}>
                 {settingsItems.map(renderSettingsItem)}
               </View>
-            </View>
+            </View> */}
 
             {isAuthenticated && userDetails ? (
               <>

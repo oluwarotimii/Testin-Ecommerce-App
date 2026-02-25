@@ -46,11 +46,8 @@ export default function SearchScreen() {
     const debounceTimer = setTimeout(() => {
       if (searchQuery.trim()) {
         performSearch(searchQuery.trim(), true); // Reset to page 1
-      } else {
-        setSearchResults([]);
-        setHasMore(true);
-        setCurrentPage(1);
       }
+      // Don't clear results when searchQuery is empty - preserve them for viewing
     }, 500); // Increased to 500ms debounce
 
     return () => clearTimeout(debounceTimer);
@@ -174,40 +171,7 @@ export default function SearchScreen() {
         }}
         scrollEventThrottle={400}
       >
-        {searchQuery.length === 0 ? (
-          <>
-            {/* Recent Searches */}
-            {recentSearches.length > 0 && (
-              <View style={styles.section}>
-                <View style={styles.sectionHeader}>
-                  <Text style={[styles.sectionTitle, { color: colors.text }]}>Recent Searches</Text>
-                  <TouchableOpacity onPress={clearAllRecentSearches}>
-                    <Text style={[styles.clearButton, { color: colors.primary }]}>Clear All</Text>
-                  </TouchableOpacity>
-                </View>
-                {recentSearches.map((search, index) => (
-                  <TouchableOpacity
-                    key={index}
-                    style={styles.searchItem}
-                    onPress={() => {
-                      setSearchQuery(search);
-                      handleSearch(search);
-                    }}
-                  >
-                    <Ionicons name="time" size={16} color={colors.textSecondary} />
-                    <Text style={[styles.searchItemText, { color: colors.text }]}>{search}</Text>
-                    <TouchableOpacity
-                      onPress={() => removeRecentSearch(search)}
-                      style={styles.removeButton}
-                    >
-                      <Ionicons name="close" size={16} color={colors.textSecondary} />
-                    </TouchableOpacity>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            )}
-          </>
-        ) : loading && !loadingMore ? (
+        {loading && !loadingMore && searchQuery.length > 0 ? (
           <ActivityIndicator size="large" color={colors.primary} style={styles.loadingIndicator} />
         ) : error ? (
           <Text style={[styles.errorText, { color: colors.error }]}>Error: {error}</Text>
@@ -215,7 +179,7 @@ export default function SearchScreen() {
           /* Search Results */
           <View style={styles.section}>
             <Text style={[styles.sectionTitle, { color: colors.text }]}>
-              {searchResults.length}+ results for "{searchQuery}"
+              {searchResults.length}+ results{searchQuery.length > 0 ? ` for "${searchQuery}"` : ''}
               {hasMore && ' (scroll for more)'}
             </Text>
             {searchResults.map((product) => (
@@ -250,6 +214,39 @@ export default function SearchScreen() {
               </Text>
             )}
           </View>
+        ) : searchQuery.length === 0 ? (
+          /* Recent Searches (shown only when no search has been performed) */
+          <>
+            {recentSearches.length > 0 && (
+              <View style={styles.section}>
+                <View style={styles.sectionHeader}>
+                  <Text style={[styles.sectionTitle, { color: colors.text }]}>Recent Searches</Text>
+                  <TouchableOpacity onPress={clearAllRecentSearches}>
+                    <Text style={[styles.clearButton, { color: colors.primary }]}>Clear All</Text>
+                  </TouchableOpacity>
+                </View>
+                {recentSearches.map((search, index) => (
+                  <TouchableOpacity
+                    key={index}
+                    style={styles.searchItem}
+                    onPress={() => {
+                      setSearchQuery(search);
+                      handleSearch(search);
+                    }}
+                  >
+                    <Ionicons name="time" size={16} color={colors.textSecondary} />
+                    <Text style={[styles.searchItemText, { color: colors.text }]}>{search}</Text>
+                    <TouchableOpacity
+                      onPress={() => removeRecentSearch(search)}
+                      style={styles.removeButton}
+                    >
+                      <Ionicons name="close" size={16} color={colors.textSecondary} />
+                    </TouchableOpacity>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            )}
+          </>
         ) : (
           <View style={styles.section}>
             <Text style={styles.noResultsText}>No products found matching "{searchQuery}"</Text>
