@@ -12,27 +12,32 @@ import { ThemeProvider, useTheme } from '@/context/ThemeContext';
 import { CartProvider } from '@/context/CartContext';
 import { CacheProvider } from '@/context/CacheContext';
 import { NetworkProvider } from '@/context/NetworkContext';
+import { ForceUpdateProvider } from '@/context/ForceUpdateContext';
 import FloatingCartButton from '@/components/FloatingCartButton';
+import ForceUpdateScreen from '@/components/ForceUpdateScreen';
 
 function AppContent() {
   const { colorScheme } = useTheme();
 
   return (
-    <CacheProvider>
-      <AuthProvider>
-        <CartProvider>
-          <NetworkProvider>
-            <View style={{ flex: 1 }}>
-              <Stack screenOptions={{ headerShown: false }}>
-                <Stack.Screen name="+not-found" />
-              </Stack>
-              <FloatingCartButton />
-              <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
-            </View>
-          </NetworkProvider>
-        </CartProvider>
-      </AuthProvider>
-    </CacheProvider>
+    <ForceUpdateProvider>
+      <CacheProvider>
+        <AuthProvider>
+          <CartProvider>
+            <NetworkProvider>
+              <View style={{ flex: 1 }}>
+                <Stack screenOptions={{ headerShown: false }}>
+                  <Stack.Screen name="+not-found" />
+                </Stack>
+                <FloatingCartButton />
+                <ForceUpdateScreen />
+                <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
+              </View>
+            </NetworkProvider>
+          </CartProvider>
+        </AuthProvider>
+      </CacheProvider>
+    </ForceUpdateProvider>
   );
 }
 
