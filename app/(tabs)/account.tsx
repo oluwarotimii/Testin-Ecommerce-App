@@ -403,7 +403,7 @@ export default function AccountScreen() {
 
         {/* App Version */}
         <View style={styles.footer}>
-          <Text style={[styles.versionText, { color: colors.textSecondary }]}>Femtech Mobile App v2.0.0</Text>
+          <Text style={[styles.versionText, { color: colors.textSecondary }]}>Femtech Mobile App v2.2.0</Text>
         </View>
       </ScrollView>
 

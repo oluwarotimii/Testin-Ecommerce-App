@@ -123,9 +123,12 @@ export function ForceUpdateProvider({ children }: { children: ReactNode }) {
    * This should be called on app start
    */
   const checkForcedUpdate = async () => {
+    // Always clear state first
+    setIsUpdateRequired(false);
+    setUpdateInfo(null);
+
     if (!FORCE_UPDATE_CONFIG.enabled) {
       console.log('Force update check disabled');
-      setIsUpdateRequired(false);
       return;
     }
 
@@ -144,14 +147,12 @@ export function ForceUpdateProvider({ children }: { children: ReactNode }) {
         storeVersion: FORCE_UPDATE_CONFIG.minimumVersion,
         minimumVersion: FORCE_UPDATE_CONFIG.minimumVersion,
         updateMessage: FORCE_UPDATE_CONFIG.updateMessage,
-        updateUrl: Platform.OS === 'ios' 
-          ? FORCE_UPDATE_CONFIG.appStoreUrl 
+        updateUrl: Platform.OS === 'ios'
+          ? FORCE_UPDATE_CONFIG.appStoreUrl
           : FORCE_UPDATE_CONFIG.playStoreUrl,
       });
       console.log('FORCED UPDATE REQUIRED: User must update to continue');
     } else {
-      setIsUpdateRequired(false);
-      setUpdateInfo(null);
       console.log('Version OK: No forced update required');
     }
   };
@@ -186,10 +187,15 @@ export function ForceUpdateProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  // Auto-check on mount if enabled
+  // Auto-check on mount and when enabled state changes
   useEffect(() => {
     if (FORCE_UPDATE_CONFIG.enabled) {
       checkForcedUpdate();
+    } else {
+      // When disabled, ensure state is cleared
+      setIsUpdateRequired(false);
+      setUpdateInfo(null);
+      console.log('Force update disabled - clearing state');
     }
   }, []);
 
