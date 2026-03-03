@@ -1,7 +1,10 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch, ActivityIndicator, Image, Linking, Modal } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch, ActivityIndicator, Image, Linking, Modal, Clipboard, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'expo-router';
+import * as Notifications from 'expo-notifications';
+import * as Device from 'expo-device';
+import Constants from 'expo-constants';
 import updateService from '@/services/updateService';
 import { useThemeColors } from '@/hooks/useColorScheme';
 import { useAuth } from '@/context/AuthContext';
@@ -17,6 +20,8 @@ export default function AccountScreen() {
   const [signingOut, setSigningOut] = useState(false);
   // console.log('isAuthenticated:', isAuthenticated, 'loadingAuth:', loadingAuth);
   const [darkMode, setDarkMode] = useState(colorScheme === 'dark');
+  const [pushToken, setPushToken] = useState<string | null>(null);
+  const [loadingToken, setLoadingToken] = useState(false);
 
   useEffect(() => {
     setDarkMode(colorScheme === 'dark');
@@ -95,51 +100,15 @@ export default function AccountScreen() {
     },
   ];
 
-  // const settingsItems = [
-    // {
-    //   id: 'notifications',
-    //   title: 'Push Notifications',
-    //   icon: () => <Ionicons name="notifications" size={20} color={colors.primary} />,
-    //   type: 'switch',
-    //   value: notifications,
-    //   onToggle: setNotifications,
-    // },
-    // {
-    //   id: 'settings',
-    //   title: 'App Settings',
-    //   icon: () => <Ionicons name="settings" size={20} color={colors.primary} />,
-    //   type: 'navigation',
-    //   onPress: () => router.push('/settings'),
-    // },
-    // {
-    //   id: 'updates',
-    //   title: 'Check for Updates',
-    //   icon: () => <Ionicons name="download" size={20} color={colors.primary} />,
-    //   type: 'navigation',
-    //   onPress: () => updateService.forceCheckForUpdates(),
-    // },
-    // {
-    //   id: 'wptest',
-    //   title: 'WordPress Test',
-    //   icon: () => <Ionicons name="globe" size={20} color={colors.primary} />,
-    //   type: 'navigation',
-    //   onPress: () => router.push('/wordpress-test'),
-    // },
-    // {
-    //   id: 'devtools',
-    //   title: 'Developer Tools',
-    //   icon: () => <Ionicons name="code-slash" size={20} color={colors.primary} />,
-    //   type: 'navigation',
-    //   onPress: () => router.push('/devtools'),
-    // },
-    // {
-    //   id: 'test-notifications',
-    //   title: 'Test Push Notifications',
-    //   icon: () => <Ionicons name="bug" size={20} color={colors.primary} />,
-    //   type: 'navigation',
-    //   onPress: () => router.push('/test-notifications'),
-    // },
-  // ];
+  const settingsItems = [
+    {
+      id: 'test-notifications',
+      title: 'Test Push Notifications (Local)',
+      icon: () => <Ionicons name="bug-outline" size={20} color={colors.primary} />,
+      type: 'navigation' as const,
+      onPress: () => router.push('/test-notifications'),
+    },
+  ];
 
   const supportItems = [
     {
@@ -160,6 +129,67 @@ export default function AccountScreen() {
       console.error('Sign out error:', error);
     } finally {
       setSigningOut(false);
+    }
+  };
+
+  const fetchPushToken = async () => {
+    try {
+      setLoadingToken(true);
+      
+      if (!Device.isDevice) {
+        Alert.alert(
+          'Device Not Supported',
+          'Push notifications require a physical device. Please test on a real device.'
+        );
+        setLoadingToken(false);
+        return;
+      }
+
+      // Check permissions
+      const { status: existingStatus } = await Notifications.getPermissionsAsync();
+      let finalStatus = existingStatus;
+
+      if (existingStatus !== 'granted') {
+        const { status } = await Notifications.requestPermissionsAsync();
+        finalStatus = status;
+      }
+
+      if (finalStatus !== 'granted') {
+        Alert.alert(
+          'Permission Denied',
+          'Push notification permission is required. Please enable it in your device settings.'
+        );
+        setLoadingToken(false);
+        return;
+      }
+
+      // Get the push token
+      const projectId = Constants?.expoConfig?.extra?.eas?.projectId ?? Constants?.easConfig?.projectId;
+      const token = (await Notifications.getExpoPushTokenAsync({ projectId })).data;
+      setPushToken(token);
+      
+      // Copy to clipboard automatically
+      Clipboard.setString(token);
+      Alert.alert(
+        'Push Token Retrieved',
+        `Token copied to clipboard:\n\n${token}`,
+        [{ text: 'OK' }]
+      );
+    } catch (error: any) {
+      console.error('Error fetching push token:', error);
+      Alert.alert(
+        'Error',
+        `Failed to get push token: ${error.message || 'Unknown error'}`
+      );
+    } finally {
+      setLoadingToken(false);
+    }
+  };
+
+  const copyPushTokenToClipboard = () => {
+    if (pushToken) {
+      Clipboard.setString(pushToken);
+      Alert.alert('Copied!', 'Push token copied to clipboard.', [{ text: 'OK' }]);
     }
   };
 
@@ -222,12 +252,54 @@ export default function AccountScreen() {
             </View>
 
             {/* Developer Tools - Always visible */}
-            {/* <View style={styles.section}>
-              <Text style={[styles.sectionTitle, { color: colors.text }]}>Developer Tools</Text>
+            <View style={styles.section}>
+              {/* <Text style={[styles.sectionTitle, { color: colors.text }]}>Developer Tools</Text>
               <View style={[styles.menuContainer, { backgroundColor: colors.surface }]}>
                 {settingsItems.map(renderSettingsItem)}
-              </View>
-            </View> */}
+              </View> */}
+              
+              {/* Push Token Display */}
+              {/* <View style={[styles.pushTokenContainer, { backgroundColor: colors.surface, marginTop: 16 }]}>
+                <View style={styles.pushTokenHeader}>
+                  <Ionicons name="scan" size={20} color={colors.primary} />
+                  <Text style={[styles.pushTokenTitle, { color: colors.text }]}>Expo Push Token</Text>
+                </View>
+                <Text style={[styles.pushTokenDescription, { color: colors.textSecondary }]}>
+                  Use this token to send targeted push notifications to this device from your admin panel.
+                </Text>
+                
+                {pushToken ? (
+                  <View style={[styles.tokenDisplay, { backgroundColor: colors.background, borderColor: colors.border }]}>
+                    <Text style={[styles.tokenText, { color: colors.text }]} numberOfLines={3}>
+                      {pushToken}
+                    </Text>
+                    <TouchableOpacity 
+                      style={[styles.copyButton, { backgroundColor: colors.primary }]}
+                      onPress={copyPushTokenToClipboard}
+                    >
+                      <Ionicons name="copy-outline" size={18} color={colors.white} />
+                    </TouchableOpacity>
+                  </View>
+                ) : (
+                  <TouchableOpacity 
+                    style={[styles.getTokenButton, { backgroundColor: colors.primary }]}
+                    onPress={fetchPushToken}
+                    disabled={loadingToken}
+                  >
+                    {loadingToken ? (
+                      <ActivityIndicator size="small" color={colors.white} />
+                    ) : (
+                      <>
+                        <Ionicons name="download-outline" size={18} color={colors.white} />
+                        <Text style={[styles.getTokenButtonText, { color: colors.white }]}>
+                          Get Push Token
+                        </Text>
+                      </>
+                    )}
+                  </TouchableOpacity>
+                )}
+              </View> */}
+            </View>
 
             {isAuthenticated && userDetails ? (
               <>
@@ -662,6 +734,60 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 16,
     fontSize: 16,
+    fontWeight: '600',
+  },
+  // Push Token Display styles
+  pushTokenContainer: {
+    marginHorizontal: 20,
+    borderRadius: 16,
+    padding: 16,
+    overflow: 'hidden',
+  },
+  pushTokenHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 8,
+  },
+  pushTokenTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  pushTokenDescription: {
+    fontSize: 13,
+    lineHeight: 18,
+    marginBottom: 12,
+  },
+  tokenDisplay: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 8,
+    borderWidth: 1,
+    padding: 12,
+    gap: 8,
+  },
+  tokenText: {
+    flex: 1,
+    fontSize: 12,
+    fontFamily: 'monospace',
+  },
+  copyButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  getTokenButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    borderRadius: 8,
+    gap: 8,
+  },
+  getTokenButtonText: {
+    fontSize: 14,
     fontWeight: '600',
   },
 });

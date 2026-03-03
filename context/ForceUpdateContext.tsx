@@ -55,23 +55,23 @@ const FORCE_UPDATE_CONFIG = {
    *
    * TO ENABLE: Change to '2.3.0' after native build is live
    */
-  minimumVersion: '2.3.0', // Production: matches current store version
+  minimumVersion: '2.5.0', // Production: matches current store version
 
   /**
    * Enable/disable the forced update check
    * Set to false to disable the gatekeeper temporarily
    *
    * ⚠️ PRODUCTION: false (disabled until store approval)
-   * ✅ CURRENT: true (ENABLED FOR TESTING)
+   * ✅ CURRENT: false (DISABLED FOR TESTING)
    *
    * TO ENABLE: Change to true after native build is live
    */
-  enabled: true, // Production: disabled by default
+  enabled: false, // Production: disabled by default
 
   /**
    * Custom message shown to users
    */
-  updateMessage: 'We\'ve rebranded! Please update to the latest version to continue using the app.',
+  updateMessage: 'Please update to the latest version to continue using the app.',
 
   /**
    * App Store URLs for your app

@@ -9,7 +9,6 @@ import {
   StatusBar,
   ScrollView,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { Download, Apple, Play, HelpCircle } from 'lucide-react-native';
 import { useForceUpdate } from '@/context/ForceUpdateContext';
 
@@ -50,13 +49,14 @@ export default function ForceUpdateScreen() {
   const isIOS = Platform.OS === 'ios';
 
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
+    <View style={styles.overlay}>
       <StatusBar hidden />
 
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
       >
         {/* Main Content */}
         <View style={styles.content}>
@@ -107,7 +107,7 @@ export default function ForceUpdateScreen() {
           </TouchableOpacity>
 
           {/* Help Link */}
-          <TouchableOpacity
+          {/* <TouchableOpacity
             style={styles.helpButton}
             onPress={async () => {
               await Linking.openURL('https://femtechit.com/support');
@@ -117,9 +117,9 @@ export default function ForceUpdateScreen() {
               <HelpCircle size={18} color="#4A90E2" strokeWidth={2} />
               <Text style={styles.helpButtonText}>Need Help?</Text>
             </View>
-          </TouchableOpacity>
+          </TouchableOpacity> */}
 
-          {/* DEV ONLY: Dismiss button for testing */}
+          {/* DEV ONLY: Dismiss button for testing
           {__DEV__ && (
             <TouchableOpacity
               style={styles.dismissButton}
@@ -127,7 +127,7 @@ export default function ForceUpdateScreen() {
             >
               <Text style={styles.dismissButtonText}>[DEV] Dismiss for Testing</Text>
             </TouchableOpacity>
-          )}
+          )} */}
         </View>
 
         {/* Footer */}
@@ -137,14 +137,16 @@ export default function ForceUpdateScreen() {
           </Text>
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
     backgroundColor: '#F8F9FE',
+    zIndex: 9999,
+    elevation: 9999,
   },
   scrollView: {
     flex: 1,
@@ -152,6 +154,7 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
     justifyContent: 'center',
+    minHeight: '100%',
   },
   content: {
     flex: 1,

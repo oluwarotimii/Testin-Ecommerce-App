@@ -20,24 +20,22 @@ function AppContent() {
   const { colorScheme } = useTheme();
 
   return (
-    <ForceUpdateProvider>
-      <CacheProvider>
-        <AuthProvider>
-          <CartProvider>
-            <NetworkProvider>
-              <View style={{ flex: 1 }}>
-                <Stack screenOptions={{ headerShown: false }}>
-                  <Stack.Screen name="+not-found" />
-                </Stack>
-                <FloatingCartButton />
-                <ForceUpdateScreen />
-                <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
-              </View>
-            </NetworkProvider>
-          </CartProvider>
-        </AuthProvider>
-      </CacheProvider>
-    </ForceUpdateProvider>
+    <CacheProvider>
+      <AuthProvider>
+        <CartProvider>
+          <NetworkProvider>
+            <View style={{ flex: 1 }}>
+              <Stack screenOptions={{ headerShown: false }}>
+                <Stack.Screen name="+not-found" />
+              </Stack>
+              <FloatingCartButton />
+              <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
+              <ForceUpdateScreen />
+            </View>
+          </NetworkProvider>
+        </CartProvider>
+      </AuthProvider>
+    </CacheProvider>
   );
 }
 
@@ -115,7 +113,9 @@ export default function RootLayout() {
 
   return (
     <ThemeProvider>
-      <AppContent />
+      <ForceUpdateProvider>
+        <AppContent />
+      </ForceUpdateProvider>
     </ThemeProvider>
   );
 }
