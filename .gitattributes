@@ -1,0 +1,17 @@
+# Normalize line endings and text files
+* text=auto eol=lf
+
+# Ensure shell scripts stay executable
+*.sh text eol=lf
+
+# Binary files
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.svg binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.eot binary
