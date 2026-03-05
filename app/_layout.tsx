@@ -16,7 +16,6 @@ import { ForceUpdateProvider } from '@/context/ForceUpdateContext';
 import FloatingCartButton from '@/components/FloatingCartButton';
 import ForceUpdateScreen from '@/components/ForceUpdateScreen';
 import * as Notifications from 'expo-notifications';
-import * as Linking from 'expo-linking';
 
 function AppContent() {
   const { colorScheme } = useTheme();
@@ -112,43 +111,30 @@ export default function RootLayout() {
     initNotifications();
 
     // CRITICAL: Check for initial notification (app was completely closed)
-    // This handles the case when user taps notification while app is idle/killed
+    // Using getLastNotificationResponseAsync() - the correct API for cold starts
     const checkInitialNotification = async () => {
       try {
-        // Method 1: Try expo-notifications initial notification
-        const initialNotification = await Notifications.getInitialNotificationAsync();
-        console.log('Initial notification check:', initialNotification ? 'FOUND' : 'NOT FOUND');
+        console.log('🔍 Checking for cold start notification...');
         
-        if (initialNotification) {
-          console.log('🔔 App launched from notification:', JSON.stringify(initialNotification, null, 2));
-          const notificationData = initialNotification.request.content.data || {};
+        // This is the CORRECT API for catching notifications that launched the app
+        const response = await Notifications.getLastNotificationResponseAsync();
+        console.log('getLastNotificationResponseAsync result:', response ? 'FOUND' : 'NOT FOUND');
+        
+        if (response) {
+          console.log('🔔 App launched from notification tap (cold start)');
+          console.log('📊 Full response:', JSON.stringify(response, null, 2));
+          
+          const notificationData = response.notification?.request?.content?.data || {};
           console.log('📊 Notification data:', JSON.stringify(notificationData, null, 2));
           
-          // Wait for router to be ready
+          // Wait for router/navigation to be ready
           await new Promise(resolve => setTimeout(resolve, 1000));
+          
           handleNotificationNavigation(notificationData);
           return;
         }
 
-        // Method 2: Try Linking initial URL (for expo-router deep links)
-        const initialUrl = await Linking.getInitialURL();
-        console.log('Initial URL check:', initialUrl || 'NOT FOUND');
-        
-        if (initialUrl) {
-          console.log('🔗 App launched from URL:', initialUrl);
-          // Parse the URL to extract notification data if it contains deep link params
-          const url = new URL(initialUrl);
-          const linkType = url.searchParams.get('linkType');
-          const linkValue = url.searchParams.get('linkValue');
-          
-          if (linkType && linkValue) {
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            handleNotificationNavigation({ linkType, linkValue });
-            return;
-          }
-        }
-
-        console.log('✅ No initial notification or deep link found - normal app launch');
+        console.log('✅ No cold start notification - normal app launch');
       } catch (error) {
         console.error('❌ Error checking initial notification:', error);
       }
@@ -156,11 +142,11 @@ export default function RootLayout() {
 
     checkInitialNotification();
 
-    // Setup notification listeners with navigation callback
+    // Setup notification listeners with navigation callback (for when app is already running)
     const cleanup = notificationService.setupNotificationListeners((response) => {
-      console.log('🔔 Notification tapped (app already running):', JSON.stringify(response, null, 2));
+      console.log('🔔 Notification tapped (app already running)');
+      console.log('📊 Notification data:', JSON.stringify(response?.notification?.request?.content?.data, null, 2));
       const notificationData = response?.notification?.request?.content?.data || {};
-      console.log('📊 Notification data:', JSON.stringify(notificationData, null, 2));
       handleNotificationNavigation(notificationData);
     });
 

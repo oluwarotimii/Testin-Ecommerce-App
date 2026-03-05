@@ -55,7 +55,7 @@ const FORCE_UPDATE_CONFIG = {
    *
    * TO ENABLE: Change to '2.3.0' after native build is live
    */
-  minimumVersion: '2.5.0', // Production: matches current store version
+  minimumVersion: '2.0.0', // Production: matches current store version
 
   /**
    * Enable/disable the forced update check

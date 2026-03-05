@@ -252,14 +252,14 @@ export default function AccountScreen() {
             </View>
 
             {/* Developer Tools - Always visible */}
-            <View style={styles.section}>
+            {/* <View style={styles.section}>
               <Text style={[styles.sectionTitle, { color: colors.text }]}>Developer Tools</Text>
               <View style={[styles.menuContainer, { backgroundColor: colors.surface }]}>
                 {settingsItems.map(renderSettingsItem)}
               </View>
               
               {/* Push Token Display */}
-              <View style={[styles.pushTokenContainer, { backgroundColor: colors.surface, marginTop: 16 }]}>
+              {/* <View style={[styles.pushTokenContainer, { backgroundColor: colors.surface, marginTop: 16 }]}>
                 <View style={styles.pushTokenHeader}>
                   <Ionicons name="scan" size={20} color={colors.primary} />
                   <Text style={[styles.pushTokenTitle, { color: colors.text }]}>Expo Push Token</Text>
@@ -298,8 +298,8 @@ export default function AccountScreen() {
                     )}
                   </TouchableOpacity>
                 )}
-              </View>
-            </View>
+              </View> */}
+            {/* </View> */} 
 
             {isAuthenticated && userDetails ? (
               <>
@@ -403,7 +403,7 @@ export default function AccountScreen() {
 
         {/* App Version */}
         <View style={styles.footer}>
-          <Text style={[styles.versionText, { color: colors.textSecondary }]}>Femtech Mobile App v2.44.0</Text>
+          <Text style={[styles.versionText, { color: colors.textSecondary }]}>Femtech Mobile App v3.0.0</Text>
         </View>
       </ScrollView>
 
