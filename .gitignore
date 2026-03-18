@@ -1,39 +1,101 @@
-# dependencies
+# Dependencies
 node_modules/
+.pnp
+.pnp.js
 
-# expo
+# Expo
 .expo/
 dist/
 web-build/
 expo-env.d.ts
-
-# native
 *.orig.*
+
+# Native builds
 *.jks
 *.p8
 *.p12
 *.key
 *.mobileprovision
+*.orig.*
+*.apk
+*.aab
+*.ipa
 
-# metro
+# Metro
 .metro-health-check*
 
-.qwen
+# Testing
+coverage/
 
-# debug
+# TypeScript
+*.tsbuildinfo
+
+# Debug logs
 npm-debug.*
 yarn-debug.*
 yarn-error.*
 
-# macos
+# macOS
 .DS_Store
 *.pem
+*.swp
+*~
 
-# local env files
-.env*.local
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# IDE
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+
+# Environment variables
 .env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
 
-# typescript
-*.tsbuildinfo
+# Secrets and credentials
+*.pem
+*.key
+*.cert
+*.p12
+*.pfx
 
+# Qwen
+.qwen/
 
+# Temporary files
+*.log
+*.tmp
+*.temp
+
+# Cache
+.cache/
+.parcel-cache/
+.eslintcache
+
+# Build outputs
+build/
+.next/
+out/
+
+# EAS Build
+.eas-build/
+
+# Sentry
+.sentryclirc
+
+# Firebase
+firebase-debug.log
+firestore-debug.log
+
+# Playwright
+playwright-report/
+playwright/.cache/

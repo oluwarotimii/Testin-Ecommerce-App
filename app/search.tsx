@@ -196,7 +196,7 @@ export default function SearchScreen() {
                     <Text style={[styles.resultName, { color: colors.text }]} numberOfLines={2}>{product.title}</Text>
                     <Text style={styles.resultCategory}>{product.category}</Text>
                   </View>
-                  <Text style={[styles.resultPrice, { color: '#FFA500' }]}>
+                  <Text style={[styles.resultPrice, { color: '#042861' }]}>
                     {formatPrice(typeof product.price === 'number' ? product.price : parseFloat(product.price || '0'))}
                   </Text>
                 </View>
@@ -292,7 +292,7 @@ const styles = StyleSheet.create({
   },
   cancelButton: {
     fontSize: 16,
-    color: '#007AFF',
+    color: '#042861',
     fontWeight: '500',
   },
   content: {
@@ -315,7 +315,7 @@ const styles = StyleSheet.create({
   },
   clearButton: {
     fontSize: 14,
-    color: '#007AFF',
+    color: '#042861',
     fontWeight: '500',
   },
   searchItem: {
@@ -378,7 +378,7 @@ const styles = StyleSheet.create({
   resultPrice: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#007AFF',
+    color: '#042861',
   },
   noResultsText: {
     textAlign: 'center',

@@ -232,7 +232,7 @@ export default function OrderDetailsScreen() {
                       Qty: {item.quantity}
                     </Text>
                   </View>
-                  <Text style={[styles.itemPrice, { color: '#FFA500' }]}>
+                  <Text style={[styles.itemPrice, { color: '#042861' }]}>
                     ₦{formatPrice(item.price * item.quantity)}
                   </Text>
                 </View>
@@ -263,7 +263,7 @@ export default function OrderDetailsScreen() {
             <View style={[styles.divider, { backgroundColor: colors.border }]} />
             <View style={styles.summaryRow}>
               <Text style={[styles.totalLabel, { color: colors.text }]}>Total</Text>
-              <Text style={[styles.totalValue, { color: '#FFA500' }]}>₦{formatPrice(order.total)}</Text>
+              <Text style={[styles.totalValue, { color: '#042861' }]}>₦{formatPrice(order.total)}</Text>
             </View>
           </View>
         </View>

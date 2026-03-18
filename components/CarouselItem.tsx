@@ -28,7 +28,7 @@ export default function CarouselItem({ item, onPress }: CarouselItemProps) {
     >
       <View style={styles.imageContainer}>
         {item.imageUrl ? (
-          <SafeImage source={{ uri: item.imageUrl }} style={styles.image} />
+          <SafeImage source={{ uri: item.imageUrl }} style={styles.image} resizeMode="cover" />
         ) : (
           <View style={[styles.placeholderImage, { backgroundColor: colors.surface }]} />
         )}
@@ -59,7 +59,6 @@ const styles = StyleSheet.create({
   image: {
     width: '100%',
     height: '100%',
-    resizeMode: 'cover',
   },
   placeholderImage: {
     width: '100%',

@@ -81,17 +81,17 @@ export default function FilterModal({
             <View style={styles.section}>
               <Text style={[styles.sectionTitle, { color: '#FF0000' }]}>Price Range</Text>
               <View style={styles.priceDisplay}>
-                <Text style={[styles.priceText, { color: '#FFA500' }]}>
+                <Text style={[styles.priceText, { color: '#042861' }]}>
                   ₦{minPrice.toFixed(0)}
                 </Text>
                 <Text style={[styles.priceText, { color: colors.textSecondary }]}>-</Text>
-                <Text style={[styles.priceText, { color: '#FFA500' }]}>
+                <Text style={[styles.priceText, { color: '#042861' }]}>
                   ₦{maxPrice.toFixed(0)}
                 </Text>
               </View>
-              
+
               {/* Min Price Slider */}
-              <Text style={[styles.sliderLabel, { color: '#FFA500' }]}>Minimum Price</Text>
+              <Text style={[styles.sliderLabel, { color: '#042861' }]}>Minimum Price</Text>
               <Slider
                 style={styles.slider}
                 minimumValue={0}

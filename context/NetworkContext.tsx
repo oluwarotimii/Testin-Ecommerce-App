@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import NetInfo from '@react-native-community/netinfo';
+import { Platform } from 'react-native';
 
 interface NetworkContextType {
   isConnected: boolean;
@@ -16,6 +17,31 @@ export const NetworkProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const [networkType, setNetworkType] = useState<string | null>(null);
 
   useEffect(() => {
+    // Web — use native browser events instead of NetInfo
+    if (Platform.OS === 'web') {
+      const handleOnline = () => {
+        setIsConnected(true);
+        setIsInternetReachable(true);
+      };
+      const handleOffline = () => {
+        setIsConnected(false);
+        setIsInternetReachable(false);
+      };
+
+      // Set initial state from browser
+      setIsConnected(navigator.onLine);
+      setIsInternetReachable(navigator.onLine);
+
+      window.addEventListener('online', handleOnline);
+      window.addEventListener('offline', handleOffline);
+
+      return () => {
+        window.removeEventListener('online', handleOnline);
+        window.removeEventListener('offline', handleOffline);
+      };
+    }
+
+    // Mobile — use NetInfo as before
     const unsubscribe = NetInfo.addEventListener(state => {
       setIsConnected(!!state.isConnected);
       setIsInternetReachable(!!state.isInternetReachable);
@@ -26,6 +52,12 @@ export const NetworkProvider: React.FC<{ children: React.ReactNode }> = ({ child
   }, []);
 
   const checkConnectivity = async (): Promise<boolean> => {
+    // Web — trust the browser's navigator.onLine
+    if (Platform.OS === 'web') {
+      return navigator.onLine;
+    }
+
+    // Mobile — use NetInfo as before
     const state = await NetInfo.fetch();
     return !!state.isConnected && !!state.isInternetReachable;
   };

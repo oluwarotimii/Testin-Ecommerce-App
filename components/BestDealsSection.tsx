@@ -113,7 +113,7 @@ export default function BestDealsSection({
                 <Text style={[styles.productName, { color: colors.text }]} numberOfLines={2}>{item.title}</Text>
                 <View style={styles.priceRow}>
                     <Text style={[styles.originalPrice, { color: colors.textSecondary }]}>{formatPrice((typeof item.price === 'number' ? item.price : parseFloat(item.price || '0')) * 1.3)}</Text>
-                    <Text style={[styles.productPrice, { color: '#FFA500' }]}>{formatPrice(typeof item.price === 'number' ? item.price : parseFloat(item.price || '0'))}</Text>
+                    <Text style={[styles.productPrice, { color: '#042861' }]}>{formatPrice(typeof item.price === 'number' ? item.price : parseFloat(item.price || '0'))}</Text>
                 </View>
             </View>
         </TouchableOpacity>

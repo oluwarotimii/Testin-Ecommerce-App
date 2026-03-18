@@ -73,7 +73,7 @@ export default function ProductCard({ product, onPress, isLiked, onToggleWishlis
                 <View style={styles.priceContainer}>
                     <View>
                         <Text style={[styles.originalPrice, { color: colors.textSecondary }]}>{formatPrice(originalPrice)}</Text>
-                        <Text style={[styles.productPrice, { color: '#FFA500' }]}>{formatPrice(price)}</Text>
+                        <Text style={[styles.productPrice, { color: '#042861' }]}>{formatPrice(price)}</Text>
                     </View>
                 </View>
             </View>

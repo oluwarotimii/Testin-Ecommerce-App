@@ -139,7 +139,7 @@ export default function CartScreen() {
             <SafeImage source={{ uri: item.image }} style={styles.itemImage} />
             <View style={styles.itemDetails}>
               <Text style={[styles.itemName, { color: colors.text }]} numberOfLines={2}>{item.title}</Text>
-              <Text style={[styles.itemPrice, { color: '#FFA500' }]}>{formatPrice(typeof item.price === 'number' ? item.price : parseFloat(item.price || '0'))}</Text>
+              <Text style={[styles.itemPrice, { color: '#042861' }]}>{formatPrice(typeof item.price === 'number' ? item.price : parseFloat(item.price || '0'))}</Text>
             </View>
             <View style={styles.itemActions}>
               <View style={[styles.quantityContainer, { backgroundColor: colors.background, borderColor: colors.border }]}>

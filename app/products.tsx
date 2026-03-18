@@ -353,7 +353,7 @@ export default function ProductsScreen() {
             </View> */}
             <View style={styles.priceContainer}>
               <Text style={[styles.originalPrice, { color: colors.textSecondary }]}>{formatPrice((typeof product.price === 'number' ? product.price : parseFloat(product.price || '0')) * 1.3)}</Text>
-              <Text style={[styles.price, { color: '#FFA500' }]}>{formatPrice(typeof product.price === 'number' ? product.price : parseFloat(product.price || '0'))}</Text>
+              <Text style={[styles.price, { color: '#042861' }]}>{formatPrice(typeof product.price === 'number' ? product.price : parseFloat(product.price || '0'))}</Text>
             </View>
           </View>
           <View style={styles.listProductActions}>

@@ -347,6 +347,7 @@ export default function ProductDetailScreen() {
               key={`main-image-${selectedImage}`} // Add key to force re-render when selected image changes
               source={{ uri: getCurrentImageUrl() }}
               style={[styles.mainProductImage, { backgroundColor: colors.background }]}
+              resizeMode="contain"
               // Add error handling to log issues
               onError={(error) => console.error("Main image error:", error)}
             />
@@ -389,6 +390,7 @@ export default function ProductDetailScreen() {
                     <SafeImage
                       source={{ uri: image }}
                       style={[styles.thumbnailImage, { backgroundColor: colors.background }]}
+                      resizeMode="cover"
                     />
                   </TouchableOpacity>
                 ))}
@@ -407,7 +409,7 @@ export default function ProductDetailScreen() {
 
           {/* Price */}
           <View style={styles.priceSection}>
-            <Text style={[styles.currentPrice, { color: '#FFA500' }]}>{formatPrice(typeof product.price === 'number' ? product.price : parseFloat(product.price || '0'))}</Text>
+            <Text style={[styles.currentPrice, { color: '#042861' }]}>{formatPrice(typeof product.price === 'number' ? product.price : parseFloat(product.price || '0'))}</Text>
           </View>
 
           {/* Description */}
@@ -480,7 +482,7 @@ export default function ProductDetailScreen() {
                   </View>
                   <View style={styles.similarProductInfoHorizontal}>
                     <Text style={[styles.similarProductName, { color: colors.text }]} numberOfLines={2}>{item.title}</Text>
-                    <Text style={[styles.similarProductPrice, { color: '#FFA500' }]}>{formatPrice(typeof item.price === 'number' ? item.price : parseFloat(item.price || '0'))}</Text>
+                    <Text style={[styles.similarProductPrice, { color: '#042861' }]}>{formatPrice(typeof item.price === 'number' ? item.price : parseFloat(item.price || '0'))}</Text>
                   </View>
                 </TouchableOpacity>
               ))}
@@ -553,7 +555,6 @@ const styles = StyleSheet.create({
     height: width * 0.85,
     maxWidth: 350,
     maxHeight: 350,
-    resizeMode: 'contain',
     borderRadius: 12,
   },
   mainProductImage: {
@@ -561,7 +562,6 @@ const styles = StyleSheet.create({
     height: width * 0.85,
     maxWidth: 350,
     maxHeight: 350,
-    resizeMode: 'contain',
     borderRadius: 12,
   },
   thumbnailContainer: {
@@ -582,12 +582,11 @@ const styles = StyleSheet.create({
     borderColor: 'transparent',
   },
   selectedThumbnail: {
-    borderColor: '#007AFF', // iOS blue selection color
+    borderColor: '#042861',
   },
   thumbnailImage: {
     width: '100%',
     height: '100%',
-    resizeMode: 'cover',
   },
   productInfoContainer: {
     marginTop: 10,

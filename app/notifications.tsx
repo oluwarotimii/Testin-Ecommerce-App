@@ -52,9 +52,9 @@ export default function NotificationsScreen() {
       case 'order':
         return <Ionicons name="cube" size={20} color={colors.primary} />;
       case 'promotion':
-        return <Ionicons name="pricetag" size={20} color="#FFA500" />;
+        return <Ionicons name="pricetag" size={20} color="#042861" />;
       case 'system':
-        return <Ionicons name="information-circle" size={20} color="#007AFF" />;
+        return <Ionicons name="information-circle" size={20} color="#042861" />;
       default:
         return <Ionicons name="notifications" size={20} color={colors.primary} />;
     }

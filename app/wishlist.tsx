@@ -148,7 +148,7 @@ export default function WishlistScreen() {
                 <View style={styles.gridInfo}>
                   <Text style={[styles.gridName, { color: colors.text }]} numberOfLines={2}>{productName}</Text>
                   <View style={styles.gridPriceRow}>
-                    <Text style={[styles.gridPrice, { color: '#FFA500' }]}>₦{formattedPrice}</Text>
+                    <Text style={[styles.gridPrice, { color: '#042861' }]}>₦{formattedPrice}</Text>
                   </View>
                 </View>
               </View>
@@ -216,7 +216,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#007AFF', // Default primary color
+    backgroundColor: '#042861',
   },
   gridImage: {
     width: '100%',

@@ -26,21 +26,22 @@ export default function WelcomeScreen() {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-      <View style={styles.header}>
-        <View style={styles.iconContainer}>
-          <Image
-            source={require('@/assets/images/icon.png')}
-            style={styles.appIcon}
-            resizeMode="contain"
-          />
+      <View style={styles.contentContainer}>
+        <View style={styles.header}>
+          <View style={styles.iconContainer}>
+            <Image
+              source={require('@/assets/images/icon.png')}
+              style={styles.appIcon}
+              resizeMode="contain"
+            />
+          </View>
+          <Text style={[styles.title, { color: colors.text }]}>Welcome to Femtech Mobile App</Text>
+          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
+            Discover cutting-edge technology and enjoy seamless shopping experience
+          </Text>
         </View>
-        <Text style={[styles.title, { color: colors.text }]}>Welcome to Femtech Mobile App</Text>
-        <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-          Discover cutting-edge technology and enjoy seamless shopping experience
-        </Text>
-      </View>
 
-      <View style={styles.buttonContainer}>
+        <View style={styles.buttonContainer}>
         <TouchableOpacity
           style={[styles.primaryButton, { backgroundColor: colors.primary }]}
           onPress={handleLogin}
@@ -63,6 +64,7 @@ export default function WelcomeScreen() {
         >
           <Text style={[styles.guestButtonText, { color: colors.textSecondary }]}>Continue as Guest</Text>
         </TouchableOpacity>
+        </View>
       </View>
     </SafeAreaView>
   );
@@ -72,6 +74,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     paddingHorizontal: 32,
+  },
+  contentContainer: {
+    flex: 1,
     justifyContent: 'center',
   },
   header: {

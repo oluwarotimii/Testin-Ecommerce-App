@@ -41,17 +41,15 @@ export async function fetchCarousels(limit: number = 10): Promise<CarouselItem[]
 
         return data.data || [];
     } catch (error: any) {
-        console.error('Error fetching carousels:', error.message, error.stack);
-
-        // Check if it's a network error specifically
-        if (error.name === 'AbortError') {
-            console.log('Carousel request timed out');
-        } else if (error.message?.includes('Network request failed')) {
-            console.log('Network error occurred while fetching carousels');
+        // Silently handle network errors in development - fallback will be used
+        const isDevelopment = __DEV__;
+        if (!isDevelopment || error.message?.includes('CORS') || error.message?.includes('Failed to fetch')) {
+            console.log('Carousel: Using fallback items (API unavailable)');
+        } else {
+            console.error('Error fetching carousels:', error.message);
         }
 
         // Return fallback carousel items if API fails
-        console.log('Returning fallback carousel items');
         return [
             {
                 id: 1,

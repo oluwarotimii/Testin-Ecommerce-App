@@ -73,7 +73,7 @@ export default function NotificationBanner({
   const getIcon = () => {
     switch (type) {
       case 'info':
-        return <Ionicons name="information-circle" size={20} color="#007AFF" />;
+        return <Ionicons name="information-circle" size={20} color="#042861" />;
       case 'warning':
         return <Ionicons name="alert-circle" size={20} color="#FF9500" />;
       case 'success':
@@ -81,14 +81,14 @@ export default function NotificationBanner({
       case 'error':
         return <Ionicons name="close-circle" size={20} color="#FF3B30" />;
       default:
-        return <Ionicons name="information-circle" size={20} color="#007AFF" />;
+        return <Ionicons name="information-circle" size={20} color="#042861" />;
     }
   };
 
   const getBackgroundColor = () => {
     switch (type) {
       case 'info':
-        return '#007AFF15';
+        return '#04286115';
       case 'warning':
         return '#FF950015';
       case 'success':
@@ -96,14 +96,14 @@ export default function NotificationBanner({
       case 'error':
         return '#FF3B3015';
       default:
-        return '#007AFF15';
+        return '#04286115';
     }
   };
 
   const getBorderColor = () => {
     switch (type) {
       case 'info':
-        return '#007AFF';
+        return '#042861';
       case 'warning':
         return '#FF9500';
       case 'success':
@@ -111,7 +111,7 @@ export default function NotificationBanner({
       case 'error':
         return '#FF3B30';
       default:
-        return '#007AFF';
+        return '#042861';
     }
   };
 

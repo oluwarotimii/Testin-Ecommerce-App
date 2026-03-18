@@ -131,15 +131,20 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   contentContainer: {
+    flexGrow: 1,
+    justifyContent: 'center',
     paddingHorizontal: 32,
-    paddingTop: 10,
-    paddingBottom: 32,
+    paddingVertical: 32,
   },
   backButton: {
-    marginBottom: 82,
+    position: 'absolute',
+    top: 16,
+    left: 16,
+    zIndex: 10,
   },
   header: {
     marginBottom: 40,
+    alignItems: 'center',
   },
   title: {
     fontSize: 32,
@@ -157,6 +162,7 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     fontSize: 16,
+    textAlign: 'center',
   },
   form: {
     marginBottom: 32,
