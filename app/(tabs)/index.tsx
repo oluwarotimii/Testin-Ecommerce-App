@@ -19,6 +19,7 @@ import { fetchCarousels } from '@/services/carousel';
 import BestDealsSection from '@/components/BestDealsSection';
 import ProductCard from '@/components/ProductCard';
 import NetworkError from '@/components/NetworkError';
+import { FEATURED_PRODUCTS_LIMIT } from '@/services/config';
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -26,21 +27,34 @@ export default function HomeScreen() {
   const { apiService, user, isAuthenticated } = useAuth();
   const { setCartCount } = useCart();
   const { isConnected, isInternetReachable, checkConnectivity } = useNetwork();
+  
+  // Carousel state
   const [loadingCarousel, setLoadingCarousel] = useState(true);
   const [carouselItems, setCarouselItems] = useState<any[]>([]);
+  const [carouselError, setCarouselError] = useState<string | null>(null);
+  
+  // Categories state
   const [categories, setCategories] = useState<any[]>([]);
   const [loadingCategories, setLoadingCategories] = useState(true);
   const [errorCategories, setErrorCategories] = useState<string | null>(null);
+  
+  // Products state
   const [products, setProducts] = useState<any[]>([]);
   const [loadingProducts, setLoadingProducts] = useState(true);
   const [errorProducts, setErrorProducts] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [hasMoreProducts, setHasMoreProducts] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
+
+  // Refresh and wishlist state
   const [refreshing, setRefreshing] = useState(false);
   const [wishlist, setWishlist] = useState<number[]>([]);
-  const [carouselError, setCarouselError] = useState<string | null>(null);
   const [cartSuccess, setCartSuccess] = useState<{ [key: number]: boolean }>({});
+
+  // OPTIMIZED: Featured products state
+  const [featuredProducts, setFeaturedProducts] = useState<any[]>([]);
+  const [loadingFeatured, setLoadingFeatured] = useState(true);
+  const [errorFeatured, setErrorFeatured] = useState<string | null>(null);
 
   const fetchWishlist = useCallback(async () => {
     if (!apiService) return;
@@ -189,17 +203,93 @@ export default function HomeScreen() {
     }
   }, [checkConnectivity]); // Added checkConnectivity dependency
 
-  // OPTIMIZED: Fetch data only once when component mounts or when authentication changes
+  // OPTIMIZED: Fetch featured products with caching
+  // Strategy: Fetch once, cache the products directly (not category ID)
+  // This avoids repeated API calls and is more resilient
+  const fetchFeaturedProducts = useCallback(async () => {
+    if (!apiService) return;
+
+    // Don't show loading if we already have data (stale-while-revalidate)
+    if (featuredProducts.length === 0) {
+      setLoadingFeatured(true);
+    }
+    setErrorFeatured(null);
+
+    try {
+      // Try to fetch from 'daily-deals' category first
+      try {
+        const products = await apiService.getProducts({
+          category: 'daily-deals',  // Try slug first
+          per_page: FEATURED_PRODUCTS_LIMIT,
+          status: 'publish',
+        });
+
+        if (products && products.length > 0) {
+          const transformed = transformProducts(products);
+          setFeaturedProducts(transformed);
+          setLoadingFeatured(false);
+          return;
+        }
+      } catch (slugError) {
+        console.warn('Failed to fetch by slug, trying featured products:', slugError);
+      }
+
+      // Fallback: Fetch featured products
+      try {
+        const products = await apiService.getProducts({
+          featured: true,
+          per_page: FEATURED_PRODUCTS_LIMIT,
+          status: 'publish',
+        });
+
+        if (products && products.length > 0) {
+          const transformed = transformProducts(products);
+          setFeaturedProducts(transformed);
+          setLoadingFeatured(false);
+          return;
+        }
+      } catch (featuredError) {
+        console.warn('Failed to fetch featured products:', featuredError);
+      }
+
+      // Final fallback: Fetch latest products
+      const products = await apiService.getProducts({
+        per_page: FEATURED_PRODUCTS_LIMIT,
+        status: 'publish',
+        orderby: 'date',
+        order: 'desc',
+      });
+
+      const transformed = transformProducts(products);
+      setFeaturedProducts(transformed);
+
+    } catch (error: any) {
+      console.error('Error fetching featured products:', error);
+      // Silently fail - keep existing data if available
+      if (featuredProducts.length === 0) {
+        setErrorFeatured('Failed to load best deals');
+      }
+    } finally {
+      setLoadingFeatured(false);
+    }
+  }, [apiService, featuredProducts.length]);
+
+  // OPTIMIZED: Fetch ALL data in PARALLEL when component mounts
   useEffect(() => {
     if (apiService) {
-      fetchProducts();
-      fetchCategories();
+      // Parallel fetching - all data loads simultaneously
+      Promise.all([
+        fetchProducts(),
+        fetchCategories(),
+        fetchFeaturedProducts(),  // NEW: Parallel fetch
+        fetchCarouselItems(),
+      ]).catch(err => console.error('Parallel fetch error:', err));
+
       if (isAuthenticated) {
         fetchWishlist();
       }
     }
-    fetchCarouselItems();
-  }, [isAuthenticated]); // OPTIMIZED: Only depend on isAuthenticated, not on functions
+  }, [isAuthenticated, fetchFeaturedProducts]); // Added fetchFeaturedProducts
 
   // Commenting out duplicate notification setup - now handled in _layout.tsx
   // OPTIMIZED: Handle push notifications - run only once on mount
@@ -252,17 +342,21 @@ export default function HomeScreen() {
     // Check connectivity first
     const isOnline = await checkConnectivity();
     if (isOnline) {
-      await fetchProducts();
-      await fetchCategories();
+      // OPTIMIZED: Refresh all data in parallel
+      await Promise.all([
+        fetchProducts(),
+        fetchCategories(),
+        fetchFeaturedProducts(),  // NEW: Refresh featured products
+        fetchCarouselItems(),
+      ]);
       if (isAuthenticated) {
         await fetchWishlist();
       }
-      await fetchCarouselItems();
     } else {
       setErrorProducts('No internet connection. Please check your connection and try again.');
     }
     setRefreshing(false);
-  }, [isAuthenticated, checkConnectivity]); // Added checkConnectivity dependency
+  }, [isAuthenticated, checkConnectivity, fetchFeaturedProducts]); // Added checkConnectivity dependency
 
 
   const handleSeeAllProducts = () => {
@@ -504,8 +598,16 @@ export default function HomeScreen() {
           </View>
         </View>
 
-        {/* Best Deals (Trending) */}
-        <BestDealsSection wishlist={wishlist} toggleWishlist={toggleWishlist} />
+        {/* Best Deals (Trending) - OPTIMIZED: Now with props from parent */}
+        <BestDealsSection
+          featuredProducts={featuredProducts}
+          loadingFeatured={loadingFeatured}
+          errorFeatured={errorFeatured}
+          wishlist={wishlist}
+          toggleWishlist={toggleWishlist}
+          apiService={apiService}
+          onRefresh={fetchFeaturedProducts}
+        />
 
         {/* Marketing Banner */}
         <MarketingBanner />

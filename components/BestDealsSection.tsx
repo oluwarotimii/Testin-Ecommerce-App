@@ -1,94 +1,43 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, ScrollView } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import SafeImage from '@/components/SafeImage';
 import SkeletonProductItem from '@/components/SkeletonProductItem';
-import { useAuth } from '@/context/AuthContext';
 import { useCart } from '@/context/CartContext';
 import { useThemeColors } from '@/hooks/useColorScheme';
-import { transformProducts } from '@/utils/woocommerceTransformers';
 import { formatPrice } from '@/utils/formatNumber';
 
-interface BestDealsSectionProps {
-    wishlist: number[];
-    toggleWishlist: (productId: number) => Promise<void>;
+interface Product {
+    id: number;
+    title: string;
+    image: string;
+    price: string | number;
 }
 
-export default function BestDealsSection({ wishlist, toggleWishlist }: BestDealsSectionProps) {
+interface BestDealsSectionProps {
+    featuredProducts: Product[];
+    loadingFeatured: boolean;
+    errorFeatured: string | null;
+    wishlist: number[];
+    toggleWishlist: (productId: number) => Promise<void>;
+    onRefresh?: () => void;
+    apiService?: any;
+}
+
+export default function BestDealsSection({
+    featuredProducts,
+    loadingFeatured,
+    errorFeatured,
+    wishlist,
+    toggleWishlist,
+    onRefresh,
+    apiService,
+}: BestDealsSectionProps) {
     const router = useRouter();
     const colors = useThemeColors();
-    const { apiService, isAuthenticated } = useAuth();
     const { setCartCount } = useCart();
-
-    const [featuredProducts, setFeaturedProducts] = useState<any[]>([]);
-    const [loadingFeatured, setLoadingFeatured] = useState(true);
-    const [featuredCategoryId, setFeaturedCategoryId] = useState<number | null>(null);
     const [cartSuccess, setCartSuccess] = useState<{ [key: number]: boolean }>({});
-    const isFetching = useRef(false);
-
-    const fetchFeaturedCategory = useCallback(async (reset: boolean = false) => {
-        if (!apiService || isFetching.current) return;
-
-        isFetching.current = true;
-
-        if (reset) {
-            setLoadingFeatured(true);
-        }
-
-        try {
-            // Try to find 'daily-deals' category first
-            let categories = await apiService.getCategories({ slug: 'daily-deals' });
-
-            // If not found, fallback to first category
-            if (!categories || categories.length === 0) {
-                categories = await apiService.getCategories({ per_page: 1 });
-            }
-
-            if (categories && categories.length > 0) {
-                const category = categories[0];
-
-                if (reset) {
-                    setFeaturedCategoryId(category.id);
-                }
-
-                // Fetch ALL products for this category (no pagination)
-                const products = await apiService.getProducts({
-                    category: category.id,
-                    per_page: 100,  // Fetch all products in one request
-                });
-
-                const transformed = transformProducts(products);
-
-                if (reset) {
-                    setFeaturedProducts(transformed);
-                }
-            } else {
-                // If no category is found, fetch all products (no pagination)
-                const products = await apiService.getProducts({
-                    per_page: 100,  // Fetch all products in one request
-                });
-
-                const transformed = transformProducts(products);
-
-                if (reset) {
-                    setFeaturedProducts(transformed);
-                }
-            }
-        } catch (error) {
-            console.error('Error fetching featured category:', error);
-        } finally {
-            setLoadingFeatured(false);
-            isFetching.current = false;
-        }
-    }, [apiService]); // Simplified dependency array
-
-    // OPTIMIZED: Fetch only once on mount
-    useEffect(() => {
-        if (apiService) {
-            fetchFeaturedCategory(true); // Reset and load first page
-        }
-    }, [apiService]); // Only apiService as dependency
 
     // Render individual product item
     const renderProductItem = (item: any) => (
@@ -98,7 +47,11 @@ export default function BestDealsSection({ wishlist, toggleWishlist }: BestDeals
             onPress={() => router.push(`/product/${item.id}` as any)}
         >
             <View style={styles.productImageContainer}>
-                <SafeImage source={{ uri: item.image }} style={[styles.productImage, { backgroundColor: colors.background }]} />
+                {/* OPTIMIZED: Use WooCommerce thumbnail if available, fallback to regular image */}
+                <SafeImage 
+                    source={{ uri: item.thumbnail || item.image }} 
+                    style={[styles.productImage, { backgroundColor: colors.background }]} 
+                />
 
                 {/* Sales Badge */}
                 <View style={styles.saleBadge}>
@@ -171,6 +124,13 @@ export default function BestDealsSection({ wishlist, toggleWishlist }: BestDeals
             <View style={styles.section}>
                 <View style={styles.sectionHeader}>
                     <Text style={[styles.sectionTitle, { color: colors.text }]}>Best Deals</Text>
+                    <TouchableOpacity
+                        style={[styles.seeAllButton, { backgroundColor: colors.primary }]}
+                        onPress={onRefresh}
+                        disabled={true}
+                    >
+                        <Text style={[styles.seeAllButtonText, { color: colors.white }]}>See All</Text>
+                    </TouchableOpacity>
                 </View>
                 <View style={styles.productsGrid}>
                     <SkeletonProductItem viewMode="grid" />
@@ -180,6 +140,14 @@ export default function BestDealsSection({ wishlist, toggleWishlist }: BestDeals
                 </View>
             </View>
         );
+    }
+
+    // Show error state but don't block - just show empty
+    if (errorFeatured) {
+        console.warn('BestDealsSection error:', errorFeatured);
+        // Silently fail - don't show error UI, just empty state
+        // This provides better UX than an error message
+        return null;
     }
 
     if (featuredProducts.length === 0) {
@@ -192,7 +160,15 @@ export default function BestDealsSection({ wishlist, toggleWishlist }: BestDeals
                 <Text style={[styles.sectionTitle, { color: colors.text }]}>Best Deals</Text>
                 <TouchableOpacity
                     style={[styles.seeAllButton, { backgroundColor: colors.primary }]}
-                    onPress={() => featuredCategoryId ? router.push(`/category/${featuredCategoryId}` as any) : router.push('/products')}
+                    onPress={() => {
+                        // Navigate to first product's category if available, otherwise all products
+                        if (featuredProducts.length > 0 && featuredProducts[0].categories?.length > 0) {
+                            const categoryId = featuredProducts[0].categories[0].id;
+                            router.push(`/category/${categoryId}` as any);
+                        } else {
+                            router.push('/products');
+                        }
+                    }}
                 >
                     <Text style={[styles.seeAllButtonText, { color: colors.white }]}>See All</Text>
                 </TouchableOpacity>

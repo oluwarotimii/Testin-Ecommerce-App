@@ -18,6 +18,8 @@ expo-env.d.ts
 # metro
 .metro-health-check*
 
+.qwen
+
 # debug
 npm-debug.*
 yarn-debug.*
