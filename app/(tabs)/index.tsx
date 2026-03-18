@@ -64,7 +64,7 @@ export default function HomeScreen() {
     } catch (error) {
       console.error('Error fetching wishlist:', error);
     }
-  }, []); 
+  }, [apiService]); 
 
   const fetchProducts = useCallback(async () => {
     if (!apiService) return;
@@ -98,7 +98,7 @@ export default function HomeScreen() {
     } finally {
       setLoadingProducts(false);
     }
-  }, [checkConnectivity]); // Added checkConnectivity dependency
+  }, [apiService, checkConnectivity]); // Added apiService dependency
 
   const loadMoreProducts = useCallback(async () => {
     if (!hasMoreProducts || isLoadingMore || !apiService) return;
@@ -141,7 +141,7 @@ export default function HomeScreen() {
     } finally {
       setIsLoadingMore(false);
     }
-  }, [currentPage, hasMoreProducts, isLoadingMore, checkConnectivity]); // Added checkConnectivity dependency
+  }, [apiService, currentPage, hasMoreProducts, isLoadingMore, checkConnectivity]); // Added apiService dependency
 
   const fetchCarouselItems = useCallback(async () => {
     setLoadingCarousel(true);
@@ -201,7 +201,7 @@ export default function HomeScreen() {
     } finally {
       setLoadingCategories(false);
     }
-  }, [checkConnectivity]); // Added checkConnectivity dependency
+  }, [apiService, checkConnectivity]); // Added apiService dependency
 
   // OPTIMIZED: Fetch featured products with caching
   // Strategy: Fetch once, cache the products directly (not category ID)
@@ -275,21 +275,22 @@ export default function HomeScreen() {
   }, [apiService, featuredProducts.length]);
 
   // OPTIMIZED: Fetch ALL data in PARALLEL when component mounts
+  // iOS Cold Start Fix: Watch apiService directly
   useEffect(() => {
-    if (apiService) {
-      // Parallel fetching - all data loads simultaneously
-      Promise.all([
-        fetchProducts(),
-        fetchCategories(),
-        fetchFeaturedProducts(),  // NEW: Parallel fetch
-        fetchCarouselItems(),
-      ]).catch(err => console.error('Parallel fetch error:', err));
+    if (!apiService) return;
 
-      if (isAuthenticated) {
-        fetchWishlist();
-      }
+    // Parallel fetching - all data loads simultaneously
+    Promise.all([
+      fetchProducts(),
+      fetchCategories(),
+      fetchFeaturedProducts(),
+      fetchCarouselItems(),
+    ]).catch(err => console.error('Parallel fetch error:', err));
+
+    if (isAuthenticated) {
+      fetchWishlist();
     }
-  }, [isAuthenticated, fetchFeaturedProducts]); // Added fetchFeaturedProducts
+  }, [apiService, isAuthenticated]); // Watch apiService directly, keep isAuthenticated for wishlist 
 
   // Commenting out duplicate notification setup - now handled in _layout.tsx
   // OPTIMIZED: Handle push notifications - run only once on mount
