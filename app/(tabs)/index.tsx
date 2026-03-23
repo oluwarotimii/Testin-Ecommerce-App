@@ -777,22 +777,19 @@ export default function HomeScreen() {
             tintColor={colors.primary}
           />
         }
-        onScroll={Animated.event(
-          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
-          { 
-            useNativeDriver: true,
-            listener: (event: NativeScrollEvent) => {
-              // Only check bottom for pagination - no setState
-              const { layoutMeasurement, contentOffset, contentSize } = event.nativeEvent;
-              if (layoutMeasurement && contentSize) {
-                const isCloseToBottom = layoutMeasurement.height + contentOffset.y >= contentSize.height - 500;
-                if (isCloseToBottom && hasMoreProducts && !isLoadingMore) {
-                  loadMoreProducts();
-                }
-              }
+        onScroll={(event) => {
+          // Update scroll position for header animation (JS driver)
+          scrollY.setValue(event.nativeEvent.contentOffset.y);
+
+          // Pagination check
+          const { layoutMeasurement, contentOffset, contentSize } = event.nativeEvent;
+          if (layoutMeasurement && contentSize) {
+            const isCloseToBottom = layoutMeasurement.height + contentOffset.y >= contentSize.height - 500;
+            if (isCloseToBottom && hasMoreProducts && !isLoadingMore) {
+              loadMoreProducts();
             }
           }
-        )}
+        }}
         scrollEventThrottle={16}
       />
     </SafeAreaView>
