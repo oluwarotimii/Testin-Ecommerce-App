@@ -202,10 +202,23 @@ export default function HomeScreen() {
     }
   }, [apiService]);
 
+  // iOS FIX: Retry connectivity check with delays (iOS network stack loads slower on cold start)
+  const checkConnectivityWithRetry = useCallback(async (retries = 3, delayMs = 400) => {
+    for (let i = 0; i < retries; i++) {
+      const isOnline = await checkConnectivity();
+      if (isOnline) return true;
+      if (i < retries - 1) {
+        await new Promise(resolve => setTimeout(resolve, delayMs));
+      }
+    }
+    return false;
+  }, [checkConnectivity]);
+
   const fetchProducts = useCallback(async () => {
     if (!apiService) return;
 
-    const isOnline = await checkConnectivity();
+    // iOS FIX: Use retry logic for connectivity check
+    const isOnline = await checkConnectivityWithRetry();
     if (!isOnline) {
       setErrorProducts('No internet connection. Please check your connection and try again.');
       setLoadingProducts(false);
@@ -221,8 +234,8 @@ export default function HomeScreen() {
       setHasMoreProducts(response.length >= 20);
       setCurrentPage(1);
     } catch (err: any) {
-      const isOnline = await checkConnectivity();
-      if (!isOnline) {
+      const stillOnline = await checkConnectivityWithRetry();
+      if (!stillOnline) {
         setErrorProducts('No internet connection. Please check your connection and try again.');
       } else {
         setErrorProducts(err.message || 'An unexpected error occurred');
@@ -230,7 +243,7 @@ export default function HomeScreen() {
     } finally {
       setLoadingProducts(false);
     }
-  }, [apiService, checkConnectivity]);
+  }, [apiService, checkConnectivityWithRetry]);
 
   const loadMoreProducts = useCallback(async () => {
     if (!hasMoreProducts || isLoadingMore || !apiService) return;
@@ -269,7 +282,8 @@ export default function HomeScreen() {
     setLoadingCarousel(true);
     setCarouselError(null);
 
-    const isOnline = await checkConnectivity();
+    // iOS FIX: Use retry logic for connectivity check
+    const isOnline = await checkConnectivityWithRetry();
     if (!isOnline) {
       setCarouselError('No internet connection. Please check your connection and try again.');
       setLoadingCarousel(false);
@@ -280,8 +294,8 @@ export default function HomeScreen() {
       const items = await fetchCarousels();
       setCarouselItems(items);
     } catch (err: any) {
-      const isOnline = await checkConnectivity();
-      if (!isOnline) {
+      const stillOnline = await checkConnectivityWithRetry();
+      if (!stillOnline) {
         setCarouselError('No internet connection. Please check your connection and try again.');
       } else {
         console.error('Error fetching carousel items:', err);
@@ -290,12 +304,13 @@ export default function HomeScreen() {
     } finally {
       setLoadingCarousel(false);
     }
-  }, [checkConnectivity]);
+  }, [checkConnectivityWithRetry]);
 
   const fetchCategories = useCallback(async () => {
     if (!apiService) return;
 
-    const isOnline = await checkConnectivity();
+    // iOS FIX: Use retry logic for connectivity check
+    const isOnline = await checkConnectivityWithRetry();
     if (!isOnline) {
       setErrorCategories('No internet connection. Please check your connection and try again.');
       setLoadingCategories(false);
@@ -309,8 +324,8 @@ export default function HomeScreen() {
       const formattedCategories = transformCategories(response);
       setCategories(formattedCategories);
     } catch (err: any) {
-      const isOnline = await checkConnectivity();
-      if (!isOnline) {
+      const stillOnline = await checkConnectivityWithRetry();
+      if (!stillOnline) {
         setErrorCategories('No internet connection. Please check your connection and try again.');
       } else {
         setErrorCategories(err.message || 'An unexpected error occurred');
@@ -323,6 +338,14 @@ export default function HomeScreen() {
   // OPTIMIZED: Fetch featured products with ref-based caching
   const fetchFeaturedProducts = useCallback(async () => {
     if (!apiService) return;
+
+    // iOS FIX: Use retry logic for connectivity check
+    const isOnline = await checkConnectivityWithRetry();
+    if (!isOnline) {
+      setErrorFeatured('No internet connection. Please check your connection and try again.');
+      setLoadingFeatured(false);
+      return;
+    }
 
     // Don't show loading if we already have data (stale-while-revalidate)
     if (featuredProducts.length === 0 && !hasFeaturedRef.current) {
@@ -390,32 +413,41 @@ export default function HomeScreen() {
     } finally {
       setLoadingFeatured(false);
     }
-  }, [apiService, featuredProducts.length]);
+  }, [apiService, checkConnectivityWithRetry, featuredProducts.length]);
 
   // OPTIMIZED: Stagger API calls - load visible content first
   useEffect(() => {
     if (!apiService) return;
 
-    // Load visible content first (carousel + categories)
-    Promise.all([
-      fetchCarouselItems(),
-      fetchCategories(),
-    ]).then(() => {
-      // Then load below-the-fold content
-      Promise.all([
-        fetchProducts(),
-        fetchFeaturedProducts(),
-      ]);
-    }).catch(err => console.error('Staggered fetch error:', err));
+    // iOS FIX: Add small delay on cold start to let network stack initialize
+    const initFetch = async () => {
+      // Wait 500ms on first launch to ensure network is ready (iOS fix)
+      await new Promise(resolve => setTimeout(resolve, 500));
 
-    if (isAuthenticated) {
-      fetchWishlist();
-    }
+      // Load visible content first (carousel + categories)
+      await Promise.all([
+        fetchCarouselItems(),
+        fetchCategories(),
+      ]).then(() => {
+        // Then load below-the-fold content
+        Promise.all([
+          fetchProducts(),
+          fetchFeaturedProducts(),
+        ]);
+      }).catch(err => console.error('Staggered fetch error:', err));
+
+      if (isAuthenticated) {
+        fetchWishlist();
+      }
+    };
+
+    initFetch().catch(err => console.error('Init fetch error:', err));
   }, [apiService, isAuthenticated]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    const isOnline = await checkConnectivity();
+    // iOS FIX: Use retry logic for connectivity check
+    const isOnline = await checkConnectivityWithRetry();
     if (isOnline) {
       await Promise.all([
         fetchProducts(),
@@ -430,7 +462,7 @@ export default function HomeScreen() {
       setErrorProducts('No internet connection. Please check your connection and try again.');
     }
     setRefreshing(false);
-  }, [isAuthenticated, checkConnectivity, fetchFeaturedProducts]);
+  }, [isAuthenticated, checkConnectivityWithRetry, fetchFeaturedProducts]);
 
   const handleSeeAllProducts = () => {
     router.push('/products');

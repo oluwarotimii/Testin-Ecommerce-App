@@ -55,7 +55,7 @@ const FORCE_UPDATE_CONFIG = {
    *
    * TO ENABLE: Change to '2.3.0' after native build is live
    */
-  minimumVersion: '2.0.0', // Production: matches current store version
+  minimumVersion: '3.0.0', // Production: matches current store version
 
   /**
    * Enable/disable the forced update check
@@ -66,7 +66,7 @@ const FORCE_UPDATE_CONFIG = {
    *
    * TO ENABLE: Change to true after native build is live
    */
-  enabled: false, // Production: disabled by default
+  enabled: true, // Production: disabled by default
 
   /**
    * Custom message shown to users

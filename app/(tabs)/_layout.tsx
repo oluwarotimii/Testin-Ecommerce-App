@@ -35,6 +35,12 @@ export default function TabLayout() {
           title: 'Categories',
         }}
       />
+      <Tabs.Screen
+        name="awoof"
+        options={{
+          title: 'Awoof Corner',
+        }}
+      />
       {/* <Tabs.Screen
         name="wishlist"
         options={{
@@ -45,12 +51,6 @@ export default function TabLayout() {
         name="cart"
         options={{
           title: 'Cart',
-        }}
-      />
-      <Tabs.Screen
-        name="wordpress-test"
-        options={{
-          title: 'WP Test',
         }}
       />
       <Tabs.Screen
