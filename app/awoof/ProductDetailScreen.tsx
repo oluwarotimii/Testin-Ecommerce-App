@@ -14,6 +14,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useThemeColors } from '@/hooks/useColorScheme';
 import { awoofCart, AwoofProduct, AwoofEvents, trackAwoofEvent } from './AwoofUtils';
 import SafeImage from '@/components/SafeImage';
+import AwoofToast, { AwoofToastRef } from '@/components/AwoofToast';
 
 const { width } = Dimensions.get('window');
 
@@ -26,6 +27,7 @@ export default function ProductDetailScreen({ route, navigation }: any) {
   const insets = useSafeAreaInsets();
   const [quantity, setQuantity] = useState(1);
   const scrollY = useRef(new Animated.Value(0)).current;
+  const toastRef = useRef<AwoofToastRef>(null);
 
   const images = [product.image, product.image, product.image];
 
@@ -58,7 +60,7 @@ export default function ProductDetailScreen({ route, navigation }: any) {
     };
     awoofCart.addItem(awProduct, quantity);
     trackAwoofEvent(AwoofEvents.ADD_TO_CART, { productId: product.id, quantity });
-    Alert.alert('Added to Cart', `${quantity}x ${product.name} added to your Awoof Cart!`);
+    toastRef.current?.show(`${product.name} added to cart!`);
   };
 
   const savings = (product.originalPrice - product.salePrice) * quantity;
@@ -72,6 +74,8 @@ export default function ProductDetailScreen({ route, navigation }: any) {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <AwoofToast ref={toastRef} />
+      
       {/* Animated Header Background */}
       <Animated.View style={[styles.header, { opacity: headerOpacity, backgroundColor: colors.card }]}>
         <View style={[styles.headerFill, { paddingTop: insets.top }]} />

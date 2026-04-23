@@ -57,7 +57,18 @@ export default function AwoofMiniCartModal({ navigation, route }: any) {
   };
 
   const handleCheckout = () => {
-    navigation.navigate('AwoofCheckoutWebView', { cartItems });
+    // Close modal first, then navigate
+    Animated.timing(slideAnim, {
+      toValue: height,
+      duration: 300,
+      useNativeDriver: true,
+    }).start(() => {
+      navigation.goBack(); // Dismiss the modal
+      // Small delay to ensure modal is dismissed before navigating to next screen
+      setTimeout(() => {
+        navigation.navigate('AwoofCheckoutWebView', { cartItems });
+      }, 100);
+    });
   };
 
   const updateQuantity = (itemId: string, delta: number) => {

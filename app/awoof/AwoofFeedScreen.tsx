@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -13,77 +13,14 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useThemeColors } from '@/hooks/useColorScheme';
-import { awoofCart, AwoofProduct, AwoofEvents, trackAwoofEvent } from './AwoofUtils';
+import { awoofCart, AwoofProduct, AwoofEvents, trackAwoofEvent, mapToAwoofProduct } from './AwoofUtils';
 import SafeImage from '@/components/SafeImage';
+import { useAuth } from '@/context/AuthContext';
+import { transformProducts } from '@/utils/woocommerceTransformers';
+import AwoofToast, { AwoofToastRef } from '@/components/AwoofToast';
 
 const { width } = Dimensions.get('window');
 const CARD_WIDTH = (width - 48) / 2;
-
-// ============================================
-// DEMO DATA - Easy to replace with API calls
-// ============================================
-const DEMO_DEALS = [
-  {
-    id: '1',
-    name: 'Wireless Earbuds Pro',
-    originalPrice: 15000,
-    salePrice: 8500,
-    image: 'https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=400',
-    discount: 43,
-    tag: 'FLASH DEAL',
-    stock: 12,
-  },
-  {
-    id: '2',
-    name: 'Smart Watch Series 6',
-    originalPrice: 45000,
-    salePrice: 28000,
-    image: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400',
-    discount: 38,
-    tag: 'HOT',
-    stock: 5,
-  },
-  {
-    id: '3',
-    name: 'Bluetooth Speaker XL',
-    originalPrice: 12000,
-    salePrice: 6500,
-    image: 'https://images.unsplash.com/photo-1608043152269-423dbba4e7e1?w=400',
-    discount: 46,
-    tag: 'LIMITED',
-    stock: 8,
-  },
-  {
-    id: '4',
-    name: 'USB-C Fast Charger',
-    originalPrice: 5000,
-    salePrice: 2200,
-    image: 'https://images.unsplash.com/photo-1583863788434-e58a36330cf0?w=400',
-    discount: 56,
-    tag: 'CLEARANCE',
-    stock: 20,
-  },
-  {
-    id: '5',
-    name: 'Phone Stand Aluminum',
-    originalPrice: 8000,
-    salePrice: 3500,
-    image: 'https://images.unsplash.com/photo-1601784551446-20c9e07cdbdb?w=400',
-    discount: 56,
-    tag: 'STEAL',
-    stock: 15,
-  },
-  {
-    id: '6',
-    name: 'Laptop Sleeve 15"',
-    originalPrice: 9500,
-    salePrice: 4800,
-    image: 'https://images.unsplash.com/photo-1588872657578-7efd1f1555ed?w=400',
-    discount: 49,
-    tag: 'NEW',
-    stock: 10,
-  },
-];
 
 // ============================================
 // MAIN COMPONENT
@@ -91,10 +28,17 @@ const DEMO_DEALS = [
 export default function AwoofFeedScreen({ navigation }: any) {
   const colors = useThemeColors();
   const insets = useSafeAreaInsets();
+  const { apiService } = useAuth();
+  const toastRef = useRef<AwoofToastRef>(null);
+  
+  const [deals, setDeals] = useState<AwoofProduct[]>([]);
+  const [loading, setLoading] = useState(true);
   const [cartCount, setCartCount] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
+    loadDeals();
+    
     const unsubscribe = awoofCart.subscribe(() => {
       setCartCount(awoofCart.getItemCount());
     });
@@ -102,9 +46,31 @@ export default function AwoofFeedScreen({ navigation }: any) {
     return unsubscribe;
   }, []);
 
+  const loadDeals = async () => {
+    try {
+      setLoading(true);
+      // Fetch from "awoof-corner" category
+      const rawProducts = await apiService.getProductsByCategory('awoof-corner', 50);
+      
+      // Transform raw WooCommerce products to AppProduct format first
+      const appProducts = transformProducts(rawProducts);
+      
+      // Map AppProduct to AwoofProduct format
+      const awoofDeals = appProducts.map(mapToAwoofProduct);
+      
+      setDeals(awoofDeals);
+    } catch (error) {
+      console.error('Error loading Awoof deals:', error);
+      // Fallback or empty state handled by deals array
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
   const handleRefresh = () => {
     setRefreshing(true);
-    setTimeout(() => setRefreshing(false), 1500);
+    loadDeals();
   };
 
   const handleProductPress = (product: any) => {
@@ -115,28 +81,29 @@ export default function AwoofFeedScreen({ navigation }: any) {
     navigation.navigate('AwoofMiniCart');
   };
 
-  const handleQuickAdd = (product: any) => {
-    const awProduct: AwoofProduct = {
-      id: product.id,
-      name: product.name,
-      originalPrice: product.originalPrice,
-      salePrice: product.salePrice,
-      image: product.image,
-      discount: product.discount,
-      tag: product.tag,
-      stock: product.stock,
-    };
-    awoofCart.addItem(awProduct, 1);
+  const handleQuickAdd = (product: AwoofProduct) => {
+    awoofCart.addItem(product, 1);
     trackAwoofEvent(AwoofEvents.ADD_TO_CART, { productId: product.id, quantity: 1 });
-    Alert.alert('Added!', `${product.name} added to your Awoof Cart`);
+    toastRef.current?.show(`${product.name} added to cart!`);
   };
+
+  if (loading && !refreshing) {
+    return (
+      <View style={[styles.container, styles.center, { backgroundColor: colors.background }]}>
+        <ActivityIndicator size="large" color={colors.primary} />
+        <Text style={[styles.loadingText, { color: colors.textSecondary }]}>Hunting for deals...</Text>
+      </View>
+    );
+  }
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <AwoofToast ref={toastRef} />
+      
       {/* Header */}
       <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
         <View style={styles.headerContent}>
-          <View>
+          <View style={styles.headerTitleContainer}>
             <Text style={[styles.headerTitle, { color: colors.text }]}>Awoof Corner</Text>
             <Text style={[styles.headerSubtitle, { color: colors.primary }]}>🔥 Today's Hottest Deals</Text>
           </View>
@@ -157,15 +124,23 @@ export default function AwoofFeedScreen({ navigation }: any) {
 
       {/* Deals Grid */}
       <FlatList
-        data={DEMO_DEALS}
+        data={deals}
         keyExtractor={(item) => item.id}
         numColumns={2}
         style={styles.list}
-        contentContainerStyle={styles.grid}
+        contentContainerStyle={[styles.grid, { padding: 16, gap: 16 }]}
         columnWrapperStyle={styles.row}
         showsVerticalScrollIndicator={false}
         refreshing={refreshing}
         onRefresh={handleRefresh}
+        ListEmptyComponent={
+          <View style={styles.emptyContainer}>
+            <Text style={[styles.emptyText, { color: colors.textSecondary }]}>No hot deals found right now.</Text>
+            <TouchableOpacity style={[styles.retryButton, { backgroundColor: colors.primary }]} onPress={loadDeals}>
+              <Text style={styles.retryText}>Check Again</Text>
+            </TouchableOpacity>
+          </View>
+        }
         ListHeaderComponent={<View style={styles.listHeader} />}
         renderItem={({ item }) => (
           <DealCard
@@ -186,21 +161,23 @@ export default function AwoofFeedScreen({ navigation }: any) {
 function DealCard({ deal, colors, onPress, onQuickAdd }: any) {
   return (
     <TouchableOpacity
-      style={[styles.card, { backgroundColor: colors.card }]}
+      style={[styles.card, { backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border }]}
       onPress={onPress}
       activeOpacity={0.8}
     >
       {/* Image Container */}
-      <View style={styles.imageContainer}>
+      <View style={[styles.imageContainer, { borderBottomWidth: 1, borderBottomColor: colors.border }]}>
         <SafeImage
           source={{ uri: deal.image }}
           style={styles.productImage}
         />
 
         {/* Discount Badge */}
-        <View style={styles.discountBadge}>
-          <Text style={styles.discountText}>-{deal.discount}%</Text>
-        </View>
+        {deal.discount > 0 && (
+          <View style={styles.discountBadge}>
+            <Text style={styles.discountText}>-{deal.discount}%</Text>
+          </View>
+        )}
       </View>
 
       {/* Product Info */}
@@ -211,7 +188,9 @@ function DealCard({ deal, colors, onPress, onQuickAdd }: any) {
 
         <View style={styles.priceRow}>
           <Text style={[styles.salePrice, { color: colors.error }]}>₦{deal.salePrice.toLocaleString()}</Text>
-          <Text style={[styles.originalPrice, { color: colors.primary }]}>₦{deal.originalPrice.toLocaleString()}</Text>
+          {deal.originalPrice > deal.salePrice && (
+            <Text style={[styles.originalPrice, { color: colors.primary }]}>₦{deal.originalPrice.toLocaleString()}</Text>
+          )}
         </View>
 
         <View style={styles.stockRow}>
@@ -245,6 +224,15 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  center: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 14,
+    fontWeight: '500',
+  },
   header: {
     paddingHorizontal: 16,
     paddingBottom: 16,
@@ -253,6 +241,16 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+  },
+  headerTitleContainer: {
+    flex: 1, // Allow title container to take available space
+    alignItems: 'center', // Center horizontally
+    position: 'absolute', // Use absolute positioning to overlay and center
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0,
+    justifyContent: 'center', // Center vertically within its absolute bounds
   },
   headerTitle: {
     fontSize: 24,
@@ -269,6 +267,7 @@ const styles = StyleSheet.create({
     borderRadius: 22,
     justifyContent: 'center',
     alignItems: 'center',
+    zIndex: 1, // Ensure cart button is above centered title if overlap occurs
   },
   cartBadge: {
     position: 'absolute',
@@ -295,20 +294,25 @@ const styles = StyleSheet.create({
   },
   grid: {
     padding: 16,
+    gap: 16, // Added gap for spacing between rows and columns
   },
   row: {
     justifyContent: 'space-between',
-    marginBottom: 16,
+    // marginBottom: 16, // Removed, handled by gap in grid
   },
   card: {
     width: CARD_WIDTH,
     borderRadius: 16,
     overflow: 'hidden',
+    borderWidth: 1, // Added for gridlines
+    borderColor: '#E0E0E0', // Faint border color
   },
   imageContainer: {
     width: '100%',
     height: CARD_WIDTH * 0.9,
     position: 'relative',
+    borderBottomWidth: 1, // Added for gridlines
+    borderBottomColor: '#E0E0E0', // Faint border color
   },
   productImage: {
     width: '100%',
@@ -335,7 +339,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '500',
     marginBottom: 8,
-    height: 40,
+    // height: 40, // Removed fixed height to allow more natural wrapping if needed, but numberOfLines handles it
   },
   priceRow: {
     flexDirection: 'row',
@@ -367,7 +371,7 @@ const styles = StyleSheet.create({
   stockText: {
     fontSize: 11,
     fontWeight: '500',
-  },
+  }, 
   quickAddButton: {
     borderRadius: 8,
     paddingVertical: 8,
@@ -378,6 +382,24 @@ const styles = StyleSheet.create({
   quickAddText: {
     color: '#fff',
     fontSize: 13,
+    fontWeight: '600',
+  },
+  emptyContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 40,
+  },
+  emptyText: {
+    fontSize: 16,
+    marginBottom: 20,
+  },
+  retryButton: {
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 8,
+  },
+  retryText: {
+    color: '#fff',
     fontWeight: '600',
   },
 });

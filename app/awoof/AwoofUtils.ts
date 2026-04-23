@@ -95,29 +95,30 @@ export const awoofCart = new AwoofCartManager();
 // API INTEGRATION HELPERS
 // ============================================
 
-// Fetch Awoof deals from your backend
-export async function fetchAwoofDeals(): Promise<AwoofProduct[]> {
-  try {
-    // Replace with your actual API endpoint
-    const response = await fetch('https://your-api.com/api/awoof-deals');
-    const data = await response.json();
-    return data;
-  } catch (error) {
-    console.error('Error fetching Awoof deals:', error);
-    return [];
-  }
-}
+import { AppProduct } from '@/utils/woocommerceTransformers';
 
-// Fetch single product details
-export async function fetchProductDetails(productId: string): Promise<AwoofProduct | null> {
-  try {
-    const response = await fetch(`https://your-api.com/api/products/${productId}`);
-    const data = await response.json();
-    return data;
-  } catch (error) {
-    console.error('Error fetching product details:', error);
-    return null;
-  }
+/**
+ * Maps a standard AppProduct to the AwoofProduct format
+ */
+export function mapToAwoofProduct(product: AppProduct): AwoofProduct {
+  const originalPrice = product.original_price || product.price;
+  const salePrice = product.price;
+  
+  // Calculate discount percentage
+  const discount = originalPrice > salePrice 
+    ? Math.round(((originalPrice - salePrice) / originalPrice) * 100)
+    : 0;
+
+  return {
+    id: product.id.toString(),
+    name: product.title,
+    originalPrice: originalPrice,
+    salePrice: salePrice,
+    image: product.image,
+    discount: discount,
+    tag: discount > 30 ? 'HOT DEAL' : 'AWOOF',
+    stock: 50, // Default if not available from standard transformer
+  };
 }
 
 // ============================================
