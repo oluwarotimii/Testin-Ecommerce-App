@@ -247,7 +247,7 @@ class WordPressApiService {
 
     // Create axios instance with base configuration
     this.api = axios.create({
-      baseURL: `${cleanWordpressUrl}/wp-json/wc/v3/`,
+      baseURL: `${cleanWordpressUrl}/wp-json/wc/v3`,
     });
 
     this.wordpressUrl = cleanWordpressUrl;

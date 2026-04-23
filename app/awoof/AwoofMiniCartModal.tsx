@@ -8,12 +8,14 @@ import {
   Modal,
   Dimensions,
   Animated,
+  ActivityIndicator,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useThemeColors } from '@/hooks/useColorScheme';
 import { awoofCart, CartItem } from './AwoofUtils';
 import SafeImage from '@/components/SafeImage';
+import { useAuth } from '@/context/AuthContext';
 
 const { height } = Dimensions.get('window');
 
@@ -23,7 +25,9 @@ const { height } = Dimensions.get('window');
 export default function AwoofMiniCartModal({ navigation, route }: any) {
   const colors = useThemeColors();
   const insets = useSafeAreaInsets();
+  const { apiService, isAuthenticated } = useAuth();
   const [cartItems, setCartItems] = useState<CartItem[]>(awoofCart.getCart());
+  const [isSyncing, setIsSyncing] = useState(false);
   const slideAnim = useState(new Animated.Value(height))[0];
 
   useEffect(() => {
@@ -47,6 +51,7 @@ export default function AwoofMiniCartModal({ navigation, route }: any) {
   }, []);
 
   const handleClose = () => {
+    if (isSyncing) return;
     Animated.timing(slideAnim, {
       toValue: height,
       duration: 300,
@@ -56,19 +61,43 @@ export default function AwoofMiniCartModal({ navigation, route }: any) {
     });
   };
 
-  const handleCheckout = () => {
-    // Close modal first, then navigate
-    Animated.timing(slideAnim, {
-      toValue: height,
-      duration: 300,
-      useNativeDriver: true,
-    }).start(() => {
-      navigation.goBack(); // Dismiss the modal
-      // Small delay to ensure modal is dismissed before navigating to next screen
-      setTimeout(() => {
-        navigation.navigate('AwoofCheckoutWebView', { cartItems });
-      }, 100);
-    });
+  const handleCheckout = async () => {
+    try {
+      setIsSyncing(true);
+      
+      // STEP 1: PRE-FLIGHT ADDRESS SYNC
+      // Only sync if user is logged in
+      if (isAuthenticated && apiService.getAddressBook && apiService.updateCustomerAddress) {
+        console.log('🔄 Starting Pre-Flight Address Sync...');
+        const addresses = await apiService.getAddressBook();
+        const primaryAddress = addresses.find((a: any) => a.isDefault) || addresses[0];
+        
+        if (primaryAddress) {
+          // Push address to WooCommerce REST API
+          await apiService.updateCustomerAddress(primaryAddress);
+          console.log('✅ Address synced successfully');
+        }
+      }
+
+      // STEP 2: NAVIGATION
+      Animated.timing(slideAnim, {
+        toValue: height,
+        duration: 300,
+        useNativeDriver: true,
+      }).start(() => {
+        navigation.goBack(); // Dismiss the modal
+        setTimeout(() => {
+          navigation.navigate('AwoofCheckoutWebView', { cartItems });
+        }, 100);
+      });
+
+    } catch (error) {
+      console.error('❌ Address sync failed:', error);
+      // Even if sync fails, proceed to checkout (WebView will handle fallback)
+      navigation.navigate('AwoofCheckoutWebView', { cartItems });
+    } finally {
+      setIsSyncing(false);
+    }
   };
 
   const updateQuantity = (itemId: string, delta: number) => {

@@ -127,14 +127,24 @@ export function mapToAwoofProduct(product: AppProduct): AwoofProduct {
 
 export function buildWooCommerceCheckoutUrl(
   baseUrl: string,
-  cartItems: CartItem[]
+  cartItems: CartItem[],
+  sessionToken?: string | null
 ): string {
   // Build WooCommerce add-to-cart URL with multiple products
   const cartParams = cartItems.map(item => {
     return `add-to-cart=${item.id}&quantity=${item.quantity}`;
   }).join('&');
 
-  return `${baseUrl}/checkout/?${cartParams}`;
+  let url = `${baseUrl}/checkout/?${cartParams}`;
+  
+  // If we have a session token, append it for autologin
+  // Note: This requires the WordPress JWT plugin to support token-based login via URL 
+  // or a custom handler on the WordPress side.
+  if (sessionToken) {
+    url += `&access_token=${sessionToken}`;
+  }
+
+  return url;
 }
 
 // ============================================

@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useMemo } from 'react';
 import {
   View,
   Text,
@@ -11,6 +11,10 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useThemeColors } from '@/hooks/useColorScheme';
 import { WebView } from 'react-native-webview';
+import { useRouter } from 'expo-router';
+import appConfig from '@/hooks/useAppConfig';
+import { buildWooCommerceCheckoutUrl } from './AwoofUtils';
+import { useAuth } from '@/context/AuthContext';
 
 // ============================================
 // MAIN COMPONENT
@@ -18,46 +22,75 @@ import { WebView } from 'react-native-webview';
 export default function AwoofCheckoutWebView({ route, navigation }: any) {
   const colors = useThemeColors();
   const insets = useSafeAreaInsets();
+  const router = useRouter();
+  const { sessionToken } = useAuth();
   const cartItems = route?.params?.cartItems || [];
   const webViewRef = useRef<any>(null);
   const [loading, setLoading] = useState(true);
+  
+  // Track if alert is currently shown to prevent duplicates
+  const alertShown = useRef(false);
 
-  const CHECKOUT_URL = 'https://your-store.com/checkout/';
-  const checkoutUrl = __DEV__
-    ? 'https://demo.woothemes.com/storefront/checkout/'
-    : CHECKOUT_URL;
+  // Get the base URL and clean it
+  const baseUrl = appConfig.wordpressUrl.endsWith('/') 
+    ? appConfig.wordpressUrl.slice(0, -1) 
+    : appConfig.wordpressUrl;
+
+  // Build the actual checkout URL with items and auth token
+  const checkoutUrl = useMemo(() => {
+    return buildWooCommerceCheckoutUrl(baseUrl, cartItems, sessionToken);
+  }, [baseUrl, cartItems, sessionToken]);
 
   const handleNavigationStateChange = (navState: any) => {
-    const { url } = navState;
+    const { url, loading: isNavLoading } = navState;
+    
+    // Only check when navigation is finishing to reduce noise
+    if (isNavLoading) return;
+
+    console.log('WebView Navigating to:', url);
 
     if (url.includes('/order-received/') || url.includes('/thank-you/')) {
       handleOrderSuccess(url);
+      return;
     }
 
-    if (!isCheckoutRelatedUrl(url)) {
+    // Check if we're leaving the checkout flow
+    if (!isCheckoutRelatedUrl(url) && !alertShown.current) {
+      alertShown.current = true;
       Alert.alert(
         'Leave Checkout?',
         'Are you sure you want to leave the checkout page?',
         [
-          { text: 'Stay', style: 'cancel' },
+          { 
+            text: 'Stay', 
+            style: 'cancel',
+            onPress: () => {
+              alertShown.current = false;
+            }
+          },
           {
             text: 'Leave',
             style: 'destructive',
-            onPress: () => navigation.goBack(),
+            onPress: () => {
+              alertShown.current = false;
+              router.back();
+            },
           },
-        ]
+        ],
+        { onDismiss: () => { alertShown.current = false; } }
       );
-      return false;
     }
   };
 
   const handleOrderSuccess = (url: string) => {
     const orderIdMatch = url.match(/order-received\/(\d+)/);
     const orderId = orderIdMatch ? orderIdMatch[1] : 'N/A';
+    // Using replace to prevent going back to checkout
     navigation.replace('OrderSuccess', { orderId });
   };
 
   const isCheckoutRelatedUrl = (url: string) => {
+    const lowerUrl = url.toLowerCase();
     const allowedPaths = [
       '/checkout',
       '/cart',
@@ -65,45 +98,81 @@ export default function AwoofCheckoutWebView({ route, navigation }: any) {
       '/order-received',
       '/thank-you',
       'paystack.com',
+      'checkout',
+      'gateway',
+      'payment',
+      'wp-login.php', // In case login is needed
+      baseUrl.toLowerCase()
     ];
-    return allowedPaths.some((path) => url.includes(path));
+    
+    // Also allow data URIs and blob URIs often used by scripts
+    if (lowerUrl.startsWith('data:') || lowerUrl.startsWith('blob:')) return true;
+    
+    return allowedPaths.some((path) => lowerUrl.includes(path.toLowerCase()));
   };
 
   const handleClose = () => {
+    if (alertShown.current) return;
+    
+    alertShown.current = true;
     Alert.alert(
       'Cancel Checkout?',
-      'Your items will be saved in your cart.',
+      'Your items will be saved in your Awoof cart.',
       [
-        { text: 'Continue Shopping', style: 'cancel' },
-        {
-          text: 'Cancel Checkout',
-          style: 'destructive',
-          onPress: () => navigation.goBack(),
+        { 
+          text: 'Continue', 
+          style: 'cancel',
+          onPress: () => { alertShown.current = false; }
         },
-      ]
+        {
+          text: 'Cancel',
+          style: 'destructive',
+          onPress: () => {
+            alertShown.current = false;
+            router.back();
+          },
+        },
+      ],
+      { onDismiss: () => { alertShown.current = false; } }
     );
   };
 
   const handleError = () => {
+    if (alertShown.current) return;
+    
+    alertShown.current = true;
     Alert.alert(
       'Connection Error',
       'Unable to load checkout page. Please check your internet connection.',
       [
-        { text: 'Retry', onPress: () => webViewRef.current?.reload() },
-        { text: 'Cancel', onPress: () => navigation.goBack() },
-      ]
+        { text: 'Retry', onPress: () => { 
+          alertShown.current = false;
+          webViewRef.current?.reload(); 
+        }},
+        { text: 'Cancel', onPress: () => {
+          alertShown.current = false;
+          router.back();
+        }},
+      ],
+      { onDismiss: () => { alertShown.current = false; } }
     );
   };
 
   const injectedJavaScript = `
     (function() {
-      const header = document.querySelector('header');
-      const footer = document.querySelector('footer');
-      const nav = document.querySelector('nav');
-      if (header) header.style.display = 'none';
-      if (footer) footer.style.display = 'none';
-      if (nav) nav.style.display = 'none';
+      // Hide standard WP/Woo elements for a cleaner native feel
+      const selectors = ['header', 'footer', 'nav', '.storefront-breadcrumb', '.widget-area'];
+      selectors.forEach(selector => {
+        const elements = document.querySelectorAll(selector);
+        elements.forEach(el => el.style.display = 'none');
+      });
       document.body.style.paddingTop = '0';
+      // Ensure the checkout form takes full width
+      const container = document.querySelector('.col-full');
+      if (container) {
+        container.style.maxWidth = '100%';
+        container.style.padding = '10px';
+      }
     })();
     true;
   `;
