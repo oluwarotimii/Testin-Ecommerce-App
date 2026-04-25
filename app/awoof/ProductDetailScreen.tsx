@@ -83,7 +83,7 @@ export default function ProductDetailScreen({ route, navigation }: any) {
 
       {/* Back Button */}
       <TouchableOpacity
-        style={[styles.backButton, { top: insets.top + 8, backgroundColor: colors.surface }]}
+        style={[styles.backButton, { top: insets.top + 16, backgroundColor: colors.surface }]}
         onPress={() => navigation.goBack()}
       >
         <Ionicons name="arrow-back" size={20} color={colors.text} />
@@ -91,6 +91,7 @@ export default function ProductDetailScreen({ route, navigation }: any) {
 
       <Animated.ScrollView
         style={styles.scrollView}
+        contentContainerStyle={{ paddingBottom: insets.bottom + 180 }}
         showsVerticalScrollIndicator={false}
         onScroll={Animated.event(
           [{ nativeEvent: { contentOffset: { y: scrollY } } }],
@@ -251,9 +252,9 @@ const styles = StyleSheet.create({
   backButton: {
     position: 'absolute',
     left: 16,
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 20,
@@ -420,43 +421,55 @@ const styles = StyleSheet.create({
     fontSize: 13,
   },
   bottomBar: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 92,
     borderTopWidth: 1,
+    paddingTop: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 12,
   },
   bottomBarContent: {
     flexDirection: 'row',
-    padding: 12,
+    paddingHorizontal: 16,
+    paddingBottom: 12,
     gap: 12,
   },
   addToCartButton: {
-    width: 56,
-    height: 52,
-    borderRadius: 12,
+    width: 66,
+    height: 56,
+    borderRadius: 16,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 2,
+    backgroundColor: 'transparent',
   },
   addToCartText: {
     fontSize: 11,
-    fontWeight: '600',
-    marginTop: 2,
+    fontWeight: '700',
+    marginTop: 3,
   },
   buyNowButton: {
     flex: 1,
-    height: 52,
-    borderRadius: 12,
+    height: 56,
+    borderRadius: 16,
     justifyContent: 'center',
     alignItems: 'center',
     flexDirection: 'row',
-    gap: 8,
+    gap: 10,
   },
   buyNowText: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '700',
     color: '#fff',
   },
   buyNowPrice: {
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: '700',
     color: 'rgba(255,255,255,0.8)',
   },
 });

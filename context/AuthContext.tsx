@@ -57,6 +57,7 @@ interface ApiService {
   getPaymentMethods: () => Promise<any>;
   getShippingMethods: () => Promise<any>;
   createOrder: (orderData: any) => Promise<any>;
+  updateOrder: (order_id: number, orderData: Record<string, any>) => Promise<any>;
   getOrders: () => Promise<any>;
   getOrderInfo: (order_id: number) => Promise<any>;
   cancelOrder: (order_id: number) => Promise<any>;

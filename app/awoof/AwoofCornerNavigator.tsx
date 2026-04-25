@@ -9,7 +9,7 @@ import { createStackNavigator } from '@react-navigation/stack';
 import AwoofFeedScreen from './AwoofFeedScreen';
 import ProductDetailScreen from './ProductDetailScreen';
 import AwoofMiniCartModal from './AwoofMiniCartModal';
-import AwoofCheckoutWebView from './AwoofCheckoutWebView';
+import AwoofCheckoutScreen from './AwoofCheckoutScreen'; // Corrected import name
 import OrderSuccessScreen from './OrderSuccessScreen';
 
 // ============================================
@@ -32,7 +32,7 @@ export type AwoofStackParamList = {
   AwoofMiniCart: {
     addedProduct?: any;
   };
-  AwoofCheckoutWebView: {
+  AwoofCheckout: { // Changed route name to match component
     cartItems: Array<any>;
   };
   OrderSuccess: {
@@ -98,22 +98,10 @@ export function AwoofCornerNavigator() {
         />
 
         <Stack.Screen
-          name="AwoofCheckoutWebView"
-          component={AwoofCheckoutWebView}
+          name="AwoofCheckout" // Route name updated to match component
+          component={AwoofCheckoutScreen} // Use the corrected component name
           options={{
-            cardStyleInterpolator: ({ current: { progress } }) => ({
-              cardStyle: {
-                flex: 1,
-                transform: [
-                  {
-                    translateY: progress.interpolate({
-                      inputRange: [0, 1],
-                      outputRange: [600, 0],
-                    }),
-                  },
-                ],
-              },
-            }),
+            headerShown: false, // Disable header for the checkout screen as it uses a modal/native component
           }}
         />
 

@@ -49,6 +49,9 @@ export default function AwoofFeedScreen({ navigation }: any) {
   const loadDeals = async () => {
     try {
       setLoading(true);
+      if (!apiService.getProductsByCategory) {
+        throw new Error('Product category lookup is unavailable.');
+      }
       // Fetch from "awoof-corner" category
       const rawProducts = await apiService.getProductsByCategory('awoof-corner', 50);
       
@@ -101,7 +104,7 @@ export default function AwoofFeedScreen({ navigation }: any) {
       <AwoofToast ref={toastRef} />
       
       {/* Header */}
-      <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
+      <View style={[styles.header, { paddingTop: insets.top + 16 }]}>
         <View style={styles.headerContent}>
           <View style={styles.headerTitleContainer}>
             <Text style={[styles.headerTitle, { color: colors.text }]}>Awoof Corner</Text>
@@ -128,7 +131,7 @@ export default function AwoofFeedScreen({ navigation }: any) {
         keyExtractor={(item) => item.id}
         numColumns={2}
         style={styles.list}
-        contentContainerStyle={[styles.grid, { padding: 16, gap: 16 }]}
+        contentContainerStyle={[styles.grid, { padding: 16, gap: 16, paddingBottom: insets.bottom + 140 }]}
         columnWrapperStyle={styles.row}
         showsVerticalScrollIndicator={false}
         refreshing={refreshing}
@@ -294,25 +297,22 @@ const styles = StyleSheet.create({
   },
   grid: {
     padding: 16,
-    gap: 16, // Added gap for spacing between rows and columns
+    gap: 16,
   },
   row: {
     justifyContent: 'space-between',
-    // marginBottom: 16, // Removed, handled by gap in grid
   },
   card: {
     width: CARD_WIDTH,
-    borderRadius: 16,
+    borderRadius: 20,
     overflow: 'hidden',
-    borderWidth: 1, // Added for gridlines
-    borderColor: '#E0E0E0', // Faint border color
+    borderWidth: 1,
   },
   imageContainer: {
     width: '100%',
     height: CARD_WIDTH * 0.9,
     position: 'relative',
-    borderBottomWidth: 1, // Added for gridlines
-    borderBottomColor: '#E0E0E0', // Faint border color
+    borderBottomWidth: 1,
   },
   productImage: {
     width: '100%',
@@ -333,13 +333,13 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   cardContent: {
-    padding: 12,
+    padding: 14,
   },
   productName: {
     fontSize: 14,
-    fontWeight: '500',
+    fontWeight: '700',
     marginBottom: 8,
-    // height: 40, // Removed fixed height to allow more natural wrapping if needed, but numberOfLines handles it
+    lineHeight: 19,
   },
   priceRow: {
     flexDirection: 'row',
@@ -347,8 +347,8 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   salePrice: {
-    fontSize: 16,
-    fontWeight: '700',
+    fontSize: 17,
+    fontWeight: '800',
     marginRight: 8,
   },
   originalPrice: {
@@ -373,8 +373,8 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   }, 
   quickAddButton: {
-    borderRadius: 8,
-    paddingVertical: 8,
+    borderRadius: 12,
+    paddingVertical: 10,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -382,7 +382,7 @@ const styles = StyleSheet.create({
   quickAddText: {
     color: '#fff',
     fontSize: 13,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   emptyContainer: {
     alignItems: 'center',

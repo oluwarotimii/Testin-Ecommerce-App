@@ -63,6 +63,13 @@ export default function OrderSuccessScreen({ route, navigation }: any) {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <TouchableOpacity
+        style={[styles.backButton, { top: insets.top + 16, backgroundColor: colors.surface }]}
+        onPress={() => navigation.navigate('AwoofFeed')}
+      >
+        <Ionicons name="arrow-back" size={20} color={colors.text} />
+      </TouchableOpacity>
+
       <View style={[styles.content, { paddingTop: insets.top + 40, paddingHorizontal: 24 }]}>
         {/* Success Animation */}
         <Animated.View style={[styles.successCircle, { transform: [{ scale: scaleAnim }], backgroundColor: colors.success }]}>
@@ -213,6 +220,17 @@ export default function OrderSuccessScreen({ route, navigation }: any) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  backButton: {
+    position: 'absolute',
+    left: 16,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 20,
+    elevation: 2,
   },
   content: {
     flex: 1,

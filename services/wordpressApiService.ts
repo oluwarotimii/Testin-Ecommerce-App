@@ -955,6 +955,16 @@ class WordPressApiService {
     }
   }
 
+  async updateOrder(order_id: number, orderData: Record<string, any>) {
+    try {
+      const response = await this.api.put(`/orders/${order_id}`, orderData);
+      return response.data;
+    } catch (error: any) {
+      console.error(`Error updating order ${order_id}:`, error.response?.data || error.message);
+      throw error;
+    }
+  }
+
   async getOrders() {
     try {
       // Get orders for the current customer

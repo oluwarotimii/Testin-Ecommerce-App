@@ -87,14 +87,14 @@ export default function AwoofMiniCartModal({ navigation, route }: any) {
       }).start(() => {
         navigation.goBack(); // Dismiss the modal
         setTimeout(() => {
-          navigation.navigate('AwoofCheckoutWebView', { cartItems });
+        navigation.navigate('AwoofCheckout', { cartItems });
         }, 100);
       });
 
     } catch (error) {
       console.error('❌ Address sync failed:', error);
       // Even if sync fails, proceed to checkout (WebView will handle fallback)
-      navigation.navigate('AwoofCheckoutWebView', { cartItems });
+      navigation.navigate('AwoofCheckout', { cartItems });
     } finally {
       setIsSyncing(false);
     }
@@ -115,7 +115,7 @@ export default function AwoofMiniCartModal({ navigation, route }: any) {
   const subtotal = cartItems.reduce((sum: number, item: CartItem) => sum + (item.salePrice * item.quantity), 0);
   const originalTotal = cartItems.reduce((sum: number, item: CartItem) => sum + (item.originalPrice * item.quantity), 0);
   const totalSavings = originalTotal - subtotal;
-  const deliveryFee = 1500;
+  const deliveryFee = 0;
   const grandTotal = subtotal + deliveryFee;
 
   if (cartItems.length === 0) {
@@ -301,7 +301,7 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     maxHeight: height * 0.85,
-    paddingTop: 12,
+    paddingTop: 20,
   },
   handleBar: {
     width: 40,
@@ -316,6 +316,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingBottom: 16,
+    paddingTop: 4,
     borderBottomWidth: 1,
   },
   headerTitle: {

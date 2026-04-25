@@ -23,13 +23,14 @@ export default function AwoofCheckoutWebView({ route, navigation }: any) {
   const colors = useThemeColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { sessionToken } = useAuth();
+  const { apiService, sessionToken } = useAuth();
   const cartItems = route?.params?.cartItems || [];
   const webViewRef = useRef<any>(null);
   const [loading, setLoading] = useState(true);
   
   // Track if alert is currently shown to prevent duplicates
   const alertShown = useRef(false);
+  const successHandledRef = useRef(false);
 
   // Get the base URL and clean it
   const baseUrl = appConfig.wordpressUrl.endsWith('/') 
@@ -82,9 +83,38 @@ export default function AwoofCheckoutWebView({ route, navigation }: any) {
     }
   };
 
-  const handleOrderSuccess = (url: string) => {
+  const handleShouldStartLoadWithRequest = (request: any) => {
+    const url = (request?.url || '').toLowerCase();
+
+    if (url.includes('/order-received/') || url.includes('/thank-you/')) {
+      void handleOrderSuccess(request.url);
+      return false;
+    }
+
+    return true;
+  };
+
+  const handleOrderSuccess = async (url: string) => {
+    if (successHandledRef.current) {
+      return;
+    }
+
+    successHandledRef.current = true;
     const orderIdMatch = url.match(/order-received\/(\d+)/);
     const orderId = orderIdMatch ? orderIdMatch[1] : 'N/A';
+
+    if (orderId !== 'N/A') {
+      try {
+        await apiService.updateOrder(Number(orderId), {
+          set_paid: true,
+          status: 'processing',
+        });
+        console.log('✅ WooCommerce order updated from WebView success:', orderId);
+      } catch (error) {
+        console.error('⚠️ Failed to update WebView order:', error);
+      }
+    }
+
     // Using replace to prevent going back to checkout
     navigation.replace('OrderSuccess', { orderId });
   };
@@ -97,6 +127,7 @@ export default function AwoofCheckoutWebView({ route, navigation }: any) {
       '/my-account',
       '/order-received',
       '/thank-you',
+      '/awoof-payment-success',
       'paystack.com',
       'checkout',
       'gateway',
@@ -180,7 +211,7 @@ export default function AwoofCheckoutWebView({ route, navigation }: any) {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Custom Header */}
-      <View style={[styles.header, { paddingTop: insets.top + 8, backgroundColor: colors.card, borderBottomColor: colors.border }]}>
+      <View style={[styles.header, { paddingTop: insets.top + 24, backgroundColor: colors.card, borderBottomColor: colors.border }]}>
         <TouchableOpacity style={[styles.closeButton, { backgroundColor: colors.surface }]} onPress={handleClose}>
           <Ionicons name="close" size={20} color={colors.text} />
         </TouchableOpacity>
@@ -212,6 +243,7 @@ export default function AwoofCheckoutWebView({ route, navigation }: any) {
         onLoadStart={() => setLoading(true)}
         onLoadEnd={() => setLoading(false)}
         onNavigationStateChange={handleNavigationStateChange}
+        onShouldStartLoadWithRequest={handleShouldStartLoadWithRequest}
         onError={handleError}
         injectedJavaScript={injectedJavaScript}
         javaScriptEnabled={true}
@@ -236,14 +268,16 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingBottom: 12,
-    paddingHorizontal: 16,
+    paddingBottom: 16,
+    paddingHorizontal: 20,
     borderBottomWidth: 1,
+    zIndex: 2,
+    elevation: 2,
   },
   closeButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     justifyContent: 'center',
     alignItems: 'center',
   },
