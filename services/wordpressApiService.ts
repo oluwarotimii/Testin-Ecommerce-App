@@ -917,6 +917,7 @@ class WordPressApiService {
             method_title: method.method_title,
             enabled: method.enabled,
             settings: method.settings,
+            cost: this.extractShippingCost(method.settings),
             zone_id: zone.id,
             zone_name: zone.name
           }));
@@ -935,6 +936,20 @@ class WordPressApiService {
       console.error('Error getting shipping methods:', error);
       return [];
     }
+  }
+
+  private extractShippingCost(settings: any) {
+    const rawCost =
+      settings?.cost?.value ??
+      settings?.cost ??
+      settings?.shipping_cost?.value ??
+      settings?.shipping_cost ??
+      settings?.class_cost?.value ??
+      settings?.class_cost ??
+      '0';
+
+    const parsed = Number.parseFloat(String(rawCost).replace(/[^0-9.-]/g, ''));
+    return Number.isFinite(parsed) ? parsed : 0;
   }
 
   async createOrder(orderData: any) {

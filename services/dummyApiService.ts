@@ -924,6 +924,15 @@ class DummyApiService {
   }
 
   // Push Notifications
+  async updateOrder(order_id: number, orderData: Record<string, any>) {
+    console.log('Dummy order update:', { order_id, orderData });
+    return {
+      success: true,
+      order_id,
+      orderData,
+    };
+  }
+
   async updatePushToken(token: string) {
     // In a real implementation, this would send the token to your backend
     // For now, we'll just log it

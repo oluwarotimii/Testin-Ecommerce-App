@@ -14,6 +14,7 @@ import { MaterialIcons, FontAwesome, Ionicons } from '@expo/vector-icons';
 export default function AccountScreen() {
   const router = useRouter();
   const colors = useThemeColors();
+  const isDarkMode = String(colors.background).toLowerCase() === '#000000';
   const { colorScheme, toggleColorScheme, setColorScheme } = useTheme();
   const { isAuthenticated, apiService, signOut, loadingAuth } = useAuth();
   const [showSignOutModal, setShowSignOutModal] = useState(false);
@@ -420,8 +421,8 @@ export default function AccountScreen() {
               <Ionicons name="log-out-outline" size={40} color={colors.error} />
             </View>
 
-            <Text style={[styles.modalTitle, { color: '#FF0000' }]}>Sign Out?</Text>
-            <Text style={[styles.modalMessage, { color: '#0000FF' }]}>
+            <Text style={[styles.modalTitle, { color: colors.text }]}>Sign Out?</Text>
+            <Text style={[styles.modalMessage, { color: colors.textSecondary }]}>
               Are you sure you want to sign out of your account?
             </Text>
 
@@ -430,14 +431,14 @@ export default function AccountScreen() {
                 style={[styles.modalButton, styles.cancelButton, { backgroundColor: colors.background }]}
                 onPress={() => setShowSignOutModal(false)}
               >
-                <Text style={[styles.modalButtonText, { color: '#FF0000' }]}>Cancel</Text>
+                <Text style={[styles.modalButtonText, { color: colors.text }]}>Cancel</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
                 style={[styles.modalButton, styles.confirmButton, { backgroundColor: colors.error }]}
                 onPress={handleLogout}
               >
-                <Text style={[styles.modalButtonText, { color: '#FFFFFF' }]}>Sign Out</Text>
+                <Text style={[styles.modalButtonText, { color: colors.white }]}>Sign Out</Text>
               </TouchableOpacity>
             </View>
           </View>

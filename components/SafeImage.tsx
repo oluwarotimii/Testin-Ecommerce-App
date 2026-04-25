@@ -9,7 +9,29 @@ const SafeImage: React.FC<RNImageProps> = (props) => {
   const [imageError, setImageError] = useState(false);
   const [retries, setRetries] = useState(0);
   const maxRetries = 3;
-  const source = useRef(props.source);
+  const source = useRef<any>(props.source);
+  const rawSource = props.source as any;
+  const hasValidRemoteUri =
+    !!rawSource &&
+    typeof rawSource === 'object' &&
+    !Array.isArray(rawSource) &&
+    typeof rawSource.uri === 'string' &&
+    rawSource.uri.trim().length > 0;
+
+  const hasRenderableSource =
+    !!rawSource &&
+    (!(
+      typeof rawSource === 'object' &&
+      !Array.isArray(rawSource) &&
+      typeof rawSource.uri !== 'undefined'
+    ) || hasValidRemoteUri);
+
+  const createReloadableSource = (input: RNImageProps['source']) => {
+    if (input && typeof input === 'object' && !Array.isArray(input)) {
+      return { ...(input as Record<string, any>), _t: Date.now() } as any;
+    }
+    return input;
+  };
 
   const handleImageError = () => {
     if (retries < maxRetries) {
@@ -18,13 +40,13 @@ const SafeImage: React.FC<RNImageProps> = (props) => {
         setRetries(prev => prev + 1);
         setImageError(false);
         // Force reload by updating source ref
-        source.current = { ...props.source, _t: Date.now() }; // Add timestamp to trigger reload
+        source.current = createReloadableSource(props.source); // Add timestamp to trigger reload
       }, 500);
     } else {
       setImageError(true);
       // Call the original onError if it exists
       if (props.onError) {
-        props.onError(new Error('Image failed to load after retries'));
+        props.onError({} as any);
       }
     }
   };
@@ -34,7 +56,7 @@ const SafeImage: React.FC<RNImageProps> = (props) => {
     setRetries(0); // Reset retries on successful load
     // Call the original onLoad if it exists
     if (props.onLoad) {
-      props.onLoad({});
+      props.onLoad({} as any);
     }
   };
 
@@ -42,10 +64,10 @@ const SafeImage: React.FC<RNImageProps> = (props) => {
     setImageError(false);
     setRetries(0);
     // Force reload by updating source ref with timestamp
-    source.current = { ...props.source, _t: Date.now() };
+    source.current = createReloadableSource(props.source);
   };
 
-  if (imageError || !props.source) {
+  if (imageError || !hasRenderableSource) {
     return (
       <TouchableOpacity
         style={[styles.placeholderContainer, props.style, { backgroundColor: colors.surface }]}
@@ -66,8 +88,8 @@ const SafeImage: React.FC<RNImageProps> = (props) => {
   let processedSource = source.current;
 
   // If source is an object with uri, ensure it's a proper URL
-  if (processedSource && typeof processedSource === 'object' && processedSource.uri) {
-    let uri = processedSource.uri;
+  if (processedSource && typeof processedSource === 'object' && !Array.isArray(processedSource) && typeof (processedSource as any).uri === 'string') {
+    let uri = (processedSource as any).uri;
 
     // Fix common URL issues
     if (uri && typeof uri === 'string') {
@@ -76,14 +98,14 @@ const SafeImage: React.FC<RNImageProps> = (props) => {
         uri = uri.replace('http://', 'https://');
       }
       // Create a new source object instead of modifying the existing one
-      processedSource = { ...processedSource, uri };
+      processedSource = { ...(processedSource as Record<string, any>), uri };
     }
   }
 
   return (
     <RNImage
       {...props}
-      source={processedSource}
+      source={processedSource as any}
       onError={handleImageError}
       onLoad={handleImageLoad}
       style={props.style}

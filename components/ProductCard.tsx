@@ -18,6 +18,7 @@ interface ProductCardProps {
 
 export default function ProductCard({ product, onPress, isLiked, onToggleWishlist, onAddToCart, addingToCart, cartSuccess, style }: ProductCardProps) {
     const colors = useThemeColors();
+    const isDarkMode = String(colors.background).toLowerCase() === '#000000';
 
     // Calculate discount percentage if original price exists and is higher than current price
     const price = typeof product.price === 'number' ? product.price : parseFloat(product.price || '0');
@@ -42,7 +43,7 @@ export default function ProductCard({ product, onPress, isLiked, onToggleWishlis
                         <Ionicons
                             name={isLiked ? "heart" : "heart-outline"}
                             size={16}
-                            color={isLiked ? "#FF3B30" : colors.text}
+                            color={isLiked ? colors.error : colors.text}
                         />
                     </TouchableOpacity>
                 </View>
@@ -73,7 +74,7 @@ export default function ProductCard({ product, onPress, isLiked, onToggleWishlis
                 <View style={styles.priceContainer}>
                     <View>
                         <Text style={[styles.originalPrice, { color: colors.textSecondary }]}>{formatPrice(originalPrice)}</Text>
-                        <Text style={[styles.productPrice, { color: '#042861' }]}>{formatPrice(price)}</Text>
+                        <Text style={[styles.productPrice, { color: isDarkMode ? colors.white : colors.primary }]}>{formatPrice(price)}</Text>
                     </View>
                 </View>
             </View>

@@ -80,6 +80,7 @@ const ProductItem = memo(({
   onAddToCart: (e: any) => void;
 }) => {
   const isInWishlist = wishlist.includes(product.id);
+  const isDarkMode = String(colors.background).toLowerCase() === '#000000';
   
   return (
     <TouchableOpacity
@@ -127,7 +128,7 @@ const ProductItem = memo(({
           <Text style={[styles.originalPrice, { color: colors.textSecondary }]}>
             {formatPrice((typeof product.price === 'number' ? product.price : parseFloat(product.price || '0')) * 1.3)}
           </Text>
-          <Text style={[styles.productPrice, { color: '#042861' }]}>
+          <Text style={[styles.productPrice, { color: isDarkMode ? colors.white : colors.primary }]}>
             {formatPrice(typeof product.price === 'number' ? product.price : parseFloat(product.price || '0'))}
           </Text>
         </View>

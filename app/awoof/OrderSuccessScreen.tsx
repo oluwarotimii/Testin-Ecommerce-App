@@ -17,6 +17,7 @@ export default function OrderSuccessScreen({ route, navigation }: any) {
   const colors = useThemeColors();
   const insets = useSafeAreaInsets();
   const { orderId = 'N/A' } = route.params || {};
+  const isDarkMode = String(colors.background).toLowerCase() === '#000000';
 
   const scaleAnim = useRef(new Animated.Value(0)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -199,7 +200,7 @@ export default function OrderSuccessScreen({ route, navigation }: any) {
           style={[styles.viewOrderButton, { borderColor: colors.primary }]}
           onPress={handleViewOrder}
         >
-          <Text style={[styles.viewOrderText, { color: colors.primary }]}>View Order Details</Text>
+          <Text style={[styles.viewOrderText, { color: isDarkMode ? colors.white : colors.primary }]}>View Order Details</Text>
         </TouchableOpacity>
 
         <TouchableOpacity

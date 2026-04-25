@@ -12,6 +12,7 @@ import SafeImage from '@/components/SafeImage';
 export default function WishlistScreen() {
   const router = useRouter();
   const colors = useThemeColors();
+  const isDarkMode = String(colors.background).toLowerCase() === '#000000';
   const { apiService } = useAuth();
   const [wishlist, setWishlist] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -129,7 +130,7 @@ export default function WishlistScreen() {
                 >
                   <SafeImage source={{ uri: imageUrl }} style={styles.gridImage} resizeMode="cover" />
                   <TouchableOpacity
-                    style={[styles.removeButtonAbsolute, { backgroundColor: 'rgba(255,255,255,0.8)' }]}
+                    style={[styles.removeButtonAbsolute, { backgroundColor: isDarkMode ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.8)' }]}
                     onPress={() => removeFromWishlist(item.id)}
                   >
                     <Ionicons name="trash-outline" size={20} color={colors.error} />
@@ -148,7 +149,7 @@ export default function WishlistScreen() {
                 <View style={styles.gridInfo}>
                   <Text style={[styles.gridName, { color: colors.text }]} numberOfLines={2}>{productName}</Text>
                   <View style={styles.gridPriceRow}>
-                    <Text style={[styles.gridPrice, { color: '#042861' }]}>₦{formattedPrice}</Text>
+                    <Text style={[styles.gridPrice, { color: isDarkMode ? colors.white : colors.primary }]}>₦{formattedPrice}</Text>
                   </View>
                 </View>
               </View>
@@ -216,7 +217,6 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#042861',
   },
   gridImage: {
     width: '100%',

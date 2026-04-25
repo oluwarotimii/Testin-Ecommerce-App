@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -18,6 +18,7 @@ import { clearCartAbandonmentReminder, sendLocalNotification } from '@/services/
 import appConfig from '@/hooks/useAppConfig';
 import { CartItem, awoofCart } from './AwoofUtils';
 import SafeImage from '@/components/SafeImage';
+import Dropdown from '@/components/Dropdown';
 import axios from 'axios';
 import { WebView } from 'react-native-webview';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -41,23 +42,45 @@ export default function AwoofCheckoutScreen({ route, navigation }: any) {
   const webViewRef = useRef<any>(null);
   const paymentCompletedRef = useRef(false);
   const [address, setAddress] = useState<any>(null);
+  const [shippingMethods, setShippingMethods] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingShippingMethods, setLoadingShippingMethods] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isWebCheckoutVisible, setIsWebCheckoutVisible] = useState(false);
   const [isWebLoading, setIsWebLoading] = useState(false);
   const [paymentData, setPaymentData] = useState<PaymentData | null>(null);
   const [checkoutUrl, setCheckoutUrl] = useState<string | null>(null);
+  const [selectedShippingMethod, setSelectedShippingMethod] = useState<any>(null);
 
   const baseWordPressUrl = useMemo(() => appConfig.wordpressUrl.replace(/\/$/, ''), []);
   const callbackUrl = useMemo(() => `${baseWordPressUrl}/awoof-payment-callback`, [baseWordPressUrl]);
+  const isDarkMode = String(colors.background).toLowerCase() === '#000000';
 
   useEffect(() => {
     if (!loadingAuth && isAuthenticated) {
       loadAddress();
+      loadShippingMethods();
     } else if (!loadingAuth && !isAuthenticated) {
       setLoading(false);
+      setLoadingShippingMethods(false);
     }
   }, [loadingAuth, isAuthenticated]);
+
+  const loadShippingMethods = useCallback(async () => {
+    try {
+      setLoadingShippingMethods(true);
+      const methods = await apiService.getShippingMethods();
+      setShippingMethods(Array.isArray(methods) ? methods : []);
+      if (Array.isArray(methods) && methods.length > 0) {
+        setSelectedShippingMethod(methods[0]);
+      }
+    } catch (error) {
+      console.error('Error loading Awoof shipping methods:', error);
+      setShippingMethods([]);
+    } finally {
+      setLoadingShippingMethods(false);
+    }
+  }, [apiService]);
 
   const loadAddress = async () => {
     try {
@@ -125,6 +148,55 @@ export default function AwoofCheckoutScreen({ route, navigation }: any) {
     };
   };
 
+  const getShippingPayload = () => {
+    const deliveryFee = getSelectedShippingCost();
+
+    if (!selectedShippingMethod) {
+      return {
+        shipping_lines: [{
+          method_id: 'flat_rate',
+          method_title: 'Standard Shipping',
+          total: deliveryFee.toFixed(2),
+        }],
+      };
+    }
+
+    const methodId = selectedShippingMethod.method_id || selectedShippingMethod.id || 'flat_rate';
+    const methodTitle = selectedShippingMethod.title || selectedShippingMethod.method_title || 'Standard Shipping';
+    const shippingLines = [{
+      method_id: methodId,
+      method_title: methodTitle,
+      total: deliveryFee.toFixed(2),
+    }];
+
+    return {
+      shipping_lines: shippingLines,
+      meta_data: [],
+    };
+  };
+
+  const getSelectedShippingCost = () => {
+    const rawCost =
+      selectedShippingMethod?.cost ??
+      selectedShippingMethod?.settings?.cost?.value ??
+      selectedShippingMethod?.settings?.cost ??
+      selectedShippingMethod?.settings?.shipping_cost?.value ??
+      selectedShippingMethod?.settings?.shipping_cost ??
+      0;
+
+    const parsed = Number.parseFloat(String(rawCost).replace(/[^0-9.-]/g, ''));
+    return Number.isFinite(parsed) ? parsed : 0;
+  };
+
+  const handlePayPress = () => {
+    if (!isAuthenticated) {
+      router.push('/login');
+      return;
+    }
+
+    void initiatePayment();
+  };
+
   const initiatePayment = async () => {
     if (!address) {
       Alert.alert('Address Missing', 'Please add a shipping address before proceeding.');
@@ -165,6 +237,7 @@ export default function AwoofCheckoutScreen({ route, navigation }: any) {
           callback_url: callbackUrl,
           email,
           ...getAddressPayload(address),
+          ...getShippingPayload(),
         },
         {
           headers: {
@@ -305,7 +378,7 @@ export default function AwoofCheckoutScreen({ route, navigation }: any) {
   };
 
   const subtotal = cartItems.reduce((sum, item) => sum + item.salePrice * item.quantity, 0);
-  const deliveryFee = 0;
+  const deliveryFee = getSelectedShippingCost();
   const total = subtotal + deliveryFee;
 
   if (loading || loadingAuth) {
@@ -328,7 +401,23 @@ export default function AwoofCheckoutScreen({ route, navigation }: any) {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
+      <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
+        <TouchableOpacity style={[styles.backButton, { backgroundColor: colors.surface }]} onPress={() => navigation.goBack()}>
+          <Ionicons name="arrow-back" size={20} color={colors.text} />
+        </TouchableOpacity>
+        <View style={{ flex: 1 }}>
+          <Text style={[styles.headerTitle, { color: colors.text }]}>Awoof Checkout</Text>
+          <Text style={[styles.headerSubtitle, { color: colors.textSecondary }]}>
+            Confirm delivery before paying
+          </Text>
+        </View>
+      </View>
+
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={{ paddingBottom: insets.bottom + 260 }}
+        showsVerticalScrollIndicator={false}
+      >
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={[styles.sectionTitle, { color: colors.text }]}>Shipping Address</Text>
@@ -369,6 +458,51 @@ export default function AwoofCheckoutScreen({ route, navigation }: any) {
         </View>
 
         <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>Delivery Method</Text>
+          {loadingShippingMethods ? (
+            <View style={[styles.summaryCard, { backgroundColor: colors.surface }]}>
+              <ActivityIndicator color={colors.primary} />
+            </View>
+          ) : shippingMethods.length > 0 ? (
+            <Dropdown
+              options={shippingMethods}
+              selectedValue={selectedShippingMethod}
+              onValueChange={(method: any) => {
+                setSelectedShippingMethod(method);
+              }}
+              keyExtractor={(item: any) => `${item.id}-${item.instance_id || item.method_id || item.title}`}
+              renderItem={(item: any, isSelected: boolean) => (
+                <View style={{ flex: 1 }}>
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <Text style={[styles.deliveryMethodTitle, { color: colors.text }, isSelected && { color: colors.primary }]}>
+                      {item.title || item.method_title}
+                    </Text>
+                    {isSelected && <Ionicons name="checkmark" size={20} color={colors.primary} />}
+                  </View>
+                  {item.zone_name && (
+                    <Text style={[styles.deliveryMethodDescription, { color: colors.textSecondary }]}>
+                      Zone: {item.zone_name}
+                    </Text>
+                  )}
+                </View>
+              )}
+            />
+          ) : (
+            <View style={[styles.summaryCard, { backgroundColor: colors.surface }]}>
+              <Text style={[styles.deliveryMethodDescription, { color: colors.textSecondary }]}>
+                No delivery methods available
+              </Text>
+            </View>
+          )}
+        </View>
+
+        <View style={styles.section}>
+          <Text style={[styles.deliveryNotice, { color: colors.error }]}>
+            Delivery is only available in the areas listed in the location options. No delivery outside the available zones.
+          </Text>
+        </View>
+
+        <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: colors.text }]}>Order Summary</Text>
           <View style={[styles.summaryCard, { backgroundColor: colors.surface }]}>
             {cartItems.map((item) => (
@@ -378,7 +512,7 @@ export default function AwoofCheckoutScreen({ route, navigation }: any) {
                   <Text style={[styles.itemName, { color: colors.text }]} numberOfLines={1}>
                     {item.name}
                   </Text>
-                  <Text style={[styles.itemPrice, { color: colors.error }]}>
+                  <Text style={[styles.itemPrice, { color: isDarkMode ? colors.white : colors.error }]}>
                     ₦{item.salePrice.toLocaleString()} x {item.quantity}
                   </Text>
                 </View>
@@ -399,7 +533,7 @@ export default function AwoofCheckoutScreen({ route, navigation }: any) {
 
             <View style={[styles.priceRow, { marginTop: 8 }]}>
               <Text style={[styles.totalLabel, { color: colors.text }]}>Total</Text>
-              <Text style={[styles.totalValue, { color: colors.primary }]}>₦{total.toLocaleString()}</Text>
+              <Text style={[styles.totalValue, { color: isDarkMode ? colors.white : colors.primary }]}>₦{total.toLocaleString()}</Text>
             </View>
           </View>
         </View>
@@ -411,7 +545,6 @@ export default function AwoofCheckoutScreen({ route, navigation }: any) {
           </Text>
         </View>
 
-        <View style={{ height: insets.bottom + 140 }} />
       </ScrollView>
 
       <View
@@ -420,21 +553,21 @@ export default function AwoofCheckoutScreen({ route, navigation }: any) {
           {
             borderTopColor: colors.border,
             backgroundColor: colors.card,
-            paddingBottom: insets.bottom + 16,
-            bottom: insets.bottom + 92,
+            paddingBottom: insets.bottom + 20,
+            bottom: insets.bottom + 16,
           },
         ]}
       >
         <TouchableOpacity
           style={[styles.payButton, { backgroundColor: colors.primary }, isProcessing && { opacity: 0.7 }]}
-          onPress={initiatePayment}
-          disabled={isProcessing || !address}
+          onPress={handlePayPress}
+          disabled={isProcessing || (isAuthenticated && !address)}
         >
           {isProcessing ? (
             <ActivityIndicator color="#fff" />
           ) : (
             <>
-              <Text style={styles.payButtonText}>Pay ₦{total.toLocaleString()}</Text>
+              <Text style={styles.payButtonText}>{isAuthenticated ? `Pay ₦${total.toLocaleString()}` : 'Login to Pay'}</Text>
               <Ionicons name="arrow-forward" size={20} color="#fff" />
             </>
           )}
@@ -480,7 +613,7 @@ export default function AwoofCheckoutScreen({ route, navigation }: any) {
             <WebView
               ref={webViewRef}
               source={{ uri: checkoutUrl }}
-              style={styles.webView}
+              style={[styles.webView, { backgroundColor: colors.background }]}
               onNavigationStateChange={handleWebViewNavigation}
               onShouldStartLoadWithRequest={handleShouldStartLoadWithRequest}
               onLoadStart={() => setIsWebLoading(true)}
@@ -546,9 +679,27 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '700',
   },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingBottom: 8,
+    gap: 12,
+  },
+  backButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   headerTitle: {
     fontSize: 18,
     fontWeight: '700',
+  },
+  headerSubtitle: {
+    fontSize: 12,
+    marginTop: 2,
   },
   addressCard: {
     padding: 16,
@@ -610,6 +761,19 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '700',
     marginTop: 2,
+  },
+  deliveryMethodTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  deliveryMethodDescription: {
+    fontSize: 12,
+    marginTop: 4,
+  },
+  deliveryNotice: {
+    fontSize: 12,
+    fontWeight: '600',
+    lineHeight: 18,
   },
   divider: {
     height: 1,
@@ -721,7 +885,6 @@ const styles = StyleSheet.create({
   },
   webView: {
     flex: 1,
-    backgroundColor: '#fff',
   },
   webFallback: {
     flex: 1,

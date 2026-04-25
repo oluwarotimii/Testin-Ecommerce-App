@@ -25,6 +25,7 @@ export default function ProductDetailScreen({ route, navigation }: any) {
   const { product } = route.params;
   const colors = useThemeColors();
   const insets = useSafeAreaInsets();
+  const isDarkMode = String(colors.background).toLowerCase() === '#000000';
   const [quantity, setQuantity] = useState(1);
   const scrollY = useRef(new Animated.Value(0)).current;
   const toastRef = useRef<AwoofToastRef>(null);
@@ -127,8 +128,8 @@ export default function ProductDetailScreen({ route, navigation }: any) {
           {/* Price Section */}
           <View style={[styles.priceSection, { backgroundColor: colors.surface }]}>
             <View style={styles.priceRow}>
-              <Text style={[styles.salePrice, { color: colors.error }]}>₦{product.salePrice.toLocaleString()}</Text>
-              <Text style={[styles.originalPrice, { color: colors.primary }]}>₦{product.originalPrice.toLocaleString()}</Text>
+              <Text style={[styles.salePrice, { color: isDarkMode ? colors.white : colors.error }]}>₦{product.salePrice.toLocaleString()}</Text>
+              <Text style={[styles.originalPrice, { color: isDarkMode ? colors.white : colors.primary }]}>₦{product.originalPrice.toLocaleString()}</Text>
             </View>
             <View style={[styles.savingsCard, { backgroundColor: colors.success + '15' }]}>
               <Text style={[styles.savingsText, { color: colors.success }]}>
@@ -167,7 +168,7 @@ export default function ProductDetailScreen({ route, navigation }: any) {
           <View style={[styles.totalSection, { backgroundColor: colors.warning + '10', borderColor: colors.warning }]}>
             <View style={styles.totalRow}>
               <Text style={[styles.totalLabel, { color: colors.textSecondary }]}>Subtotal ({quantity} item{quantity > 1 ? 's' : ''})</Text>
-              <Text style={[styles.totalAmount, { color: colors.primary }]}>₦{totalPrice.toLocaleString()}</Text>
+              <Text style={[styles.totalAmount, { color: isDarkMode ? colors.white : colors.primary }]}>₦{totalPrice.toLocaleString()}</Text>
             </View>
             <View style={styles.totalRow}>
               <Text style={[styles.savingsLabel, { color: colors.warning }]}>Total Savings</Text>

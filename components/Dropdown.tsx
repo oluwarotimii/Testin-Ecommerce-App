@@ -38,6 +38,7 @@ export default function Dropdown({
     const [dropdownWidth, setDropdownWidth] = useState(0);
     const buttonRef = useRef<View>(null);
     const colors = useThemeColors();
+    const isDarkMode = String(colors.background).toLowerCase() === '#000000';
 
     const toggleDropdown = () => {
         if (visible) {
@@ -83,11 +84,11 @@ export default function Dropdown({
                 style={[styles.item, isSelected && { backgroundColor: colors.primary + '10' }]}
                 onPress={() => handleSelect(item)}
             >
-                <Text style={[styles.itemText, { color: '#333333' }, isSelected && { color: '#FF0000', fontWeight: '600' }]}>
+                <Text style={[styles.itemText, { color: isDarkMode ? colors.white : colors.text }, isSelected && { color: colors.primary, fontWeight: '600' }]}>
                     {labelExtractor(item)}
                 </Text>
                 {isSelected && (
-                    <Ionicons name="checkmark" size={20} color="#FF0000" />
+                    <Ionicons name="checkmark" size={20} color={colors.primary} />
                 )}
             </TouchableOpacity>
         );
@@ -100,10 +101,10 @@ export default function Dropdown({
                 style={[styles.button, { backgroundColor: colors.surface, borderColor: colors.border }]}
                 onPress={toggleDropdown}
             >
-                <Text style={[styles.buttonText, { color: selectedItem ? '#333333' : '#888888' }]}>
+                <Text style={[styles.buttonText, { color: selectedItem ? colors.text : colors.textSecondary }]}>
                     {displayText}
                 </Text>
-                <Ionicons name={visible ? "chevron-up" : "chevron-down"} size={20} color="#666666" />
+                <Ionicons name={visible ? "chevron-up" : "chevron-down"} size={20} color={colors.textSecondary} />
             </TouchableOpacity>
 
             <Modal visible={visible} transparent animationType="fade" onRequestClose={() => setVisible(false)}>

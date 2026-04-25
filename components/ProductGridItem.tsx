@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import SafeImage from './SafeImage';
 import { Ionicons } from '@expo/vector-icons';
+import { useThemeColors } from '@/hooks/useColorScheme';
 
 interface ProductGridItemProps {
   product: any;
@@ -10,23 +11,25 @@ interface ProductGridItemProps {
 }
 
 const ProductGridItem: React.FC<ProductGridItemProps> = ({ product, onPress, onAddToCart }) => {
+  const colors = useThemeColors();
+  const isDarkMode = String(colors.background).toLowerCase() === '#000000';
   return (
     <View style={styles.gridItem}>
       <TouchableOpacity
-        style={styles.productCard}
+        style={[styles.productCard, { backgroundColor: colors.surface, borderColor: colors.border }]}
         onPress={onPress}
         activeOpacity={0.9}
       >
-        <SafeImage source={{ uri: product.image }} style={styles.productImage} />
+        <SafeImage source={{ uri: product.image }} style={[styles.productImage, { backgroundColor: colors.background }]} />
 
         <View style={styles.productDetails}>
-          <Text style={styles.productName} numberOfLines={2}>{product.title}</Text>
+          <Text style={[styles.productName, { color: colors.text }]} numberOfLines={2}>{product.title}</Text>
 
           <View style={styles.bottomRow}>
-            <Text style={styles.productPrice}>{`₦${product.price.toFixed(2)}`}</Text>
+            <Text style={[styles.productPrice, { color: isDarkMode ? colors.white : colors.primary }]}>{`₦${product.price.toFixed(2)}`}</Text>
 
             <TouchableOpacity
-              style={styles.addToCartButton}
+              style={[styles.addToCartButton, { backgroundColor: colors.primary }]}
               onPress={(e) => {
                 e.stopPropagation();
                 onAddToCart();
@@ -46,7 +49,6 @@ const styles = StyleSheet.create({
     width: '48%',
     marginBottom: 16,
     borderRadius: 16,
-    backgroundColor: '#FFFFFF',
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
@@ -64,7 +66,6 @@ const styles = StyleSheet.create({
   productImage: {
     width: '100%',
     height: 160,
-    backgroundColor: '#F2F2F7',
   },
   productDetails: {
     padding: 12,
@@ -72,7 +73,6 @@ const styles = StyleSheet.create({
   productName: {
     fontSize: 14,
     fontWeight: '500',
-    color: '#1D1D1F',
     marginBottom: 12,
     lineHeight: 20,
     height: 40, // Fixed height for 2 lines to keep alignment
@@ -85,13 +85,11 @@ const styles = StyleSheet.create({
   productPrice: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#042861',
   },
   addToCartButton: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: '#042861',
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#042861',

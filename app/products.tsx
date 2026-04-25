@@ -23,6 +23,7 @@ export default function ProductsScreen() {
   const { setCartCount } = useCart();
   const { isConnected, isInternetReachable, checkConnectivity } = useNetwork();
   const colors = useThemeColors();
+  const isDarkMode = String(colors.background).toLowerCase() === '#000000';
   const scrollViewRef = useRef();
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [searchQuery, setSearchQuery] = useState('');
@@ -353,7 +354,7 @@ export default function ProductsScreen() {
             </View> */}
             <View style={styles.priceContainer}>
               <Text style={[styles.originalPrice, { color: colors.textSecondary }]}>{formatPrice((typeof product.price === 'number' ? product.price : parseFloat(product.price || '0')) * 1.3)}</Text>
-              <Text style={[styles.price, { color: '#042861' }]}>{formatPrice(typeof product.price === 'number' ? product.price : parseFloat(product.price || '0'))}</Text>
+              <Text style={[styles.price, { color: isDarkMode ? colors.white : colors.primary }]}>{formatPrice(typeof product.price === 'number' ? product.price : parseFloat(product.price || '0'))}</Text>
             </View>
           </View>
           <View style={styles.listProductActions}>

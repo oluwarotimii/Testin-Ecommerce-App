@@ -27,6 +27,7 @@ export default function FilterModal({
   maxPriceLimit = 1000 
 }: FilterModalProps) {
   const colors = useThemeColors();
+  const isDarkMode = String(colors.background).toLowerCase() === '#000000';
   const [minPrice, setMinPrice] = useState(currentFilters.minPrice);
   const [maxPrice, setMaxPrice] = useState(currentFilters.maxPrice);
   const [sortBy, setSortBy] = useState(currentFilters.sortBy);
@@ -70,28 +71,28 @@ export default function FilterModal({
         <View style={[styles.modalContent, { backgroundColor: colors.background }]}>
           {/* Header */}
           <View style={[styles.modalHeader, { borderBottomColor: colors.border }]}>
-            <Text style={[styles.modalTitle, { color: '#FF0000' }]}>Filters & Sort</Text>
+            <Text style={[styles.modalTitle, { color: colors.text }]}>Filters & Sort</Text>
             <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-              <Ionicons name="close" size={24} color="#FF0000" />
+              <Ionicons name="close" size={24} color={colors.text} />
             </TouchableOpacity>
           </View>
 
           <ScrollView style={styles.modalBody} showsVerticalScrollIndicator={false}>
             {/* Price Range */}
             <View style={styles.section}>
-              <Text style={[styles.sectionTitle, { color: '#FF0000' }]}>Price Range</Text>
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>Price Range</Text>
               <View style={styles.priceDisplay}>
-                <Text style={[styles.priceText, { color: '#042861' }]}>
+                <Text style={[styles.priceText, { color: isDarkMode ? colors.white : colors.primary }]}>
                   ₦{minPrice.toFixed(0)}
                 </Text>
                 <Text style={[styles.priceText, { color: colors.textSecondary }]}>-</Text>
-                <Text style={[styles.priceText, { color: '#042861' }]}>
+                <Text style={[styles.priceText, { color: isDarkMode ? colors.white : colors.primary }]}>
                   ₦{maxPrice.toFixed(0)}
                 </Text>
               </View>
 
               {/* Min Price Slider */}
-              <Text style={[styles.sliderLabel, { color: '#042861' }]}>Minimum Price</Text>
+              <Text style={[styles.sliderLabel, { color: colors.textSecondary }]}>Minimum Price</Text>
               <Slider
                 style={styles.slider}
                 minimumValue={0}
@@ -105,7 +106,7 @@ export default function FilterModal({
               />
               
               {/* Max Price Slider */}
-              <Text style={[styles.sliderLabel, { color: '#FF69B4' }]}>Maximum Price</Text>
+              <Text style={[styles.sliderLabel, { color: colors.textSecondary }]}>Maximum Price</Text>
               <Slider
                 style={styles.slider}
                 minimumValue={minPrice}
@@ -121,7 +122,7 @@ export default function FilterModal({
 
             {/* Sort By */}
             <View style={styles.section}>
-              <Text style={[styles.sectionTitle, { color: '#0000FF' }]}>Sort By</Text>
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>Sort By</Text>
               {sortOptions.map((option) => (
                 <TouchableOpacity
                   key={option.value}
@@ -140,7 +141,7 @@ export default function FilterModal({
                   <Text
                     style={[
                       styles.sortOptionText,
-                      { color: sortBy === option.value ? '#FF0000' : '#666666' }
+                      { color: sortBy === option.value ? (isDarkMode ? colors.white : colors.primary) : colors.textSecondary }
                     ]}
                   >
                     {option.label}
@@ -154,7 +155,7 @@ export default function FilterModal({
 
             {/* Rating Filter */}
             <View style={styles.section}>
-              <Text style={[styles.sectionTitle, { color: '#00FF00' }]}>Minimum Rating</Text>
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>Minimum Rating</Text>
               <View style={styles.ratingContainer}>
                 {ratingOptions.map((stars) => (
                   <TouchableOpacity
@@ -167,11 +168,11 @@ export default function FilterModal({
                     onPress={() => setRating(stars)}
                   >
                     {stars === 0 ? (
-                      <Text style={[styles.ratingText, { color: '#808080' }]}>Any</Text>
+                      <Text style={[styles.ratingText, { color: colors.textSecondary }]}>Any</Text>
                     ) : (
                       <>
-                        <Ionicons name="star" size={16} color={rating === stars ? '#FFD700' : '#CCCCCC'} />
-                        <Text style={[styles.ratingText, { color: rating === stars ? '#FF0000' : '#666666' }]}>
+                        <Ionicons name="star" size={16} color={rating === stars ? colors.warning : colors.textSecondary } />
+                        <Text style={[styles.ratingText, { color: rating === stars ? (isDarkMode ? colors.white : colors.primary) : colors.textSecondary }]}>
                           {stars}+
                         </Text>
                       </>
@@ -188,13 +189,13 @@ export default function FilterModal({
               style={[styles.resetButton, { backgroundColor: colors.surface }]}
               onPress={handleReset}
             >
-              <Text style={[styles.resetButtonText, { color: '#FF0000' }]}>Reset</Text>
+              <Text style={[styles.resetButtonText, { color: colors.text }]}>Reset</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.applyButton, { backgroundColor: colors.primary }]}
               onPress={handleApply}
             >
-              <Text style={[styles.applyButtonText, { color: '#FFFFFF' }]}>Apply Filters</Text>
+              <Text style={[styles.applyButtonText, { color: colors.white }]}>Apply Filters</Text>
             </TouchableOpacity>
           </View>
         </View>

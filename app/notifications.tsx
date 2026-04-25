@@ -155,7 +155,7 @@ export default function NotificationsScreen() {
                   style={styles.actionButton}
                   onPress={() => deleteNotification(notification.id)}
                 >
-                  <Text style={{ color: '#FF3B30', fontSize: 14 }}>Delete</Text>
+                  <Text style={{ color: colors.error, fontSize: 14 }}>Delete</Text>
                 </TouchableOpacity>
               </View>
             </View>

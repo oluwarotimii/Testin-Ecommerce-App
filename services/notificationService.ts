@@ -194,7 +194,9 @@ const scheduleCartAbandonmentReminder = async (options?: {
         },
       },
       trigger: {
+        type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
         seconds: CART_REMINDER_DELAY_SECONDS,
+        repeats: false,
       },
     });
 

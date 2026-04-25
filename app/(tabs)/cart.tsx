@@ -15,6 +15,7 @@ import { formatPrice } from '@/utils/formatNumber';
 export default function CartScreen() {
   const router = useRouter();
   const colors = useThemeColors();
+  const isDarkMode = String(colors.background).toLowerCase() === '#000000';
   const { apiService } = useAuth();
   const { setCartCount } = useCart();
   const isFocused = useIsFocused();
@@ -139,7 +140,7 @@ export default function CartScreen() {
             <SafeImage source={{ uri: item.image }} style={styles.itemImage} />
             <View style={styles.itemDetails}>
               <Text style={[styles.itemName, { color: colors.text }]} numberOfLines={2}>{item.title}</Text>
-              <Text style={[styles.itemPrice, { color: '#042861' }]}>{formatPrice(typeof item.price === 'number' ? item.price : parseFloat(item.price || '0'))}</Text>
+              <Text style={[styles.itemPrice, { color: isDarkMode ? colors.white : colors.primary }]}>{formatPrice(typeof item.price === 'number' ? item.price : parseFloat(item.price || '0'))}</Text>
             </View>
             <View style={styles.itemActions}>
               <View style={[styles.quantityContainer, { backgroundColor: colors.background, borderColor: colors.border }]}>
@@ -220,7 +221,7 @@ export default function CartScreen() {
       <View style={[styles.summary, { backgroundColor: colors.surface }]}>
         <View style={styles.summaryRow}>
           <Text style={[styles.totalLabel, { color: colors.text }]}>Total</Text>
-          <Text style={[styles.totalValue, { color: colors.text }]}>{formatPrice(total)}</Text>
+          <Text style={[styles.totalValue, { color: isDarkMode ? colors.white : colors.primary }]}>{formatPrice(total)}</Text>
         </View>
 
         <TouchableOpacity
@@ -281,7 +282,6 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 12,
-    backgroundColor: '#F2F2F7',
   },
   itemDetails: {
     flex: 1,

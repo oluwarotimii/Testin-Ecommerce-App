@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { View, Image, StyleSheet, TouchableOpacity, ActivityIndicator, Linking } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, ActivityIndicator, Linking } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useThemeColors } from '@/hooks/useColorScheme';
 import { fetchBanner, BannerItem } from '@/services/banner';
+import SafeImage from '@/components/SafeImage';
 
 interface MarketingBannerProps {
     // No props needed as it fetches its own data
@@ -63,7 +64,7 @@ const MarketingBanner: React.FC<MarketingBannerProps> = () => {
             onPress={handlePress}
             activeOpacity={bannerData.linkType === 'none' ? 1 : 0.9}
         >
-            <Image
+            <SafeImage
                 source={{ uri: bannerData.imageUrl }}
                 style={styles.image}
                 resizeMode="cover"

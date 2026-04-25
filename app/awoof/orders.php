@@ -203,6 +203,9 @@ function awoof_initiate_paystack_payment(WP_REST_Request $request) {
     $items = isset($params['items']) && is_array($params['items']) ? $params['items'] : array();
     $billing_data = isset($params['billing']) && is_array($params['billing']) ? $params['billing'] : array();
     $shipping_data = isset($params['shipping']) && is_array($params['shipping']) ? $params['shipping'] : array();
+    $shipping_lines = isset($params['shipping_lines']) && is_array($params['shipping_lines']) ? $params['shipping_lines'] : array();
+    $meta_data = isset($params['meta_data']) && is_array($params['meta_data']) ? $params['meta_data'] : array();
+    $first_shipping_line = !empty($shipping_lines) && is_array($shipping_lines[0]) ? $shipping_lines[0] : array();
 
     if (empty($items)) {
         return new WP_Error('no_items', 'No items in cart', array('status' => 400));
@@ -237,6 +240,36 @@ function awoof_initiate_paystack_payment(WP_REST_Request $request) {
 
         $order->set_address($billing, 'billing');
         $order->set_address($shipping, 'shipping');
+
+        if (!empty($first_shipping_line['method_id'])) {
+            $order->update_meta_data('_awoof_delivery_method_id', sanitize_text_field($first_shipping_line['method_id']));
+        }
+
+        if (!empty($first_shipping_line['method_title'])) {
+            $order->update_meta_data('_awoof_delivery_method_title', sanitize_text_field($first_shipping_line['method_title']));
+        }
+
+        foreach ($shipping_lines as $shipping_line) {
+            if (!is_array($shipping_line)) {
+                continue;
+            }
+
+            $shipping_item = new WC_Order_Item_Shipping();
+            $shipping_item->set_method_id(sanitize_text_field($shipping_line['method_id'] ?? 'flat_rate'));
+            $shipping_item->set_method_title(sanitize_text_field($shipping_line['method_title'] ?? 'Standard Shipping'));
+            $shipping_item->set_total(wc_format_decimal($shipping_line['total'] ?? 0));
+            $order->add_item($shipping_item);
+        }
+
+        if (!empty($meta_data)) {
+            foreach ($meta_data as $meta) {
+                if (!is_array($meta) || empty($meta['key'])) {
+                    continue;
+                }
+                $order->update_meta_data(sanitize_text_field($meta['key']), is_scalar($meta['value'] ?? '') ? sanitize_text_field((string) $meta['value']) : '');
+            }
+        }
+
         $order->calculate_totals();
         $order->set_status('pending');
         $order->update_meta_data('_awoof_checkout_source', 'mobile_app');

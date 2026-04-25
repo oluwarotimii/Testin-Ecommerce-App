@@ -26,6 +26,7 @@ export default function AwoofMiniCartModal({ navigation, route }: any) {
   const colors = useThemeColors();
   const insets = useSafeAreaInsets();
   const { apiService, isAuthenticated } = useAuth();
+  const isDarkMode = String(colors.background).toLowerCase() === '#000000';
   const [cartItems, setCartItems] = useState<CartItem[]>(awoofCart.getCart());
   const [isSyncing, setIsSyncing] = useState(false);
   const slideAnim = useState(new Animated.Value(height))[0];
@@ -165,6 +166,7 @@ export default function AwoofMiniCartModal({ navigation, route }: any) {
                 key={item.id}
                 item={item}
                 colors={colors}
+                isDarkMode={isDarkMode}
                 onUpdateQuantity={(delta: number) => updateQuantity(item.id, delta)}
                 onRemove={() => removeItem(item.id)}
               />
@@ -188,7 +190,7 @@ export default function AwoofMiniCartModal({ navigation, route }: any) {
 
               <View style={styles.summaryRow}>
                 <Text style={[styles.totalLabel, { color: colors.text }]}>Total</Text>
-                <Text style={[styles.totalValue, { color: colors.primary }]}>₦{grandTotal.toLocaleString()}</Text>
+                <Text style={[styles.totalValue, { color: isDarkMode ? colors.white : colors.primary }]}>₦{grandTotal.toLocaleString()}</Text>
               </View>
 
               <View style={[styles.savingsCard, { backgroundColor: colors.success + '15' }]}>
@@ -218,7 +220,7 @@ export default function AwoofMiniCartModal({ navigation, route }: any) {
             <View style={styles.bottomContent}>
               <View style={styles.priceInfo}>
                 <Text style={[styles.bottomLabel, { color: colors.textSecondary }]}>Total Amount</Text>
-                <Text style={[styles.bottomPrice, { color: colors.primary }]}>₦{grandTotal.toLocaleString()}</Text>
+                <Text style={[styles.bottomPrice, { color: isDarkMode ? colors.white : colors.primary }]}>₦{grandTotal.toLocaleString()}</Text>
               </View>
 
               <TouchableOpacity
@@ -239,7 +241,7 @@ export default function AwoofMiniCartModal({ navigation, route }: any) {
 // ============================================
 // CART ITEM COMPONENT
 // ============================================
-function CartItemRow({ item, colors, onUpdateQuantity, onRemove }: any) {
+function CartItemRow({ item, colors, isDarkMode, onUpdateQuantity, onRemove }: any) {
   return (
     <View style={[styles.cartItem, { borderBottomColor: colors.border }]}>
       <SafeImage source={{ uri: item.image }} style={styles.itemImage} />
@@ -250,8 +252,8 @@ function CartItemRow({ item, colors, onUpdateQuantity, onRemove }: any) {
         </Text>
 
         <View style={styles.priceRow}>
-          <Text style={[styles.itemPrice, { color: colors.error }]}>₦{item.salePrice.toLocaleString()}</Text>
-          <Text style={[styles.itemOriginalPrice, { color: colors.primary }]}>₦{item.originalPrice.toLocaleString()}</Text>
+          <Text style={[styles.itemPrice, { color: isDarkMode ? colors.white : colors.error }]}>₦{item.salePrice.toLocaleString()}</Text>
+          <Text style={[styles.itemOriginalPrice, { color: isDarkMode ? colors.white : colors.primary }]}>₦{item.originalPrice.toLocaleString()}</Text>
         </View>
 
         <View style={styles.itemActions}>

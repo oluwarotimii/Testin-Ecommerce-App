@@ -30,6 +30,7 @@ export default function AwoofFeedScreen({ navigation }: any) {
   const insets = useSafeAreaInsets();
   const { apiService } = useAuth();
   const toastRef = useRef<AwoofToastRef>(null);
+  const isDarkMode = String(colors.background).toLowerCase() === '#000000';
   
   const [deals, setDeals] = useState<AwoofProduct[]>([]);
   const [loading, setLoading] = useState(true);
@@ -108,7 +109,7 @@ export default function AwoofFeedScreen({ navigation }: any) {
         <View style={styles.headerContent}>
           <View style={styles.headerTitleContainer}>
             <Text style={[styles.headerTitle, { color: colors.text }]}>Awoof Corner</Text>
-            <Text style={[styles.headerSubtitle, { color: colors.primary }]}>🔥 Today's Hottest Deals</Text>
+            <Text style={[styles.headerSubtitle, { color: isDarkMode ? colors.white : colors.primary }]}>🔥 Today's Hottest Deals</Text>
           </View>
 
           <TouchableOpacity
@@ -149,6 +150,7 @@ export default function AwoofFeedScreen({ navigation }: any) {
           <DealCard
             deal={item}
             colors={colors}
+            isDarkMode={isDarkMode}
             onPress={() => handleProductPress(item)}
             onQuickAdd={() => handleQuickAdd(item)}
           />
@@ -161,7 +163,7 @@ export default function AwoofFeedScreen({ navigation }: any) {
 // ============================================
 // DEAL CARD COMPONENT
 // ============================================
-function DealCard({ deal, colors, onPress, onQuickAdd }: any) {
+function DealCard({ deal, colors, isDarkMode, onPress, onQuickAdd }: any) {
   return (
     <TouchableOpacity
       style={[styles.card, { backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border }]}
@@ -190,9 +192,9 @@ function DealCard({ deal, colors, onPress, onQuickAdd }: any) {
         </Text>
 
         <View style={styles.priceRow}>
-          <Text style={[styles.salePrice, { color: colors.error }]}>₦{deal.salePrice.toLocaleString()}</Text>
+          <Text style={[styles.salePrice, { color: isDarkMode ? colors.white : colors.error }]}>₦{deal.salePrice.toLocaleString()}</Text>
           {deal.originalPrice > deal.salePrice && (
-            <Text style={[styles.originalPrice, { color: colors.primary }]}>₦{deal.originalPrice.toLocaleString()}</Text>
+            <Text style={[styles.originalPrice, { color: isDarkMode ? colors.white : colors.primary }]}>₦{deal.originalPrice.toLocaleString()}</Text>
           )}
         </View>
 

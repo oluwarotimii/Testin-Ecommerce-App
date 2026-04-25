@@ -16,6 +16,7 @@ import { clearCartAbandonmentReminder, sendLocalNotification } from '@/services/
 export default function CheckoutScreen() {
   const router = useRouter();
   const colors = useThemeColors();
+  const isDarkMode = String(colors.background).toLowerCase() === '#000000';
   const { apiService, isAuthenticated, loadingAuth, user } = useAuth();
   const { setCartCount } = useCart();
   const [addresses, setAddresses] = useState<any[]>([]);
@@ -399,7 +400,7 @@ export default function CheckoutScreen() {
                   <SafeImage source={{ uri: item.image }} style={[styles.itemImage, { backgroundColor: colors.surface }]} />
                   <View style={styles.itemDetails}>
                     <Text style={[styles.itemName, { color: colors.text }]} numberOfLines={2}>{item.title}</Text>
-                    <Text style={[styles.itemPrice, { color: '#042861' }]}>{formatPrice(typeof item.price === 'number' ? item.price : parseFloat(item.price))}</Text>
+                    <Text style={[styles.itemPrice, { color: isDarkMode ? colors.white : colors.primary }]}>{formatPrice(typeof item.price === 'number' ? item.price : parseFloat(item.price))}</Text>
                     <Text style={[styles.itemQuantity, { color: colors.textSecondary }]}>Qty: {item.quantity || 1}</Text>
                   </View>
                   <Text style={[styles.itemTotal, { color: colors.text }]}>
@@ -578,7 +579,7 @@ export default function CheckoutScreen() {
 
             <View style={[styles.totalRow, { borderTopColor: colors.border }]}>
               <Text style={[styles.totalLabel, { color: colors.text }]}>Total</Text>
-              <Text style={[styles.totalValue, { color: colors.text }]}>{formatPrice(orderSummary.total)}</Text>
+              <Text style={[styles.totalValue, { color: isDarkMode ? colors.white : colors.primary }]}>{formatPrice(orderSummary.total)}</Text>
             </View>
           </View>
         </View>

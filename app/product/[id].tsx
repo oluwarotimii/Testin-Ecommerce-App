@@ -23,6 +23,7 @@ export default function ProductDetailScreen() {
   const { apiService } = useAuth();
   const { setCartCount } = useCart();
   const colors = useThemeColors();
+  const isDarkMode = String(colors.background).toLowerCase() === '#000000';
   const insets = useSafeAreaInsets();
   const [quantity, setQuantity] = useState(1);
   const [selectedImage, setSelectedImage] = useState(0);
@@ -409,7 +410,7 @@ export default function ProductDetailScreen() {
 
           {/* Price */}
           <View style={styles.priceSection}>
-            <Text style={[styles.currentPrice, { color: '#042861' }]}>{formatPrice(typeof product.price === 'number' ? product.price : parseFloat(product.price || '0'))}</Text>
+            <Text style={[styles.currentPrice, { color: isDarkMode ? colors.white : colors.primary }]}>{formatPrice(typeof product.price === 'number' ? product.price : parseFloat(product.price || '0'))}</Text>
           </View>
 
           {/* Description */}
@@ -482,7 +483,7 @@ export default function ProductDetailScreen() {
                   </View>
                   <View style={styles.similarProductInfoHorizontal}>
                     <Text style={[styles.similarProductName, { color: colors.text }]} numberOfLines={2}>{item.title}</Text>
-                    <Text style={[styles.similarProductPrice, { color: '#042861' }]}>{formatPrice(typeof item.price === 'number' ? item.price : parseFloat(item.price || '0'))}</Text>
+                    <Text style={[styles.similarProductPrice, { color: isDarkMode ? colors.white : colors.primary }]}>{formatPrice(typeof item.price === 'number' ? item.price : parseFloat(item.price || '0'))}</Text>
                   </View>
                 </TouchableOpacity>
               ))}

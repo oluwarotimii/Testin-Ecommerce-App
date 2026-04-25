@@ -435,8 +435,8 @@ export default function OrderDetailsScreen() {
       {showCancelModal && (
         <View style={styles.modalOverlay}>
           <View style={[styles.modalContent, { backgroundColor: colors.surface }]}>
-            <Text style={[styles.modalTitle, { color: '#FF0000' }]}>Cancel Order</Text>
-            <Text style={[styles.modalMessage, { color: '#0000FF' }]}>
+            <Text style={[styles.modalTitle, { color: colors.text }]}>Cancel Order</Text>
+            <Text style={[styles.modalMessage, { color: colors.textSecondary }]}>
               Are you sure you want to cancel this order? This action cannot be undone.
             </Text>
 
@@ -445,14 +445,14 @@ export default function OrderDetailsScreen() {
                 style={[styles.modalCancelButton, { borderColor: colors.border }]}
                 onPress={cancelCancelOrder}
               >
-                <Text style={[styles.modalCancelButtonText, { color: '#FF0000' }]}>Cancel</Text>
+                <Text style={[styles.modalCancelButtonText, { color: colors.text }]}>Cancel</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
                 style={[styles.modalConfirmButton, { backgroundColor: colors.danger }]}
                 onPress={confirmCancelOrder}
               >
-                <Text style={[styles.modalConfirmButtonText, { color: '#000000' }]}>Yes, Cancel Order</Text>
+                <Text style={[styles.modalConfirmButtonText, { color: colors.white }]}>Yes, Cancel Order</Text>
               </TouchableOpacity>
             </View>
           </View>

@@ -37,7 +37,6 @@ const styles = StyleSheet.create({
   container: {
     borderRadius: 16,
     overflow: 'hidden',
-    backgroundColor: '#FFFFFF',
   },
   gridContainer: {
     width: '48%',

@@ -12,6 +12,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 export default function SearchScreen() {
   const router = useRouter();
   const colors = useThemeColors();
+  const isDarkMode = String(colors.background).toLowerCase() === '#000000';
   const { apiService } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
@@ -196,7 +197,7 @@ export default function SearchScreen() {
                     <Text style={[styles.resultName, { color: colors.text }]} numberOfLines={2}>{product.title}</Text>
                     <Text style={styles.resultCategory}>{product.category}</Text>
                   </View>
-                  <Text style={[styles.resultPrice, { color: '#042861' }]}>
+                  <Text style={[styles.resultPrice, { color: isDarkMode ? colors.white : colors.primary }]}>
                     {formatPrice(typeof product.price === 'number' ? product.price : parseFloat(product.price || '0'))}
                   </Text>
                 </View>
@@ -263,7 +264,6 @@ export default function SearchScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
   },
   searchHeader: {
     flexDirection: 'row',
@@ -277,7 +277,6 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F2F2F7',
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderRadius: 12,
@@ -288,11 +287,9 @@ const styles = StyleSheet.create({
     flex: 1,
     marginLeft: 12,
     fontSize: 16,
-    color: '#1D1D1F',
   },
   cancelButton: {
     fontSize: 16,
-    color: '#042861',
     fontWeight: '500',
   },
   content: {
@@ -311,11 +308,9 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#1D1D1F',
   },
   clearButton: {
     fontSize: 14,
-    color: '#042861',
     fontWeight: '500',
   },
   searchItem: {
@@ -328,7 +323,6 @@ const styles = StyleSheet.create({
   searchItemText: {
     flex: 1,
     fontSize: 16,
-    color: '#1D1D1F',
     marginLeft: 12,
   },
   removeButton: {
@@ -347,7 +341,6 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     borderRadius: 8,
-    backgroundColor: '#F2F2F7',
     marginRight: 12,
   },
   resultInfo: {
@@ -357,12 +350,10 @@ const styles = StyleSheet.create({
   resultName: {
     fontSize: 16,
     fontWeight: '500',
-    color: '#1D1D1F',
     marginBottom: 2,
   },
   resultCategory: {
     fontSize: 12,
-    color: '#8E8E93',
     marginBottom: 4,
   },
   resultRating: {
@@ -372,17 +363,14 @@ const styles = StyleSheet.create({
   },
   ratingText: {
     fontSize: 12,
-    color: '#1D1D1F',
     marginLeft: 4,
   },
   resultPrice: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#042861',
   },
   noResultsText: {
     textAlign: 'center',
-    color: '#8E8E93',
     marginTop: 20,
     fontSize: 16,
   },

@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { Download, Apple, Play, HelpCircle } from 'lucide-react-native';
 import { useForceUpdate } from '@/context/ForceUpdateContext';
+import { useThemeColors } from '@/hooks/useColorScheme';
 
 /**
  * ForceUpdateScreen
@@ -26,6 +27,8 @@ import { useForceUpdate } from '@/context/ForceUpdateContext';
  */
 export default function ForceUpdateScreen() {
   const { updateInfo, dismissUpdate } = useForceUpdate();
+  const colors = useThemeColors();
+  const isDarkMode = String(colors.background).toLowerCase() === '#000000';
 
   const handleUpdatePress = async () => {
     if (updateInfo?.updateUrl) {
@@ -62,29 +65,29 @@ export default function ForceUpdateScreen() {
         <View style={styles.content}>
           {/* Icon/Logo */}
           <View style={styles.iconContainer}>
-            <View style={styles.iconBackground}>
-              <View style={styles.iconCircle}>
-                <Download size={56} color="#4A90E2" strokeWidth={2} />
+            <View style={[styles.iconBackground, { backgroundColor: isDarkMode ? colors.surface : '#E8F0FE' }]}>
+              <View style={[styles.iconCircle, { backgroundColor: colors.card }]}>
+                <Download size={56} color={colors.primary} strokeWidth={2} />
               </View>
             </View>
           </View>
 
           {/* Title */}
-          <Text style={styles.title}>Update Required</Text>
+          <Text style={[styles.title, { color: colors.text }]}>Update Required</Text>
 
           {/* Message */}
-          <Text style={styles.message}>{updateInfo.updateMessage}</Text>
+          <Text style={[styles.message, { color: colors.textSecondary }]}>{updateInfo.updateMessage}</Text>
 
           {/* Version Badge */}
-          <View style={styles.versionBadge}>
+            <View style={[styles.versionBadge, { backgroundColor: colors.card }]}>
             <View style={styles.versionRow}>
-              <Text style={styles.versionLabel}>Current Version</Text>
-              <Text style={styles.versionValue}>{updateInfo.currentVersion}</Text>
+              <Text style={[styles.versionLabel, { color: colors.textSecondary }]}>Current Version</Text>
+              <Text style={[styles.versionValue, { color: colors.text }]}>{updateInfo.currentVersion}</Text>
             </View>
-            <View style={styles.versionDivider} />
+            <View style={[styles.versionDivider, { backgroundColor: colors.border }]} />
             <View style={styles.versionRow}>
-              <Text style={styles.versionLabel}>Required Version</Text>
-              <Text style={styles.versionValueHighlight}>{updateInfo.storeVersion}</Text>
+              <Text style={[styles.versionLabel, { color: colors.textSecondary }]}>Required Version</Text>
+              <Text style={[styles.versionValueHighlight, { color: colors.text }]}>{updateInfo.storeVersion}</Text>
             </View>
           </View>
 
@@ -144,7 +147,6 @@ export default function ForceUpdateScreen() {
 const styles = StyleSheet.create({
   overlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: '#F8F9FE',
     zIndex: 9999,
     elevation: 9999,
   },
@@ -171,7 +173,6 @@ const styles = StyleSheet.create({
     width: 140,
     height: 140,
     borderRadius: 70,
-    backgroundColor: '#E8F0FE',
     justifyContent: 'center',
     alignItems: 'center',
     shadowColor: '#4A90E2',
@@ -184,7 +185,6 @@ const styles = StyleSheet.create({
     width: 100,
     height: 100,
     borderRadius: 50,
-    backgroundColor: '#FFFFFF',
     justifyContent: 'center',
     alignItems: 'center',
     shadowColor: '#000',
@@ -196,21 +196,18 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 32,
     fontWeight: '800',
-    color: '#1A1A2E',
     textAlign: 'center',
     marginBottom: 16,
     letterSpacing: -0.5,
   },
   message: {
     fontSize: 16,
-    color: '#5A5A7A',
     textAlign: 'center',
     lineHeight: 26,
     marginBottom: 40,
     paddingHorizontal: 16,
   },
   versionBadge: {
-    backgroundColor: '#FFFFFF',
     borderRadius: 20,
     paddingVertical: 20,
     paddingHorizontal: 24,
@@ -230,17 +227,14 @@ const styles = StyleSheet.create({
   },
   versionLabel: {
     fontSize: 14,
-    color: '#8A8AA0',
     fontWeight: '500',
   },
   versionValue: {
     fontSize: 16,
-    color: '#5A5A7A',
     fontWeight: '600',
   },
   versionDivider: {
     height: 1,
-    backgroundColor: '#E8E8F0',
     marginVertical: 8,
   },
   versionValueHighlight: {
@@ -249,7 +243,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   updateButton: {
-    backgroundColor: '#4A90E2',
     borderRadius: 16,
     paddingVertical: 18,
     paddingHorizontal: 32,
@@ -269,7 +262,6 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   updateButtonText: {
-    color: '#FFFFFF',
     fontSize: 18,
     fontWeight: '700',
     letterSpacing: 0.3,
@@ -285,7 +277,6 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   helpButtonText: {
-    color: '#4A90E2',
     fontSize: 15,
     fontWeight: '600',
   },
@@ -312,7 +303,6 @@ const styles = StyleSheet.create({
   },
   footerText: {
     fontSize: 13,
-    color: '#8A8AA0',
     textAlign: 'center',
     lineHeight: 22,
   },

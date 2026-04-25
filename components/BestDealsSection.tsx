@@ -36,6 +36,7 @@ export default function BestDealsSection({
 }: BestDealsSectionProps) {
     const router = useRouter();
     const colors = useThemeColors();
+    const isDarkMode = String(colors.background).toLowerCase() === '#000000';
     const { setCartCount } = useCart();
     const [cartSuccess, setCartSuccess] = useState<{ [key: number]: boolean }>({});
 
@@ -69,7 +70,7 @@ export default function BestDealsSection({
                         <Ionicons
                             name={wishlist.includes(item.id) ? "heart" : "heart-outline"}
                             size={16}
-                            color={wishlist.includes(item.id) ? "#FF3B30" : colors.text}
+                            color={wishlist.includes(item.id) ? colors.error : colors.text}
                         />
                     </TouchableOpacity>
                 </View>
@@ -113,7 +114,7 @@ export default function BestDealsSection({
                 <Text style={[styles.productName, { color: colors.text }]} numberOfLines={2}>{item.title}</Text>
                 <View style={styles.priceRow}>
                     <Text style={[styles.originalPrice, { color: colors.textSecondary }]}>{formatPrice((typeof item.price === 'number' ? item.price : parseFloat(item.price || '0')) * 1.3)}</Text>
-                    <Text style={[styles.productPrice, { color: '#042861' }]}>{formatPrice(typeof item.price === 'number' ? item.price : parseFloat(item.price || '0'))}</Text>
+                    <Text style={[styles.productPrice, { color: isDarkMode ? colors.white : colors.primary }]}>{formatPrice(typeof item.price === 'number' ? item.price : parseFloat(item.price || '0'))}</Text>
                 </View>
             </View>
         </TouchableOpacity>
