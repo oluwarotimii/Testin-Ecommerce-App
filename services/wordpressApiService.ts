@@ -1,5 +1,9 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios, { AxiosInstance } from 'axios';
+import {
+  clearCartAbandonmentReminder,
+  scheduleCartAbandonmentReminder,
+} from '@/services/notificationService';
 
 interface Product {
   id: number;
@@ -717,6 +721,11 @@ class WordPressApiService {
 
       await AsyncStorage.setItem('cartItems', JSON.stringify(items));
 
+      void scheduleCartAbandonmentReminder({
+        cartCount: items.reduce((sum: number, item: any) => sum + (item.quantity || 1), 0),
+        source: 'cart',
+      });
+
       return {
         success: true,
         message: "Product added to cart",
@@ -747,6 +756,14 @@ class WordPressApiService {
       }
 
       await AsyncStorage.setItem('cartItems', JSON.stringify(items));
+      if (items.length === 0) {
+        void clearCartAbandonmentReminder();
+      } else {
+        void scheduleCartAbandonmentReminder({
+          cartCount: items.reduce((sum: number, item: any) => sum + (item.quantity || 1), 0),
+          source: 'cart',
+        });
+      }
 
       return {
         success: true,
@@ -769,6 +786,14 @@ class WordPressApiService {
       );
 
       await AsyncStorage.setItem('cartItems', JSON.stringify(items));
+      if (items.length === 0) {
+        void clearCartAbandonmentReminder();
+      } else {
+        void scheduleCartAbandonmentReminder({
+          cartCount: items.reduce((sum: number, item: any) => sum + (item.quantity || 1), 0),
+          source: 'cart',
+        });
+      }
 
       return {
         success: true,
@@ -784,6 +809,7 @@ class WordPressApiService {
     try {
       // Clear all cart items from AsyncStorage
       await AsyncStorage.removeItem('cartItems');
+      void clearCartAbandonmentReminder();
       return {
         success: true,
         message: 'Cart cleared successfully'
@@ -944,6 +970,7 @@ class WordPressApiService {
 
       // Clear cart after successful order
       await AsyncStorage.removeItem('cartItems');
+      void clearCartAbandonmentReminder();
 
       return {
         success: true,

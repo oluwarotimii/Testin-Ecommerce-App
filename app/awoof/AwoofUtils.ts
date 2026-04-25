@@ -3,6 +3,8 @@
 // ============================================
 // Helper functions and utilities for managing Awoof Corner functionality
 
+import { scheduleCartAbandonmentReminder, clearCartAbandonmentReminder } from '@/services/notificationService';
+
 // ============================================
 // CART MANAGEMENT
 // ============================================
@@ -38,11 +40,18 @@ class AwoofCartManager {
     }
     
     this.notifyListeners();
+    void scheduleCartAbandonmentReminder({
+      cartCount: this.getItemCount(),
+      source: 'Awoof cart',
+    });
   }
 
   removeItem(productId: string) {
     this.cart = this.cart.filter(item => item.id !== productId);
     this.notifyListeners();
+    if (this.cart.length === 0) {
+      void clearCartAbandonmentReminder();
+    }
   }
 
   updateQuantity(productId: string, quantity: number) {
@@ -50,12 +59,17 @@ class AwoofCartManager {
     if (item) {
       item.quantity = Math.max(1, quantity);
       this.notifyListeners();
+      void scheduleCartAbandonmentReminder({
+        cartCount: this.getItemCount(),
+        source: 'Awoof cart',
+      });
     }
   }
 
   clearCart() {
     this.cart = [];
     this.notifyListeners();
+    void clearCartAbandonmentReminder();
   }
 
   getCart(): CartItem[] {

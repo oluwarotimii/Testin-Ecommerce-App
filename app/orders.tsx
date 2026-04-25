@@ -9,6 +9,37 @@ import BackButton from '@/components/BackButton';
 import { getOrderStatus } from '@/constants/orderStatus';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+const getOrderMetaValue = (metaData: any[] | undefined, key: string) => {
+  if (!Array.isArray(metaData)) return undefined;
+  return metaData.find((item) => item?.key === key)?.value;
+};
+
+const isAwoofOrder = (metaData: any[] | undefined) => {
+  const source = getOrderMetaValue(metaData, '_awoof_checkout_source') || getOrderMetaValue(metaData, '_awoof_order_tag');
+  return String(source || '').toLowerCase() === 'mobile_app' || String(source || '').toLowerCase() === 'awoof';
+};
+
+const isPaidOrder = (order: any) => {
+  return !!order.date_paid || ['processing', 'completed'].includes(String(order.status || '').toLowerCase());
+};
+
+const getDeliveryMethodLabel = (order: any) => {
+  const shippingLine = Array.isArray(order?.shipping_lines) ? order.shipping_lines[0] : null;
+  const methodId = String(shippingLine?.method_id || '').toLowerCase();
+  const methodTitle = String(shippingLine?.method_title || shippingLine?.title || '').trim();
+  const pickupBranch = getOrderMetaValue(order?.meta_data, '_pickup_branch');
+
+  if (methodId === 'local_pickup') {
+    return pickupBranch ? `Store Pickup - ${pickupBranch}` : 'Store Pickup';
+  }
+
+  if (methodTitle) {
+    return methodTitle;
+  }
+
+  return 'Delivery';
+};
+
 
 export default function OrdersScreen() {
   const router = useRouter();
@@ -38,7 +69,11 @@ export default function OrdersScreen() {
             date_added: order.date_created || order.date_added,
             status: order.status,
             total: order.total,
-            products: order.line_items || order.products || []
+            products: order.line_items || order.products || [],
+            meta_data: order.meta_data || [],
+            shipping_lines: order.shipping_lines || [],
+            date_paid: order.date_paid,
+            payment_method_title: order.payment_method_title
           }));
           setOrders(transformedOrders);
         } else {
@@ -118,7 +153,11 @@ export default function OrdersScreen() {
           date_added: order.date_created || order.date_added,
           status: order.status,
           total: order.total,
-          products: order.line_items || order.products || []
+          products: order.line_items || order.products || [],
+          meta_data: order.meta_data || [],
+          shipping_lines: order.shipping_lines || [],
+          date_paid: order.date_paid,
+          payment_method_title: order.payment_method_title
         }));
 
         console.log('Setting updated orders state...');
@@ -141,7 +180,11 @@ export default function OrdersScreen() {
             date_added: order.date_created || order.date_added,
             status: order.status,
             total: order.total,
-            products: order.line_items || order.products || []
+            products: order.line_items || order.products || [],
+            meta_data: order.meta_data || [],
+            shipping_lines: order.shipping_lines || [],
+            date_paid: order.date_paid,
+            payment_method_title: order.payment_method_title
           }));
           setOrders(transformedOrders);
           console.log('Orders list refreshed after failed cancellation');
@@ -216,6 +259,10 @@ export default function OrdersScreen() {
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {orders.map((order) => {
           const orderStatus = getOrderStatus(order.status);
+          const awoofOrder = isAwoofOrder(order.meta_data);
+          const paidOrder = isPaidOrder(order);
+          const deliveryMethod = getDeliveryMethodLabel(order);
+          const isDarkMode = String(colors.background).toLowerCase() === '#000000';
           return (
             <TouchableOpacity
               key={order.order_id}
@@ -229,22 +276,39 @@ export default function OrdersScreen() {
                     {new Date(order.date_added).toLocaleDateString()}
                   </Text>
                 </View>
-                <View style={[styles.statusBadge, { backgroundColor: orderStatus.color + '20' }]}>
-                  <Text style={[styles.statusText, { color: orderStatus.color }]}>
-                    {orderStatus.label}
-                  </Text>
+                <View style={styles.badgeRow}>
+                  {awoofOrder && (
+                    <View style={[styles.sourceBadge, { backgroundColor: colors.primary + '18' }]}>
+                      <Text style={[styles.sourceText, { color: colors.primary }]}>Awoof</Text>
+                    </View>
+                  )}
+                  <View style={[styles.statusBadge, { backgroundColor: orderStatus.color + '20' }]}>
+                    <Text style={[styles.statusText, { color: orderStatus.color }]}>
+                      {orderStatus.label}
+                    </Text>
+                  </View>
+                  <View style={[styles.paymentBadge, { backgroundColor: paidOrder ? colors.success + '18' : colors.warning + '18' }]}>
+                    <Text style={[styles.paymentText, { color: paidOrder ? colors.success : colors.warning }]}>
+                      {paidOrder ? 'Paid' : 'Pending'}
+                    </Text>
+                  </View>
                 </View>
               </View>
 
               <View style={[styles.divider, { backgroundColor: colors.border }]} />
 
               <View style={styles.cardFooter}>
-                <Text style={[styles.itemCount, { color: colors.textSecondary }]}>
-                  {order.products ? order.products.length : 0} items
-                </Text>
+                <View>
+                  <Text style={[styles.itemCount, { color: colors.textSecondary }]}>
+                    {order.products ? order.products.length : 0} items
+                  </Text>
+                  <Text style={[styles.deliveryMethodText, { color: colors.textSecondary }]}>
+                    {deliveryMethod}
+                  </Text>
+                </View>
                 <View style={styles.totalContainer}>
                   <Text style={[styles.totalLabel, { color: colors.textSecondary }]}>Total: </Text>
-                  <Text style={[styles.totalAmount, { color: colors.primary }]}>
+                  <Text style={[styles.totalAmount, { color: isDarkMode ? colors.white : colors.primary }]}>
                     ₦{formatPrice(order.total)}
                   </Text>
                 </View>
@@ -316,6 +380,12 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'flex-start',
   },
+  badgeRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'flex-end',
+    gap: 6,
+  },
   orderId: {
     fontSize: 16,
     fontWeight: 'bold',
@@ -329,7 +399,25 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     borderRadius: 12,
   },
+  sourceBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  paymentBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
   statusText: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  sourceText: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  paymentText: {
     fontSize: 12,
     fontWeight: '600',
   },
@@ -344,6 +432,10 @@ const styles = StyleSheet.create({
   },
   itemCount: {
     fontSize: 14,
+  },
+  deliveryMethodText: {
+    fontSize: 12,
+    marginTop: 2,
   },
   totalContainer: {
     flexDirection: 'row',

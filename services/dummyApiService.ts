@@ -1,3 +1,8 @@
+import {
+  clearCartAbandonmentReminder,
+  scheduleCartAbandonmentReminder,
+} from '@/services/notificationService';
+
 // Updated dummy data for electronics e-commerce app
 const dummyElectronicsProducts = [
   // Smartphones
@@ -653,6 +658,11 @@ class DummyApiService {
       });
     }
 
+    void scheduleCartAbandonmentReminder({
+      cartCount: cartItems.reduce((sum, item) => sum + (item.quantity || 1), 0),
+      source: 'cart',
+    });
+
     return {
       success: true,
       message: `${product.title} added to cart`,
@@ -669,6 +679,15 @@ class DummyApiService {
       }
     }
 
+    if (cartItems.length === 0) {
+      void clearCartAbandonmentReminder();
+    } else {
+      void scheduleCartAbandonmentReminder({
+        cartCount: cartItems.reduce((sum, item) => sum + (item.quantity || 1), 0),
+        source: 'cart',
+      });
+    }
+
     return {
       success: true,
       cart: cartItems
@@ -677,6 +696,14 @@ class DummyApiService {
 
   async removeFromCart(key: number) {
     cartItems = cartItems.filter(item => item.id !== key);
+    if (cartItems.length === 0) {
+      void clearCartAbandonmentReminder();
+    } else {
+      void scheduleCartAbandonmentReminder({
+        cartCount: cartItems.reduce((sum, item) => sum + (item.quantity || 1), 0),
+        source: 'cart',
+      });
+    }
     return {
       success: true,
       cart: cartItems
@@ -685,6 +712,7 @@ class DummyApiService {
 
   async emptyCart() {
     cartItems = [];
+    void clearCartAbandonmentReminder();
     return {
       success: true,
       message: 'Cart cleared successfully'
@@ -760,6 +788,7 @@ class DummyApiService {
 
     // Clear cart after order
     cartItems = [];
+    void clearCartAbandonmentReminder();
 
     // Add to dummy orders
     dummyOrders.push(newOrder);

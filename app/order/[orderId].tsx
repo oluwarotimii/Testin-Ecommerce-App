@@ -9,6 +9,28 @@ import { getOrderStatus } from '@/constants/orderStatus';
 import SafeImage from '@/components/SafeImage';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+const getOrderMetaValue = (metaData: any[] | undefined, key: string) => {
+  if (!Array.isArray(metaData)) return undefined;
+  return metaData.find((item) => item?.key === key)?.value;
+};
+
+const getDeliveryMethodLabel = (orderData: any) => {
+  const shippingLine = Array.isArray(orderData?.shipping_lines) ? orderData.shipping_lines[0] : null;
+  const methodId = String(shippingLine?.method_id || '').toLowerCase();
+  const methodTitle = String(shippingLine?.method_title || shippingLine?.title || '').trim();
+  const pickupBranch = getOrderMetaValue(orderData?.meta_data, '_pickup_branch');
+
+  if (methodId === 'local_pickup') {
+    return pickupBranch ? `Store Pickup - ${pickupBranch}` : 'Store Pickup';
+  }
+
+  if (methodTitle) {
+    return methodTitle;
+  }
+
+  return 'Delivery';
+};
+
 export default function OrderDetailsScreen() {
   const router = useRouter();
   const { orderId } = useLocalSearchParams();
@@ -47,6 +69,9 @@ export default function OrderDetailsScreen() {
             order_id: orderData.id,
             date: orderData.date_created || orderData.date_added,
             status: orderData.status,
+            meta_data: orderData.meta_data || [],
+            shipping_lines: orderData.shipping_lines || [],
+            date_paid: orderData.date_paid,
             items: orderData.line_items ? orderData.line_items.map((item: any) => ({
               id: item.product_id || item.id,
               title: item.name || item.title,
@@ -65,6 +90,16 @@ export default function OrderDetailsScreen() {
               state: orderData.shipping?.state || 'N/A',
               zip_code: orderData.shipping?.postcode || 'N/A',
               country: orderData.shipping?.country || 'N/A'
+            },
+            billing_address: {
+              name: `${orderData.billing?.first_name || ''} ${orderData.billing?.last_name || ''}`.trim() || 'N/A',
+              address: orderData.billing?.address_1 || 'N/A',
+              city: orderData.billing?.city || 'N/A',
+              state: orderData.billing?.state || 'N/A',
+              zip_code: orderData.billing?.postcode || 'N/A',
+              country: orderData.billing?.country || 'N/A',
+              email: orderData.billing?.email || 'N/A',
+              phone: orderData.billing?.phone || 'N/A'
             },
             payment_method: orderData.payment_method_title || 'N/A'
           };
@@ -108,6 +143,11 @@ export default function OrderDetailsScreen() {
   }
 
   const orderStatus = getOrderStatus(order.status);
+  const isAwoofOrder = String(getOrderMetaValue(order.meta_data, '_awoof_checkout_source') || getOrderMetaValue(order.meta_data, '_awoof_order_tag') || '').toLowerCase() === 'mobile_app'
+    || String(getOrderMetaValue(order.meta_data, '_awoof_order_tag') || '').toLowerCase() === 'awoof';
+  const isPaidOrder = !!order.date_paid || ['processing', 'completed'].includes(String(order.status || '').toLowerCase());
+  const deliveryMethod = getDeliveryMethodLabel(order);
+  const isDarkMode = String(colors.background).toLowerCase() === '#000000';
 
   const handleCancelOrder = async () => {
     console.log('handleCancelOrder called');
@@ -140,12 +180,15 @@ export default function OrderDetailsScreen() {
 
       if (updatedOrderData && !updatedOrderData.error) {
         console.log('Transforming updated order data...');
-        const transformedOrder = {
-          id: updatedOrderData.id,
-          order_id: updatedOrderData.id,
-          date: updatedOrderData.date_created || updatedOrderData.date_added,
-          status: updatedOrderData.status,
-          items: updatedOrderData.line_items ? updatedOrderData.line_items.map((item: any) => ({
+          const transformedOrder = {
+            id: updatedOrderData.id,
+            order_id: updatedOrderData.id,
+            date: updatedOrderData.date_created || updatedOrderData.date_added,
+            status: updatedOrderData.status,
+            meta_data: updatedOrderData.meta_data || [],
+            shipping_lines: updatedOrderData.shipping_lines || [],
+            date_paid: updatedOrderData.date_paid,
+            items: updatedOrderData.line_items ? updatedOrderData.line_items.map((item: any) => ({
             id: item.product_id || item.id,
             title: item.name || item.title,
             price: parseFloat(item.price || item.total) / (item.quantity || 1),
@@ -156,16 +199,26 @@ export default function OrderDetailsScreen() {
           shipping: parseFloat(updatedOrderData.shipping_total || '0'),
           tax: parseFloat(updatedOrderData.total_tax || '0'),
           total: parseFloat(updatedOrderData.total || '0'),
-          shipping_address: {
-            name: `${updatedOrderData.shipping?.first_name || ''} ${updatedOrderData.shipping?.last_name || ''}`.trim() || 'N/A',
-            address: updatedOrderData.shipping?.address_1 || 'N/A',
-            city: updatedOrderData.shipping?.city || 'N/A',
-            state: updatedOrderData.shipping?.state || 'N/A',
-            zip_code: updatedOrderData.shipping?.postcode || 'N/A',
-            country: updatedOrderData.shipping?.country || 'N/A'
-          },
-          payment_method: updatedOrderData.payment_method_title || 'N/A'
-        };
+            shipping_address: {
+              name: `${updatedOrderData.shipping?.first_name || ''} ${updatedOrderData.shipping?.last_name || ''}`.trim() || 'N/A',
+              address: updatedOrderData.shipping?.address_1 || 'N/A',
+              city: updatedOrderData.shipping?.city || 'N/A',
+              state: updatedOrderData.shipping?.state || 'N/A',
+              zip_code: updatedOrderData.shipping?.postcode || 'N/A',
+              country: updatedOrderData.shipping?.country || 'N/A'
+            },
+            billing_address: {
+              name: `${updatedOrderData.billing?.first_name || ''} ${updatedOrderData.billing?.last_name || ''}`.trim() || 'N/A',
+              address: updatedOrderData.billing?.address_1 || 'N/A',
+              city: updatedOrderData.billing?.city || 'N/A',
+              state: updatedOrderData.billing?.state || 'N/A',
+              zip_code: updatedOrderData.billing?.postcode || 'N/A',
+              country: updatedOrderData.billing?.country || 'N/A',
+              email: updatedOrderData.billing?.email || 'N/A',
+              phone: updatedOrderData.billing?.phone || 'N/A'
+            },
+            payment_method: updatedOrderData.payment_method_title || 'N/A'
+          };
 
         console.log('Setting new order state...');
         setOrder(transformedOrder);
@@ -207,7 +260,7 @@ export default function OrderDetailsScreen() {
             <View style={[styles.statusIconContainer, { backgroundColor: orderStatus.color + '20' }]}>
               <Ionicons name="cube" size={24} color={orderStatus.color} />
             </View>
-            <View>
+            <View style={{ flex: 1 }}>
               <Text style={[styles.statusText, { color: orderStatus.color }]}>
                 {orderStatus.label}
               </Text>
@@ -215,7 +268,22 @@ export default function OrderDetailsScreen() {
                 {new Date(order.date).toLocaleDateString()} • {new Date(order.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
               </Text>
             </View>
+            <View style={styles.badgeWrap}>
+              {isAwoofOrder && (
+                <View style={[styles.tagBadge, { backgroundColor: colors.primary + '18' }]}>
+                  <Text style={[styles.tagText, { color: colors.primary }]}>Awoof</Text>
+                </View>
+              )}
+              <View style={[styles.tagBadge, { backgroundColor: isPaidOrder ? colors.success + '18' : colors.warning + '18' }]}>
+                <Text style={[styles.tagText, { color: isPaidOrder ? colors.success : colors.warning }]}>
+                  {isPaidOrder ? 'Paid' : 'Pending'}
+                </Text>
+              </View>
+            </View>
           </View>
+          <Text style={[styles.deliveryNote, { color: colors.error }]}>
+            Delivery is only available in covered areas. No delivery outside available zones.
+          </Text>
         </View>
 
         {/* Items */}
@@ -232,7 +300,7 @@ export default function OrderDetailsScreen() {
                       Qty: {item.quantity}
                     </Text>
                   </View>
-                  <Text style={[styles.itemPrice, { color: '#042861' }]}>
+                  <Text style={[styles.itemPrice, { color: isDarkMode ? colors.white : colors.primary }]}>
                     ₦{formatPrice(item.price * item.quantity)}
                   </Text>
                 </View>
@@ -263,7 +331,25 @@ export default function OrderDetailsScreen() {
             <View style={[styles.divider, { backgroundColor: colors.border }]} />
             <View style={styles.summaryRow}>
               <Text style={[styles.totalLabel, { color: colors.text }]}>Total</Text>
-              <Text style={[styles.totalValue, { color: '#042861' }]}>₦{formatPrice(order.total)}</Text>
+              <Text style={[styles.totalValue, { color: isDarkMode ? colors.white : colors.primary }]}>₦{formatPrice(order.total)}</Text>
+            </View>
+          </View>
+        </View>
+
+        {/* Delivery Method */}
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>Delivery Method</Text>
+          <View style={[styles.card, { backgroundColor: colors.surface }]}>
+            <View style={styles.infoRow}>
+              <Ionicons name="bicycle-outline" size={20} color={colors.textSecondary} style={styles.infoIcon} />
+              <View>
+                <Text style={[styles.infoTitle, { color: colors.text }]}>{deliveryMethod}</Text>
+                <Text style={[styles.infoText, { color: colors.textSecondary }]}>
+                  {deliveryMethod.toLowerCase().includes('pickup')
+                    ? 'Pick up from the selected branch.'
+                    : 'Delivery to the selected address.'}
+                </Text>
+              </View>
             </View>
           </View>
         </View>
@@ -285,6 +371,19 @@ export default function OrderDetailsScreen() {
                 <Text style={[styles.infoText, { color: colors.textSecondary }]}>
                   {order.shipping_address.country}
                 </Text>
+              </View>
+            </View>
+            <View style={[styles.divider, { backgroundColor: colors.border }]} />
+            <View style={styles.infoRow}>
+              <Ionicons name="mail-outline" size={20} color={colors.textSecondary} style={styles.infoIcon} />
+              <View>
+                <Text style={[styles.infoTitle, { color: colors.text }]}>Billing Address</Text>
+                <Text style={[styles.infoText, { color: colors.textSecondary }]}>{order.billing_address.name}</Text>
+                <Text style={[styles.infoText, { color: colors.textSecondary }]}>{order.billing_address.address}</Text>
+                <Text style={[styles.infoText, { color: colors.textSecondary }]}>{order.billing_address.city}, {order.billing_address.state} {order.billing_address.zip_code}</Text>
+                <Text style={[styles.infoText, { color: colors.textSecondary }]}>{order.billing_address.country}</Text>
+                <Text style={[styles.infoText, { color: colors.textSecondary }]}>{order.billing_address.email}</Text>
+                <Text style={[styles.infoText, { color: colors.textSecondary }]}>{order.billing_address.phone}</Text>
               </View>
             </View>
           </View>
@@ -397,6 +496,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
+  badgeWrap: {
+    flexDirection: 'row',
+    gap: 8,
+    alignItems: 'center',
+    marginLeft: 12,
+  },
   statusIconContainer: {
     width: 48,
     height: 48,
@@ -412,6 +517,20 @@ const styles = StyleSheet.create({
   },
   statusDate: {
     fontSize: 14,
+  },
+  tagBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 999,
+  },
+  tagText: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  deliveryNote: {
+    marginTop: 10,
+    fontSize: 12,
+    fontWeight: '600',
   },
   section: {
     marginBottom: 8,

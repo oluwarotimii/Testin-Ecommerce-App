@@ -11,6 +11,7 @@ import BackButton from '@/components/BackButton';
 import SafeImage from '@/components/SafeImage';
 import Dropdown from '@/components/Dropdown';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { clearCartAbandonmentReminder, sendLocalNotification } from '@/services/notificationService';
 
 export default function CheckoutScreen() {
   const router = useRouter();
@@ -253,10 +254,21 @@ export default function CheckoutScreen() {
           await apiService.emptyCart();
           // Also update the cart count context to 0 using the context setter
           setCartCount(0);
+          await clearCartAbandonmentReminder();
         } catch (clearError) {
           console.error('Error clearing cart after order:', clearError);
           // Continue to success page even if cart clear fails
         }
+
+        await sendLocalNotification(
+          'Order placed successfully',
+          `Your order #${response.id || response.order?.id || 'new'} has been placed and is now being processed.`,
+          {
+            linkType: 'page',
+            linkValue: 'orders',
+            orderId: response.id || response.order?.id,
+          }
+        );
 
         // Redirect to success screen
         const orderId = response.id || response.order?.id || 'Unknown';
@@ -549,6 +561,12 @@ export default function CheckoutScreen() {
           </View>
         )}
 
+        <View style={styles.section}>
+          <Text style={[styles.deliveryNotice, { color: colors.error }]}>
+            Delivery is only available in covered areas. No delivery outside available zones.
+          </Text>
+        </View>
+
         {/* Order Summary */}
         <View style={[styles.section, { marginBottom: 100 }]}>
           <Text style={[styles.sectionTitle, { color: colors.text }]}>Order Summary</Text>
@@ -735,6 +753,11 @@ const styles = StyleSheet.create({
   totalValue: {
     fontSize: 18,
     fontWeight: 'bold',
+  },
+  deliveryNotice: {
+    fontSize: 12,
+    fontWeight: '600',
+    lineHeight: 18,
   },
   bottomBar: {
     padding: 20,

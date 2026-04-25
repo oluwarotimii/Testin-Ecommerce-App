@@ -5,7 +5,9 @@ import { Platform } from 'react-native';
 import Constants from 'expo-constants';
 import { DASHBOARD_API_BASE_URL } from './config';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useAuth } from '@/context/AuthContext';
+
+const CART_REMINDER_ID_KEY = 'cartReminderNotificationId';
+const CART_REMINDER_DELAY_SECONDS = 36 * 60 * 60;
 
 // Function to create notification channel for Android 13+
 const createNotificationChannel = async () => {
@@ -158,6 +160,56 @@ const sendLocalNotification = async (title: string, body: string, data: any = {}
   });
 };
 
+const clearCartAbandonmentReminder = async () => {
+  try {
+    const reminderId = await AsyncStorage.getItem(CART_REMINDER_ID_KEY);
+    if (reminderId) {
+      await Notifications.cancelScheduledNotificationAsync(reminderId);
+      await AsyncStorage.removeItem(CART_REMINDER_ID_KEY);
+    }
+  } catch (error) {
+    console.error('Error clearing cart abandonment reminder:', error);
+  }
+};
+
+const scheduleCartAbandonmentReminder = async (options?: {
+  cartCount?: number;
+  source?: string;
+}) => {
+  try {
+    await clearCartAbandonmentReminder();
+
+    const cartCount = options?.cartCount ?? 1;
+    const source = options?.source || 'shopping cart';
+    const id = await Notifications.scheduleNotificationAsync({
+      content: {
+        title: 'Still thinking about it?',
+        body: cartCount > 1
+          ? `You left ${cartCount} items in your ${source}. Checkout is still waiting.`
+          : `You left an item in your ${source}. Tap to continue checkout.`,
+        data: {
+          linkType: 'page',
+          linkValue: 'cart',
+          notificationType: 'cart_reminder',
+        },
+      },
+      trigger: {
+        seconds: CART_REMINDER_DELAY_SECONDS,
+      },
+    });
+
+    await AsyncStorage.setItem(CART_REMINDER_ID_KEY, id);
+    return id;
+  } catch (error) {
+    console.error('Error scheduling cart abandonment reminder:', error);
+    return null;
+  }
+};
+
+const clearCartReminderIfNeeded = async () => {
+  await clearCartAbandonmentReminder();
+};
+
 // Function to update push token for authenticated user
 // This will be called from the AuthContext when needed
 const updatePushTokenForUser = async (apiService: any, pushToken: string) => {
@@ -193,6 +245,9 @@ export {
   setupNotificationListeners,
   initialize,
   sendLocalNotification,
+  scheduleCartAbandonmentReminder,
+  clearCartAbandonmentReminder,
+  clearCartReminderIfNeeded,
   updatePushTokenForUser
 };
 
@@ -201,5 +256,8 @@ export default {
   setupNotificationListeners,
   initialize,
   sendLocalNotification,
+  scheduleCartAbandonmentReminder,
+  clearCartAbandonmentReminder,
+  clearCartReminderIfNeeded,
   updatePushTokenForUser
 };

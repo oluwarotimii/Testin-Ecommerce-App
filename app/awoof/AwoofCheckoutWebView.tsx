@@ -13,8 +13,9 @@ import { useThemeColors } from '@/hooks/useColorScheme';
 import { WebView } from 'react-native-webview';
 import { useRouter } from 'expo-router';
 import appConfig from '@/hooks/useAppConfig';
-import { buildWooCommerceCheckoutUrl } from './AwoofUtils';
+import { awoofCart, buildWooCommerceCheckoutUrl } from './AwoofUtils';
 import { useAuth } from '@/context/AuthContext';
+import { clearCartAbandonmentReminder, sendLocalNotification } from '@/services/notificationService';
 
 // ============================================
 // MAIN COMPONENT
@@ -114,6 +115,18 @@ export default function AwoofCheckoutWebView({ route, navigation }: any) {
         console.error('⚠️ Failed to update WebView order:', error);
       }
     }
+
+    await clearCartAbandonmentReminder();
+    awoofCart.clearCart();
+    await sendLocalNotification(
+      'Order placed successfully',
+      `Your Awoof order #${orderId} has been confirmed and is being processed.`,
+      {
+        linkType: 'page',
+        linkValue: 'orders',
+        orderId,
+      }
+    );
 
     // Using replace to prevent going back to checkout
     navigation.replace('OrderSuccess', { orderId });

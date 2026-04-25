@@ -14,6 +14,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useThemeColors } from '@/hooks/useColorScheme';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
+import { clearCartAbandonmentReminder, sendLocalNotification } from '@/services/notificationService';
 import appConfig from '@/hooks/useAppConfig';
 import { CartItem, awoofCart } from './AwoofUtils';
 import SafeImage from '@/components/SafeImage';
@@ -93,6 +94,37 @@ export default function AwoofCheckoutScreen({ route, navigation }: any) {
     );
   };
 
+  const getAddressPayload = (selectedAddressData: any) => {
+    const firstName = selectedAddressData?.firstName || selectedAddressData?.name?.split(' ')[0] || user?.first_name || user?.name?.split(' ')[0] || '';
+    const lastName = selectedAddressData?.lastName || selectedAddressData?.name?.split(' ').slice(1).join(' ') || user?.last_name || user?.name?.split(' ').slice(1).join(' ') || '';
+    return {
+      billing: {
+        first_name: firstName,
+        last_name: lastName,
+        company: '',
+        address_1: selectedAddressData?.address || '',
+        address_2: '',
+        city: selectedAddressData?.city || '',
+        state: selectedAddressData?.state || '',
+        postcode: selectedAddressData?.zipCode || '',
+        country: selectedAddressData?.country || '',
+        email: getCustomerEmail(),
+        phone: selectedAddressData?.phone || user?.phone || '',
+      },
+      shipping: {
+        first_name: firstName,
+        last_name: lastName,
+        company: '',
+        address_1: selectedAddressData?.address || '',
+        address_2: '',
+        city: selectedAddressData?.city || '',
+        state: selectedAddressData?.state || '',
+        postcode: selectedAddressData?.zipCode || '',
+        country: selectedAddressData?.country || '',
+      },
+    };
+  };
+
   const initiatePayment = async () => {
     if (!address) {
       Alert.alert('Address Missing', 'Please add a shipping address before proceeding.');
@@ -132,6 +164,7 @@ export default function AwoofCheckoutScreen({ route, navigation }: any) {
           items: itemsPayload,
           callback_url: callbackUrl,
           email,
+          ...getAddressPayload(address),
         },
         {
           headers: {
@@ -201,7 +234,17 @@ export default function AwoofCheckoutScreen({ route, navigation }: any) {
     console.log('✅ Payment finished via:', source, { orderId, paymentData });
 
     await finalizeWooCommerceOrder();
+    await clearCartAbandonmentReminder();
     awoofCart.clearCart();
+    await sendLocalNotification(
+      'Order placed successfully',
+      `Your Awoof order #${orderId} has been confirmed and is being processed.`,
+      {
+        linkType: 'page',
+        linkValue: 'orders',
+        orderId,
+      }
+    );
     setPaymentData(null);
     setCheckoutUrl(null);
     setIsWebLoading(false);

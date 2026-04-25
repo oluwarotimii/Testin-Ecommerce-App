@@ -85,6 +85,110 @@ function awoof_get_order_id_from_reference($reference) {
     return 0;
 }
 
+function awoof_is_awoof_order($order) {
+    if (!$order instanceof WC_Order) {
+        $order = wc_get_order(absint($order));
+    }
+
+    if (!$order) {
+        return false;
+    }
+
+    $checkout_source = (string) $order->get_meta('_awoof_checkout_source');
+    $order_tag = (string) $order->get_meta('_awoof_order_tag');
+
+    return strtolower($checkout_source) === 'mobile_app' || strtolower($order_tag) === 'awoof';
+}
+
+function awoof_render_admin_order_badge_row($order) {
+    if (!$order instanceof WC_Order) {
+        return;
+    }
+
+    if (!awoof_is_awoof_order($order)) {
+        return;
+    }
+
+    $is_paid = (bool) $order->get_date_paid() || in_array($order->get_status(), array('processing', 'completed'), true);
+    ?>
+    <p>
+        <strong>Awoof:</strong>
+        <span style="display:inline-block;margin-left:8px;padding:3px 10px;border-radius:999px;background:#e8f5ff;color:#0b5cab;font-weight:600;">
+            Awoof
+        </span>
+        <span style="display:inline-block;margin-left:8px;padding:3px 10px;border-radius:999px;background:<?php echo esc_attr($is_paid ? '#e8f7ee' : '#fff6df'); ?>;color:<?php echo esc_attr($is_paid ? '#1d7a3a' : '#9a6b00'); ?>;font-weight:600;">
+            <?php echo esc_html($is_paid ? 'Paid' : 'Pending'); ?>
+        </span>
+    </p>
+    <?php
+}
+
+function awoof_add_admin_order_list_columns($columns) {
+    $new_columns = array();
+
+    foreach ($columns as $key => $label) {
+        $new_columns[$key] = $label;
+
+        if ($key === 'order_number') {
+            $new_columns['awoof_tag'] = __('Tag', 'awoof');
+        }
+    }
+
+    if (!isset($new_columns['awoof_tag'])) {
+        $new_columns['awoof_tag'] = __('Tag', 'awoof');
+    }
+
+    return $new_columns;
+}
+
+function awoof_render_admin_order_list_column($column, $post_id_or_order = null) {
+    if ($column !== 'awoof_tag') {
+        return;
+    }
+
+    $order = $post_id_or_order instanceof WC_Order ? $post_id_or_order : wc_get_order(absint($post_id_or_order));
+    if (!$order || !awoof_is_awoof_order($order)) {
+        echo '&mdash;';
+        return;
+    }
+
+    $is_paid = (bool) $order->get_date_paid() || in_array($order->get_status(), array('processing', 'completed'), true);
+    echo '<span style="display:inline-block;padding:2px 8px;border-radius:999px;background:#e8f5ff;color:#0b5cab;font-weight:600;margin-right:6px;">Awoof</span>';
+    echo '<span style="display:inline-block;padding:2px 8px;border-radius:999px;background:' . esc_attr($is_paid ? '#e8f7ee' : '#fff6df') . ';color:' . esc_attr($is_paid ? '#1d7a3a' : '#9a6b00') . ';font-weight:600;">' . esc_html($is_paid ? 'Paid' : 'Pending') . '</span>';
+}
+
+add_filter('manage_edit-shop_order_columns', 'awoof_add_admin_order_list_columns', 20);
+add_filter('manage_woocommerce_page_wc-orders_columns', 'awoof_add_admin_order_list_columns', 20);
+add_action('manage_shop_order_posts_custom_column', 'awoof_render_admin_order_list_column', 20, 2);
+add_action('manage_woocommerce_page_wc-orders_custom_column', 'awoof_render_admin_order_list_column', 20, 2);
+add_action('woocommerce_admin_order_data_after_order_details', 'awoof_render_admin_order_badge_row');
+
+function awoof_sanitize_address_field($value) {
+    return is_string($value) ? sanitize_text_field(wp_unslash($value)) : '';
+}
+
+function awoof_build_wc_address_from_request($request_data, $user_id, $order, $type = 'billing') {
+    $fallback_email = awoof_get_user_email_for_payment($user_id, $order);
+    $address_data = isset($request_data[$type]) && is_array($request_data[$type]) ? $request_data[$type] : array();
+
+    $first_name = awoof_sanitize_address_field($address_data['first_name'] ?? '');
+    $last_name = awoof_sanitize_address_field($address_data['last_name'] ?? '');
+
+    return array(
+        'first_name' => $first_name,
+        'last_name'  => $last_name,
+        'company'    => '',
+        'address_1'  => awoof_sanitize_address_field($address_data['address_1'] ?? ''),
+        'address_2'  => awoof_sanitize_address_field($address_data['address_2'] ?? ''),
+        'city'       => awoof_sanitize_address_field($address_data['city'] ?? ''),
+        'state'      => awoof_sanitize_address_field($address_data['state'] ?? ''),
+        'postcode'   => awoof_sanitize_address_field($address_data['postcode'] ?? ''),
+        'country'    => awoof_sanitize_address_field($address_data['country'] ?? ''),
+        'email'      => $type === 'billing' ? awoof_sanitize_address_field($address_data['email'] ?? $fallback_email) : '',
+        'phone'      => $type === 'billing' ? awoof_sanitize_address_field($address_data['phone'] ?? '') : '',
+    );
+}
+
 /**
  * INIT PAYMENT
  * Creates the WooCommerce order and initializes Paystack.
@@ -97,6 +201,8 @@ function awoof_initiate_paystack_payment(WP_REST_Request $request) {
 
     $params = $request->get_json_params();
     $items = isset($params['items']) && is_array($params['items']) ? $params['items'] : array();
+    $billing_data = isset($params['billing']) && is_array($params['billing']) ? $params['billing'] : array();
+    $shipping_data = isset($params['shipping']) && is_array($params['shipping']) ? $params['shipping'] : array();
 
     if (empty($items)) {
         return new WP_Error('no_items', 'No items in cart', array('status' => 400));
@@ -107,6 +213,9 @@ function awoof_initiate_paystack_payment(WP_REST_Request $request) {
 
     try {
         $order = wc_create_order(array('customer_id' => $user_id));
+
+        $billing = awoof_build_wc_address_from_request(array('billing' => $billing_data), $user_id, $order, 'billing');
+        $shipping = awoof_build_wc_address_from_request(array('shipping' => $shipping_data), $user_id, $order, 'shipping');
 
         foreach ($items as $item) {
             $product_id = isset($item['id']) ? absint($item['id']) : 0;
@@ -126,9 +235,12 @@ function awoof_initiate_paystack_payment(WP_REST_Request $request) {
             return new WP_Error('no_valid_items', 'Unable to add any products to the order.', array('status' => 400));
         }
 
+        $order->set_address($billing, 'billing');
+        $order->set_address($shipping, 'shipping');
         $order->calculate_totals();
         $order->set_status('pending');
         $order->update_meta_data('_awoof_checkout_source', 'mobile_app');
+        $order->update_meta_data('_awoof_order_tag', 'awoof');
         $order->save();
     } catch (Exception $e) {
         return new WP_Error('order_fail', $e->getMessage(), array('status' => 500));
@@ -190,6 +302,7 @@ function awoof_initiate_paystack_payment(WP_REST_Request $request) {
     $order->update_meta_data('_awoof_paystack_access_code', $access_code);
     $order->update_meta_data('_awoof_paystack_reference', $reference);
     $order->update_meta_data('_awoof_paystack_authorization_url', $paystack_authorization_url);
+    $order->update_meta_data('_awoof_order_tag', 'awoof');
     $order->save();
 
     return array(
