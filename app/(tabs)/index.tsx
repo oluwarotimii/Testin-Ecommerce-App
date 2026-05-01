@@ -16,6 +16,7 @@ import SkeletonProductItem from '@/components/SkeletonProductItem';
 import { transformProducts, transformCategories } from '@/utils/woocommerceTransformers';
 import { formatPrice } from '@/utils/formatNumber';
 import MarketingBanner from '@/components/MarketingBanner';
+import AwoofPromoBanner from '@/components/AwoofPromoBanner';
 import { fetchCarousels } from '@/services/carousel';
 import BestDealsSection from '@/components/BestDealsSection';
 import ProductCard from '@/components/ProductCard';
@@ -23,13 +24,14 @@ import NetworkError from '@/components/NetworkError';
 import { FEATURED_PRODUCTS_LIMIT } from '@/services/config';
 
 // Section types for FlashList
-type SectionType = 
+type SectionType =
   | { type: 'header' }
   | { type: 'search' }
   | { type: 'carousel' }
   | { type: 'categories' }
   | { type: 'bestDeals' }
   | { type: 'banner' }
+  | { type: 'awoofBanner' }
   | { type: 'products' };
 
 // Memoized Category Item - prevents re-renders when parent state changes
@@ -552,6 +554,7 @@ export default function HomeScreen() {
     { type: 'categories' },
     { type: 'bestDeals' },
     { type: 'banner' },
+    // { type: 'awoofBanner' },
     { type: 'products' },
   ];
 
@@ -660,6 +663,9 @@ export default function HomeScreen() {
 
       case 'banner':
         return <MarketingBanner />;
+
+      case 'awoofBanner':
+        // return <AwoofPromoBanner />;
 
       case 'products':
         return (
@@ -772,6 +778,7 @@ export default function HomeScreen() {
       case 'categories': return 180;
       case 'bestDeals': return 280;
       case 'banner': return 150;
+      case 'awoofBanner': return 60;
       case 'products': return 450;
       default: return 200;
     }
@@ -779,6 +786,7 @@ export default function HomeScreen() {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+      {/* <AwoofPromoBanner /> */}
       {/* Sticky Header - positioned absolutely */}
       <Animated.View style={[
         styles.stickyHeader, 
@@ -855,10 +863,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingBottom: 8,
+    paddingBottom: 6,
   },
   greeting: {
     fontSize: 14,
+    paddingTop:10,
   },
   title: {
     fontSize: 20,

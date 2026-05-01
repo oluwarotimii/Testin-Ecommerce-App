@@ -16,6 +16,8 @@ import { ForceUpdateProvider } from '@/context/ForceUpdateContext';
 import FloatingCartButton from '@/components/FloatingCartButton';
 import ForceUpdateScreen from '@/components/ForceUpdateScreen';
 import * as Notifications from 'expo-notifications';
+import * as Linking from 'expo-linking';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 function AppContent() {
   const { colorScheme } = useTheme();
@@ -48,6 +50,27 @@ export default function RootLayout() {
   // Helper function to handle notification navigation
   const handleNotificationNavigation = useCallback((notificationData: any) => {
     console.log('🧭 handleNotificationNavigation called with:', JSON.stringify(notificationData, null, 2));
+
+    // Handle in-app actions (non-navigation side effects) by routing with params
+    if (notificationData?.action === 'empty_cart') {
+      router.push({ pathname: '/cart', params: { action: 'empty_cart' } });
+      return;
+    }
+
+    // Awoof Corner actions (prefill cart, jump to checkout, etc.)
+    const isAwoofPage = notificationData?.linkType === 'page' && notificationData?.linkValue === 'awoof';
+    const isAwoofLinkType = notificationData?.linkType === 'awoof';
+    if (isAwoofPage || isAwoofLinkType || notificationData?.awoofAction) {
+      const awoofAction = notificationData?.awoofAction ?? notificationData;
+      void (async () => {
+        try {
+          await AsyncStorage.setItem('pending_awoof_action', JSON.stringify(awoofAction));
+        } finally {
+          router.push('/awoof');
+        }
+      })();
+      return;
+    }
     
     // First, try the expected format (using linkType/linkValue)
     let { linkType, linkValue } = notificationData;
@@ -82,6 +105,9 @@ export default function RootLayout() {
         // Navigate to a specific page
         console.log('📄 Navigating to page:', linkValue);
         router.push(`/${linkValue}`);
+      } else if (linkType === 'awoof') {
+        // Shortcut link type for Awoof Corner
+        router.push('/awoof');
       } else if (linkType === 'url') {
         // For external URLs, you might want to open in a web view
         console.log('🌐 External URL notification:', linkValue);
@@ -94,6 +120,29 @@ export default function RootLayout() {
       console.log('Full notificationData:', JSON.stringify(notificationData, null, 2));
     }
   }, [router]);
+
+  // Handle deep linking for referrals
+  const handleDeepLink = useCallback(async (url: string | null) => {
+    if (!url) return;
+
+    try {
+      const parsed = Linking.parse(url);
+      console.log('🔗 Parsed deep link:', JSON.stringify(parsed, null, 2));
+
+      // Handle referral code: myapp://referral?code=XYZ
+      if (parsed.path === 'referral' || (parsed.queryParams && parsed.queryParams.code)) {
+        const code = parsed.queryParams?.code as string;
+        if (code) {
+          console.log('🎁 Found referral code in deep link:', code);
+          await AsyncStorage.setItem('pending_referral_code', code);
+          // Optional: navigate to account page or show modal
+          // router.push('/(tabs)/account');
+        }
+      }
+    } catch (error) {
+      console.error('❌ Error parsing deep link:', error);
+    }
+  }, []);
 
   useEffect(() => {
     // Initialize silent updates that run in the background
@@ -109,6 +158,14 @@ export default function RootLayout() {
     };
 
     initNotifications();
+
+    // Check for initial URL (cold start)
+    Linking.getInitialURL().then(handleDeepLink);
+
+    // Listen for incoming URLs (warm start)
+    const subscription = Linking.addEventListener('url', (event) => {
+      handleDeepLink(event.url);
+    });
 
     // CRITICAL: Check for initial notification (app was completely closed)
     // Using getLastNotificationResponseAsync() - the correct API for cold starts
@@ -155,8 +212,9 @@ export default function RootLayout() {
         updateSubscriptionRef.current.remove();
       }
       cleanup();
+      subscription.remove();
     };
-  }, [handleNotificationNavigation]);
+  }, [handleNotificationNavigation, handleDeepLink]);
 
   return (
     <ThemeProvider>

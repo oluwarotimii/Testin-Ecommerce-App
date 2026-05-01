@@ -30,6 +30,19 @@ class AwoofCartManager {
   private cart: CartItem[] = [];
   private listeners: Array<(cart: CartItem[]) => void> = [];
 
+  setCart(items: CartItem[]) {
+    this.cart = Array.isArray(items) ? items.map((item) => ({ ...item })) : [];
+    this.notifyListeners();
+    if (this.cart.length === 0) {
+      void clearCartAbandonmentReminder();
+      return;
+    }
+    void scheduleCartAbandonmentReminder({
+      cartCount: this.getItemCount(),
+      source: 'Awoof cart',
+    });
+  }
+
   addItem(product: AwoofProduct, quantity: number = 1) {
     const existingItem = this.cart.find(item => item.id === product.id);
     

@@ -37,7 +37,7 @@ interface ApiService {
   sessionToken: string | null;
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<any>;
-  register: (firstname: string, lastname: string, email: string, telephone: string, password: string) => Promise<any>;
+  register: (firstname: string, lastname: string, email: string, telephone: string, password: string, referralCode?: string) => Promise<any>;
   signOut: () => Promise<any>;
   getProducts: (params?: Record<string, any>) => Promise<any>;
   getProduct: (product_id: number) => Promise<any>;
@@ -65,6 +65,7 @@ interface ApiService {
   updateAccountDetails: (details: Record<string, any>) => Promise<any>;
   getAddressBook: () => Promise<any>;
   getCarouselItems: () => Promise<any>;
+  getCouponByCode?: (code: string) => Promise<any>;
   updatePushToken: (token: string) => Promise<any>;
   setSessionToken: (token: string | null) => void;
   validateToken?: (token: string) => Promise<boolean>;
@@ -76,7 +77,7 @@ interface AuthContextType {
   sessionToken: string | null;
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<boolean>;
-  register: (firstname: string, lastname: string, email: string, telephone: string, password: string) => Promise<boolean>;
+  register: (firstname: string, lastname: string, email: string, telephone: string, password: string, referralCode?: string) => Promise<boolean>;
   signOut: () => Promise<void>;
   loadingAuth: boolean;
   apiService: ApiService;
@@ -227,10 +228,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const register = async (firstname: string, lastname: string, email: string, telephone: string, password: string): Promise<boolean> => {
+  const register = async (firstname: string, lastname: string, email: string, telephone: string, password: string, referralCode?: string): Promise<boolean> => {
     setLoadingAuth(true);
     try {
-      const response = await apiService.register(firstname, lastname, email, telephone, password);
+      const response = await apiService.register(firstname, lastname, email, telephone, password, referralCode);
       if (response.token) {
         const token = response.token;
         await AsyncStorage.setItem('sessionToken', token);

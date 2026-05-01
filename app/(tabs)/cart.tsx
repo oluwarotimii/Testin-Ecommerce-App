@@ -1,7 +1,7 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useState, useEffect } from 'react';
-import { useRouter } from 'expo-router';
+import { useState, useEffect, useMemo, useRef } from 'react';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
 import { useCart } from '@/context/CartContext';
 import { useThemeColors } from '@/hooks/useColorScheme';
@@ -14,6 +14,7 @@ import { formatPrice } from '@/utils/formatNumber';
 
 export default function CartScreen() {
   const router = useRouter();
+  const { action } = useLocalSearchParams<{ action?: string }>();
   const colors = useThemeColors();
   const isDarkMode = String(colors.background).toLowerCase() === '#000000';
   const { apiService } = useAuth();
@@ -22,6 +23,7 @@ export default function CartScreen() {
   const [cart, setCart] = useState<any>(null);
   const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const hasHandledActionRef = useRef(false);
 
   const fetchCartContents = async () => {
     try {
@@ -55,18 +57,39 @@ export default function CartScreen() {
   }, [isFocused]);
 
   useEffect(() => {
+    if (hasHandledActionRef.current) return;
+    if (action !== 'empty_cart') return;
+    hasHandledActionRef.current = true;
+
+    void (async () => {
+      try {
+        await apiService.emptyCart();
+        setProducts([]);
+        setCart(null);
+        setCartCount(0);
+        Alert.alert('Cart cleared', 'Your cart has been emptied.');
+      } catch (error) {
+        console.error('Error emptying cart from notification action:', error);
+        Alert.alert('Unable to clear cart', 'Please try again.');
+      }
+    })();
+  }, [action, apiService, setCartCount]);
+
+  useEffect(() => {
     // Update cart count whenever products change
     const totalQuantity = products.reduce((total, item) => total + (item.quantity || 1), 0);
     setCartCount(totalQuantity);
   }, [products, setCartCount]);
 
   // Calculate subtotal consistently with checkout page (no shipping or tax)
-  const subtotal = products.reduce((sum, item) => {
-    const price = typeof item.price === 'number' ? item.price : parseFloat(item.price || '0');
-    const quantity = typeof item.quantity === 'number' ? item.quantity : parseInt(item.quantity) || 1;
-    return sum + (price * quantity);
-  }, 0);
-  // No shipping, no tax - total is same as subtotal
+  const subtotal = useMemo(() => {
+    return products.reduce((sum, item) => {
+      const price = typeof item.price === 'number' ? item.price : parseFloat(item.price || '0');
+      const quantity = typeof item.quantity === 'number' ? item.quantity : parseInt(item.quantity) || 1;
+      return sum + (price * quantity);
+    }, 0);
+  }, [products]);
+
   const total = subtotal;
 
   if (loading) {
@@ -90,14 +113,14 @@ export default function CartScreen() {
           <SkeletonCartItem />
         </ScrollView>
 
-        {/* Order Summary */}
-        <View style={[styles.summary, { backgroundColor: colors.surface }]}>
-          <SkeletonLoader width="100%" height={20} marginBottom={12} />
-          <SkeletonLoader width="100%" height={20} marginBottom={12} />
-          <SkeletonLoader width="100%" height={20} marginBottom={12} />
-          <SkeletonLoader width="100%" height={20} marginBottom={20} />
-          <SkeletonLoader width="100%" height={50} borderRadius={12} />
-        </View>
+      {/* Order Summary */}
+      <View style={[styles.summary, { backgroundColor: colors.surface }]}>
+        <SkeletonLoader width="100%" height={20} marginBottom={12} />
+        <SkeletonLoader width="100%" height={20} marginBottom={12} />
+        <SkeletonLoader width="100%" height={20} marginBottom={12} />
+        <SkeletonLoader width="100%" height={20} marginBottom={20} />
+        <SkeletonLoader width="100%" height={50} borderRadius={12} />
+      </View>
       </View>
     );
   }

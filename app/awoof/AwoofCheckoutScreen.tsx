@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
   Alert,
   Modal,
+  TextInput,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -22,6 +23,7 @@ import Dropdown from '@/components/Dropdown';
 import axios from 'axios';
 import { WebView } from 'react-native-webview';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { calculateAwoofCouponDiscount, clearStoredAwoofAppliedCoupon, getStoredAwoofAppliedCoupon, normalizeAwoofCouponCode, setStoredAwoofAppliedCoupon, type AwoofAppliedCoupon } from '@/utils/awoofCoupons';
 
 const PAYSTACK_INIT_ENDPOINT = `${appConfig.wordpressUrl.replace(/\/$/, '')}/wp-json/awoof/v1/initialize-payment`;
 
@@ -51,6 +53,8 @@ export default function AwoofCheckoutScreen({ route, navigation }: any) {
   const [paymentData, setPaymentData] = useState<PaymentData | null>(null);
   const [checkoutUrl, setCheckoutUrl] = useState<string | null>(null);
   const [selectedShippingMethod, setSelectedShippingMethod] = useState<any>(null);
+  const [couponInput, setCouponInput] = useState('');
+  const [appliedCoupon, setAppliedCoupon] = useState<AwoofAppliedCoupon | null>(null);
 
   const baseWordPressUrl = useMemo(() => appConfig.wordpressUrl.replace(/\/$/, ''), []);
   const callbackUrl = useMemo(() => `${baseWordPressUrl}/awoof-payment-callback`, [baseWordPressUrl]);
@@ -65,6 +69,79 @@ export default function AwoofCheckoutScreen({ route, navigation }: any) {
       setLoadingShippingMethods(false);
     }
   }, [loadingAuth, isAuthenticated]);
+
+  useEffect(() => {
+    void (async () => {
+      const stored = await getStoredAwoofAppliedCoupon();
+      if (stored) {
+        setAppliedCoupon(stored);
+        setCouponInput(stored.code);
+      }
+    })();
+  }, []);
+
+  const handleApplyCoupon = async () => {
+    const code = normalizeAwoofCouponCode(couponInput);
+    if (!code) {
+      Alert.alert('Enter a code', 'Please enter a coupon code.');
+      return;
+    }
+
+    try {
+      if (!apiService.getCouponByCode) {
+        Alert.alert('Unavailable', 'Coupons are not available right now.');
+        return;
+      }
+
+      const coupon = await apiService.getCouponByCode(code);
+      if (!coupon) {
+        Alert.alert('Invalid coupon', 'That coupon code was not found.');
+        return;
+      }
+
+      const discountType = String(coupon.discount_type || '').toLowerCase();
+      const amount = Number.parseFloat(String(coupon.amount || '0'));
+      const minimumAmount = Number.parseFloat(String(coupon.minimum_amount || '0'));
+
+      if (!Number.isFinite(amount) || amount <= 0) {
+        Alert.alert('Invalid coupon', 'This coupon cannot be applied.');
+        return;
+      }
+
+      if (Number.isFinite(minimumAmount) && minimumAmount > 0 && subtotal < minimumAmount) {
+        Alert.alert('Not eligible', `Order subtotal must be at least ₦${minimumAmount} to use this coupon.`);
+        return;
+      }
+
+      if (coupon.date_expires) {
+        const expiresAt = new Date(String(coupon.date_expires));
+        if (!Number.isNaN(expiresAt.getTime()) && expiresAt.getTime() < Date.now()) {
+          Alert.alert('Expired coupon', 'This coupon has expired.');
+          return;
+        }
+      }
+
+      if (discountType !== 'percent' && discountType !== 'fixed_cart') {
+        Alert.alert('Unsupported coupon', 'This coupon type is not supported in Awoof.');
+        return;
+      }
+
+      const applied: AwoofAppliedCoupon = { code, discountType, amount };
+      await setStoredAwoofAppliedCoupon(applied);
+      setAppliedCoupon(applied);
+      setCouponInput(code);
+      Alert.alert('Coupon applied', 'Discount will apply to this Awoof order.');
+    } catch (error) {
+      console.error('Error applying Awoof coupon:', error);
+      Alert.alert('Error', 'Could not apply this coupon. Please try again.');
+    }
+  };
+
+  const handleRemoveCoupon = async () => {
+    await clearStoredAwoofAppliedCoupon();
+    setAppliedCoupon(null);
+    setCouponInput('');
+  };
 
   const loadShippingMethods = useCallback(async () => {
     try {
@@ -236,6 +313,7 @@ export default function AwoofCheckoutScreen({ route, navigation }: any) {
           items: itemsPayload,
           callback_url: callbackUrl,
           email,
+          coupon_code: appliedCoupon?.code || undefined,
           ...getAddressPayload(address),
           ...getShippingPayload(),
         },
@@ -309,6 +387,7 @@ export default function AwoofCheckoutScreen({ route, navigation }: any) {
     await finalizeWooCommerceOrder();
     await clearCartAbandonmentReminder();
     awoofCart.clearCart();
+    await clearStoredAwoofAppliedCoupon();
     await sendLocalNotification(
       'Order placed successfully',
       `Your Awoof order #${orderId} has been confirmed and is being processed.`,
@@ -379,7 +458,8 @@ export default function AwoofCheckoutScreen({ route, navigation }: any) {
 
   const subtotal = cartItems.reduce((sum, item) => sum + item.salePrice * item.quantity, 0);
   const deliveryFee = getSelectedShippingCost();
-  const total = subtotal + deliveryFee;
+  const discount = appliedCoupon ? calculateAwoofCouponDiscount(subtotal, appliedCoupon) : 0;
+  const total = Math.max(0, subtotal - discount) + deliveryFee;
 
   if (loading || loadingAuth) {
     return (
@@ -524,6 +604,44 @@ export default function AwoofCheckoutScreen({ route, navigation }: any) {
             <View style={styles.priceRow}>
               <Text style={[styles.priceLabel, { color: colors.textSecondary }]}>Subtotal</Text>
               <Text style={[styles.priceValue, { color: colors.text }]}>₦{subtotal.toLocaleString()}</Text>
+            </View>
+
+            <View style={styles.couponBox}>
+              <Text style={[styles.couponTitle, { color: colors.text }]}>Coupon (Awoof only)</Text>
+              <View style={styles.couponRow}>
+                <TextInput
+                  value={couponInput}
+                  onChangeText={setCouponInput}
+                  placeholder="Enter coupon code"
+                  placeholderTextColor={colors.textSecondary}
+                  autoCapitalize="none"
+                  style={[
+                    styles.couponInput,
+                    { color: colors.text, backgroundColor: colors.background, borderColor: colors.border },
+                  ]}
+                />
+                {appliedCoupon ? (
+                  <TouchableOpacity
+                    style={[styles.couponButton, { backgroundColor: colors.textSecondary }]}
+                    onPress={handleRemoveCoupon}
+                  >
+                    <Text style={styles.couponButtonText}>Remove</Text>
+                  </TouchableOpacity>
+                ) : (
+                  <TouchableOpacity
+                    style={[styles.couponButton, { backgroundColor: colors.primary }]}
+                    onPress={handleApplyCoupon}
+                  >
+                    <Text style={styles.couponButtonText}>Apply</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+              {appliedCoupon && discount > 0 && (
+                <View style={styles.priceRow}>
+                  <Text style={[styles.priceLabel, { color: colors.textSecondary }]}>Discount ({appliedCoupon.code})</Text>
+                  <Text style={[styles.priceValue, { color: colors.textSecondary }]}>-₦{discount.toLocaleString()}</Text>
+                </View>
+              )}
             </View>
 
             <View style={styles.priceRow}>
@@ -790,6 +908,36 @@ const styles = StyleSheet.create({
   priceValue: {
     fontSize: 14,
     fontWeight: '500',
+  },
+  couponBox: {
+    marginTop: 10,
+    gap: 10,
+  },
+  couponTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  couponRow: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  couponInput: {
+    flex: 1,
+    borderWidth: 1,
+    borderRadius: 14,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    fontSize: 14,
+  },
+  couponButton: {
+    paddingHorizontal: 14,
+    borderRadius: 14,
+    justifyContent: 'center',
+  },
+  couponButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '800',
   },
   totalLabel: {
     fontSize: 16,

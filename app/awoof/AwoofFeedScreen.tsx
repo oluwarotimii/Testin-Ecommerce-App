@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View,
   Text,
@@ -18,6 +18,7 @@ import SafeImage from '@/components/SafeImage';
 import { useAuth } from '@/context/AuthContext';
 import { transformProducts } from '@/utils/woocommerceTransformers';
 import AwoofToast, { AwoofToastRef } from '@/components/AwoofToast';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const { width } = Dimensions.get('window');
 const CARD_WIDTH = (width - 48) / 2;
@@ -36,6 +37,7 @@ export default function AwoofFeedScreen({ navigation }: any) {
   const [loading, setLoading] = useState(true);
   const [cartCount, setCartCount] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
+  const hasHandledPendingActionRef = useRef(false);
 
   useEffect(() => {
     loadDeals();
@@ -46,6 +48,158 @@ export default function AwoofFeedScreen({ navigation }: any) {
     setCartCount(awoofCart.getItemCount());
     return unsubscribe;
   }, []);
+
+  const processPendingAwoofAction = useCallback(async () => {
+    if (hasHandledPendingActionRef.current) return;
+
+    const raw = await AsyncStorage.getItem('pending_awoof_action');
+    if (!raw) return;
+
+    let action: any = null;
+    try {
+      action = JSON.parse(raw);
+    } catch (error) {
+      console.error('Invalid pending_awoof_action JSON:', error);
+      await AsyncStorage.removeItem('pending_awoof_action');
+      return;
+    }
+
+    const actionType = String(action?.actionType || action?.action || '').toLowerCase();
+    const items = Array.isArray(action?.items) ? action.items : [];
+    const replaceCart = action?.replaceCart !== false;
+    const target = String(action?.target || 'feed').toLowerCase();
+    const productId = action?.productId != null ? String(action.productId) : null;
+
+    const dealsById = new Map(deals.map((d) => [String(d.id), d]));
+
+    const resolvedProducts: Array<{ product: AwoofProduct; quantity: number }> = [];
+    for (const item of items) {
+      const id = item?.productId != null ? String(item.productId) : '';
+      const quantity = Math.max(1, Number(item?.quantity ?? 1));
+      if (!id) continue;
+
+      const inFeed = dealsById.get(id);
+      if (inFeed) {
+        resolvedProducts.push({ product: inFeed, quantity });
+        continue;
+      }
+
+      try {
+        const rawProduct = await apiService.getProduct(Number(id));
+        const appProducts = transformProducts([rawProduct]);
+        if (appProducts.length > 0) {
+          resolvedProducts.push({ product: mapToAwoofProduct(appProducts[0]), quantity });
+        }
+      } catch (error) {
+        console.error('Failed to resolve awoof product for notification:', id, error);
+      }
+    }
+
+    const resolveSingleProductById = async (id: string) => {
+      const inFeed = dealsById.get(id);
+      if (inFeed) return inFeed;
+
+      try {
+        const rawProduct = await apiService.getProduct(Number(id));
+        const appProducts = transformProducts([rawProduct]);
+        if (appProducts.length > 0) return mapToAwoofProduct(appProducts[0]);
+      } catch (error) {
+        console.error('Failed to resolve awoof product for notification:', id, error);
+      }
+      return null;
+    };
+
+    // For actions that reference a single product without an items[] list
+    if ((actionType === 'checkout_product' || actionType === 'open_product' || target === 'product') && productId) {
+      const product = await resolveSingleProductById(productId);
+      if (product) {
+        // Ensure product is available for downstream navigation and cart set
+        if (!resolvedProducts.some((p) => String(p.product.id) === productId)) {
+          resolvedProducts.push({ product, quantity: 1 });
+        }
+      }
+    }
+
+    if (actionType === 'prefill_cart' || actionType === 'checkout' || actionType === 'open_cart' || actionType === 'checkout_product') {
+      if (replaceCart) {
+        awoofCart.setCart(
+          resolvedProducts.map(({ product, quantity }) => ({
+            ...product,
+            quantity,
+          }))
+        );
+      } else {
+        for (const { product, quantity } of resolvedProducts) {
+          awoofCart.addItem(product, quantity);
+        }
+      }
+    }
+
+    hasHandledPendingActionRef.current = true;
+    await AsyncStorage.removeItem('pending_awoof_action');
+
+    await new Promise(resolve => setTimeout(resolve, 150));
+
+    if (actionType === 'open_product' && productId) {
+      const product = dealsById.get(productId) || resolvedProducts.find((p) => String(p.product.id) === productId)?.product;
+      if (product) navigation.navigate('ProductDetail', { product });
+      return;
+    }
+
+    if (actionType === 'checkout_product' && productId) {
+      const product = dealsById.get(productId) || resolvedProducts.find((p) => String(p.product.id) === productId)?.product;
+      if (product) {
+        awoofCart.setCart([{ ...product, quantity: 1 }]);
+      }
+      const cart = awoofCart.getCart();
+      if (cart.length === 0) {
+        Alert.alert('Unable to open checkout', 'We could not load that product. Please try again.');
+        return;
+      }
+      navigation.navigate('AwoofCheckout', { cartItems: cart });
+      return;
+    }
+
+    if (actionType === 'checkout') {
+      const cart = awoofCart.getCart();
+      if (cart.length === 0) {
+        Alert.alert('Cart is empty', 'No items were added from this notification.');
+        return;
+      }
+      navigation.navigate('AwoofCheckout', { cartItems: cart });
+      return;
+    }
+
+    if (actionType === 'open_cart') {
+      const cart = awoofCart.getCart();
+      if (cart.length === 0) {
+        Alert.alert('Cart is empty', 'No items were added from this notification.');
+        return;
+      }
+      navigation.navigate('AwoofMiniCart');
+      return;
+    }
+
+    if (target === 'checkout') {
+      navigation.navigate('AwoofCheckout', { cartItems: awoofCart.getCart() });
+    } else if (target === 'cart') {
+      navigation.navigate('AwoofMiniCart');
+    } else if (target === 'product' && productId) {
+      const product = dealsById.get(productId);
+      if (product) navigation.navigate('ProductDetail', { product });
+    }
+  }, [apiService, deals, navigation]);
+
+  useEffect(() => {
+    void processPendingAwoofAction();
+  }, [processPendingAwoofAction]);
+
+  useEffect(() => {
+    // Retry once after deals load (handles race where pending action is set just after mount)
+    if (hasHandledPendingActionRef.current) return;
+    if (deals.length === 0) return;
+    void processPendingAwoofAction();
+  }, [deals.length, processPendingAwoofAction]);
 
   const loadDeals = async () => {
     try {

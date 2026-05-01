@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Dimensions, Animated, Easing } from 'react-native';
 import { Tabs } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useThemeColors } from '@/hooks/useColorScheme';
@@ -20,6 +20,31 @@ const CustomTabBar: React.FC<CustomTabBarProps> = ({ state, descriptors, navigat
   const { colorScheme } = useTheme();
   const { cartCount } = useCart();
   const insets = useSafeAreaInsets();
+
+  // Pulse animation for Awoof tab
+  const pulseAnim = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    const animation = Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulseAnim, {
+          toValue: 1.15,
+          duration: 1000,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true,
+        }),
+        Animated.timing(pulseAnim, {
+          toValue: 1,
+          duration: 1000,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true,
+        }),
+      ])
+    );
+    animation.start();
+
+    return () => animation.stop();
+  }, [pulseAnim]);
 
   // Check if we're on the cart screen
   const currentRoute = state.routes[state.index]?.name;
@@ -57,6 +82,20 @@ const CustomTabBar: React.FC<CustomTabBarProps> = ({ state, descriptors, navigat
     const label = options.title || name;
     const iconName = getIconName(name, focused);
 
+    const isAwoof = name === 'awoof';
+    const awoofColor = '#ff0000'; // Gold color to make it pop
+
+    // Animation for the glow ring
+    const glowScale = pulseAnim.interpolate({
+      inputRange: [1, 1.15],
+      outputRange: [1, 1.4],
+    });
+
+    const glowOpacity = pulseAnim.interpolate({
+      inputRange: [1, 1.15],
+      outputRange: [0.3, 0],
+    });
+
     return (
       <TouchableOpacity
         key={index}
@@ -64,11 +103,28 @@ const CustomTabBar: React.FC<CustomTabBarProps> = ({ state, descriptors, navigat
         onPress={() => navigation.navigate(name)}
       >
         <View style={styles.cartIconContainer}>
-          <Ionicons
-            name={iconName}
-            size={24}
-            color={focused ? activeTintColor : inactiveTintColor}
-          />
+          {isAwoof && (
+            <Animated.View 
+              style={[
+                styles.awoofGlow,
+                {
+                  transform: [{ scale: glowScale }],
+                  opacity: glowOpacity,
+                }
+              ]}
+            />
+          )}
+          <Animated.View 
+            style={[
+              isAwoof && { transform: [{ scale: pulseAnim }] }
+            ]}
+          >
+            <Ionicons
+              name={iconName}
+              size={isAwoof ? 26 : 24} // Slightly larger for Awoof
+              color={isAwoof ? awoofColor : (focused ? activeTintColor : inactiveTintColor)}
+            />
+          </Animated.View>
           {name === 'cart' && cartCount > 0 && (
             <View style={styles.cartBadge}>
               <Text style={styles.cartBadgeText}>
@@ -76,8 +132,17 @@ const CustomTabBar: React.FC<CustomTabBarProps> = ({ state, descriptors, navigat
               </Text>
             </View>
           )}
+          {isAwoof && !focused && (
+            <View style={styles.awoofDot} />
+          )}
         </View>
-        <Text style={[styles.tabLabel, { color: focused ? activeTintColor : inactiveTintColor }]}>
+        <Text style={[
+          styles.tabLabel, 
+          { 
+            color: isAwoof ? awoofColor : (focused ? activeTintColor : inactiveTintColor),
+            fontWeight: isAwoof || focused ? 'bold' : '600'
+          }
+        ]}>
           {label}
         </Text>
       </TouchableOpacity>
@@ -128,6 +193,8 @@ const styles = StyleSheet.create({
   },
   cartIconContainer: {
     position: 'relative',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   cartBadge: {
     position: 'absolute',
@@ -147,6 +214,25 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 10,
     fontWeight: 'bold',
+  },
+  awoofDot: {
+    position: 'absolute',
+    top: -2,
+    right: -2,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#FF3B30',
+    borderWidth: 1,
+    borderColor: '#FFFFFF',
+  },
+  awoofGlow: {
+    position: 'absolute',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#FFD700',
+    zIndex: 1,
   },
 });
 

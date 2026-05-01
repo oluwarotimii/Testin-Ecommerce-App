@@ -99,3 +99,7 @@ firestore-debug.log
 # Playwright
 playwright-report/
 playwright/.cache/
+
+
+# PHP
+*.php

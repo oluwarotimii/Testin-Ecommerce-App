@@ -799,6 +799,18 @@ class DummyApiService {
     };
   }
 
+  async getCouponByCode(code: string) {
+    const normalized = String(code || '').trim().toLowerCase();
+    if (!normalized) return null;
+
+    const coupons = [
+      { id: 1, code: 'welcome10', discount_type: 'percent', amount: '10', date_expires: null, minimum_amount: '0' },
+      { id: 2, code: 'save500', discount_type: 'fixed_cart', amount: '500', date_expires: null, minimum_amount: '0' },
+    ];
+
+    return coupons.find(c => c.code === normalized) ?? null;
+  }
+
   async getOrders() {
     return {
       success: true,

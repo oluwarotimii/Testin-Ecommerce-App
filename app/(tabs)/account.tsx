@@ -9,7 +9,9 @@ import updateService from '@/services/updateService';
 import { useThemeColors } from '@/hooks/useColorScheme';
 import { useAuth } from '@/context/AuthContext';
 import { useTheme } from '@/context/ThemeContext';
+import ReferralSystem from '@/components/ReferralSystem';
 import { MaterialIcons, FontAwesome, Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function AccountScreen() {
   const router = useRouter();
@@ -18,6 +20,7 @@ export default function AccountScreen() {
   const { colorScheme, toggleColorScheme, setColorScheme } = useTheme();
   const { isAuthenticated, apiService, signOut, loadingAuth } = useAuth();
   const [showSignOutModal, setShowSignOutModal] = useState(false);
+  const [showReferralModal, setShowReferralModal] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
   // console.log('isAuthenticated:', isAuthenticated, 'loadingAuth:', loadingAuth);
   const [darkMode, setDarkMode] = useState(colorScheme === 'dark');
@@ -30,6 +33,21 @@ export default function AccountScreen() {
   const [notifications, setNotifications] = useState(true);
   const [userDetails, setUserDetails] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+
+  // Check for pending referral code on mount
+  useEffect(() => {
+    const checkPendingReferral = async () => {
+      try {
+        const pendingCode = await AsyncStorage.getItem('pending_referral_code');
+        if (pendingCode) {
+          setShowReferralModal(true);
+        }
+      } catch (error) {
+        console.error('Error checking pending referral:', error);
+      }
+    };
+    checkPendingReferral();
+  }, []);
 
   useEffect(() => {
     const fetchUserDetails = async () => {
@@ -112,6 +130,12 @@ export default function AccountScreen() {
   ];
 
   const supportItems = [
+    {
+      id: 'referral',
+      title: 'Referral Program',
+      icon: () => <Ionicons name="people" size={20} color={colors.primary} />,
+      onPress: () => setShowReferralModal(true),
+    },
     {
       id: 'help',
       title: 'Help & Support',
@@ -331,6 +355,9 @@ export default function AccountScreen() {
                   </TouchableOpacity>
                 </View>
 
+                {/* Referral System - Hidden from main view, moved to modal */}
+                {/* <ReferralSystem /> */}
+
                 {/* Account Menu */}
                 <View style={styles.section}>
                   <Text style={[styles.sectionTitle, { color: colors.text }]}>Account</Text>
@@ -402,11 +429,37 @@ export default function AccountScreen() {
           </>
         )}
 
-        {/* App Version */}
-        <View style={styles.footer}>
+        {/* App Version - Hidden trigger for Referral System */}
+        <TouchableOpacity 
+          style={styles.footer} 
+          onPress={() => setShowReferralModal(true)}
+          activeOpacity={0.7}
+        >
           <Text style={[styles.versionText, { color: colors.textSecondary }]}>Femtech Mobile App v3.0.0</Text>
-        </View>
+        </TouchableOpacity>
       </ScrollView>
+
+      {/* Referral Program Modal */}
+      <Modal
+        visible={showReferralModal}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowReferralModal(false)}
+      >
+        <View style={styles.referralModalOverlay}>
+          <View style={[styles.referralModalContent, { backgroundColor: colors.background }]}>
+            <View style={styles.referralModalHeader}>
+              <Text style={[styles.referralModalTitle, { color: colors.text }]}>Referral Program</Text>
+              <TouchableOpacity onPress={() => setShowReferralModal(false)} style={styles.closeModalButton}>
+                <Ionicons name="close" size={28} color={colors.text} />
+              </TouchableOpacity>
+            </View>
+            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.referralModalScroll}>
+              <ReferralSystem />
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
 
       {/* Sign Out Confirmation Modal */}
       <Modal
@@ -790,5 +843,35 @@ const styles = StyleSheet.create({
   getTokenButtonText: {
     fontSize: 14,
     fontWeight: '600',
+  },
+  referralModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  referralModalContent: {
+    height: '80%',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingTop: 20,
+  },
+  referralModalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingBottom: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(0,0,0,0.05)',
+  },
+  referralModalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+  },
+  closeModalButton: {
+    padding: 4,
+  },
+  referralModalScroll: {
+    paddingBottom: 40,
   },
 });

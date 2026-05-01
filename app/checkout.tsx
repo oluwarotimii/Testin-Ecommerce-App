@@ -202,7 +202,7 @@ export default function CheckoutScreen() {
     try {
       // Format order data for WooCommerce
       // Using default/fallback values for payment and shipping as sections were removed
-      const orderData = {
+      const orderData: any = {
         payment_method: selectedPaymentMethod || 'bacs', // Use selected payment method
         payment_method_title: paymentMethods.find(m => m.id === selectedPaymentMethod)?.title || 'Direct Bank Transfer',
         set_paid: false,

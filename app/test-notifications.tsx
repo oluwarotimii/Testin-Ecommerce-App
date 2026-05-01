@@ -5,12 +5,16 @@ import { useRouter } from 'expo-router';
 import { useThemeColors } from '@/hooks/useColorScheme';
 import { Ionicons } from '@expo/vector-icons';
 import * as Notifications from 'expo-notifications';
+import notificationService from '@/services/notificationService';
 
 export default function TestNotificationsScreen() {
   const router = useRouter();
   const colors = useThemeColors();
   const [customProductSlug, setCustomProductSlug] = useState('');
   const [customCategorySlug, setCustomCategorySlug] = useState('');
+  const [cartReminderSeconds, setCartReminderSeconds] = useState('30');
+  const [cartReminderCount, setCartReminderCount] = useState('2');
+  const [cartReminderSource, setCartReminderSource] = useState('Awoof cart');
 
   const sendTestNotification = async (linkType: string, linkValue: string, title: string, body: string) => {
     try {
@@ -58,6 +62,39 @@ export default function TestNotificationsScreen() {
       'Category Test',
       `Testing navigation to category: ${customCategorySlug.trim()}`
     );
+  };
+
+  const scheduleCartReminderTest = async () => {
+    const seconds = Number.parseInt(cartReminderSeconds, 10);
+    const cartCount = Number.parseInt(cartReminderCount, 10);
+
+    if (!Number.isFinite(seconds) || seconds <= 0) {
+      Alert.alert('Invalid time', 'Enter a positive number of seconds.');
+      return;
+    }
+
+    try {
+      await notificationService.scheduleCartAbandonmentReminder({
+        cartCount: Number.isFinite(cartCount) && cartCount > 0 ? cartCount : 1,
+        source: cartReminderSource.trim() || 'shopping cart',
+        delaySeconds: seconds,
+      });
+      Alert.alert(
+        'Scheduled',
+        `Cart reminder scheduled to repeat every ${seconds}s.\n\nBackground the app and wait for it, then tap it to verify it opens the cart.`
+      );
+    } catch (error: any) {
+      Alert.alert('Error', `Failed to schedule reminder: ${error?.message || 'Unknown error'}`);
+    }
+  };
+
+  const cancelCartReminderTest = async () => {
+    try {
+      await notificationService.clearCartAbandonmentReminder();
+      Alert.alert('Cancelled', 'Cart reminder cancelled.');
+    } catch (error: any) {
+      Alert.alert('Error', `Failed to cancel reminder: ${error?.message || 'Unknown error'}`);
+    }
   };
 
   return (
@@ -139,6 +176,71 @@ export default function TestNotificationsScreen() {
                 <Text style={styles.testButtonText}>Test</Text>
               </TouchableOpacity>
             </View>
+          </View>
+        </View>
+
+        {/* Cart Abandonment Reminder Test */}
+        <View style={[styles.section, { backgroundColor: colors.surface }]}>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>Cart Abandonment Reminder Test</Text>
+          <Text style={[styles.sectionSubtitle, { color: colors.textSecondary }]}>
+            This schedules a repeating local reminder. Set seconds low for testing (e.g. 30).
+          </Text>
+
+          <View style={styles.inputGroup}>
+            <Text style={[styles.inputLabel, { color: colors.text }]}>Repeat Every (seconds):</Text>
+            <View style={[styles.inputContainer, { backgroundColor: colors.background, borderColor: colors.border }]}>
+              <TextInput
+                style={[styles.input, { color: colors.text }]}
+                placeholder="e.g., 30"
+                placeholderTextColor={colors.textSecondary}
+                value={cartReminderSeconds}
+                onChangeText={setCartReminderSeconds}
+                keyboardType="number-pad"
+              />
+            </View>
+          </View>
+
+          <View style={styles.inputGroup}>
+            <Text style={[styles.inputLabel, { color: colors.text }]}>Cart Count (for message):</Text>
+            <View style={[styles.inputContainer, { backgroundColor: colors.background, borderColor: colors.border }]}>
+              <TextInput
+                style={[styles.input, { color: colors.text }]}
+                placeholder="e.g., 2"
+                placeholderTextColor={colors.textSecondary}
+                value={cartReminderCount}
+                onChangeText={setCartReminderCount}
+                keyboardType="number-pad"
+              />
+            </View>
+          </View>
+
+          <View style={styles.inputGroup}>
+            <Text style={[styles.inputLabel, { color: colors.text }]}>Source Label:</Text>
+            <View style={[styles.inputContainer, { backgroundColor: colors.background, borderColor: colors.border }]}>
+              <TextInput
+                style={[styles.input, { color: colors.text }]}
+                placeholder="e.g., Awoof cart"
+                placeholderTextColor={colors.textSecondary}
+                value={cartReminderSource}
+                onChangeText={setCartReminderSource}
+                autoCapitalize="none"
+              />
+            </View>
+          </View>
+
+          <View style={{ flexDirection: 'row', gap: 12 }}>
+            <TouchableOpacity
+              style={[styles.actionButton, { backgroundColor: colors.primary }]}
+              onPress={scheduleCartReminderTest}
+            >
+              <Text style={styles.actionButtonText}>Schedule</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.actionButton, { backgroundColor: colors.error }]}
+              onPress={cancelCartReminderTest}
+            >
+              <Text style={styles.actionButtonText}>Cancel</Text>
+            </TouchableOpacity>
           </View>
         </View>
 
@@ -258,6 +360,18 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 14,
     fontWeight: '600',
+  },
+  actionButton: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  actionButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '700',
   },
   tipCard: {
     borderRadius: 12,

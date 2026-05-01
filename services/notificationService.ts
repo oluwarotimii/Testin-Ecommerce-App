@@ -7,7 +7,8 @@ import { DASHBOARD_API_BASE_URL } from './config';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const CART_REMINDER_ID_KEY = 'cartReminderNotificationId';
-const CART_REMINDER_DELAY_SECONDS = 36 * 60 * 60;
+// Cart abandonment reminder cadence (48 hours)
+const CART_REMINDER_DELAY_SECONDS = 48 * 60 * 60;
 
 // Function to create notification channel for Android 13+
 const createNotificationChannel = async () => {
@@ -160,6 +161,15 @@ const sendLocalNotification = async (title: string, body: string, data: any = {}
   });
 };
 
+const sendAwoofLocalNotification = async (title: string, body: string, data: any = {}) => {
+  return sendLocalNotification(title, body, {
+    linkType: 'page',
+    linkValue: 'awoof',
+    notificationType: 'awoof',
+    ...data,
+  });
+};
+
 const clearCartAbandonmentReminder = async () => {
   try {
     const reminderId = await AsyncStorage.getItem(CART_REMINDER_ID_KEY);
@@ -175,12 +185,14 @@ const clearCartAbandonmentReminder = async () => {
 const scheduleCartAbandonmentReminder = async (options?: {
   cartCount?: number;
   source?: string;
+  delaySeconds?: number;
 }) => {
   try {
     await clearCartAbandonmentReminder();
 
     const cartCount = options?.cartCount ?? 1;
     const source = options?.source || 'shopping cart';
+    const delaySeconds = options?.delaySeconds ?? CART_REMINDER_DELAY_SECONDS;
     const id = await Notifications.scheduleNotificationAsync({
       content: {
         title: 'Still thinking about it?',
@@ -195,8 +207,8 @@ const scheduleCartAbandonmentReminder = async (options?: {
       },
       trigger: {
         type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
-        seconds: CART_REMINDER_DELAY_SECONDS,
-        repeats: false,
+        seconds: delaySeconds,
+        repeats: true,
       },
     });
 
@@ -247,6 +259,7 @@ export {
   setupNotificationListeners,
   initialize,
   sendLocalNotification,
+  sendAwoofLocalNotification,
   scheduleCartAbandonmentReminder,
   clearCartAbandonmentReminder,
   clearCartReminderIfNeeded,
@@ -258,6 +271,7 @@ export default {
   setupNotificationListeners,
   initialize,
   sendLocalNotification,
+  sendAwoofLocalNotification,
   scheduleCartAbandonmentReminder,
   clearCartAbandonmentReminder,
   clearCartReminderIfNeeded,

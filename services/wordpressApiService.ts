@@ -408,7 +408,7 @@ class WordPressApiService {
     }
   }
 
-  async register(firstname: string, lastname: string, email: string, telephone: string, password: string) {
+  async register(firstname: string, lastname: string, email: string, telephone: string, password: string, referralCode?: string) {
     try {
       const newCustomer: any = {
         email: email,
@@ -450,6 +450,39 @@ class WordPressApiService {
       // Store customer ID after registration
       if (response.id) {
         await AsyncStorage.setItem('customerId', response.id.toString());
+      }
+
+      // Handle referral code if provided
+      if (referralCode && referralCode.trim()) {
+        try {
+          const { DASHBOARD_API_BASE_URL } = require('./config');
+          const { Platform } = require('react-native');
+          const Device = require('expo-device');
+          
+          const deviceId = Device.osBuildId || Device.modelId || 'unknown-device';
+          
+          await fetch(`${DASHBOARD_API_BASE_URL}/api/referral-events`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              code: referralCode.trim(),
+              device_id: deviceId,
+              platform: Platform.OS,
+              customer_id: response.id || null,
+              customer_email: email || null,
+            }),
+          });
+          
+          // Mark as submitted locally
+          await AsyncStorage.setItem(`referral_submitted_${deviceId}`, 'true');
+          await AsyncStorage.removeItem('pending_referral_code');
+          console.log('Referral tracked during registration');
+        } catch (referralError) {
+          console.error('Failed to track referral during registration:', referralError);
+          // Don't fail the whole registration if referral tracking fails
+        }
       }
 
       // Login after registration using JWT
@@ -971,7 +1004,9 @@ class WordPressApiService {
             method_title: orderData.shipping_method || 'Flat Rate',
             total: orderData.shipping_cost || '0.00'
           }
-        ]
+        ],
+        coupon_lines: Array.isArray(orderData.coupon_lines) ? orderData.coupon_lines : undefined,
+        meta_data: Array.isArray(orderData.meta_data) ? orderData.meta_data : undefined,
       };
 
       if (customerId) {
@@ -994,6 +1029,26 @@ class WordPressApiService {
     } catch (error: any) {
       console.error('Error creating order:', error.response?.data || error.message);
       throw error;
+    }
+  }
+
+  async getCouponByCode(code: string) {
+    try {
+      const trimmed = String(code || '').trim();
+      if (!trimmed) return null;
+
+      // WooCommerce REST API supports filtering coupons by code
+      const response = await this.handleRequest(`/coupons?code=${encodeURIComponent(trimmed)}`, {
+        method: 'get',
+      });
+
+      if (Array.isArray(response) && response.length > 0) {
+        return response[0];
+      }
+      return null;
+    } catch (error: any) {
+      console.error('Error fetching coupon by code:', error.response?.data || error.message);
+      return null;
     }
   }
 
