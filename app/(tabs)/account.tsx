@@ -130,12 +130,12 @@ export default function AccountScreen() {
   ];
 
   const supportItems = [
-    {
-      id: 'referral',
-      title: 'Referral Program',
-      icon: () => <Ionicons name="people" size={20} color={colors.primary} />,
-      onPress: () => setShowReferralModal(true),
-    },
+    // {
+    //   id: 'referral',
+    //   title: 'Referral Program',
+    //   icon: () => <Ionicons name="people" size={20} color={colors.primary} />,
+    //   onPress: () => setShowReferralModal(true),
+    // },
     {
       id: 'help',
       title: 'Help & Support',
@@ -284,16 +284,16 @@ export default function AccountScreen() {
               </View>
               
               {/* Push Token Display */}
-              {/* <View style={[styles.pushTokenContainer, { backgroundColor: colors.surface, marginTop: 16 }]}>
+               {/* <View style={[styles.pushTokenContainer, { backgroundColor: colors.surface, marginTop: 16 }]}>
                 <View style={styles.pushTokenHeader}>
                   <Ionicons name="scan" size={20} color={colors.primary} />
                   <Text style={[styles.pushTokenTitle, { color: colors.text }]}>Expo Push Token</Text>
                 </View>
                 <Text style={[styles.pushTokenDescription, { color: colors.textSecondary }]}>
                   Use this token to send targeted push notifications to this device from your admin panel.
-                </Text>
+                </Text> */}
                 
-                {pushToken ? (
+                {/* {pushToken ? (
                   <View style={[styles.tokenDisplay, { backgroundColor: colors.background, borderColor: colors.border }]}>
                     <Text style={[styles.tokenText, { color: colors.text }]} numberOfLines={3}>
                       {pushToken}
@@ -323,8 +323,8 @@ export default function AccountScreen() {
                     )}
                   </TouchableOpacity>
                 )}
-              </View> */}
-            {/* </View> */} 
+              {/* </View>  */}
+            {/* </View>  */}
 
             {isAuthenticated && userDetails ? (
               <>
@@ -435,7 +435,7 @@ export default function AccountScreen() {
           onPress={() => setShowReferralModal(true)}
           activeOpacity={0.7}
         >
-          <Text style={[styles.versionText, { color: colors.textSecondary }]}>Femtech Mobile App v3.0.0</Text>
+          <Text style={[styles.versionText, { color: colors.textSecondary }]}>Femtech Mobile App v3.1.0</Text>
         </TouchableOpacity>
       </ScrollView>
 

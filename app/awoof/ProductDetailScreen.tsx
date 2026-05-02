@@ -92,7 +92,10 @@ export default function ProductDetailScreen({ route, navigation }: any) {
 
       <Animated.ScrollView
         style={styles.scrollView}
-        contentContainerStyle={{ paddingBottom: insets.bottom + 180 }}
+        contentContainerStyle={{ 
+          paddingTop: insets.top + 10,
+          paddingBottom: insets.bottom + 180 
+        }}
         showsVerticalScrollIndicator={false}
         onScroll={Animated.event(
           [{ nativeEvent: { contentOffset: { y: scrollY } } }],
@@ -242,7 +245,7 @@ const styles = StyleSheet.create({
   },
   header: {
     position: 'absolute',
-    top: 0,
+    top: 10,
     left: 0,
     right: 0,
     zIndex: 10,
@@ -261,6 +264,7 @@ const styles = StyleSheet.create({
     zIndex: 20,
   },
   imageGallery: {
+    marginTop: 50,
     width,
     height: width * 0.9,
     position: 'relative',

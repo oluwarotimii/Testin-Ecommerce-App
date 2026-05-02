@@ -7,6 +7,10 @@ import { DASHBOARD_API_BASE_URL } from './config';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const CART_REMINDER_ID_KEY = 'cartReminderNotificationId';
+// Cart abandonment reminders are currently disabled for preview builds.
+// Re-enable by setting this to true (and shipping a new build).
+const ENABLE_CART_ABANDONMENT_REMINDERS = false;
+
 // Cart abandonment reminder cadence (48 hours)
 const CART_REMINDER_DELAY_SECONDS = 48 * 60 * 60;
 
@@ -172,6 +176,11 @@ const sendAwoofLocalNotification = async (title: string, body: string, data: any
 
 const clearCartAbandonmentReminder = async () => {
   try {
+    if (!ENABLE_CART_ABANDONMENT_REMINDERS) {
+      // Best-effort: still clear any previously scheduled reminder id.
+      await AsyncStorage.removeItem(CART_REMINDER_ID_KEY);
+      return;
+    }
     const reminderId = await AsyncStorage.getItem(CART_REMINDER_ID_KEY);
     if (reminderId) {
       await Notifications.cancelScheduledNotificationAsync(reminderId);
@@ -188,6 +197,9 @@ const scheduleCartAbandonmentReminder = async (options?: {
   delaySeconds?: number;
 }) => {
   try {
+    if (!ENABLE_CART_ABANDONMENT_REMINDERS) {
+      return null;
+    }
     await clearCartAbandonmentReminder();
 
     const cartCount = options?.cartCount ?? 1;
