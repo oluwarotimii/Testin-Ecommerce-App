@@ -1,4 +1,3 @@
-import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
 import * as Linking from 'expo-linking';
 import { Platform } from 'react-native';
@@ -14,8 +13,23 @@ const ENABLE_CART_ABANDONMENT_REMINDERS = false;
 // Cart abandonment reminder cadence (48 hours)
 const CART_REMINDER_DELAY_SECONDS = 48 * 60 * 60;
 
+const isExpoGo = Constants.appOwnership === 'expo';
+
+const getNotifications = async () => {
+  if (isExpoGo) return null;
+  try {
+    const mod = await import('expo-notifications');
+    return mod;
+  } catch (error) {
+    console.warn('expo-notifications unavailable in this environment:', error);
+    return null;
+  }
+};
+
 // Function to create notification channel for Android 13+
 const createNotificationChannel = async () => {
+  const Notifications = await getNotifications();
+  if (!Notifications) return;
   if (Platform.OS === 'android') {
     await Notifications.setNotificationChannelAsync('default', {
       name: 'default',
@@ -27,19 +41,33 @@ const createNotificationChannel = async () => {
 };
 
 
-// Set notification handler
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldPlaySound: true,
-    sound: 'default', // Custom notification sound (to use custom sounds, see documentation)
-    shouldSetBadge: true,
-    shouldShowBanner: true,
-    shouldShowList: true,
-    priority: Notifications.AndroidNotificationPriority.HIGH, // Ensure high priority for vibration
-  }),
-});
+const ensureNotificationHandler = (() => {
+  let didSet = false;
+  return async () => {
+    if (didSet) return;
+    const Notifications = await getNotifications();
+    if (!Notifications) return;
+    Notifications.setNotificationHandler({
+      handleNotification: async () => ({
+        shouldPlaySound: true,
+        sound: 'default',
+        shouldSetBadge: true,
+        shouldShowBanner: true,
+        shouldShowList: true,
+        priority: Notifications.AndroidNotificationPriority.HIGH,
+      }),
+    });
+    didSet = true;
+  };
+})();
 
 const registerForPushNotificationsAsync = async () => {
+  await ensureNotificationHandler();
+  const Notifications = await getNotifications();
+  if (!Notifications) {
+    console.log('Push notifications disabled (Expo Go or missing expo-notifications).');
+    return null;
+  }
   if (!Device.isDevice) {
     console.log('Must use a physical device for push notifications');
     return null;
@@ -133,7 +161,10 @@ const processPushToken = async (fullPushToken: string) => {
   }
 }
 
-const setupNotificationListeners = (navigationCallback?: (response: any) => void) => {
+const setupNotificationListeners = async (navigationCallback?: (response: any) => void) => {
+  await ensureNotificationHandler();
+  const Notifications = await getNotifications();
+  if (!Notifications) return () => {};
   // Listener for when notification is received
   const notificationListener = Notifications.addNotificationReceivedListener(notification => {
     console.log('Received notification:', notification);
@@ -155,6 +186,9 @@ const setupNotificationListeners = (navigationCallback?: (response: any) => void
 }
 
 const sendLocalNotification = async (title: string, body: string, data: any = {}) => {
+  await ensureNotificationHandler();
+  const Notifications = await getNotifications();
+  if (!Notifications) return;
   await Notifications.scheduleNotificationAsync({
     content: {
       title,
@@ -176,6 +210,7 @@ const sendAwoofLocalNotification = async (title: string, body: string, data: any
 
 const clearCartAbandonmentReminder = async () => {
   try {
+    const Notifications = await getNotifications();
     if (!ENABLE_CART_ABANDONMENT_REMINDERS) {
       // Best-effort: still clear any previously scheduled reminder id.
       await AsyncStorage.removeItem(CART_REMINDER_ID_KEY);
@@ -183,7 +218,7 @@ const clearCartAbandonmentReminder = async () => {
     }
     const reminderId = await AsyncStorage.getItem(CART_REMINDER_ID_KEY);
     if (reminderId) {
-      await Notifications.cancelScheduledNotificationAsync(reminderId);
+      await Notifications?.cancelScheduledNotificationAsync(reminderId);
       await AsyncStorage.removeItem(CART_REMINDER_ID_KEY);
     }
   } catch (error) {
@@ -197,6 +232,8 @@ const scheduleCartAbandonmentReminder = async (options?: {
   delaySeconds?: number;
 }) => {
   try {
+    const Notifications = await getNotifications();
+    if (!Notifications) return null;
     if (!ENABLE_CART_ABANDONMENT_REMINDERS) {
       return null;
     }

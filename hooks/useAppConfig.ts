@@ -10,7 +10,9 @@ export const useAppConfig = () => {
     expoPublicDashboardUrl,
     expoPublicAppUrl,
     expoPublicWordpressConsumerKey,
-    expoPublicWordpressConsumerSecret
+    expoPublicWordpressConsumerSecret,
+    expoPublicTxnFeePercent,
+    expoPublicTxnFeeFlat
   } = Constants.expoConfig?.extra || {};
 
   // Memoize the configuration to prevent unnecessary re-renders
@@ -31,6 +33,10 @@ export const useAppConfig = () => {
     // WordPress credentials
     consumerKey: expoPublicWordpressConsumerKey || process.env.EXPO_PUBLIC_WORDPRESS_CONSUMER_KEY || '',
     consumerSecret: expoPublicWordpressConsumerSecret || process.env.EXPO_PUBLIC_WORDPRESS_CONSUMER_SECRET || '',
+
+    // Checkout fees (transaction/processing)
+    txnFeePercent: Number.parseFloat(String(expoPublicTxnFeePercent ?? process.env.EXPO_PUBLIC_TXN_FEE_PERCENT ?? '1.5')),
+    txnFeeFlat: Number.parseFloat(String(expoPublicTxnFeeFlat ?? process.env.EXPO_PUBLIC_TXN_FEE_FLAT ?? '100')),
     
     // Fallback URLs
     fallbackWordpressUrl: 'https://invalid-url-for-testing.com/',
@@ -41,7 +47,9 @@ export const useAppConfig = () => {
     expoPublicDashboardUrl,
     expoPublicAppUrl,
     expoPublicWordpressConsumerKey,
-    expoPublicWordpressConsumerSecret
+    expoPublicWordpressConsumerSecret,
+    expoPublicTxnFeePercent,
+    expoPublicTxnFeeFlat
   ]);
 
   return config;
@@ -79,6 +87,18 @@ const appConfig = {
   get consumerSecret() {
     const { expoPublicWordpressConsumerSecret } = Constants.expoConfig?.extra || {};
     return expoPublicWordpressConsumerSecret || process.env.EXPO_PUBLIC_WORDPRESS_CONSUMER_SECRET || '';
+  },
+
+  get txnFeePercent() {
+    const { expoPublicTxnFeePercent } = Constants.expoConfig?.extra || {};
+    const parsed = Number.parseFloat(String(expoPublicTxnFeePercent ?? process.env.EXPO_PUBLIC_TXN_FEE_PERCENT ?? '1.5'));
+    return Number.isFinite(parsed) ? parsed : 1.5;
+  },
+
+  get txnFeeFlat() {
+    const { expoPublicTxnFeeFlat } = Constants.expoConfig?.extra || {};
+    const parsed = Number.parseFloat(String(expoPublicTxnFeeFlat ?? process.env.EXPO_PUBLIC_TXN_FEE_FLAT ?? '100'));
+    return Number.isFinite(parsed) ? parsed : 100;
   }
 };
 

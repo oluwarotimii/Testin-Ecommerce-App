@@ -17,7 +17,7 @@ import { useRouter } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
 import { clearCartAbandonmentReminder, sendLocalNotification } from '@/services/notificationService';
 import appConfig from '@/hooks/useAppConfig';
-import { CartItem, awoofCart } from './AwoofUtils';
+import { CartItem, awoofCart, calculateTxnFee } from '@/utils/awoof/AwoofUtils';
 import SafeImage from '@/components/SafeImage';
 import Dropdown from '@/components/Dropdown';
 import axios from 'axios';
@@ -225,8 +225,11 @@ export default function AwoofCheckoutScreen({ route, navigation }: any) {
     };
   };
 
-  const getShippingPayload = () => {
-    const deliveryFee = getSelectedShippingCost();
+  const getShippingPayload = (deliveryFeeOverride?: number) => {
+    const deliveryFee =
+      typeof deliveryFeeOverride === 'number' && Number.isFinite(deliveryFeeOverride)
+        ? deliveryFeeOverride
+        : getSelectedShippingCost();
 
     if (!selectedShippingMethod) {
       return {
@@ -301,6 +304,13 @@ export default function AwoofCheckoutScreen({ route, navigation }: any) {
         qty: item.quantity,
       }));
 
+      const subtotalNow = cartItems.reduce((sum, item) => sum + item.salePrice * item.quantity, 0);
+      const deliveryFeeNow = getSelectedShippingCost();
+      const discountNow = appliedCoupon ? calculateAwoofCouponDiscount(subtotalNow, appliedCoupon) : 0;
+
+      const taxableBase = Math.max(0, subtotalNow - discountNow) + deliveryFeeNow;
+      const txnFeeNow = calculateTxnFee(taxableBase);
+
       console.log('🚀 Initiating awoof payment:', {
         endpoint: PAYSTACK_INIT_ENDPOINT,
         itemCount: itemsPayload.length,
@@ -314,8 +324,11 @@ export default function AwoofCheckoutScreen({ route, navigation }: any) {
           callback_url: callbackUrl,
           email,
           coupon_code: appliedCoupon?.code || undefined,
+          fee_lines: [
+            ...(txnFeeNow > 0 ? [{ name: 'Transaction fee', total: txnFeeNow.toFixed(2) }] : []),
+          ],
           ...getAddressPayload(address),
-          ...getShippingPayload(),
+          ...getShippingPayload(deliveryFeeNow),
         },
         {
           headers: {
@@ -459,8 +472,13 @@ export default function AwoofCheckoutScreen({ route, navigation }: any) {
   const subtotal = cartItems.reduce((sum, item) => sum + item.salePrice * item.quantity, 0);
   const deliveryFee = getSelectedShippingCost();
   const discount = appliedCoupon ? calculateAwoofCouponDiscount(subtotal, appliedCoupon) : 0;
-  const total = Math.max(0, subtotal - discount) + deliveryFee;
 
+
+  const txnFee = useMemo(() => {
+    const base = Math.max(0, subtotal - discount) + deliveryFee;
+    return calculateTxnFee(base);
+  }, [subtotal, discount, deliveryFee]);
+  const total = Math.max(0, subtotal - discount) + deliveryFee + txnFee;
   if (loading || loadingAuth) {
     return (
       <View style={[styles.container, styles.center, { backgroundColor: colors.background }]}>
@@ -649,6 +667,13 @@ export default function AwoofCheckoutScreen({ route, navigation }: any) {
               <Text style={[styles.priceValue, { color: colors.text }]}>₦{deliveryFee.toLocaleString()}</Text>
             </View>
 
+            {txnFee > 0 && (
+              <View style={styles.priceRow}>
+                <Text style={[styles.priceLabel, { color: colors.textSecondary }]}>Transaction Fee</Text>
+                <Text style={[styles.priceValue, { color: colors.text }]}>₦{txnFee.toLocaleString()}</Text>
+              </View>
+            )}
+
             <View style={[styles.priceRow, { marginTop: 8 }]}>
               <Text style={[styles.totalLabel, { color: colors.text }]}>Total</Text>
               <Text style={[styles.totalValue, { color: isDarkMode ? colors.white : colors.primary }]}>₦{total.toLocaleString()}</Text>
@@ -727,43 +752,45 @@ export default function AwoofCheckoutScreen({ route, navigation }: any) {
             <View style={styles.placeholder} />
           </View>
 
-          {checkoutUrl ? (
-            <WebView
-              ref={webViewRef}
-              source={{ uri: checkoutUrl }}
-              style={[styles.webView, { backgroundColor: colors.background }]}
-              onNavigationStateChange={handleWebViewNavigation}
-              onShouldStartLoadWithRequest={handleShouldStartLoadWithRequest}
-              onLoadStart={() => setIsWebLoading(true)}
-              onLoadEnd={() => setIsWebLoading(false)}
-              onError={() => {
-                setIsWebLoading(false);
-                Alert.alert(
-                  'Checkout Error',
-                  'Unable to open the payment page. Please try again.',
-                  [{ text: 'OK', onPress: handlePaymentCancel }]
-                );
-              }}
-              javaScriptEnabled
-              domStorageEnabled
-              originWhitelist={['*']}
-              allowsInlineMediaPlayback
-              mediaPlaybackRequiresUserAction={false}
-            />
-          ) : isWebLoading ? (
-            <View style={[styles.webFallback, { backgroundColor: colors.background }]}>
-              <ActivityIndicator size="large" color={colors.primary} />
-              <Text style={[styles.modalText, { color: colors.textSecondary }]}>
-                Loading secure checkout...
-              </Text>
-            </View>
-          ) : (
-            <View style={[styles.webFallback, { backgroundColor: colors.background }]}>
-              <Text style={[styles.modalText, { color: colors.textSecondary }]}>
-                Preparing secure checkout...
-              </Text>
-            </View>
-          )}
+          <>
+            {checkoutUrl ? (
+              <WebView
+                ref={webViewRef}
+                source={{ uri: checkoutUrl }}
+                style={[styles.webView, { backgroundColor: colors.background }]}
+                onNavigationStateChange={handleWebViewNavigation}
+                onShouldStartLoadWithRequest={handleShouldStartLoadWithRequest}
+                onLoadStart={() => setIsWebLoading(true)}
+                onLoadEnd={() => setIsWebLoading(false)}
+                onError={() => {
+                  setIsWebLoading(false);
+                  Alert.alert(
+                    'Checkout Error',
+                    'Unable to open the payment page. Please try again.',
+                    [{ text: 'OK', onPress: handlePaymentCancel }]
+                  );
+                }}
+                javaScriptEnabled
+                domStorageEnabled
+                originWhitelist={['*']}
+                allowsInlineMediaPlayback
+                mediaPlaybackRequiresUserAction={false}
+              />
+            ) : isWebLoading ? (
+              <View style={[styles.webFallback, { backgroundColor: colors.background }]}>
+                <ActivityIndicator size="large" color={colors.primary} />
+                <Text style={[styles.modalText, { color: colors.textSecondary }]}>
+                  Loading secure checkout...
+                </Text>
+              </View>
+            ) : (
+              <View style={[styles.webFallback, { backgroundColor: colors.background }]}>
+                <Text style={[styles.modalText, { color: colors.textSecondary }]}>
+                  Preparing secure checkout...
+                </Text>
+              </View>
+            )}
+          </>
         </View>
       </Modal>
     </View>

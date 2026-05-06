@@ -91,7 +91,9 @@
       "expoPublicApiServiceType": "wordpress",
       "expoPublicWordpressUrl": "https://femtechit.com/",
       "expoPublicDashboardUrl": "https://femapp.vercel.app",
-      "expoPublicPrivacyPolicyUrl": "https://femtechit.com/privacy-policy"
+      "expoPublicPrivacyPolicyUrl": "https://femtechit.com/privacy-policy",
+      "expoPublicTxnFeePercent": "1.5",
+      "expoPublicTxnFeeFlat": "100"
     }
   }
 }

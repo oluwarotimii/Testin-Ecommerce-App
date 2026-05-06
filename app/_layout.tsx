@@ -200,18 +200,21 @@ export default function RootLayout() {
     checkInitialNotification();
 
     // Setup notification listeners with navigation callback (for when app is already running)
-    const cleanup = notificationService.setupNotificationListeners((response) => {
+    let cleanupNotifications = () => {};
+    void notificationService.setupNotificationListeners((response) => {
       console.log('🔔 Notification tapped (app already running)');
       console.log('📊 Notification data:', JSON.stringify(response?.notification?.request?.content?.data, null, 2));
       const notificationData = response?.notification?.request?.content?.data || {};
       handleNotificationNavigation(notificationData);
+    }).then((cleanup) => {
+      cleanupNotifications = cleanup;
     });
 
     return () => {
       if (updateSubscriptionRef.current) {
         updateSubscriptionRef.current.remove();
       }
-      cleanup();
+      cleanupNotifications();
       subscription.remove();
     };
   }, [handleNotificationNavigation, handleDeepLink]);

@@ -4,26 +4,24 @@
 // Helper functions and utilities for managing Awoof Corner functionality
 
 import { scheduleCartAbandonmentReminder, clearCartAbandonmentReminder } from '@/services/notificationService';
+import appConfig from '@/hooks/useAppConfig';
+import { calculateTxnFee } from '@/utils/feeUtils';
+export { calculateTxnFee };
 
-// ============================================
-// CART MANAGEMENT
-// ============================================
-// In production, replace this with Redux/Zustand/Context API
-
-export interface AwoofProduct {
+export type AwoofProduct = {
   id: string;
   name: string;
   originalPrice: number;
   salePrice: number;
   image: string;
   discount: number;
-  tag: string;
+  tag?: string;
   stock: number;
-}
+};
 
-export interface CartItem extends AwoofProduct {
+export type CartItem = AwoofProduct & {
   quantity: number;
-}
+};
 
 // Simple cart state manager (replace with your state management solution)
 class AwoofCartManager {

@@ -6,11 +6,11 @@
 import * as React from 'react';
 import { View } from 'react-native';
 import { createStackNavigator } from '@react-navigation/stack';
-import AwoofFeedScreen from './AwoofFeedScreen';
-import ProductDetailScreen from './ProductDetailScreen';
-import AwoofMiniCartModal from './AwoofMiniCartModal';
-import AwoofCheckoutScreen from './AwoofCheckoutScreen'; // Corrected import name
-import OrderSuccessScreen from './OrderSuccessScreen';
+import AwoofFeedScreen from '@/app/awoof/AwoofFeedScreen';
+import ProductDetailScreen from '@/app/awoof/ProductDetailScreen';
+import AwoofMiniCartModal from '@/app/awoof/AwoofMiniCartModal';
+import AwoofCheckoutScreen from '@/app/awoof/AwoofCheckoutScreen';
+import OrderSuccessScreen from '@/app/awoof/OrderSuccessScreen';
 
 // ============================================
 // TYPE DEFINITIONS

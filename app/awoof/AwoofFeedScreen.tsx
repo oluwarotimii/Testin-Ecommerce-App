@@ -13,7 +13,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useThemeColors } from '@/hooks/useColorScheme';
-import { awoofCart, AwoofProduct, AwoofEvents, trackAwoofEvent, mapToAwoofProduct } from './AwoofUtils';
+import { awoofCart, AwoofProduct, AwoofEvents, trackAwoofEvent, mapToAwoofProduct } from '@/utils/awoof/AwoofUtils';
 import SafeImage from '@/components/SafeImage';
 import { useAuth } from '@/context/AuthContext';
 import { transformProducts } from '@/utils/woocommerceTransformers';

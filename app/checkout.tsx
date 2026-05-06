@@ -12,6 +12,7 @@ import SafeImage from '@/components/SafeImage';
 import Dropdown from '@/components/Dropdown';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { clearCartAbandonmentReminder, sendLocalNotification } from '@/services/notificationService';
+import { calculateTxnFee } from '@/utils/feeUtils';
 
 export default function CheckoutScreen() {
   const router = useRouter();
@@ -38,6 +39,8 @@ export default function CheckoutScreen() {
   const [selectedAddress, setSelectedAddress] = useState(0);
   const [orderSummary, setOrderSummary] = useState({
     subtotal: 0,
+    shipping: 0,
+    transactionFee: 0,
     total: 0
   });
 
@@ -154,14 +157,22 @@ export default function CheckoutScreen() {
       return sum + (itemPrice * itemQuantity);
     }, 0);
 
-    // No shipping, no tax, no additional charges - total is same as subtotal
-    const total = subtotal;
+    // Get shipping cost
+    const shippingCost = selectedShippingMethod ? (parseFloat(selectedShippingMethod.settings?.cost?.value || selectedShippingMethod.settings?.cost || '0') || 0) : 0;
+
+    // Transaction Fee Calculation using centralized utility
+    // It should be calculated on (subtotal + shipping)
+    const transactionFee = calculateTxnFee(subtotal + shippingCost);
+
+    const total = subtotal + shippingCost + transactionFee;
 
     setOrderSummary({
       subtotal,
+      shipping: shippingCost,
+      transactionFee,
       total
     });
-  }, [cartItems]);
+  }, [cartItems, selectedShippingMethod]);
 
   const handlePlaceOrder = async () => {
     if (addresses.length === 0) {
@@ -232,6 +243,13 @@ export default function CheckoutScreen() {
           product_id: item.id || item.productId,
           quantity: item.quantity || 1
         })),
+        fee_lines: orderSummary.transactionFee > 0 ? [
+          {
+            name: 'Transaction Fee',
+            tax_status: 'none',
+            total: orderSummary.transactionFee.toFixed(2)
+          }
+        ] : [],
         shipping_lines: selectedShippingMethod ? [{
           method_id: selectedShippingMethod.method_id || 'flat_rate',
           method_title: selectedShippingMethod.title || 'Standard Shipping',
@@ -576,6 +594,18 @@ export default function CheckoutScreen() {
               <Text style={[styles.summaryLabel, { color: colors.text }]}>Subtotal</Text>
               <Text style={[styles.summaryValue, { color: colors.text }]}>{formatPrice(orderSummary.subtotal)}</Text>
             </View>
+
+            <View style={styles.summaryRow}>
+              <Text style={[styles.summaryLabel, { color: colors.text }]}>Shipping</Text>
+              <Text style={[styles.summaryValue, { color: colors.text }]}>{formatPrice(orderSummary.shipping)}</Text>
+            </View>
+
+            {orderSummary.transactionFee > 0 && (
+              <View style={styles.summaryRow}>
+                <Text style={[styles.summaryLabel, { color: colors.text }]}>Transaction Fee</Text>
+                <Text style={[styles.summaryValue, { color: colors.text }]}>{formatPrice(orderSummary.transactionFee)}</Text>
+              </View>
+            )}
 
             <View style={[styles.totalRow, { borderTopColor: colors.border }]}>
               <Text style={[styles.totalLabel, { color: colors.text }]}>Total</Text>

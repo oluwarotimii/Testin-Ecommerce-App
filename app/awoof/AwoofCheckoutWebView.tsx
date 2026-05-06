@@ -13,7 +13,7 @@ import { useThemeColors } from '@/hooks/useColorScheme';
 import { WebView } from 'react-native-webview';
 import { useRouter } from 'expo-router';
 import appConfig from '@/hooks/useAppConfig';
-import { awoofCart, buildWooCommerceCheckoutUrl } from './AwoofUtils';
+import { awoofCart, buildWooCommerceCheckoutUrl } from '@/utils/awoof/AwoofUtils';
 import { useAuth } from '@/context/AuthContext';
 import { clearCartAbandonmentReminder, sendLocalNotification } from '@/services/notificationService';
 

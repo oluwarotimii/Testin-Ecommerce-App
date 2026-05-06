@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useMemo } from 'react';
 import {
   View,
   Text,
@@ -12,7 +12,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useThemeColors } from '@/hooks/useColorScheme';
-import { awoofCart, AwoofProduct, AwoofEvents, trackAwoofEvent } from './AwoofUtils';
+import { awoofCart, AwoofProduct, AwoofEvents, trackAwoofEvent, calculateTxnFee } from '@/utils/awoof/AwoofUtils';
 import SafeImage from '@/components/SafeImage';
 import AwoofToast, { AwoofToastRef } from '@/components/AwoofToast';
 
@@ -64,8 +64,9 @@ export default function ProductDetailScreen({ route, navigation }: any) {
     toastRef.current?.show(`${product.name} added to cart!`);
   };
 
+  const subtotalPrice = product.salePrice * quantity;
+  const totalPrice = subtotalPrice;
   const savings = (product.originalPrice - product.salePrice) * quantity;
-  const totalPrice = product.salePrice * quantity;
 
   const headerOpacity = scrollY.interpolate({
     inputRange: [0, 200],

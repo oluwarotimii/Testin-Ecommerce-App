@@ -204,6 +204,7 @@ function awoof_initiate_paystack_payment(WP_REST_Request $request) {
     $billing_data = isset($params['billing']) && is_array($params['billing']) ? $params['billing'] : array();
     $shipping_data = isset($params['shipping']) && is_array($params['shipping']) ? $params['shipping'] : array();
     $shipping_lines = isset($params['shipping_lines']) && is_array($params['shipping_lines']) ? $params['shipping_lines'] : array();
+    $fee_lines = isset($params['fee_lines']) && is_array($params['fee_lines']) ? $params['fee_lines'] : array();
     $meta_data = isset($params['meta_data']) && is_array($params['meta_data']) ? $params['meta_data'] : array();
     $first_shipping_line = !empty($shipping_lines) && is_array($shipping_lines[0]) ? $shipping_lines[0] : array();
 
@@ -259,6 +260,27 @@ function awoof_initiate_paystack_payment(WP_REST_Request $request) {
             $shipping_item->set_method_title(sanitize_text_field($shipping_line['method_title'] ?? 'Standard Shipping'));
             $shipping_item->set_total(wc_format_decimal($shipping_line['total'] ?? 0));
             $order->add_item($shipping_item);
+        }
+
+        // Optional fee lines (e.g., transaction/processing fee) from the mobile app.
+        // These are added as WooCommerce fee items so they contribute to $order->get_total().
+        foreach ($fee_lines as $fee_line) {
+            if (!is_array($fee_line)) {
+                continue;
+            }
+
+            $fee_name = sanitize_text_field($fee_line['name'] ?? '');
+            $fee_total_raw = $fee_line['total'] ?? 0;
+            $fee_total = (float) wc_format_decimal($fee_total_raw);
+
+            if (empty($fee_name) || $fee_total <= 0) {
+                continue;
+            }
+
+            $fee_item = new WC_Order_Item_Fee();
+            $fee_item->set_name($fee_name);
+            $fee_item->set_total($fee_total);
+            $order->add_item($fee_item);
         }
 
         if (!empty($meta_data)) {

@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import { NavigationIndependentTree } from '@react-navigation/native';
-import { AwoofCornerNavigator } from '../awoof/AwoofCornerNavigator';
+import { AwoofCornerNavigator } from '@/components/awoof/AwoofCornerNavigator';
 
 export default function AwoofScreen() {
   return (
