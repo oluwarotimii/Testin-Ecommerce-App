@@ -17,7 +17,7 @@ import { useRouter } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
 import { clearCartAbandonmentReminder, sendLocalNotification } from '@/services/notificationService';
 import appConfig from '@/hooks/useAppConfig';
-import { CartItem, awoofCart, calculateTxnFee } from '@/utils/awoof/AwoofUtils';
+import { CartItem, awoofCart } from '@/utils/awoof/AwoofUtils';
 import SafeImage from '@/components/SafeImage';
 import Dropdown from '@/components/Dropdown';
 import axios from 'axios';
@@ -308,9 +308,6 @@ export default function AwoofCheckoutScreen({ route, navigation }: any) {
       const deliveryFeeNow = getSelectedShippingCost();
       const discountNow = appliedCoupon ? calculateAwoofCouponDiscount(subtotalNow, appliedCoupon) : 0;
 
-      const taxableBase = Math.max(0, subtotalNow - discountNow) + deliveryFeeNow;
-      const txnFeeNow = calculateTxnFee(taxableBase);
-
       console.log('🚀 Initiating awoof payment:', {
         endpoint: PAYSTACK_INIT_ENDPOINT,
         itemCount: itemsPayload.length,
@@ -324,9 +321,6 @@ export default function AwoofCheckoutScreen({ route, navigation }: any) {
           callback_url: callbackUrl,
           email,
           coupon_code: appliedCoupon?.code || undefined,
-          fee_lines: [
-            ...(txnFeeNow > 0 ? [{ name: 'Transaction fee', total: txnFeeNow.toFixed(2) }] : []),
-          ],
           ...getAddressPayload(address),
           ...getShippingPayload(deliveryFeeNow),
         },
@@ -473,12 +467,7 @@ export default function AwoofCheckoutScreen({ route, navigation }: any) {
   const deliveryFee = getSelectedShippingCost();
   const discount = appliedCoupon ? calculateAwoofCouponDiscount(subtotal, appliedCoupon) : 0;
 
-
-  const txnFee = useMemo(() => {
-    const base = Math.max(0, subtotal - discount) + deliveryFee;
-    return calculateTxnFee(base);
-  }, [subtotal, discount, deliveryFee]);
-  const total = Math.max(0, subtotal - discount) + deliveryFee + txnFee;
+  const total = Math.max(0, subtotal - discount) + deliveryFee;
   if (loading || loadingAuth) {
     return (
       <View style={[styles.container, styles.center, { backgroundColor: colors.background }]}>
@@ -666,13 +655,6 @@ export default function AwoofCheckoutScreen({ route, navigation }: any) {
               <Text style={[styles.priceLabel, { color: colors.textSecondary }]}>Delivery Fee</Text>
               <Text style={[styles.priceValue, { color: colors.text }]}>₦{deliveryFee.toLocaleString()}</Text>
             </View>
-
-            {txnFee > 0 && (
-              <View style={styles.priceRow}>
-                <Text style={[styles.priceLabel, { color: colors.textSecondary }]}>Transaction Fee</Text>
-                <Text style={[styles.priceValue, { color: colors.text }]}>₦{txnFee.toLocaleString()}</Text>
-              </View>
-            )}
 
             <View style={[styles.priceRow, { marginTop: 8 }]}>
               <Text style={[styles.totalLabel, { color: colors.text }]}>Total</Text>
@@ -985,18 +967,19 @@ const styles = StyleSheet.create({
     lineHeight: 16,
   },
   bottomBar: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    padding: 20,
+    // position: 'absolute',
+    // left: 0,
+    // top: 10,
+    // right: 20,
+    padding: 10,
     borderTopWidth: 1,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    elevation: 12,
+    // shadowColor: '#000',
+    // shadowOffset: { width: 0, height: -4 },
+    // shadowOpacity: 0.08,
+    // shadowRadius: 12,
+    // elevation: 12,
   },
   payButton: {
     height: 58,

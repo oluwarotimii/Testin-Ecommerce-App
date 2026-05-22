@@ -92,8 +92,8 @@
       "expoPublicWordpressUrl": "https://femtechit.com/",
       "expoPublicDashboardUrl": "https://femapp.vercel.app",
       "expoPublicPrivacyPolicyUrl": "https://femtechit.com/privacy-policy",
-      "expoPublicTxnFeePercent": "1.5",
-      "expoPublicTxnFeeFlat": "100"
+      "expoPublicTxnFeePercent": "0",
+      "expoPublicTxnFeeFlat": "0"
     }
   }
 }

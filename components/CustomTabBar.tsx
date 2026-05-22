@@ -46,9 +46,22 @@ const CustomTabBar: React.FC<CustomTabBarProps> = ({ state, descriptors, navigat
     return () => animation.stop();
   }, [pulseAnim]);
 
-  // Check if we're on the cart screen
-  const currentRoute = state.routes[state.index]?.name;
-  const hideTabBar = currentRoute === 'cart';
+  // Check if we should hide the tab bar (e.g., on cart or checkout screens)
+  const currentTabRoute = state.routes[state.index];
+  const currentRouteName = currentTabRoute?.name;
+  
+  // Detect nested route name if it's a nested navigator (like Awoof Corner)
+  let nestedRouteName = '';
+  if (currentTabRoute?.state?.routes) {
+    const nestedState = currentTabRoute.state;
+    nestedRouteName = nestedState.routes[nestedState.index]?.name;
+  }
+
+  const hideTabBar = 
+    currentRouteName === 'cart' || 
+    nestedRouteName === 'AwoofCheckout' ||
+    nestedRouteName === 'AwoofCheckoutWebView' ||
+    nestedRouteName === 'OrderSuccess';
 
   // If we need to hide the tab bar, return null
   if (hideTabBar) {

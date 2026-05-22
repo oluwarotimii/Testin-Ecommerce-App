@@ -10,9 +10,8 @@ import SkeletonLoader from '@/components/SkeletonLoader';
 import BackButton from '@/components/BackButton';
 import SafeImage from '@/components/SafeImage';
 import Dropdown from '@/components/Dropdown';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { clearCartAbandonmentReminder, sendLocalNotification } from '@/services/notificationService';
-import { calculateTxnFee } from '@/utils/feeUtils';
 
 export default function CheckoutScreen() {
   const router = useRouter();
@@ -20,6 +19,7 @@ export default function CheckoutScreen() {
   const isDarkMode = String(colors.background).toLowerCase() === '#000000';
   const { apiService, isAuthenticated, loadingAuth, user } = useAuth();
   const { setCartCount } = useCart();
+  const insets = useSafeAreaInsets();
   const [addresses, setAddresses] = useState<any[]>([]);
   const [cartItems, setCartItems] = useState<any[]>([]);
 
@@ -160,16 +160,12 @@ export default function CheckoutScreen() {
     // Get shipping cost
     const shippingCost = selectedShippingMethod ? (parseFloat(selectedShippingMethod.settings?.cost?.value || selectedShippingMethod.settings?.cost || '0') || 0) : 0;
 
-    // Transaction Fee Calculation using centralized utility
-    // It should be calculated on (subtotal + shipping)
-    const transactionFee = calculateTxnFee(subtotal + shippingCost);
-
-    const total = subtotal + shippingCost + transactionFee;
+    const total = subtotal + shippingCost;
 
     setOrderSummary({
       subtotal,
       shipping: shippingCost,
-      transactionFee,
+      transactionFee: 0,
       total
     });
   }, [cartItems, selectedShippingMethod]);
@@ -243,13 +239,6 @@ export default function CheckoutScreen() {
           product_id: item.id || item.productId,
           quantity: item.quantity || 1
         })),
-        fee_lines: orderSummary.transactionFee > 0 ? [
-          {
-            name: 'Transaction Fee',
-            tax_status: 'none',
-            total: orderSummary.transactionFee.toFixed(2)
-          }
-        ] : [],
         shipping_lines: selectedShippingMethod ? [{
           method_id: selectedShippingMethod.method_id || 'flat_rate',
           method_title: selectedShippingMethod.title || 'Standard Shipping',
@@ -600,13 +589,6 @@ export default function CheckoutScreen() {
               <Text style={[styles.summaryValue, { color: colors.text }]}>{formatPrice(orderSummary.shipping)}</Text>
             </View>
 
-            {orderSummary.transactionFee > 0 && (
-              <View style={styles.summaryRow}>
-                <Text style={[styles.summaryLabel, { color: colors.text }]}>Transaction Fee</Text>
-                <Text style={[styles.summaryValue, { color: colors.text }]}>{formatPrice(orderSummary.transactionFee)}</Text>
-              </View>
-            )}
-
             <View style={[styles.totalRow, { borderTopColor: colors.border }]}>
               <Text style={[styles.totalLabel, { color: colors.text }]}>Total</Text>
               <Text style={[styles.totalValue, { color: isDarkMode ? colors.white : colors.primary }]}>{formatPrice(orderSummary.total)}</Text>
@@ -616,7 +598,14 @@ export default function CheckoutScreen() {
       </ScrollView>
 
       {/* Place Order Button */}
-      <View style={[styles.bottomBar, { backgroundColor: colors.background, borderTopColor: colors.border }]}>
+      <View style={[
+        styles.bottomBar, 
+        { 
+          backgroundColor: colors.background, 
+          borderTopColor: colors.border,
+          paddingBottom: Math.max(insets.bottom, 20)
+        }
+      ]}>
     
         <TouchableOpacity
           style={[styles.placeOrderButton, { backgroundColor: colors.primary }]}

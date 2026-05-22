@@ -12,7 +12,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useThemeColors } from '@/hooks/useColorScheme';
-import { awoofCart, AwoofProduct, AwoofEvents, trackAwoofEvent, calculateTxnFee } from '@/utils/awoof/AwoofUtils';
+import { awoofCart, AwoofProduct, AwoofEvents, trackAwoofEvent } from '@/utils/awoof/AwoofUtils';
 import SafeImage from '@/components/SafeImage';
 import AwoofToast, { AwoofToastRef } from '@/components/AwoofToast';
 

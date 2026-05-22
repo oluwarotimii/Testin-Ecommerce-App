@@ -5,8 +5,6 @@
 
 import { scheduleCartAbandonmentReminder, clearCartAbandonmentReminder } from '@/services/notificationService';
 import appConfig from '@/hooks/useAppConfig';
-import { calculateTxnFee } from '@/utils/feeUtils';
-export { calculateTxnFee };
 
 export type AwoofProduct = {
   id: string;

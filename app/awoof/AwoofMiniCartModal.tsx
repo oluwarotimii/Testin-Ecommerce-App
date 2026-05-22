@@ -13,7 +13,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useThemeColors } from '@/hooks/useColorScheme';
-import { awoofCart, CartItem, calculateTxnFee } from '@/utils/awoof/AwoofUtils';
+import { awoofCart, CartItem } from '@/utils/awoof/AwoofUtils';
 import SafeImage from '@/components/SafeImage';
 import { useAuth } from '@/context/AuthContext';
 import appConfig from '@/hooks/useAppConfig';
@@ -118,10 +118,7 @@ export default function AwoofMiniCartModal({ navigation, route }: any) {
   const originalTotal = cartItems.reduce((sum: number, item: CartItem) => sum + (item.originalPrice * item.quantity), 0);
   const totalSavings = originalTotal - subtotal;
   const deliveryFee = 0;
-
-  // Match checkout screen logic: fees apply on (subtotal + delivery)
-  const txnFee = calculateTxnFee(subtotal + deliveryFee);
-  const grandTotal = subtotal + deliveryFee + txnFee;
+  const grandTotal = subtotal + deliveryFee;
 
   if (cartItems.length === 0) {
     return (
@@ -189,13 +186,6 @@ export default function AwoofMiniCartModal({ navigation, route }: any) {
                 <Text style={[styles.summaryLabel, { color: colors.textSecondary }]}>Delivery Fee</Text>
                 <Text style={[styles.summaryValue, { color: colors.text }]}>₦{deliveryFee.toLocaleString()}</Text>
               </View>
-
-              {txnFee > 0 && (
-                <View style={styles.summaryRow}>
-                  <Text style={[styles.summaryLabel, { color: colors.textSecondary }]}>Transaction Fee</Text>
-                  <Text style={[styles.summaryValue, { color: colors.text }]}>₦{txnFee.toLocaleString()}</Text>
-                </View>
-              )}
 
               <View style={[styles.divider, { backgroundColor: colors.border }]} />
 
