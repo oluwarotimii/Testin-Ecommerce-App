@@ -435,7 +435,7 @@ export default function AccountScreen() {
           onPress={() => setShowReferralModal(true)}
           activeOpacity={0.7}
         >
-          <Text style={[styles.versionText, { color: colors.textSecondary }]}>Femtech Mobile App v3.1.0</Text>
+          <Text style={[styles.versionText, { color: colors.textSecondary }]}>Femtech Mobile App v3.1.1</Text>
         </TouchableOpacity>
       </ScrollView>
 
