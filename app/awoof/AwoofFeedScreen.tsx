@@ -42,12 +42,31 @@ export default function AwoofFeedScreen({ navigation }: any) {
   useEffect(() => {
     loadDeals();
     
+    // Check for pending payment to auto-navigate to checkout
+    const checkPaymentRecovery = async () => {
+      try {
+        const stored = await AsyncStorage.getItem('pending_awoof_payment');
+        if (stored) {
+          const data = JSON.parse(stored);
+          // Only auto-navigate if it's recent (last 2 hours)
+          const isRecent = Date.now() - (data.timestamp || 0) < 2 * 60 * 60 * 1000;
+          if (isRecent) {
+            navigation.navigate('AwoofCheckout');
+          }
+        }
+      } catch (error) {
+        console.error('Error checking payment recovery in feed:', error);
+      }
+    };
+
+    checkPaymentRecovery();
+    
     const unsubscribe = awoofCart.subscribe(() => {
       setCartCount(awoofCart.getItemCount());
     });
     setCartCount(awoofCart.getItemCount());
     return unsubscribe;
-  }, []);
+  }, [navigation]);
 
   const processPendingAwoofAction = useCallback(async () => {
     if (hasHandledPendingActionRef.current) return;

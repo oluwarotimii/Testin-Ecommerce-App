@@ -104,5 +104,5 @@ playwright/.cache/
 
 
 # PHP
-.php*
+# .php*
 .aider*

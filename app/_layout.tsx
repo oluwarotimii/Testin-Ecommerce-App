@@ -1,6 +1,6 @@
 import { useEffect, useRef, useCallback } from 'react';
 import { Stack } from 'expo-router';
-import { View } from 'react-native';
+import { View, Alert, AppState } from 'react-native';
 import { usePathname } from 'expo-router';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -145,6 +145,43 @@ export default function RootLayout() {
   }, []);
 
   useEffect(() => {
+    // Check for pending payments on app start or resume
+    const checkPendingPayment = async () => {
+      try {
+        const stored = await AsyncStorage.getItem('pending_awoof_payment');
+        if (stored) {
+          const data = JSON.parse(stored);
+          // Only resume if it's recent (e.g., last 2 hours)
+          const isRecent = Date.now() - (data.timestamp || 0) < 2 * 60 * 60 * 1000;
+          
+          if (isRecent) {
+            // Wait for app and navigation to be ready
+            setTimeout(() => {
+              Alert.alert(
+                "Incomplete Payment",
+                "It looks like you have an incomplete payment. Would you like to resume it?",
+                [
+                  { text: "Dismiss", style: "cancel" },
+                  { text: "Resume", onPress: () => router.push('/(tabs)/awoof') }
+                ]
+              );
+            }, 3000); // 3 second delay to ensure UI is ready
+          }
+        }
+      } catch (e) {
+        console.error('Error checking pending payment in layout:', e);
+      }
+    };
+
+    checkPendingPayment();
+    
+    // Listen for app state changes to check when app becomes active again
+    const appStateSubscription = AppState.addEventListener('change', (nextAppState) => {
+      if (nextAppState === 'active') {
+        checkPendingPayment();
+      }
+    });
+
     // Initialize silent updates that run in the background
     updateSubscriptionRef.current = updateService.initializeSilentUpdates();
 
@@ -214,6 +251,7 @@ export default function RootLayout() {
       if (updateSubscriptionRef.current) {
         updateSubscriptionRef.current.remove();
       }
+      appStateSubscription.remove();
       cleanupNotifications();
       subscription.remove();
     };

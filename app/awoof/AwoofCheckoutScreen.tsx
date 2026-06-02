@@ -80,6 +80,51 @@ export default function AwoofCheckoutScreen({ route, navigation }: any) {
     })();
   }, []);
 
+  // Check for pending payment to resume if the app was closed
+  useEffect(() => {
+    const checkPendingPayment = async () => {
+      try {
+        const stored = await AsyncStorage.getItem('pending_awoof_payment');
+        if (stored) {
+          const data = JSON.parse(stored);
+          // Only resume if it's recent (e.g., last 2 hours)
+          const isRecent = Date.now() - (data.timestamp || 0) < 2 * 60 * 60 * 1000;
+          
+          if (isRecent && data.authorization_url) {
+            Alert.alert(
+              "Resume Payment?",
+              "You have an incomplete payment. Would you like to resume it?",
+              [
+                { 
+                  text: "Cancel", 
+                  style: "cancel",
+                  onPress: () => AsyncStorage.removeItem('pending_awoof_payment')
+                },
+                { 
+                  text: "Resume", 
+                  onPress: () => {
+                    setPaymentData(data);
+                    setCheckoutUrl(data.authorization_url);
+                    if (data.address) setAddress(data.address);
+                    setIsWebCheckoutVisible(true);
+                  }
+                }
+              ]
+            );
+          } else {
+            await AsyncStorage.removeItem('pending_awoof_payment');
+          }
+        }
+      } catch (e) {
+        console.error('Error checking pending payment:', e);
+      }
+    };
+
+    if (isAuthenticated && !loadingAuth) {
+      checkPendingPayment();
+    }
+  }, [isAuthenticated, loadingAuth]);
+
   const handleApplyCoupon = async () => {
     const code = normalizeAwoofCouponCode(couponInput);
     if (!code) {
@@ -341,7 +386,21 @@ export default function AwoofCheckoutScreen({ route, navigation }: any) {
         throw new Error('Payment initialization succeeded but no checkout URL was returned.');
       }
 
-      setPaymentData({ ...payload, authorization_url: authorizationUrl });
+      const paymentInfo = { ...payload, authorization_url: authorizationUrl };
+      setPaymentData(paymentInfo);
+      
+      // Save pending payment for recovery if app closes
+      try {
+        await AsyncStorage.setItem('pending_awoof_payment', JSON.stringify({
+          ...paymentInfo,
+          timestamp: Date.now(),
+          email: getCustomerEmail(),
+          address: address
+        }));
+      } catch (storageError) {
+        console.error('Failed to save pending payment:', storageError);
+      }
+
       setCheckoutUrl(authorizationUrl);
       setIsWebCheckoutVisible(true);
     } catch (error: any) {
@@ -395,6 +454,10 @@ export default function AwoofCheckoutScreen({ route, navigation }: any) {
     await clearCartAbandonmentReminder();
     awoofCart.clearCart();
     await clearStoredAwoofAppliedCoupon();
+    
+    // Clear pending payment
+    await AsyncStorage.removeItem('pending_awoof_payment');
+
     await sendLocalNotification(
       'Order placed successfully',
       `Your Awoof order #${orderId} has been confirmed and is being processed.`,
@@ -423,6 +486,10 @@ export default function AwoofCheckoutScreen({ route, navigation }: any) {
     setIsWebLoading(false);
     setIsWebCheckoutVisible(false);
     paymentCompletedRef.current = false;
+    
+    // Clear pending payment
+    void AsyncStorage.removeItem('pending_awoof_payment');
+    
     navigation.goBack();
   };
 
@@ -479,7 +546,7 @@ export default function AwoofCheckoutScreen({ route, navigation }: any) {
     );
   }
 
-  if (cartItems.length === 0) {
+  if (cartItems.length === 0 && !paymentData) {
     Alert.alert('Empty Cart', 'Your cart is empty. Please add items to proceed.', [
       { text: 'OK', onPress: () => router.back() },
     ]);
