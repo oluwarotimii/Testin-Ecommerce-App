@@ -16,9 +16,7 @@ import SkeletonProductItem from '@/components/SkeletonProductItem';
 import { transformProducts, transformCategories } from '@/utils/woocommerceTransformers';
 import { formatPrice } from '@/utils/formatNumber';
 import MarketingBanner from '@/components/MarketingBanner';
-import AwoofPromoBanner from '@/components/AwoofPromoBanner';
 import { fetchCarousels } from '@/services/carousel';
-import BestDealsSection from '@/components/BestDealsSection';
 import ProductCard from '@/components/ProductCard';
 import NetworkError from '@/components/NetworkError';
 import { FEATURED_PRODUCTS_LIMIT } from '@/services/config';
@@ -86,30 +84,19 @@ const ProductItem = memo(({
       key={product.id}
       style={[styles.productCard, { backgroundColor: colors.surface }]}
       onPress={onProductPress}
+      activeOpacity={0.9}
     >
       <View style={styles.productImageContainer}>
         <SafeImage 
           source={{ uri: product.image }} 
           style={[styles.productImage, { backgroundColor: colors.background }]} 
         />
-        <View style={styles.wishlistOverlay}>
-          <TouchableOpacity
-            style={[styles.wishlistButton, { backgroundColor: colors.surface }]}
-            onPress={onToggleWishlist}
-          >
-            <Ionicons
-              name={isInWishlist ? "heart" : "heart-outline"}
-              size={16}
-              color={isInWishlist ? "#FF3B30" : colors.text}
-            />
-          </TouchableOpacity>
-        </View>
         <View style={styles.cartOverlayBottom}>
           <TouchableOpacity
             style={[styles.addToCartButton, { backgroundColor: colors.primary }]}
             onPress={onAddToCart}
           >
-            <Ionicons name="cart" size={18} color={colors.white} />
+            <Ionicons name="cart" size={16} color={colors.white} />
           </TouchableOpacity>
         </View>
         {cartSuccess[product.id] && (
@@ -130,6 +117,13 @@ const ProductItem = memo(({
           <Text style={[styles.productPrice, { color: isDarkMode ? colors.white : colors.primary }]}>
             {formatPrice(typeof product.price === 'number' ? product.price : parseFloat(product.price || '0'))}
           </Text>
+          <TouchableOpacity style={styles.wishlistBottom} onPress={onToggleWishlist}>
+            <Ionicons
+              name={isInWishlist ? "heart" : "heart-outline"}
+              size={18}
+              color={isInWishlist ? "#FF3B30" : colors.textSecondary}
+            />
+          </TouchableOpacity>
         </View>
       </View>
     </TouchableOpacity>
@@ -539,6 +533,7 @@ export default function HomeScreen() {
       }, 1500);
     } catch (error) {
       console.error("Add to cart error:", error);
+
       // Revert optimistic update on error
       setCartCount(prev => prev - 1);
     }
@@ -547,13 +542,10 @@ export default function HomeScreen() {
   // OPTIMIZED: FlashList data sections
   const sections: SectionType[] = [
     { type: 'header' },
-    { type: 'search' },
     { type: 'carousel' },
     { type: 'categories' },
-    { type: 'bestDeals' },
-    { type: 'banner' },
-    // { type: 'awoofBanner' },
     { type: 'products' },
+    { type: 'banner' },
   ];
 
   // OPTIMIZED: Render sections with FlashList
@@ -570,35 +562,16 @@ export default function HomeScreen() {
                 transform: [{ translateY: headerTranslateY }],
               }
             ]}>
-              <View>
+              <View style={styles.headerLeft}>
                 <Text style={[styles.greeting, { color: colors.textSecondary }]}>
-                  {isAuthenticated && user ? `Hello, ${user.first_name || 'User'}` : 'Hello'}
+                  {isAuthenticated && user ? `Hello, ${user.first_name || 'User'}` : 'Welcome'}
                 </Text>
-                <Text style={[styles.title, { color: colors.text }]}>Discover the best tech!</Text>
+                <Text style={[styles.title, { color: colors.text }]}>Enjoy Exclusive unbeatable deals</Text>
               </View>
-              <View style={styles.headerIcons} />
+              <TouchableOpacity style={[styles.headerSearchIcon, { backgroundColor: colors.surface }]} onPress={() => router.push('/search')}>
+                <Ionicons name="search" size={20} color={colors.text} />
+              </TouchableOpacity>
             </Animated.View>
-          </View>
-        );
-
-      case 'search':
-        return (
-          <View style={styles.searchWrapper}>
-            <View style={[
-              styles.searchContainer,
-              {
-                backgroundColor: colors.surface,
-                borderRadius: 24
-              }
-            ]}>
-              <Ionicons name="search" size={20} color={colors.textSecondary} style={{ marginLeft: 12 }} />
-              <TextInput
-                style={[styles.searchPlaceholder, { color: colors.text, flex: 1 }]}
-                placeholder="Search products..."
-                placeholderTextColor={colors.textSecondary}
-                onFocus={() => router.push('/search')}
-              />
-            </View>
           </View>
         );
 
@@ -610,13 +583,11 @@ export default function HomeScreen() {
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
               <View style={styles.sectionTitleContainer}>
-                <Text style={[styles.sectionTitle, { color: colors.text }]}>Featured Categories</Text>
+                <Ionicons name="grid-outline" size={18} color={colors.primary} />
+                <Text style={[styles.sectionTitle, { color: colors.text }]}>Categories</Text>
               </View>
-              <TouchableOpacity
-                style={[styles.seeAllButton, { backgroundColor: colors.primary }]}
-                onPress={() => router.push('/categories')}
-              >
-                <Text style={[styles.seeAllButtonText, { color: colors.white }]}>See All</Text>
+              <TouchableOpacity onPress={() => router.push('/categories')}>
+                <Text style={[styles.seeAllText, { color: colors.primary }]}>See All →</Text>
               </TouchableOpacity>
             </View>
             <View style={styles.categoriesContainer}>
@@ -647,35 +618,19 @@ export default function HomeScreen() {
           </View>
         );
 
-      case 'bestDeals':
-        return (
-          <BestDealsSection
-            featuredProducts={featuredProducts}
-            loadingFeatured={loadingFeatured}
-            errorFeatured={errorFeatured}
-            wishlist={wishlist}
-            toggleWishlist={toggleWishlist}
-            apiService={apiService}
-            onRefresh={fetchFeaturedProducts}
-          />
-        );
-
       case 'banner':
         return <MarketingBanner />;
-
-      case 'awoofBanner':
-        // return <AwoofPromoBanner />;
 
       case 'products':
         return (
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
-              <Text style={[styles.sectionTitle, { color: colors.text }]}>Latest Products</Text>
-              <TouchableOpacity
-                style={[styles.seeAllButton, { backgroundColor: colors.primary }]}
-                onPress={handleSeeAllProducts}
-              >
-                <Text style={[styles.seeAllButtonText, { color: colors.white }]}>See All</Text>
+              <View style={styles.sectionTitleContainer}>
+                <Ionicons name="flame" size={18} color={colors.warning} />
+                <Text style={[styles.sectionTitle, { color: colors.text }]}>Trending Now</Text>
+              </View>
+              <TouchableOpacity onPress={handleSeeAllProducts}>
+                <Text style={[styles.seeAllText, { color: colors.primary }]}>See All →</Text>
               </TouchableOpacity>
             </View>
             {loadingProducts ? (
@@ -748,9 +703,6 @@ export default function HomeScreen() {
     loadingCategories,
     errorCategories,
     categories,
-    featuredProducts,
-    loadingFeatured,
-    errorFeatured,
     wishlist,
     loadingProducts,
     errorProducts,
@@ -763,7 +715,6 @@ export default function HomeScreen() {
     toggleWishlist,
     addToCart,
     onRefresh,
-    fetchFeaturedProducts,
     apiService,
     router,
   ]);
@@ -771,21 +722,17 @@ export default function HomeScreen() {
   // Get estimated item sizes for FlashList optimization
   const getEstimatedItemSize = (item: SectionType) => {
     switch (item.type) {
-      case 'header': return 60;
-      case 'search': return 60;
-      case 'carousel': return 200;
-      case 'categories': return 180;
-      case 'bestDeals': return 280;
-      case 'banner': return 150;
-      case 'awoofBanner': return 60;
+      case 'header': return 70;
+      case 'carousel': return 260;
       case 'products': return 450;
+      case 'categories': return 180;
+      case 'banner': return 150;
       default: return 200;
     }
   };
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-      {/* <AwoofPromoBanner /> */}
       {/* Sticky Header - positioned absolutely */}
       <Animated.View style={[
         styles.stickyHeader, 
@@ -857,6 +804,7 @@ const styles = StyleSheet.create({
   headerSpacer: {
     paddingTop: 16,
     paddingHorizontal: 16,
+    paddingBottom: 4,
   },
   header: {
     flexDirection: 'row',
@@ -864,13 +812,24 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingBottom: 6,
   },
+  headerLeft: {
+    flex: 1,
+    marginRight: 12,
+  },
   greeting: {
-    fontSize: 14,
-    paddingTop:10,
+    fontSize: 13,
+    marginBottom: 2,
   },
   title: {
-    fontSize: 20,
-    fontWeight: 'bold',
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  headerSearchIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   headerIcons: {
     flexDirection: 'row',
@@ -878,23 +837,6 @@ const styles = StyleSheet.create({
   },
   iconButton: {
     padding: 8,
-  },
-  searchWrapper: {
-    paddingHorizontal: 16,
-    paddingTop: 16,
-  },
-  searchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 24,
-    flex: 1,
-  },
-  searchPlaceholder: {
-    marginLeft: 6,
-    fontSize: 13,
-    flex: 1,
   },
   section: {
     marginBottom: 16,
@@ -912,8 +854,12 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   sectionTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
+    fontSize: 18,
+    fontWeight: '700',
+  },
+  seeAllText: {
+    fontSize: 14,
+    fontWeight: '600',
   },
   seeAll: {
     fontSize: 14,
@@ -1004,13 +950,7 @@ const styles = StyleSheet.create({
   },
   productImage: {
     width: '100%',
-    height: 200,
-  },
-  wishlistOverlay: {
-    position: 'absolute',
-    top: 8,
-    left: 8,
-    zIndex: 2,
+    height: 180,
   },
   cartOverlayBottom: {
     position: 'absolute',
@@ -1018,19 +958,17 @@ const styles = StyleSheet.create({
     right: 8,
     zIndex: 2,
   },
-  wishlistButton: {
+  addToCartButton: {
     width: 32,
     height: 32,
     borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  addToCartButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 3,
+    elevation: 3,
   },
   successOverlay: {
     position: 'absolute',
@@ -1056,15 +994,19 @@ const styles = StyleSheet.create({
   priceRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 6,
   },
   originalPrice: {
     fontSize: 11,
     textDecorationLine: 'line-through',
   },
   productPrice: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: 'bold',
+  },
+  wishlistBottom: {
+    marginLeft: 'auto',
+    padding: 4,
   },
   seeAllButton: {
     paddingHorizontal: 12,

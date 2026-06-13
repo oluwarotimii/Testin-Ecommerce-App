@@ -4,7 +4,7 @@ import CarouselItem from './CarouselItem';
 import { useThemeColors } from '@/hooks/useColorScheme';
 
 const { width } = Dimensions.get('window');
-const ITEM_WIDTH = width - 40;
+const ITEM_WIDTH = width - 32;
 
 interface CarouselData {
   id: string | number;
@@ -112,10 +112,10 @@ const styles = StyleSheet.create({
     marginVertical: 16,
   },
   scrollView: {
-    paddingLeft: 20,
+    paddingLeft: 16,
   },
   scrollContent: {
-    paddingRight: 20,
+    paddingRight: 16,
   },
   pagination: {
     flexDirection: 'row',

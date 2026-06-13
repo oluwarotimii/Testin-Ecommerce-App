@@ -3,8 +3,8 @@ import { useThemeColors } from '@/hooks/useColorScheme';
 import SafeImage from './SafeImage';
 
 const { width } = Dimensions.get('window');
-const ITEM_WIDTH = width - 40;
-const ITEM_HEIGHT = 200;
+const ITEM_WIDTH = width - 32;
+const ITEM_HEIGHT = 240;
 
 interface CarouselItemProps {
   item: {
