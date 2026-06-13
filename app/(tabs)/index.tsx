@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, TouchableOpacity, TextInput, ActivityIndicator, RefreshControl, Animated, NativeScrollEvent } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, TextInput, ActivityIndicator, RefreshControl, Animated, NativeScrollEvent, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { FlashList, FlashListProps } from '@shopify/flash-list';
 import SafeImage from '@/components/SafeImage';
@@ -26,34 +26,31 @@ import { FEATURED_PRODUCTS_LIMIT } from '@/services/config';
 // Section types for FlashList
 type SectionType =
   | { type: 'header' }
-  | { type: 'search' }
   | { type: 'carousel' }
+  | { type: 'products' }
   | { type: 'categories' }
-  | { type: 'bestDeals' }
-  | { type: 'banner' }
-  | { type: 'awoofBanner' }
-  | { type: 'products' };
+  | { type: 'banner' };
 
 // Memoized Category Item - prevents re-renders when parent state changes
-const CategoryItem = memo(({ category, colors, onPress }: { 
+const CategoryItem = memo(({ category, colors, isDarkMode, onPress }: { 
   category: any; 
   colors: any; 
+  isDarkMode: boolean;
   onPress: () => void;
 }) => (
   <TouchableOpacity
-    style={[styles.categoryCard, { backgroundColor: colors.surface }]}
+    style={styles.categoryCard}
     onPress={onPress}
+    activeOpacity={0.7}
   >
-    <View style={styles.categoryImageContainer}>
+    <View style={[styles.categoryImageCircle, { backgroundColor: isDarkMode ? '#2C2C2E' : '#F2F2F7' }]}>
       {category.image ? (
         <SafeImage
           source={{ uri: category.image }}
           style={styles.categoryItemImage}
         />
       ) : (
-        <View style={[styles.categoryItemImagePlaceholder, { backgroundColor: colors.background }]}>
-          <Ionicons name="image-outline" size={32} color={colors.textSecondary} />
-        </View>
+        <Ionicons name="image-outline" size={24} color={colors.textSecondary} />
       )}
     </View>
     <Text style={[styles.categoryName, { color: colors.text }]} numberOfLines={2}>
@@ -143,6 +140,7 @@ ProductItem.displayName = 'ProductItem';
 export default function HomeScreen() {
   const router = useRouter();
   const colors = useThemeColors();
+  const isDarkMode = String(colors.background).toLowerCase() === '#000000';
   const { apiService, user, isAuthenticated } = useAuth();
   const { setCartCount } = useCart();
   const { isConnected, isInternetReachable, checkConnectivity } = useNetwork();
@@ -624,25 +622,26 @@ export default function HomeScreen() {
             <View style={styles.categoriesContainer}>
               {loadingCategories ? (
                 <View style={styles.categoriesRow}>
-                  <SkeletonLoader width="30%" height={80} borderRadius={12} style={styles.skeletonCategoryItem} />
-                  <SkeletonLoader width="30%" height={80} borderRadius={12} style={styles.skeletonCategoryItem} />
-                  <SkeletonLoader width="30%" height={80} borderRadius={12} style={styles.skeletonCategoryItem} />
+                  <SkeletonLoader width={80} height={100} borderRadius={40} style={styles.skeletonCategoryItem} />
+                  <SkeletonLoader width={80} height={100} borderRadius={40} style={styles.skeletonCategoryItem} />
+                  <SkeletonLoader width={80} height={100} borderRadius={40} style={styles.skeletonCategoryItem} />
                 </View>
               ) : errorCategories ? (
                 <Text style={[styles.errorText, { color: colors.error }]}>Error loading categories: {errorCategories}</Text>
               ) : categories.length === 0 ? (
                 <Text style={[styles.noProductsText, { color: colors.textSecondary }]}>No categories found.</Text>
               ) : (
-                <View style={styles.categoriesRow}>
-                  {categories.slice(0, 3).map((category) => (
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.categoriesScroll}>
+                  {categories.map((category) => (
                     <CategoryItem
                       key={category.category_id}
                       category={category}
                       colors={colors}
+                      isDarkMode={isDarkMode}
                       onPress={() => handleCategoryPress(category.category_id)}
                     />
                   ))}
-                </View>
+                </ScrollView>
               )}
             </View>
           </View>
@@ -925,7 +924,11 @@ const styles = StyleSheet.create({
   },
   categoriesRow: {
     flexDirection: 'row',
-    gap: 8,
+    gap: 12,
+  },
+  categoriesScroll: {
+    gap: 16,
+    paddingBottom: 8,
   },
   productsGrid: {
     flexDirection: 'row',
@@ -945,38 +948,30 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   categoryCard: {
-    width: '30%',
-    borderRadius: 16,
-    overflow: 'hidden',
-    position: 'relative',
-    marginBottom: 16,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    width: 80,
+    alignItems: 'center',
   },
-  categoryImageContainer: {
-    position: 'relative',
-    width: '100%',
-  },
-  categoryItemImage: {
-    width: '100%',
-    height: 120,
-    borderRadius: 8,
-  },
-  categoryItemImagePlaceholder: {
-    width: '100%',
-    height: 120,
-    borderRadius: 8,
+  categoryImageCircle: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
     alignItems: 'center',
     justifyContent: 'center',
+    overflow: 'hidden',
+    borderWidth: 2,
+    borderColor: '#E5E5EA',
+  },
+  categoryItemImage: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
   },
   categoryName: {
-    fontSize: 12,
+    fontSize: 11,
     textAlign: 'center',
-    fontWeight: '500',
+    fontWeight: '600',
     marginTop: 8,
+    maxWidth: 80,
   },
   skeletonCategoryItem: {
     marginHorizontal: 2,
@@ -1074,7 +1069,7 @@ const styles = StyleSheet.create({
   seeAllButton: {
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: 20,
+    borderRadius: 16,
   },
   seeAllButtonText: {
     fontSize: 14,

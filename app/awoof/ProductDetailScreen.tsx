@@ -15,6 +15,7 @@ import { useThemeColors } from '@/hooks/useColorScheme';
 import { awoofCart, AwoofProduct, AwoofEvents, trackAwoofEvent } from '@/utils/awoof/AwoofUtils';
 import SafeImage from '@/components/SafeImage';
 import AwoofToast, { AwoofToastRef } from '@/components/AwoofToast';
+import PriceNoticeBanner from '@/components/PriceNoticeBanner';
 
 const { width } = Dimensions.get('window');
 
@@ -179,7 +180,8 @@ export default function ProductDetailScreen({ route, navigation }: any) {
               <Text style={[styles.savingsAmount, { color: colors.warning }]}>− ₦{savings.toLocaleString()}</Text>
             </View>
           </View>
-
+          
+          <PriceNoticeBanner />
           {/* Why Buy Section */}
           <View style={styles.whyBuySection}>
             <Text style={[styles.sectionTitle, { color: colors.text }]}>Why This Deal?</Text>

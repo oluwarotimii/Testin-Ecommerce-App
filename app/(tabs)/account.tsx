@@ -221,19 +221,19 @@ export default function AccountScreen() {
   const renderMenuItem = (item: any) => (
     <TouchableOpacity key={item.id} style={styles.menuItem} onPress={item.onPress}>
       <View style={styles.menuItemLeft}>
-        <View style={[styles.iconContainer, { backgroundColor: colors.surface }]}>
+        <View style={[styles.iconContainer, { backgroundColor: colors.primary + '15' }]}>
           {item.icon()}
         </View>
         <Text style={[styles.menuItemText, { color: colors.text }]}>{item.title}</Text>
       </View>
-      <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
+      <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
     </TouchableOpacity>
   );
 
   const renderSettingsItem = (item: any) => (
     <View key={item.id} style={styles.menuItem}>
       <View style={styles.menuItemLeft}>
-        <View style={[styles.iconContainer, { backgroundColor: colors.surface }]}>
+        <View style={[styles.iconContainer, { backgroundColor: colors.primary + '15' }]}>
           {item.icon()}
         </View>
         <Text style={[styles.menuItemText, { color: colors.text }]}>{item.title}</Text>
@@ -247,7 +247,7 @@ export default function AccountScreen() {
         />
       ) : (
         <TouchableOpacity onPress={item.onPress}>
-          <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
+          <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
         </TouchableOpacity>
       )}
     </View>
@@ -270,7 +270,10 @@ export default function AccountScreen() {
           <>
             {/* Theme Settings - Always visible */}
             <View style={styles.section}>
-              <Text style={[styles.sectionTitle, { color: colors.text }]}>Appearance</Text>
+              <View style={styles.sectionHeaderRow}>
+                <Ionicons name="color-palette-outline" size={18} color={colors.primary} />
+                <Text style={[styles.sectionTitle, { color: colors.text }]}>Appearance</Text>
+              </View>
               <View style={[styles.menuContainer, { backgroundColor: colors.surface }]}>
                 {themeItems.map(renderSettingsItem)}
               </View>
@@ -329,7 +332,7 @@ export default function AccountScreen() {
             {isAuthenticated && userDetails ? (
               <>
                 {/* User Profile */}
-                <View style={[styles.profileSection, { backgroundColor: colors.surface }]}>
+                <View style={[styles.profileSection, { backgroundColor: isDarkMode ? colors.surface : colors.primary + '12' }]}>
                   <View style={styles.profileInfo}>
                     <View style={[styles.avatar, { backgroundColor: colors.primary }]}>
                       <Text style={[styles.avatarText, { color: colors.white }]}>
@@ -348,10 +351,11 @@ export default function AccountScreen() {
                         {userDetails.first_name || userDetails.name?.firstname || userDetails.firstname || 'User'} {userDetails.last_name || userDetails.name?.lastname || userDetails.lastname || ''}
                       </Text>
                       <Text style={[styles.userEmail, { color: colors.textSecondary }]}>{userDetails.email}</Text>
+                      <Text style={[styles.memberSince, { color: colors.textSecondary }]}>Account member</Text>
                     </View>
                   </View>
                   <TouchableOpacity style={[styles.editButton, { backgroundColor: colors.primary }]} onPress={() => router.push('/profile')}>
-                    <Text style={[styles.editButtonText, { color: colors.white }]}>Edit</Text>
+                    <Ionicons name="create-outline" size={18} color={colors.white} />
                   </TouchableOpacity>
                 </View>
 
@@ -360,7 +364,10 @@ export default function AccountScreen() {
 
                 {/* Account Menu */}
                 <View style={styles.section}>
-                  <Text style={[styles.sectionTitle, { color: colors.text }]}>Account</Text>
+                  <View style={styles.sectionHeaderRow}>
+                    <Ionicons name="grid-outline" size={18} color={colors.primary} />
+                    <Text style={[styles.sectionTitle, { color: colors.text }]}>Account</Text>
+                  </View>
                   <View style={[styles.menuContainer, { backgroundColor: colors.surface }]}>
                     {menuItems.map(renderMenuItem)}
                   </View>
@@ -368,7 +375,10 @@ export default function AccountScreen() {
 
                 {/* Settings */}
                 <View style={styles.section}>
-                  <Text style={[styles.sectionTitle, { color: colors.text }]}>Settings</Text>
+                  <View style={styles.sectionHeaderRow}>
+                    <Ionicons name="settings-outline" size={18} color={colors.primary} />
+                    <Text style={[styles.sectionTitle, { color: colors.text }]}>Settings</Text>
+                  </View>
                   <View style={[styles.menuContainer, { backgroundColor: colors.surface }]}>
                     {settingsItems.map(renderSettingsItem)}
                   </View>
@@ -376,7 +386,10 @@ export default function AccountScreen() {
 
                 {/* Support */}
                 <View style={styles.section}>
-                  <Text style={[styles.sectionTitle, { color: colors.text }]}>Support</Text>
+                  <View style={styles.sectionHeaderRow}>
+                    <Ionicons name="headset-outline" size={18} color={colors.primary} />
+                    <Text style={[styles.sectionTitle, { color: colors.text }]}>Support</Text>
+                  </View>
                   <View style={[styles.menuContainer, { backgroundColor: colors.surface }]}>
                     {supportItems.map(renderMenuItem)}
                   </View>
@@ -391,28 +404,35 @@ export default function AccountScreen() {
 
                 {/* Logout */}
                 <View style={styles.section}>
-                  <TouchableOpacity style={[styles.logoutButton, { backgroundColor: colors.surface }]} onPress={() => setShowSignOutModal(true)}>
-                    <Ionicons name="log-out" size={20} color={colors.error} />
+                  <TouchableOpacity style={[styles.logoutCard, { backgroundColor: colors.surface, borderColor: colors.error + '20' }]} onPress={() => setShowSignOutModal(true)}>
+                    <View style={[styles.logoutIconContainer, { backgroundColor: colors.error + '15' }]}>
+                      <Ionicons name="log-out-outline" size={22} color={colors.error} />
+                    </View>
                     <Text style={[styles.logoutText, { color: colors.error }]}>Sign Out</Text>
+                    <Ionicons name="chevron-forward" size={18} color={colors.error} />
                   </TouchableOpacity>
                 </View>
               </>
             ) : (
               <>
                 <View style={[styles.emptyContainer, { backgroundColor: colors.background }]}>
-                  <Ionicons name="person-circle-outline" size={80} color={colors.textSecondary} style={styles.emptyIcon} />
+                  <View style={[styles.emptyIconCircle, { backgroundColor: colors.primary + '10' }]}>
+                    <Ionicons name="person-outline" size={40} color={colors.primary} />
+                  </View>
                   <Text style={[styles.emptyTitle, { color: colors.text }]}>You are not logged in.</Text>
                   <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>Please log in or create an account to view your profile, orders, and more.</Text>
                   <TouchableOpacity
                     style={[styles.loginButton, { backgroundColor: colors.primary }]}
                     onPress={() => router.push('/login')}
                   >
+                    <Ionicons name="log-in-outline" size={18} color={colors.white} style={{ marginRight: 8 }} />
                     <Text style={[styles.loginButtonText, { color: colors.white }]}>Log In</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={[styles.registerButton, { borderColor: colors.primary }]}
                     onPress={() => router.push('/register')}
                   >
+                    <Ionicons name="person-add-outline" size={18} color={colors.primary} style={{ marginRight: 8 }} />
                     <Text style={[styles.registerButtonText, { color: colors.primary }]}>Create Account</Text>
                   </TouchableOpacity>
 
@@ -534,8 +554,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 20,
     marginHorizontal: 20,
-    borderRadius: 16,
+    borderRadius: 20,
     marginBottom: 32,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 4,
   },
   profileInfo: {
     flexDirection: 'row',
@@ -543,49 +568,58 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   avatar: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 16,
+    marginRight: 14,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.12,
+    shadowRadius: 4,
+    elevation: 3,
   },
   avatarText: {
     fontSize: 20,
-    fontWeight: 'bold',
+    fontWeight: '700',
   },
   userDetails: {
     flex: 1,
   },
   userName: {
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: '700',
   },
   userEmail: {
-    fontSize: 14,
+    fontSize: 13,
     marginTop: 2,
   },
   memberSince: {
     fontSize: 12,
     marginTop: 4,
+    opacity: 0.7,
   },
   editButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 8,
-  },
-  editButtonText: {
-    fontSize: 14,
-    fontWeight: '500',
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   section: {
-    marginBottom: 32,
+    marginBottom: 24,
+  },
+  sectionHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 20,
+    marginBottom: 14,
   },
   sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    paddingHorizontal: 20,
-    marginBottom: 16,
+    fontSize: 17,
+    fontWeight: '700',
   },
   menuContainer: {
     marginHorizontal: 20,
@@ -597,8 +631,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingVertical: 16,
-    borderBottomWidth: 1,
+    paddingVertical: 14,
   },
   menuItemLeft: {
     flexDirection: 'row',
@@ -606,28 +639,38 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   iconContainer: {
-    width: 32,
-    height: 32,
-    borderRadius: 8,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
   },
   menuItemText: {
-    fontSize: 16,
+    fontSize: 15,
+    fontWeight: '500',
   },
-  logoutButton: {
+  logoutCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
     marginHorizontal: 20,
-    paddingVertical: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
     borderRadius: 16,
-    gap: 8,
+    borderWidth: 1,
+  },
+  logoutIconContainer: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
   },
   logoutText: {
-    fontSize: 16,
-    fontWeight: '500',
+    fontSize: 15,
+    fontWeight: '600',
+    flex: 1,
   },
   footer: {
     alignItems: 'center',
@@ -650,44 +693,59 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
-    minHeight: 300, // Ensure it takes up enough space
+    minHeight: 360,
   },
-  emptyIcon: {
-    marginBottom: 20,
+  emptyIconCircle: {
+    width: 88,
+    height: 88,
+    borderRadius: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 24,
   },
   emptyTitle: {
     fontSize: 22,
-    fontWeight: 'bold',
+    fontWeight: '700',
     marginBottom: 10,
     textAlign: 'center',
   },
   emptySubtitle: {
-    fontSize: 16,
+    fontSize: 15,
     textAlign: 'center',
-    marginBottom: 30,
+    marginBottom: 32,
     paddingHorizontal: 20,
+    lineHeight: 22,
   },
   loginButton: {
     width: '100%',
-    paddingVertical: 15,
-    borderRadius: 10,
+    flexDirection: 'row',
+    paddingVertical: 16,
+    borderRadius: 14,
     alignItems: 'center',
-    marginBottom: 15,
+    justifyContent: 'center',
+    marginBottom: 14,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 4,
   },
   loginButtonText: {
-    fontSize: 18,
-    fontWeight: 'bold',
+    fontSize: 17,
+    fontWeight: '700',
   },
   registerButton: {
     width: '100%',
-    paddingVertical: 15,
-    borderRadius: 10,
+    flexDirection: 'row',
+    paddingVertical: 16,
+    borderRadius: 14,
     alignItems: 'center',
-    borderWidth: 1,
+    justifyContent: 'center',
+    borderWidth: 1.5,
   },
   registerButtonText: {
-    fontSize: 18,
-    fontWeight: 'bold',
+    fontSize: 17,
+    fontWeight: '700',
   },
   privacyButton: {
     width: '100%',

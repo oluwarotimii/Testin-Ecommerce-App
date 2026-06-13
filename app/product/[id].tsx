@@ -8,6 +8,7 @@ import { useThemeColors } from '@/hooks/useColorScheme';
 import { transformProduct } from '@/utils/woocommerceTransformers';
 import { formatPrice } from '@/utils/formatNumber';
 import { stripHtml } from '@/utils/htmlUtils';
+import PriceNoticeBanner from '@/components/PriceNoticeBanner';
 import Constants from 'expo-constants';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -412,6 +413,8 @@ export default function ProductDetailScreen() {
           <View style={styles.priceSection}>
             <Text style={[styles.currentPrice, { color: isDarkMode ? colors.white : colors.primary }]}>{formatPrice(typeof product.price === 'number' ? product.price : parseFloat(product.price || '0'))}</Text>
           </View>
+
+          <PriceNoticeBanner />
 
           {/* Description */}
           <View style={[styles.descriptionSection, { backgroundColor: colors.surface, borderRadius: 12, padding: 16, marginTop: 10 }]}>

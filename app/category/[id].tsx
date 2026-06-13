@@ -9,6 +9,7 @@ import SafeImage from '@/components/SafeImage';
 import { transformProducts } from '@/utils/woocommerceTransformers';
 import BackButton from '@/components/BackButton';
 import ProductCard from '@/components/ProductCard';
+import PriceNoticeBanner from '@/components/PriceNoticeBanner';
 
 export default function CategoryScreen() {
     const router = useRouter();
@@ -342,6 +343,8 @@ export default function CategoryScreen() {
                     </Text>
                 </View>
             )}
+
+            <PriceNoticeBanner />
 
             {/* Content */}
             <Animated.FlatList
