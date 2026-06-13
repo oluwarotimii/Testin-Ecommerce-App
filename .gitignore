@@ -106,3 +106,5 @@ playwright/.cache/
 # PHP
 # .php*
 .aider*
+app/awoof/orders.php
+app/awoof/orders.php
