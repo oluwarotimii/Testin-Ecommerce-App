@@ -30,7 +30,7 @@ export default function ProductCard({ product, onPress, isLiked, onToggleWishlis
             onPress={onPress}
         >
             <View style={styles.productImageContainer}>
-                <SafeImage source={{ uri: product.image }} style={[styles.productImage, { backgroundColor: colors.background }]} />
+                <SafeImage source={{ uri: product.image }} style={styles.productImage} />
 
                 <View style={styles.wishlistOverlay}>
                     <TouchableOpacity

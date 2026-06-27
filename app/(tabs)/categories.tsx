@@ -107,15 +107,16 @@ export default function CategoriesScreen() {
           key={category.id}
           style={[styles.gridItem, { backgroundColor: colors.surface }]}
           onPress={() => router.push(`/category/${category.id}` as any)}
+          activeOpacity={0.7}
         >
           {category.image ? (
             <SafeImage
               source={{ uri: category.image }}
-              style={[styles.categoryImage, { backgroundColor: colors.background }]}
+              style={styles.categoryImage}
             />
           ) : (
-            <View style={[styles.iconCircle, { backgroundColor: colors.primaryLight }]}>
-              <Ionicons name={category.icon as any} size={32} color={colors.primary} />
+            <View style={[styles.iconCircle, { backgroundColor: colors.primary + '15' }]}>
+              <Ionicons name={category.icon as any} size={28} color={colors.primary} />
             </View>
           )}
           <Text style={[styles.categoryNameGrid, { color: colors.text }]} numberOfLines={2}>
@@ -133,23 +134,22 @@ export default function CategoriesScreen() {
           key={category.id}
           style={[styles.listItem, { borderBottomColor: colors.border }]}
           onPress={() => router.push(`/category/${category.id}` as any)}
+          activeOpacity={0.7}
         >
           {category.image ? (
             <SafeImage
               source={{ uri: category.image }}
-              style={[styles.categoryImageList, { backgroundColor: colors.background }]}
+              style={styles.categoryImageList}
             />
           ) : (
-            <View style={[styles.iconContainer, { backgroundColor: colors.surface }]}>
-              <Ionicons name={category.icon as any} size={24} color={colors.primary} />
+            <View style={[styles.listIconCircle, { backgroundColor: colors.primary + '15' }]}>
+              <Ionicons name={category.icon as any} size={22} color={colors.primary} />
             </View>
           )}
-          <View style={styles.categoryInfo}>
-            <Text style={[styles.categoryNameList, { color: colors.text }]} numberOfLines={1}>
-              {category.name}
-            </Text>
-          </View>
-          <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
+          <Text style={[styles.categoryNameList, { color: colors.text }]} numberOfLines={1}>
+            {category.name}
+          </Text>
+          <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
         </TouchableOpacity>
       ))}
     </View>
@@ -219,113 +219,102 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingTop: 10,
-    paddingBottom: 20,
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    paddingBottom: 16,
   },
   headerLeft: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   backButton: {
-    padding: 8,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   title: {
-    fontSize: 23,
-    fontWeight: 'bold',
+    fontSize: 22,
+    fontWeight: '700',
+    marginLeft: 8,
   },
   viewToggle: {
     flexDirection: 'row',
-    borderRadius: 8,
-    padding: 2,
+    borderRadius: 10,
+    padding: 3,
+    gap: 2,
   },
   toggleButton: {
-    padding: 8,
-    borderRadius: 6,
-  },
-  searchContainer: {
-    flexDirection: 'row',
+    width: 36,
+    height: 36,
+    borderRadius: 8,
     alignItems: 'center',
-    marginHorizontal: 20,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderRadius: 12,
-    marginBottom: 20,
-  },
-  searchInput: {
-    flex: 1,
-    marginLeft: 12,
-    fontSize: 16,
+    justifyContent: 'center',
   },
   content: {
     flex: 1,
   },
   scrollContent: {
-    paddingBottom: 2, // Proper padding to ensure content doesn't get cut off
+    paddingBottom: 20,
   },
   gridContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    paddingHorizontal: 20,
-    gap: 16,
+    paddingHorizontal: 16,
+    gap: 14,
   },
   gridItem: {
     width: '47%',
-    aspectRatio: 1,
     borderRadius: 16,
-    padding: 16,
+    padding: 20,
     alignItems: 'center',
     justifyContent: 'center',
-    overflow: 'hidden',
+    gap: 10,
   },
   iconCircle: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+    width: 72,
+    height: 72,
+    borderRadius: 36,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 12,
   },
   categoryImage: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    marginBottom: 12,
+    width: 72,
+    height: 72,
+    borderRadius: 36,
   },
   categoryNameGrid: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '600',
     textAlign: 'center',
   },
   listContainer: {
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
   },
   listItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 16,
-    borderBottomWidth: 1,
+    paddingVertical: 14,
+    borderBottomWidth: 0.5,
+    gap: 14,
   },
-  iconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 12,
+  listIconCircle: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 16,
   },
   categoryImageList: {
-    width: 80,
-    height: 80,
-    borderRadius: 12,
-    marginRight: 16,
-  },
-  categoryInfo: {
-    flex: 1,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
   },
   categoryNameList: {
-    fontSize: 16,
-    fontWeight: '500',
+    flex: 1,
+    fontSize: 15,
+    fontWeight: '600',
   },
   loadingIndicator: {
     marginTop: 50,
@@ -333,6 +322,6 @@ const styles = StyleSheet.create({
   noCategoriesText: {
     textAlign: 'center',
     marginTop: 20,
-    fontSize: 16,
+    fontSize: 15,
   },
 });

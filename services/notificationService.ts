@@ -6,12 +6,13 @@ import { DASHBOARD_API_BASE_URL } from './config';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const CART_REMINDER_ID_KEY = 'cartReminderNotificationId';
-// Cart abandonment reminders are currently disabled for preview builds.
-// Re-enable by setting this to true (and shipping a new build).
-const ENABLE_CART_ABANDONMENT_REMINDERS = false;
+const ENABLE_CART_ABANDONMENT_REMINDERS = true;
 
-// Cart abandonment reminder cadence (48 hours)
-const CART_REMINDER_DELAY_SECONDS = 48 * 60 * 60;
+const CART_REMINDER_DELAY_SECONDS = 60 * 60;
+
+const WINDOW_START_HOUR = 9;  // 9 AM
+const WINDOW_END_HOUR = 20;   // 8 PM
+const MIN_NOTIFICATION_GAP_HOURS = 3;
 
 const isExpoGo = Constants.appOwnership === 'expo';
 
@@ -240,14 +241,15 @@ const scheduleCartAbandonmentReminder = async (options?: {
     await clearCartAbandonmentReminder();
 
     const cartCount = options?.cartCount ?? 1;
-    const source = options?.source || 'shopping cart';
     const delaySeconds = options?.delaySeconds ?? CART_REMINDER_DELAY_SECONDS;
+    let { hour, minute } = getNextTimeInWindow(delaySeconds);
+
     const id = await Notifications.scheduleNotificationAsync({
       content: {
-        title: 'Still thinking about it?',
+        title: '🔥 Your cart misses you!',
         body: cartCount > 1
-          ? `You left ${cartCount} items in your ${source}. Checkout is still waiting.`
-          : `You left an item in your ${source}. Tap to continue checkout.`,
+          ? `Those ${cartCount} items won't wait forever! Complete your order before they're gone.`
+          : 'This item is selling fast! Don\'t miss out — finish your purchase now.',
         data: {
           linkType: 'page',
           linkValue: 'cart',
@@ -255,9 +257,10 @@ const scheduleCartAbandonmentReminder = async (options?: {
         },
       },
       trigger: {
-        type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
-        seconds: delaySeconds,
-        repeats: true,
+        type: Notifications.SchedulableTriggerInputTypes.CALENDAR,
+        hour,
+        minute,
+        repeats: false,
       },
     });
 
@@ -268,6 +271,27 @@ const scheduleCartAbandonmentReminder = async (options?: {
     return null;
   }
 };
+
+function getNextTimeInWindow(delaySeconds: number): { hour: number; minute: number } {
+  const now = new Date();
+  const target = new Date(now.getTime() + delaySeconds * 1000);
+  const hour = target.getHours();
+  const minute = target.getMinutes();
+
+  if (hour >= WINDOW_START_HOUR && hour < WINDOW_END_HOUR) {
+    return { hour, minute };
+  }
+
+  // Outside 9 AM - 8 PM: shift to next 9 AM
+  const next = new Date(target);
+  if (hour < WINDOW_START_HOUR) {
+    next.setHours(WINDOW_START_HOUR, 0, 0, 0);
+  } else {
+    next.setDate(next.getDate() + 1);
+    next.setHours(WINDOW_START_HOUR, 0, 0, 0);
+  }
+  return { hour: next.getHours(), minute: next.getMinutes() };
+}
 
 const clearCartReminderIfNeeded = async () => {
   await clearCartAbandonmentReminder();
@@ -303,6 +327,116 @@ const initialize = async () => {
   return token;
 }
 
+// const AWOOF_ID_KEY = 'awoofNotificationId';
+// const AWOOF_NEXT_FIRE_KEY = 'awoofNextFireTime';
+// const ENABLE_AWOOF_PROMO = true;
+
+// const AWOOF_TITLE = '🎯 Awoof Corner is Live!';
+// const AWOOF_BODY = "Order now & pay immediately — Unbeatable deals only on Awoof Corner! Tap to explore today's offers.";
+
+// const FOMO_NOTIFICATION_ID_KEY = 'fomoNotificationId';
+// const ENABLE_FOMO_NOTIFICATIONS = true;
+// const FOMO_HOUR = WINDOW_START_HOUR + 4; // 1:00 PM (4h after awoof's 9 AM, respects 3h min gap)
+
+// const FOMO_TITLE = '⚡ Don\'t Miss Out!';
+// const FOMO_BODY = 'Hot deals are flying off the shelves! Check out trending items before they\'re gone.';
+
+// const awoofContent = {
+//   title: AWOOF_TITLE,
+//   body: AWOOF_BODY,
+//   data: {
+//     linkType: 'page' as const,
+//     linkValue: 'awoof',
+//     notificationType: 'awoof_promo',
+//   },
+// };
+
+// const clearAwoofCornerPromo = async () => {
+//   try {
+//     const Notifications = await getNotifications();
+//     const reminderId = await AsyncStorage.getItem(AWOOF_ID_KEY);
+//     if (reminderId) {
+//       await Notifications?.cancelScheduledNotificationAsync(reminderId);
+//       await AsyncStorage.removeItem(AWOOF_ID_KEY);
+//     }
+//     await AsyncStorage.removeItem(AWOOF_NEXT_FIRE_KEY);
+//   } catch (error) {
+//     console.error('Error clearing Awoof promo:', error);
+//   }
+// };
+
+// const scheduleAwoofCornerPromo = async () => {
+//   try {
+//     const Notifications = await getNotifications();
+//     if (!Notifications) return null;
+//     if (!ENABLE_AWOOF_PROMO) return null;
+//     await clearAwoofCornerPromo();
+// 
+//     const id = await Notifications.scheduleNotificationAsync({
+//       content: awoofContent,
+//       trigger: {
+//         type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
+//         seconds: 48 * 60 * 60,
+//         repeats: true,
+//       },
+//     });
+// 
+//     const nextFireTime = Date.now() + 48 * 60 * 60 * 1000;
+//     await AsyncStorage.setItem(AWOOF_ID_KEY, id);
+//     await AsyncStorage.setItem(AWOOF_NEXT_FIRE_KEY, String(nextFireTime));
+//     return id;
+//   } catch (error) {
+//     console.error('Error scheduling Awoof promo:', error);
+//     return null;
+//   }
+// };
+
+// const clearFomoNotification = async () => {
+//   try {
+//     const Notifications = await getNotifications();
+//     const reminderId = await AsyncStorage.getItem(FOMO_NOTIFICATION_ID_KEY);
+//     if (reminderId) {
+//       await Notifications?.cancelScheduledNotificationAsync(reminderId);
+//       await AsyncStorage.removeItem(FOMO_NOTIFICATION_ID_KEY);
+//     }
+//   } catch (error) {
+//     console.error('Error clearing FOMO notification:', error);
+//   }
+// };
+
+// const scheduleFomoNotification = async () => {
+//   try {
+//     const Notifications = await getNotifications();
+//     if (!Notifications) return null;
+//     if (!ENABLE_FOMO_NOTIFICATIONS) return null;
+//     await clearFomoNotification();
+
+//     const id = await Notifications.scheduleNotificationAsync({
+//       content: {
+//         title: FOMO_TITLE,
+//         body: FOMO_BODY,
+//         data: {
+//           linkType: 'page',
+//           linkValue: 'home',
+//           notificationType: 'fomo',
+//         },
+//       },
+//       trigger: {
+//         type: Notifications.SchedulableTriggerInputTypes.CALENDAR,
+//         hour: FOMO_HOUR,
+//         minute: 0,
+//         repeats: true,
+//       },
+//     });
+
+//     await AsyncStorage.setItem(FOMO_NOTIFICATION_ID_KEY, id);
+//     return id;
+//   } catch (error) {
+//     console.error('Error scheduling FOMO notification:', error);
+//     return null;
+//   }
+// };
+
 export {
   registerForPushNotificationsAsync,
   setupNotificationListeners,
@@ -312,7 +446,11 @@ export {
   scheduleCartAbandonmentReminder,
   clearCartAbandonmentReminder,
   clearCartReminderIfNeeded,
-  updatePushTokenForUser
+  updatePushTokenForUser,
+  // scheduleAwoofCornerPromo,
+  // clearAwoofCornerPromo,
+  // scheduleFomoNotification,
+  // clearFomoNotification,
 };
 
 export default {
@@ -324,5 +462,9 @@ export default {
   scheduleCartAbandonmentReminder,
   clearCartAbandonmentReminder,
   clearCartReminderIfNeeded,
-  updatePushTokenForUser
+  updatePushTokenForUser,
+  // scheduleAwoofCornerPromo,
+  // clearAwoofCornerPromo,
+  // scheduleFomoNotification,
+  // clearFomoNotification,
 };

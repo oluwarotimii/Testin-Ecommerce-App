@@ -192,6 +192,8 @@ export default function RootLayout() {
       if (!token) {
         console.log("Push notifications not enabled due to denied permissions");
       }
+
+      // Scheduled notifications (Awoof, FOMO) — all turned off
     };
 
     initNotifications();

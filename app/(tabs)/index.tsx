@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, TouchableOpacity, TextInput, ActivityIndicator, RefreshControl, Animated, NativeScrollEvent, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, RefreshControl, Animated, NativeScrollEvent, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { FlashList, FlashListProps } from '@shopify/flash-list';
 import SafeImage from '@/components/SafeImage';
@@ -547,7 +547,6 @@ export default function HomeScreen() {
   // OPTIMIZED: FlashList data sections
   const sections: SectionType[] = [
     { type: 'header' },
-    { type: 'search' },
     { type: 'carousel' },
     { type: 'categories' },
     { type: 'bestDeals' },
@@ -570,35 +569,16 @@ export default function HomeScreen() {
                 transform: [{ translateY: headerTranslateY }],
               }
             ]}>
-              <View>
+              <View style={styles.headerLeft}>
                 <Text style={[styles.greeting, { color: colors.textSecondary }]}>
                   {isAuthenticated && user ? `Hello, ${user.first_name || 'User'}` : 'Hello'}
                 </Text>
-                <Text style={[styles.title, { color: colors.text }]}>Discover the best tech!</Text>
+                <Text style={[styles.title, { color: colors.text }]}>Your wallet's new best friend excluse prices</Text>
               </View>
-              <View style={styles.headerIcons} />
+              <TouchableOpacity style={[styles.headerSearchIcon, { backgroundColor: colors.surface }]} onPress={() => router.push('/search')}>
+                <Ionicons name="search" size={20} color={colors.text} />
+              </TouchableOpacity>
             </Animated.View>
-          </View>
-        );
-
-      case 'search':
-        return (
-          <View style={styles.searchWrapper}>
-            <View style={[
-              styles.searchContainer,
-              {
-                backgroundColor: colors.surface,
-                borderRadius: 24
-              }
-            ]}>
-              <Ionicons name="search" size={20} color={colors.textSecondary} style={{ marginLeft: 12 }} />
-              <TextInput
-                style={[styles.searchPlaceholder, { color: colors.text, flex: 1 }]}
-                placeholder="Search products..."
-                placeholderTextColor={colors.textSecondary}
-                onFocus={() => router.push('/search')}
-              />
-            </View>
           </View>
         );
 
@@ -771,13 +751,11 @@ export default function HomeScreen() {
   // Get estimated item sizes for FlashList optimization
   const getEstimatedItemSize = (item: SectionType) => {
     switch (item.type) {
-      case 'header': return 60;
-      case 'search': return 60;
-      case 'carousel': return 200;
+      case 'header': return 70;
+      case 'carousel': return 260;
       case 'categories': return 180;
       case 'bestDeals': return 280;
       case 'banner': return 150;
-      case 'awoofBanner': return 60;
       case 'products': return 450;
       default: return 200;
     }
@@ -857,6 +835,7 @@ const styles = StyleSheet.create({
   headerSpacer: {
     paddingTop: 16,
     paddingHorizontal: 16,
+    paddingBottom: 4,
   },
   header: {
     flexDirection: 'row',
@@ -864,13 +843,24 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingBottom: 6,
   },
+  headerLeft: {
+    flex: 1,
+    marginRight: 12,
+  },
   greeting: {
-    fontSize: 14,
-    paddingTop:10,
+    fontSize: 13,
+    marginBottom: 2,
   },
   title: {
-    fontSize: 20,
-    fontWeight: 'bold',
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  headerSearchIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   headerIcons: {
     flexDirection: 'row',
@@ -878,23 +868,6 @@ const styles = StyleSheet.create({
   },
   iconButton: {
     padding: 8,
-  },
-  searchWrapper: {
-    paddingHorizontal: 16,
-    paddingTop: 16,
-  },
-  searchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 24,
-    flex: 1,
-  },
-  searchPlaceholder: {
-    marginLeft: 6,
-    fontSize: 13,
-    flex: 1,
   },
   section: {
     marginBottom: 16,

@@ -138,26 +138,28 @@ export default function SearchScreen() {
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Search Header */}
       <View style={styles.searchHeader}>
-        <View style={[styles.searchContainer, { backgroundColor: colors.surface }]}>
-          <Ionicons name="search" size={20} color={colors.textSecondary} />
-          <TextInput
-            style={[styles.searchInput, { color: colors.text }]}
-            placeholder="Search products..."
-            placeholderTextColor={colors.textSecondary}
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-            onSubmitEditing={() => handleSearch(searchQuery)}
-            autoFocus
-          />
-          {searchQuery.length > 0 && (
-            <TouchableOpacity onPress={() => setSearchQuery('')}>
-              <Ionicons name="close" size={20} color={colors.textSecondary} />
-            </TouchableOpacity>
-          )}
+        <View style={styles.searchHeaderLeft}>
+          <TouchableOpacity onPress={() => router.back()} style={styles.backArrow}>
+            <Ionicons name="arrow-back" size={22} color={colors.text} />
+          </TouchableOpacity>
+          <View style={[styles.searchBar, { backgroundColor: colors.surface }]}>
+            <Ionicons name="search" size={18} color={colors.textSecondary} />
+            <TextInput
+              style={[styles.searchInput, { color: colors.text }]}
+              placeholder="Search products..."
+              placeholderTextColor={colors.textSecondary}
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              onSubmitEditing={() => handleSearch(searchQuery)}
+              autoFocus
+            />
+            {searchQuery.length > 0 && (
+              <TouchableOpacity onPress={() => setSearchQuery('')} style={styles.clearSearch}>
+                <Ionicons name="close-circle" size={18} color={colors.textSecondary} />
+              </TouchableOpacity>
+            )}
+          </View>
         </View>
-        <TouchableOpacity onPress={() => router.back()}>
-          <Text style={[styles.cancelButton, { color: colors.primary }]}>Cancel</Text>
-        </TouchableOpacity>
       </View>
 
       <ScrollView 
@@ -189,18 +191,17 @@ export default function SearchScreen() {
                 style={[styles.resultItem, { borderBottomColor: colors.border }]}
                 onPress={() => router.push(`/product/${product.id}`)}
               >
-                <View style={styles.resultImageContainer}>
-                  <SafeImage source={{ uri: product.image }} style={styles.resultImage} />
-                </View>
+                <SafeImage source={{ uri: product.image }} style={[styles.resultImage, { backgroundColor: colors.surface }]} />
                 <View style={styles.resultInfo}>
-                  <View>
-                    <Text style={[styles.resultName, { color: colors.text }]} numberOfLines={2}>{product.title}</Text>
-                    <Text style={styles.resultCategory}>{product.category}</Text>
+                  <Text style={[styles.resultName, { color: colors.text }]} numberOfLines={2}>{product.title}</Text>
+                  <View style={styles.resultMeta}>
+                    <Text style={[styles.resultCategory, { color: colors.textSecondary }]}>{product.category}</Text>
+                    <Text style={[styles.resultPrice, { color: colors.primary }]}>
+                      {formatPrice(typeof product.price === 'number' ? product.price : parseFloat(product.price || '0'))}
+                    </Text>
                   </View>
-                  <Text style={[styles.resultPrice, { color: isDarkMode ? colors.white : colors.primary }]}>
-                    {formatPrice(typeof product.price === 'number' ? product.price : parseFloat(product.price || '0'))}
-                  </Text>
                 </View>
+                <Ionicons name="chevron-forward" size={16} color={colors.textSecondary} />
               </TouchableOpacity>
             ))}
             {loadingMore && (
@@ -221,26 +222,25 @@ export default function SearchScreen() {
             {recentSearches.length > 0 && (
               <View style={styles.section}>
                 <View style={styles.sectionHeader}>
-                  <Text style={[styles.sectionTitle, { color: colors.text }]}>Recent Searches</Text>
+                  <Text style={[styles.sectionTitle, { color: colors.text }]}>Recent</Text>
                   <TouchableOpacity onPress={clearAllRecentSearches}>
-                    <Text style={[styles.clearButton, { color: colors.primary }]}>Clear All</Text>
+                    <Text style={[styles.clearButton, { color: colors.primary }]}>Clear</Text>
                   </TouchableOpacity>
                 </View>
                 {recentSearches.map((search, index) => (
                   <TouchableOpacity
                     key={index}
-                    style={styles.searchItem}
+                    style={[styles.searchItem, { borderBottomColor: colors.border }]}
                     onPress={() => {
                       setSearchQuery(search);
                       handleSearch(search);
                     }}
                   >
-                    <Ionicons name="time" size={16} color={colors.textSecondary} />
+                    <View style={[styles.recentIcon, { backgroundColor: colors.surface }]}>
+                      <Ionicons name="time-outline" size={16} color={colors.textSecondary} />
+                    </View>
                     <Text style={[styles.searchItemText, { color: colors.text }]}>{search}</Text>
-                    <TouchableOpacity
-                      onPress={() => removeRecentSearch(search)}
-                      style={styles.removeButton}
-                    >
+                    <TouchableOpacity onPress={() => removeRecentSearch(search)} style={styles.removeButton}>
                       <Ionicons name="close" size={16} color={colors.textSecondary} />
                     </TouchableOpacity>
                   </TouchableOpacity>
@@ -249,10 +249,13 @@ export default function SearchScreen() {
             )}
           </>
         ) : (
-          <View style={styles.section}>
-            <Text style={styles.noResultsText}>No products found matching "{searchQuery}"</Text>
-            <Text style={[styles.noResultsSubtext, { color: colors.textSecondary }]}>
-              Try searching with different keywords or check the spelling
+          <View style={styles.emptyState}>
+            <View style={[styles.emptyIconCircle, { backgroundColor: colors.surface }]}>
+              <Ionicons name="search-outline" size={32} color={colors.textSecondary} />
+            </View>
+            <Text style={[styles.emptyText, { color: colors.text }]}>No results found</Text>
+            <Text style={[styles.emptySubtext, { color: colors.textSecondary }]}>
+              Try a different search term
             </Text>
           </View>
         )}
@@ -266,113 +269,137 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   searchHeader: {
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    paddingBottom: 12,
+  },
+  searchHeaderLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingTop: 10,
-    paddingBottom: 16,
-    gap: 12,
+    gap: 10,
   },
-  searchContainer: {
+  backArrow: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  searchBar: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderRadius: 12,
-    height: 40,
+    paddingHorizontal: 14,
+    height: 42,
+    borderRadius: 14,
+    gap: 8,
   },
   searchInput: {
-    height: 40,
     flex: 1,
-    marginLeft: 12,
-    fontSize: 16,
+    fontSize: 15,
+    height: 42,
   },
-  cancelButton: {
-    fontSize: 16,
-    fontWeight: '500',
+  clearSearch: {
+    padding: 2,
   },
   content: {
     flex: 1,
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
   },
   section: {
-    marginBottom: 32,
+    marginBottom: 24,
   },
   sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 8,
   },
   sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
+    fontSize: 17,
+    fontWeight: '700',
   },
   clearButton: {
     fontSize: 14,
-    fontWeight: '500',
+    fontWeight: '600',
   },
   searchItem: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F2F2F7',
+    borderBottomWidth: 0.5,
+  },
+  recentIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
   },
   searchItemText: {
     flex: 1,
-    fontSize: 16,
-    marginLeft: 12,
+    fontSize: 15,
+    fontWeight: '500',
   },
   removeButton: {
-    padding: 4,
+    padding: 6,
   },
   resultItem: {
     flexDirection: 'row',
+    alignItems: 'center',
     paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F2F2F7',
-  },
-  resultImageContainer: {
-    position: 'relative',
+    borderBottomWidth: 0.5,
+    gap: 12,
   },
   resultImage: {
-    width: 60,
-    height: 60,
-    borderRadius: 8,
-    marginRight: 12,
+    width: 56,
+    height: 56,
+    borderRadius: 12,
   },
   resultInfo: {
     flex: 1,
-    justifyContent: 'space-between',
+    justifyContent: 'center',
+    gap: 4,
   },
   resultName: {
-    fontSize: 16,
-    fontWeight: '500',
-    marginBottom: 2,
+    fontSize: 15,
+    fontWeight: '600',
+    lineHeight: 20,
+  },
+  resultMeta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
   resultCategory: {
     fontSize: 12,
-    marginBottom: 4,
-  },
-  resultRating: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 4,
-  },
-  ratingText: {
-    fontSize: 12,
-    marginLeft: 4,
+    fontWeight: '500',
   },
   resultPrice: {
-    fontSize: 16,
-    fontWeight: 'bold',
+    fontSize: 15,
+    fontWeight: '700',
   },
-  noResultsText: {
-    textAlign: 'center',
-    marginTop: 20,
-    fontSize: 16,
+  emptyState: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingTop: 80,
+    gap: 8,
+  },
+  emptyIconCircle: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 8,
+  },
+  emptyText: {
+    fontSize: 17,
+    fontWeight: '600',
+  },
+  emptySubtext: {
+    fontSize: 14,
   },
   loadingIndicator: {
     marginTop: 40,
@@ -385,24 +412,16 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   loadingMoreText: {
-    fontSize: 14,
-    fontStyle: 'italic',
+    fontSize: 13,
   },
   noMoreResultsText: {
     textAlign: 'center',
-    marginTop: 20,
-    fontSize: 14,
-    fontStyle: 'italic',
-  },
-  noResultsSubtext: {
-    textAlign: 'center',
-    marginTop: 8,
-    fontSize: 14,
-    paddingHorizontal: 20,
+    marginTop: 16,
+    fontSize: 13,
   },
   errorText: {
     textAlign: 'center',
     marginTop: 20,
-    fontSize: 16,
+    fontSize: 15,
   },
 });

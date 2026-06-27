@@ -22,10 +22,13 @@ export default function PriceNoticeBanner({ onPress, onDismiss }: PriceNoticeBan
       </View>
       <View style={styles.textContainer}>
         <Text style={[styles.title, { color: isDarkMode ? '#A5D6A7' : '#1B5E20' }]}>
-          App Exclusive Pricing
+          Awoof Corner Deal
         </Text>
-        <Text style={[styles.message, { color: isDarkMode ? '#C8E6C9' : '#388E3C' }]}>
-          Prices on this app may be lower than in-store prices. Order here for the best deals!
+        <Text
+          style={[styles.message, { color: isDarkMode ? '#C8E6C9' : '#388E3C' }]}
+          numberOfLines={2}
+        >
+          Same prices as in-store. Only Awoof Corner items have exclusive prices!
         </Text>
       </View>
       {onDismiss && (
@@ -41,8 +44,9 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 14,
-    marginHorizontal: 16,
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    marginHorizontal: 0,
     marginVertical: 8,
     borderRadius: 14,
     shadowColor: '#000',

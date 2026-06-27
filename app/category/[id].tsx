@@ -7,7 +7,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { useThemeColors } from '@/hooks/useColorScheme';
 import SafeImage from '@/components/SafeImage';
 import { transformProducts } from '@/utils/woocommerceTransformers';
-import BackButton from '@/components/BackButton';
 import ProductCard from '@/components/ProductCard';
 import PriceNoticeBanner from '@/components/PriceNoticeBanner';
 
@@ -24,6 +23,7 @@ export default function CategoryScreen() {
     const [error, setError] = useState<string | null>(null);
     const [wishlist, setWishlist] = useState<number[]>([]);
     const [categoryName, setCategoryName] = useState('Category');
+    const [isAwoofCategory, setIsAwoofCategory] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const [showSearch, setShowSearch] = useState(false);
     const [cartSuccess, setCartSuccess] = useState<{ [key: number]: boolean }>({});
@@ -70,6 +70,7 @@ export default function CategoryScreen() {
                 );
                 if (category) {
                     setCategoryName(category.name);
+                    setIsAwoofCategory(category.slug === 'awoof-corner');
                     categoryId = category.id.toString();
                 } else {
                     console.error(`Category "${idStr}" not found - invalid slug or ID`);
@@ -86,9 +87,9 @@ export default function CategoryScreen() {
 
             // Fetch products by category - MUST use numeric ID, slug won't work
             const params: any = {
-                category: categoryId, // Use the numeric ID we found
+                category: categoryId,
                 per_page: 20,
-                page: reset ? 1 : page
+                page: reset ? 1 : page + 1
             };
 
             // Fetch products using the general getProducts method with category filter
@@ -98,25 +99,15 @@ export default function CategoryScreen() {
             const transformedProducts = transformProducts(categoryProducts);
 
             if (reset) {
-                // Remove duplicates from the initial set
-                const uniqueProducts = transformedProducts.filter((product, index, self) =>
-                    index === self.findIndex(p => p.id === product.id)
-                );
-                setProducts(uniqueProducts);
+                setProducts(transformedProducts);
                 setPage(1);
                 setHasMore(categoryProducts.length >= 20);
             } else {
-                // Filter out duplicates and append new products
-                const existingIds = new Set(products.map(p => p.id));
-                const uniqueNewProducts = transformedProducts.filter(p => !existingIds.has(p.id));
-                const combinedProducts = [...products, ...uniqueNewProducts];
-
-                // Double-check for any duplicates between existing and new products
-                const finalUniqueProducts = combinedProducts.filter((product, index, self) =>
-                    index === self.findIndex(p => p.id === product.id)
-                );
-
-                setProducts(finalUniqueProducts);
+                setProducts(prev => {
+                    const existingIds = new Set(prev.map(p => p.id));
+                    const uniqueNew = transformedProducts.filter(p => !existingIds.has(p.id));
+                    return [...prev, ...uniqueNew];
+                });
                 setHasMore(categoryProducts.length >= 20);
                 setPage(prev => prev + 1);
             }
@@ -135,6 +126,16 @@ export default function CategoryScreen() {
         fetchCategoryProducts(true); // Reset and load first page
         fetchWishlist();
     }, [id]); // Only re-run if the category ID actually changes
+
+    // Auto-fetch remaining pages in the background
+    useEffect(() => {
+        if (!loading && hasMore && !loadingMore && products.length > 0) {
+            const timer = setTimeout(() => {
+                fetchCategoryProducts(false);
+            }, 300);
+            return () => clearTimeout(timer);
+        }
+    }, [loading, hasMore, loadingMore, products.length, fetchCategoryProducts]);
 
     const filteredProducts = useMemo(() => {
         // Remove duplicates by ID before applying search filter
@@ -230,10 +231,6 @@ export default function CategoryScreen() {
         [{ nativeEvent: { contentOffset: { y: scrollY } } }],
         {
             useNativeDriver: false,
-            listener: (event: any) => {
-                const offsetY = event.nativeEvent.contentOffset.y;
-                setShowSearch(offsetY > 100);
-            },
         }
     );
 
@@ -299,39 +296,37 @@ export default function CategoryScreen() {
     return (
         <View style={[styles.container, { backgroundColor: colors.background }]}>
             {/* Header */}
-            <View style={[styles.header, { backgroundColor: colors.background, alignItems: 'center' }]}>
-                <BackButton />
-                <View style={styles.headerCenter}>
-                    <Text style={[styles.title, { color: colors.text }]} numberOfLines={1}>
-                        {categoryName}
-                    </Text>
-                </View>
+            <View style={styles.header}>
+                <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+                    <Ionicons name="arrow-back" size={22} color={colors.text} />
+                </TouchableOpacity>
+                <Text style={[styles.title, { color: colors.text }]} numberOfLines={1}>
+                    {categoryName}
+                </Text>
                 <TouchableOpacity
-                    style={styles.searchButton}
+                    style={[styles.searchIcon, { backgroundColor: colors.surface }]}
                     onPress={() => setShowSearch(!showSearch)}
                 >
-                    <Ionicons name={showSearch ? "close" : "search"} size={24} color={colors.text} />
+                    <Ionicons name={showSearch ? "close" : "search"} size={20} color={colors.text} />
                 </TouchableOpacity>
             </View>
 
-            {/* Sticky Search Bar */}
+            {/* Search Bar */}
             {showSearch && (
-                <View style={[styles.stickySearchContainer, { backgroundColor: colors.background, paddingTop: 10 }]}>
-                    <View style={[styles.searchBar, { backgroundColor: colors.surface, borderRadius: 24, marginHorizontal: 16 }]}>
-                        <Ionicons name="search" size={20} color={colors.textSecondary} style={{ marginLeft: 12 }} />
-                        <TextInput
-                            style={[styles.searchInput, { color: colors.text, flex: 1 }]}
-                            placeholder="Search products..."
-                            placeholderTextColor={colors.textSecondary}
-                            value={searchQuery}
-                            onChangeText={setSearchQuery}
-                        />
-                        {searchQuery.length > 0 && (
-                            <TouchableOpacity onPress={() => setSearchQuery('')} style={{ marginRight: 12 }}>
-                                <Ionicons name="close-circle" size={20} color={colors.textSecondary} />
-                            </TouchableOpacity>
-                        )}
-                    </View>
+                <View style={[styles.searchContainer, { backgroundColor: colors.surface }]}>
+                    <Ionicons name="search" size={18} color={colors.textSecondary} />
+                    <TextInput
+                        style={[styles.searchInput, { color: colors.text }]}
+                        placeholder="Search in this category..."
+                        placeholderTextColor={colors.textSecondary}
+                        value={searchQuery}
+                        onChangeText={setSearchQuery}
+                    />
+                    {searchQuery.length > 0 && (
+                        <TouchableOpacity onPress={() => setSearchQuery('')}>
+                            <Ionicons name="close-circle" size={18} color={colors.textSecondary} />
+                        </TouchableOpacity>
+                    )}
                 </View>
             )}
 
@@ -339,12 +334,12 @@ export default function CategoryScreen() {
             {!loading && !error && (
                 <View style={styles.countContainer}>
                     <Text style={[styles.countText, { color: colors.textSecondary }]}>
-                        {filteredProducts.length} {filteredProducts.length === 1 ? 'product' : 'products'} found
+                        {filteredProducts.length} {filteredProducts.length === 1 ? 'product' : 'products'}
                     </Text>
                 </View>
             )}
 
-            <PriceNoticeBanner />
+            {isAwoofCategory && <PriceNoticeBanner />}
 
             {/* Content */}
             <Animated.FlatList
@@ -357,7 +352,7 @@ export default function CategoryScreen() {
                 onScroll={handleScroll}
                 scrollEventThrottle={16}
                 onEndReached={loadMoreProducts}
-                onEndReachedThreshold={0.1}
+                onEndReachedThreshold={0.5}
                 ListFooterComponent={renderFooter}
                 ListEmptyComponent={renderEmpty}
                 numColumns={2}
@@ -366,8 +361,8 @@ export default function CategoryScreen() {
                     <RefreshControl
                         refreshing={loading}
                         onRefresh={() => fetchCategoryProducts(true)}
-                        colors={[colors.primary]} // Use theme color
-                        tintColor={colors.primary} // For iOS
+                        colors={[colors.primary]}
+                        tintColor={colors.primary}
                     />
                 }
             />
@@ -384,58 +379,61 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         alignItems: 'center',
         paddingHorizontal: 16,
-        paddingTop: 30, // Reduced from 50
-        paddingBottom: 8, // Reduced from 12
+        paddingTop: 6,
+        paddingBottom: 6,
+        gap: 8,
     },
     backButton: {
-        padding: 8,
-    },
-    searchButton: {
-        padding: 8,
-    },
-    headerCenter: {
-        flex: 1,
+        width: 36,
+        height: 36,
+        borderRadius: 18,
         alignItems: 'center',
-        paddingHorizontal: 8,
+        justifyContent: 'center',
     },
-    title: {
-        fontSize: 20,
-        fontWeight: 'bold',
-        textTransform: 'capitalize',
+    searchIcon: {
+        width: 36,
+        height: 36,
+        borderRadius: 18,
+        alignItems: 'center',
+        justifyContent: 'center',
     },
-    stickySearchContainer: {
-        paddingHorizontal: 16,
-        paddingVertical: 4,
-        borderBottomWidth: 1,
-        borderBottomColor: 'rgba(0,0,0,0.1)',
-    },
-    searchBar: {
+    searchContainer: {
         flexDirection: 'row',
         alignItems: 'center',
-        paddingHorizontal: 12,
-        paddingVertical: 10,
-        borderRadius: 12,
+        marginHorizontal: 16,
+        paddingHorizontal: 14,
+        height: 42,
+        borderRadius: 14,
+        marginBottom: 4,
         gap: 8,
     },
     searchInput: {
         flex: 1,
-        fontSize: 14,
-        height: 36,
+        fontSize: 15,
+        height: 42,
+    },
+    title: {
+        flex: 1,
+        fontSize: 20,
+        fontWeight: '700',
+        textTransform: 'capitalize',
+        textAlign: 'center',
     },
     countContainer: {
         paddingHorizontal: 16,
-        paddingBottom: 4, // Reduced from 8
-        paddingTop: 2,
+        paddingBottom: 2,
+        paddingTop: 4,
     },
     countText: {
-        fontSize: 14,
+        fontSize: 13,
+        fontWeight: '500',
     },
     content: {
         flex: 1,
     },
     scrollContent: {
-        paddingBottom: 80, // Further reduced to minimize whitespace
-        paddingHorizontal: 4, // Consistent with previous grid padding
+        paddingBottom: 80,
+        paddingHorizontal: 4,
     },
     centerContainer: {
         flex: 1,
@@ -446,22 +444,22 @@ const styles = StyleSheet.create({
     },
     loadingText: {
         marginTop: 16,
-        fontSize: 16,
+        fontSize: 15,
     },
     errorText: {
         marginTop: 16,
-        fontSize: 16,
+        fontSize: 15,
         textAlign: 'center',
     },
     emptyText: {
         marginTop: 16,
-        fontSize: 16,
+        fontSize: 15,
         textAlign: 'center',
     },
     columnWrapper: {
         justifyContent: 'space-between',
-        gap: 8, // Consistent spacing between columns
-        paddingHorizontal: 8, // Add horizontal padding
+        gap: 8,
+        paddingHorizontal: 8,
     },
     loadingMoreContainer: {
         width: '100%',
@@ -469,5 +467,4 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
     },
-
 });

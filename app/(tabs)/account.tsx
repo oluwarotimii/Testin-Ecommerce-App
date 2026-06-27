@@ -119,16 +119,6 @@ export default function AccountScreen() {
     },
   ];
 
-  const settingsItems = [
-    {
-      id: 'test-notifications',
-      title: 'Test Push Notifications (Local)',
-      icon: () => <Ionicons name="bug-outline" size={20} color={colors.primary} />,
-      type: 'navigation' as const,
-      onPress: () => router.push('/test-notifications'),
-    },
-  ];
-
   const supportItems = [
     // {
     //   id: 'referral',
@@ -278,57 +268,6 @@ export default function AccountScreen() {
                 {themeItems.map(renderSettingsItem)}
               </View>
             </View>
-
-            {/* Developer Tools - Always visible */}
-            {/* <View style={styles.section}>
-              <Text style={[styles.sectionTitle, { color: colors.text }]}>Developer Tools</Text>
-              <View style={[styles.menuContainer, { backgroundColor: colors.surface }]}>
-                {settingsItems.map(renderSettingsItem)}
-              </View>
-              
-              {/* Push Token Display */}
-               {/* <View style={[styles.pushTokenContainer, { backgroundColor: colors.surface, marginTop: 16 }]}>
-                <View style={styles.pushTokenHeader}>
-                  <Ionicons name="scan" size={20} color={colors.primary} />
-                  <Text style={[styles.pushTokenTitle, { color: colors.text }]}>Expo Push Token</Text>
-                </View>
-                <Text style={[styles.pushTokenDescription, { color: colors.textSecondary }]}>
-                  Use this token to send targeted push notifications to this device from your admin panel.
-                </Text> */}
-                
-                {/* {pushToken ? (
-                  <View style={[styles.tokenDisplay, { backgroundColor: colors.background, borderColor: colors.border }]}>
-                    <Text style={[styles.tokenText, { color: colors.text }]} numberOfLines={3}>
-                      {pushToken}
-                    </Text>
-                    <TouchableOpacity 
-                      style={[styles.copyButton, { backgroundColor: colors.primary }]}
-                      onPress={copyPushTokenToClipboard}
-                    >
-                      <Ionicons name="copy-outline" size={18} color={colors.white} />
-                    </TouchableOpacity>
-                  </View>
-                ) : (
-                  <TouchableOpacity 
-                    style={[styles.getTokenButton, { backgroundColor: colors.primary }]}
-                    onPress={fetchPushToken}
-                    disabled={loadingToken}
-                  >
-                    {loadingToken ? (
-                      <ActivityIndicator size="small" color={colors.white} />
-                    ) : (
-                      <>
-                        <Ionicons name="download-outline" size={18} color={colors.white} />
-                        <Text style={[styles.getTokenButtonText, { color: colors.white }]}>
-                          Get Push Token
-                        </Text>
-                      </>
-                    )}
-                  </TouchableOpacity>
-                )}
-              {/* </View>  */}
-            {/* </View>  */}
-
             {isAuthenticated && userDetails ? (
               <>
                 {/* User Profile */}
@@ -370,17 +309,6 @@ export default function AccountScreen() {
                   </View>
                   <View style={[styles.menuContainer, { backgroundColor: colors.surface }]}>
                     {menuItems.map(renderMenuItem)}
-                  </View>
-                </View>
-
-                {/* Settings */}
-                <View style={styles.section}>
-                  <View style={styles.sectionHeaderRow}>
-                    <Ionicons name="settings-outline" size={18} color={colors.primary} />
-                    <Text style={[styles.sectionTitle, { color: colors.text }]}>Settings</Text>
-                  </View>
-                  <View style={[styles.menuContainer, { backgroundColor: colors.surface }]}>
-                    {settingsItems.map(renderSettingsItem)}
                   </View>
                 </View>
 
@@ -455,7 +383,7 @@ export default function AccountScreen() {
           onPress={() => setShowReferralModal(true)}
           activeOpacity={0.7}
         >
-          <Text style={[styles.versionText, { color: colors.textSecondary }]}>Femtech Mobile App v3.1.1</Text>
+          <Text style={[styles.versionText, { color: colors.textSecondary }]}>Femtech Mobile App v3.2.0</Text>
         </TouchableOpacity>
       </ScrollView>
 

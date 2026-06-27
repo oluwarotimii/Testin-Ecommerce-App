@@ -428,7 +428,7 @@ export default function ProductDetailScreen() {
             )}
           </View>
 
-          <PriceNoticeBanner />
+          {product.categories?.some((c: any) => c.slug === 'awoof-corner') && <PriceNoticeBanner />}
 
           {/* Description */}
           <Text style={[styles.detailsLabel, { color: colors.text }]}>Details</Text>
