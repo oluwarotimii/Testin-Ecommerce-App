@@ -419,26 +419,12 @@ class WordPressApiService {
         billing: {
           first_name: firstname,
           last_name: lastname,
-          company: '',
           email: email,
-          phone: telephone,
-          address_1: '',
-          address_2: '',
-          city: '',
-          state: '',
-          postcode: '',
-          country: ''
+          phone: telephone
         },
         shipping: {
           first_name: firstname,
-          last_name: lastname,
-          company: '',
-          address_1: '',
-          address_2: '',
-          city: '',
-          state: '',
-          postcode: '',
-          country: ''
+          last_name: lastname
         }
       };
 
@@ -995,6 +981,7 @@ class WordPressApiService {
         payment_method: orderData.payment_method,
         payment_method_title: orderData.payment_method_title || 'Direct Bank Transfer',
         set_paid: orderData.set_paid || false,
+        status: orderData.status || 'processing',
         billing: orderData.billing,
         shipping: orderData.shipping,
         line_items: orderData.line_items,

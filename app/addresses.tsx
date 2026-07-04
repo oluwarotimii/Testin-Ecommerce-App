@@ -23,7 +23,6 @@ export default function AddressesScreen() {
     address2: '',
     city: '',
     state: '',
-    zipCode: '',
     country: '',
     phone: '',
     email: '',
@@ -59,7 +58,6 @@ export default function AddressesScreen() {
       address2: address.address2 || '',
       city: address.city || '',
       state: address.state || '',
-      zipCode: address.zipCode || '',
       country: address.country || '',
       phone: address.phone || '',
       email: address.email || '',
@@ -112,7 +110,6 @@ export default function AddressesScreen() {
         address2: '',
         city: '',
         state: '',
-        zipCode: '',
         country: '',
         phone: '',
         email: '',
@@ -339,17 +336,6 @@ export default function AddressesScreen() {
 
             <View style={styles.rowGroup}>
               <View style={styles.halfInputGroup}>
-                <Text style={[styles.label, { color: colors.text }]}>ZIP Code</Text>
-                <TextInput
-                  style={[styles.input, { backgroundColor: colors.surface, color: colors.text }]}
-                  value={formData.zipCode}
-                  onChangeText={(text) => setFormData({ ...formData, zipCode: text })}
-                  placeholder=""
-                  placeholderTextColor={colors.textSecondary}
-                  keyboardType="default"
-                />
-              </View>
-              <View style={styles.halfInputGroup}>
                 <Text style={[styles.label, { color: colors.text }]}>Country *</Text>
                 <TextInput
                   style={[styles.input, { backgroundColor: colors.surface, color: colors.text }]}
@@ -406,7 +392,6 @@ export default function AddressesScreen() {
             address2: '',
             city: '',
             state: '',
-            zipCode: '',
             country: '',
             phone: '',
             email: '',
@@ -437,7 +422,6 @@ export default function AddressesScreen() {
                   address2: '',
                   city: '',
                   state: '',
-                  zipCode: '',
                   country: '',
                   phone: user?.phone || '',
                   email: user?.email || '',
@@ -460,7 +444,7 @@ export default function AddressesScreen() {
                 )}
               </View>
               <Text style={[styles.addressText, { color: colors.text }]}>{address.address}</Text>
-              <Text style={[styles.addressText, { color: colors.text }]}>{address.city}, {address.state} {address.zipCode}</Text>
+              <Text style={[styles.addressText, { color: colors.text }]}>{address.city}, {address.state}</Text>
               <Text style={[styles.addressText, { color: colors.text }]}>{address.country}</Text>
               <Text style={[styles.addressPhone, { color: colors.textSecondary }]}>{address.phone}</Text>
               <Text style={[styles.addressPhone, { color: colors.textSecondary }]}>{address.email}</Text>

@@ -28,7 +28,7 @@ export default function PriceNoticeBanner({ onPress, onDismiss }: PriceNoticeBan
           style={[styles.message, { color: isDarkMode ? '#C8E6C9' : '#388E3C' }]}
           numberOfLines={2}
         >
-          Same prices as in-store. Only Awoof Corner items have exclusive prices!
+         Only Awoof Corner items have exclusive prices!
         </Text>
       </View>
       {onDismiss && (

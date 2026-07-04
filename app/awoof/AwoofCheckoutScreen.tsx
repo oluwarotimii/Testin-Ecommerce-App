@@ -458,15 +458,19 @@ export default function AwoofCheckoutScreen({ route, navigation }: any) {
     // Clear pending payment
     await AsyncStorage.removeItem('pending_awoof_payment');
 
-    await sendLocalNotification(
-      'Order placed successfully',
-      `Your Awoof order #${orderId} has been confirmed and is being processed.`,
-      {
-        linkType: 'page',
-        linkValue: 'orders',
-        orderId,
-      }
-    );
+    try {
+      await sendLocalNotification(
+        'Order placed successfully',
+        `Your Awoof order #${orderId} has been confirmed and is being processed.`,
+        {
+          linkType: 'page',
+          linkValue: 'orders',
+          orderId,
+        }
+      );
+    } catch (notificationError) {
+      console.warn('Notification not sent (e.g. on web):', notificationError);
+    }
     setPaymentData(null);
     setCheckoutUrl(null);
     setIsWebLoading(false);

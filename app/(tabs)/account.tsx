@@ -353,14 +353,14 @@ export default function AccountScreen() {
                     style={[styles.loginButton, { backgroundColor: colors.primary }]}
                     onPress={() => router.push('/login')}
                   >
-                    <Ionicons name="log-in-outline" size={18} color={colors.white} style={{ marginRight: 8 }} />
+                    <Ionicons name="log-in-outline" size={18} color={colors.white} />
                     <Text style={[styles.loginButtonText, { color: colors.white }]}>Log In</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={[styles.registerButton, { borderColor: colors.primary }]}
                     onPress={() => router.push('/register')}
                   >
-                    <Ionicons name="person-add-outline" size={18} color={colors.primary} style={{ marginRight: 8 }} />
+                    <Ionicons name="person-add-outline" size={18} color={colors.primary} />
                     <Text style={[styles.registerButtonText, { color: colors.primary }]}>Create Account</Text>
                   </TouchableOpacity>
 
@@ -383,7 +383,7 @@ export default function AccountScreen() {
           onPress={() => setShowReferralModal(true)}
           activeOpacity={0.7}
         >
-          <Text style={[styles.versionText, { color: colors.textSecondary }]}>Femtech Mobile App v3.2.0</Text>
+          <Text style={[styles.versionText, { color: colors.textSecondary }]}>Femtech Mobile App v3.3.0</Text>
         </TouchableOpacity>
       </ScrollView>
 
@@ -429,7 +429,7 @@ export default function AccountScreen() {
 
             <View style={styles.modalButtons}>
               <TouchableOpacity
-                style={[styles.modalButton, styles.cancelButton, { backgroundColor: colors.background }]}
+                style={[styles.modalButton, styles.cancelButton, { backgroundColor: colors.background, borderColor: colors.border }]}
                 onPress={() => setShowSignOutModal(false)}
               >
                 <Text style={[styles.modalButtonText, { color: colors.text }]}>Cancel</Text>
@@ -584,7 +584,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 20,
     paddingHorizontal: 16,
     paddingVertical: 14,
-    borderRadius: 16,
+    borderRadius: 12,
     borderWidth: 1,
   },
   logoutIconContainer: {
@@ -647,33 +647,30 @@ const styles = StyleSheet.create({
   loginButton: {
     width: '100%',
     flexDirection: 'row',
-    paddingVertical: 16,
-    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 16,
+    borderRadius: 12,
     marginBottom: 14,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 6,
-    elevation: 4,
   },
   loginButtonText: {
-    fontSize: 17,
-    fontWeight: '700',
+    fontSize: 16,
+    fontWeight: '600',
   },
   registerButton: {
     width: '100%',
     flexDirection: 'row',
-    paddingVertical: 16,
-    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1.5,
+    gap: 8,
+    paddingVertical: 16,
+    borderRadius: 12,
+    borderWidth: 1,
   },
   registerButtonText: {
-    fontSize: 17,
-    fontWeight: '700',
+    fontSize: 16,
+    fontWeight: '600',
   },
   privacyButton: {
     width: '100%',
@@ -692,7 +689,8 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
   },
   privacyLinkText: {
-    fontSize: 16,
+    fontSize: 14,
+    fontWeight: '500',
     textDecorationLine: 'underline',
   },
   // Modal styles
@@ -744,7 +742,6 @@ const styles = StyleSheet.create({
   },
   cancelButton: {
     borderWidth: 1,
-    borderColor: '#E5E5E5',
   },
   confirmButton: {
     // backgroundColor set dynamically

@@ -118,15 +118,19 @@ export default function AwoofCheckoutWebView({ route, navigation }: any) {
 
     await clearCartAbandonmentReminder();
     awoofCart.clearCart();
-    await sendLocalNotification(
-      'Order placed successfully',
-      `Your Awoof order #${orderId} has been confirmed and is being processed.`,
-      {
-        linkType: 'page',
-        linkValue: 'orders',
-        orderId,
-      }
-    );
+    try {
+      await sendLocalNotification(
+        'Order placed successfully',
+        `Your Awoof order #${orderId} has been confirmed and is being processed.`,
+        {
+          linkType: 'page',
+          linkValue: 'orders',
+          orderId,
+        }
+      );
+    } catch (notificationError) {
+      console.warn('Notification not sent (e.g. on web):', notificationError);
+    }
 
     // Using replace to prevent going back to checkout
     navigation.replace('OrderSuccess', { orderId });

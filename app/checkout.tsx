@@ -190,7 +190,6 @@ export default function CheckoutScreen() {
       { field: 'address', label: 'Street Address' },
       { field: 'city', label: 'City' },
       { field: 'state', label: 'State' },
-      { field: 'zipCode', label: 'ZIP Code' },
       { field: 'country', label: 'Country' }
     ];
 
@@ -268,15 +267,19 @@ export default function CheckoutScreen() {
           // Continue to success page even if cart clear fails
         }
 
-        await sendLocalNotification(
-          'Order placed successfully',
-          `Your order #${response.id || response.order?.id || 'new'} has been placed and is now being processed.`,
-          {
-            linkType: 'page',
-            linkValue: 'orders',
-            orderId: response.id || response.order?.id,
-          }
-        );
+        try {
+          await sendLocalNotification(
+            'Order placed successfully',
+            `Your order #${response.id || response.order?.id || 'new'} has been placed and is now being processed.`,
+            {
+              linkType: 'page',
+              linkValue: 'orders',
+              orderId: response.id || response.order?.id,
+            }
+          );
+        } catch (notificationError) {
+          console.warn('Notification not sent (e.g. on web):', notificationError);
+        }
 
         // Redirect to success screen
         const orderId = response.id || response.order?.id || 'Unknown';

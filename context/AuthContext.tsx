@@ -112,54 +112,34 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       try {
         const storedToken = await AsyncStorage.getItem('sessionToken');
         if (storedToken) {
-          // Set the token on the API service before validating
           apiService.setSessionToken(storedToken);
 
-          // Validate token if service supports it
-          if (apiService.validateToken) {
-            const isValid = await apiService.validateToken(storedToken);
-            if (isValid) {
-              setSessionToken(storedToken);
-              setIsAuthenticated(true);
+          // Check 6-month expiry from stored login timestamp
+          const loginTimestamp = await AsyncStorage.getItem('loginTimestamp');
+          const sixMonthsMs = 6 * 30 * 24 * 60 * 60 * 1000;
+          const tokenAge = loginTimestamp ? Date.now() - parseInt(loginTimestamp, 10) : 0;
 
-              // Fetch user details
-              try {
-                const customerId = await AsyncStorage.getItem('customerId');
-                if (customerId) {
-                  // We need to fetch the user details to get the name
-                  // This assumes apiService has a method to get user details by ID or current session
-                  if (apiService.getAccountDetails) {
-                    const userDetails = await apiService.getAccountDetails();
-                    setUser(userDetails);
-                  }
-                }
-              } catch (userError) {
-                console.error("Error fetching user details:", userError);
-              }
-
-            } else {
-              // Token invalid, clear it
-              console.log('Stored token is invalid, clearing session');
-              await AsyncStorage.removeItem('sessionToken');
-              await AsyncStorage.removeItem('customerId');
-              setSessionToken(null);
-              setIsAuthenticated(false);
-              setUser(null);
-              // Make sure to clear the token from the API service too
-              apiService.setSessionToken(null);
-            }
+          if (loginTimestamp && tokenAge > sixMonthsMs) {
+            console.log('Session expired (6 months), clearing');
+            await AsyncStorage.removeItem('sessionToken');
+            await AsyncStorage.removeItem('customerId');
+            await AsyncStorage.removeItem('loginTimestamp');
+            setSessionToken(null);
+            setIsAuthenticated(false);
+            setUser(null);
+            apiService.setSessionToken(null);
           } else {
-            // Fallback for services without validation (e.g. dummy)
             setSessionToken(storedToken);
             setIsAuthenticated(true);
-            // Fetch user details for services without validation
+
+            // Try to load user details - don't clear session if it fails
             try {
               if (apiService.getAccountDetails) {
                 const userDetails = await apiService.getAccountDetails();
                 setUser(userDetails);
               }
             } catch (userError) {
-              console.error("Error fetching user details for non-validating service:", userError);
+              console.warn("Could not fetch user details, session preserved:", userError);
             }
           }
         }
@@ -185,6 +165,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (response.token) {
         const token = response.token;
         await AsyncStorage.setItem('sessionToken', token);
+        await AsyncStorage.setItem('loginTimestamp', Date.now().toString());
         setSessionToken(token);
         setIsAuthenticated(true);
 
@@ -235,6 +216,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (response.token) {
         const token = response.token;
         await AsyncStorage.setItem('sessionToken', token);
+        await AsyncStorage.setItem('loginTimestamp', Date.now().toString());
         setSessionToken(token);
         setIsAuthenticated(true);
 
@@ -283,7 +265,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       await apiService.signOut();
       await AsyncStorage.removeItem('sessionToken');
       await AsyncStorage.removeItem('customerId');
-      await AsyncStorage.removeItem('pushToken'); // Remove push token on logout
+      await AsyncStorage.removeItem('pushToken');
+      await AsyncStorage.removeItem('loginTimestamp');
       setSessionToken(null);
       setIsAuthenticated(false);
     } catch (error) {

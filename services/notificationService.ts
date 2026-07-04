@@ -18,6 +18,7 @@ const isExpoGo = Constants.appOwnership === 'expo';
 
 const getNotifications = async () => {
   if (isExpoGo) return null;
+  if (Platform.OS === 'web') return null;
   try {
     const mod = await import('expo-notifications');
     return mod;
