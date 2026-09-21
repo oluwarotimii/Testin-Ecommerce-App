@@ -977,11 +977,20 @@ class WordPressApiService {
       const customerId = await AsyncStorage.getItem('customerId');
 
       // Create an order in WooCommerce
+      // Don't default `status` to 'processing' - that string means "payment
+      // received" in WooCommerce and the Orders UI (isPaidOrder in
+      // orders.tsx / order/[orderId].tsx) reads it as such. Since checkout
+      // never actually confirms payment before calling this (set_paid is
+      // always false here), forcing 'processing' made every order look paid
+      // regardless of whether it was. Only pass status when the caller
+      // explicitly provides one (e.g. a real payment confirmation) -
+      // otherwise WooCommerce falls back to its own default ('pending'),
+      // which correctly reflects an order awaiting payment.
       const order: any = {
         payment_method: orderData.payment_method,
         payment_method_title: orderData.payment_method_title || 'Direct Bank Transfer',
         set_paid: orderData.set_paid || false,
-        status: orderData.status || 'processing',
+        status: orderData.status,
         billing: orderData.billing,
         shipping: orderData.shipping,
         line_items: orderData.line_items,
