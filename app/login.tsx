@@ -8,6 +8,7 @@ import { ArrowLeftIcon, EnvelopeIcon, LockIcon, EyeIcon, EyeSlashIcon } from 'ph
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Button from '@/components/Button';
 import { radius, fontFamily } from '@/constants/designTokens';
+import { getFriendlyErrorMessage } from '@/utils/networkError';
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -43,8 +44,9 @@ export default function LoginScreen() {
         errorMessage = 'The email or password you entered is incorrect. Please try again.';
       } else if (error?.message?.includes('incorrect') || error?.message?.includes('invalid')) {
         errorMessage = 'The email or password you entered is incorrect. Please try again.';
-      } else if (error?.message) {
-        errorMessage = error.message;
+      } else {
+        // Never surface a raw status code / HTML challenge to the user.
+        errorMessage = getFriendlyErrorMessage(error, errorMessage);
       }
 
       setError(errorMessage);

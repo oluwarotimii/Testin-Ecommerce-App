@@ -1,6 +1,6 @@
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { useThemeColors } from '@/hooks/useColorScheme';
-import { Ionicons } from '@expo/vector-icons';
+import { MoneyIcon, BicycleIcon, StorefrontIcon } from 'phosphor-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import BackButton from '@/components/BackButton';
 import { radius, fontFamily, shadow } from '@/constants/designTokens';
@@ -18,7 +18,7 @@ export default function PaymentMethodsScreen() {
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         <View style={[styles.iconWrap, { backgroundColor: colors.primaryLight }]}>
-          <Ionicons name="cash-outline" size={48} color={colors.primary} />
+          <MoneyIcon weight="regular" size={48} color={colors.primary} />
         </View>
 
         <Text style={[styles.heading, { color: colors.text }]}>Payment on Delivery</Text>
@@ -29,7 +29,7 @@ export default function PaymentMethodsScreen() {
         <View style={[styles.card, { backgroundColor: colors.surface }]}>
           <View style={styles.cardRow}>
             <View style={[styles.cardIcon, { backgroundColor: '#E3F2FD' }]}>
-              <Ionicons name="bicycle-outline" size={22} color="#2196F3" />
+              <BicycleIcon weight="regular" size={22} color="#2196F3" />
             </View>
             <View style={styles.cardTextWrap}>
               <Text style={[styles.cardTitle, { color: colors.text }]}>Delivery</Text>
@@ -43,7 +43,7 @@ export default function PaymentMethodsScreen() {
         <View style={[styles.card, { backgroundColor: colors.surface }]}>
           <View style={styles.cardRow}>
             <View style={[styles.cardIcon, { backgroundColor: '#E8F5E9' }]}>
-              <Ionicons name="storefront-outline" size={22} color="#4CAF50" />
+              <StorefrontIcon weight="regular" size={22} color="#4CAF50" />
             </View>
             <View style={styles.cardTextWrap}>
               <Text style={[styles.cardTitle, { color: colors.text }]}>Pickup</Text>

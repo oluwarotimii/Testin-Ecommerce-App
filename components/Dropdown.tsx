@@ -8,7 +8,7 @@ import {
     StyleSheet,
     TouchableWithoutFeedback
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { CheckIcon, CaretUpIcon, CaretDownIcon } from 'phosphor-react-native';
 import { useThemeColors } from '@/hooks/useColorScheme';
 
 interface DropdownProps {
@@ -86,7 +86,7 @@ export default function Dropdown({
                     {labelExtractor(item)}
                 </Text>
                 {isSelected && (
-                    <Ionicons name="checkmark" size={20} color={colors.primary} />
+                    <CheckIcon weight="bold" size={20} color={colors.primary} />
                 )}
             </TouchableOpacity>
         );
@@ -102,7 +102,9 @@ export default function Dropdown({
                 <Text style={[styles.buttonText, { color: selectedItem ? colors.text : colors.textSecondary }]}>
                     {displayText}
                 </Text>
-                <Ionicons name={visible ? "chevron-up" : "chevron-down"} size={20} color={colors.textSecondary} />
+                {visible
+                    ? <CaretUpIcon weight="bold" size={20} color={colors.textSecondary} />
+                    : <CaretDownIcon weight="bold" size={20} color={colors.textSecondary} />}
             </TouchableOpacity>
 
             <Modal visible={visible} transparent animationType="fade" onRequestClose={() => setVisible(false)}>

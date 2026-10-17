@@ -9,7 +9,7 @@ import {
   StatusBar,
   ScrollView,
 } from 'react-native';
-import { Download, Apple, Play } from 'lucide-react-native';
+import { DownloadSimpleIcon, AppleLogoIcon, GooglePlayLogoIcon } from 'phosphor-react-native';
 import { useForceUpdate } from '@/context/ForceUpdateContext';
 import { useThemeColors } from '@/hooks/useColorScheme';
 
@@ -67,7 +67,7 @@ export default function ForceUpdateScreen() {
           <View style={styles.iconContainer}>
             <View style={[styles.iconBackground, { backgroundColor: isDarkMode ? colors.surface : '#E8F0FE' }]}>
               <View style={[styles.iconCircle, { backgroundColor: colors.card }]}>
-                <Download size={56} color={colors.primary} strokeWidth={2} />
+                <DownloadSimpleIcon weight="bold" size={56} color={colors.primary} />
               </View>
             </View>
           </View>
@@ -99,9 +99,9 @@ export default function ForceUpdateScreen() {
           >
             <View style={styles.buttonContent}>
               {isIOS ? (
-                <Apple size={24} color="#FFFFFF" strokeWidth={2} />
+                <AppleLogoIcon weight="fill" size={24} color="#FFFFFF" />
               ) : (
-                <Play size={24} color="#FFFFFF" fill="#FFFFFF" strokeWidth={2} />
+                <GooglePlayLogoIcon weight="fill" size={24} color="#FFFFFF" />
               )}
               <Text style={styles.updateButtonText}>
                 {isIOS ? 'Update on App Store' : 'Update on Google Play'}

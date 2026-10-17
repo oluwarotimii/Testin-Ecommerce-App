@@ -8,7 +8,7 @@ import {
   Animated,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
+import { ArrowLeftIcon, MinusIcon, PlusIcon, LightningIcon, CubeIcon, ShieldCheckIcon, ShoppingCartIcon } from 'phosphor-react-native';
 import { useThemeColors } from '@/hooks/useColorScheme';
 import { awoofCart, AwoofProduct, AwoofEvents, trackAwoofEvent } from '@/utils/awoof/AwoofUtils';
 import SafeImage from '@/components/SafeImage';
@@ -88,7 +88,7 @@ export default function ProductDetailScreen({ route, navigation }: any) {
         style={[styles.backButton, { top: insets.top + 16, backgroundColor: colors.surface }]}
         onPress={() => navigation.goBack()}
       >
-        <Ionicons name="arrow-back" size={20} color={colors.text} />
+        <ArrowLeftIcon weight="bold" size={20} color={colors.text} />
       </TouchableOpacity>
 
       <Animated.ScrollView
@@ -151,7 +151,7 @@ export default function ProductDetailScreen({ route, navigation }: any) {
                 onPress={() => setQuantity(Math.max(1, quantity - 1))}
                 disabled={quantity <= 1}
               >
-                <Ionicons name="remove" size={20} color="#fff" />
+                <MinusIcon weight="bold" size={20} color="#fff" />
               </TouchableOpacity>
 
               <View style={[styles.quantityDisplay, { backgroundColor: colors.surface }]}>
@@ -163,7 +163,7 @@ export default function ProductDetailScreen({ route, navigation }: any) {
                 onPress={() => setQuantity(Math.min(product.stock, quantity + 1))}
                 disabled={quantity >= product.stock}
               >
-                <Ionicons name="add" size={20} color="#fff" />
+                <PlusIcon weight="bold" size={20} color="#fff" />
               </TouchableOpacity>
             </View>
           </View>
@@ -185,21 +185,21 @@ export default function ProductDetailScreen({ route, navigation }: any) {
           <View style={styles.whyBuySection}>
             <Text style={[styles.sectionTitle, { color: colors.text }]}>Why This Deal?</Text>
             <View style={styles.benefitRow}>
-              <Ionicons name="flash" size={22} color={colors.primary} />
+              <LightningIcon weight="fill" size={22} color={colors.primary} />
               <View style={styles.benefitContent}>
                 <Text style={[styles.benefitTitle, { color: colors.text }]}>Flash Sale Price</Text>
                 <Text style={[styles.benefitDesc, { color: colors.textSecondary }]}>Exclusive Awoof discount</Text>
               </View>
             </View>
             <View style={styles.benefitRow}>
-              <Ionicons name="cube" size={22} color={colors.primary} />
+              <CubeIcon size={22} color={colors.primary} />
               <View style={styles.benefitContent}>
                 <Text style={[styles.benefitTitle, { color: colors.text }]}>Quick Delivery</Text>
                 <Text style={[styles.benefitDesc, { color: colors.textSecondary }]}>Ships within 24 hours</Text>
               </View>
             </View>
             <View style={styles.benefitRow}>
-              <Ionicons name="shield-checkmark" size={22} color={colors.primary} />
+              <ShieldCheckIcon weight="fill" size={22} color={colors.primary} />
               <View style={styles.benefitContent}>
                 <Text style={[styles.benefitTitle, { color: colors.text }]}>Secure Payment</Text>
                 <Text style={[styles.benefitDesc, { color: colors.textSecondary }]}>Paystack secure checkout</Text>
@@ -218,7 +218,7 @@ export default function ProductDetailScreen({ route, navigation }: any) {
             style={[styles.addToCartButton, { borderColor: colors.primary }]}
             onPress={handleAddToCart}
           >
-            <Ionicons name="cart-outline" size={18} color={colors.primary} />
+            <ShoppingCartIcon size={18} color={colors.primary} />
             <Text style={[styles.addToCartText, { color: colors.primary }]}>Add</Text>
           </TouchableOpacity>
 

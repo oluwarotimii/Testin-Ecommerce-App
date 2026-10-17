@@ -11,12 +11,13 @@ import {
   TextInput,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
+import { ArrowLeftIcon, MapPinIcon, PlusCircleIcon, CheckIcon, ShieldCheckIcon, ArrowRightIcon, XIcon, LockIcon } from 'phosphor-react-native';
 import { useThemeColors } from '@/hooks/useColorScheme';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
 import { clearCartAbandonmentReminder, sendLocalNotification } from '@/services/notificationService';
 import appConfig from '@/hooks/useAppConfig';
+import { CLIENT_USER_AGENT } from '@/services/config';
 import { CartItem, awoofCart } from '@/utils/awoof/AwoofUtils';
 import SafeImage from '@/components/SafeImage';
 import Dropdown from '@/components/Dropdown';
@@ -25,6 +26,7 @@ import { WebView } from 'react-native-webview';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { calculateAwoofCouponDiscount, clearStoredAwoofAppliedCoupon, getStoredAwoofAppliedCoupon, normalizeAwoofCouponCode, setStoredAwoofAppliedCoupon, type AwoofAppliedCoupon } from '@/utils/awoofCoupons';
 import { isExpiredTokenError } from '@/utils/tokenError';
+import { getFriendlyErrorMessage } from '@/utils/networkError';
 import { radius, fontFamily } from '@/constants/designTokens';
 
 const PAYSTACK_INIT_ENDPOINT = `${appConfig.wordpressUrl.replace(/\/$/, '')}/wp-json/awoof/v1/initialize-payment`;
@@ -373,6 +375,8 @@ export default function AwoofCheckoutScreen({ route, navigation }: any) {
           headers: {
             Authorization: `Bearer ${authToken}`,
             'Content-Type': 'application/json',
+            Accept: 'application/json',
+            'User-Agent': CLIENT_USER_AGENT,
           },
         }
       );
@@ -432,12 +436,10 @@ export default function AwoofCheckoutScreen({ route, navigation }: any) {
         return;
       }
 
-      let errorMessage = 'An unexpected error occurred during payment initialization.';
-      if (error.response?.data?.message) {
-        errorMessage = error.response.data.message;
-      } else if (error.message) {
-        errorMessage = error.message;
-      }
+      const errorMessage = getFriendlyErrorMessage(
+        error,
+        'An unexpected error occurred during payment initialization.'
+      );
 
       Alert.alert('Payment Initialization Failed', errorMessage, [
         { text: 'Retry', onPress: initiatePayment },
@@ -587,7 +589,7 @@ export default function AwoofCheckoutScreen({ route, navigation }: any) {
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
         <TouchableOpacity style={[styles.backButton, { backgroundColor: colors.surface }]} onPress={() => navigation.goBack()}>
-          <Ionicons name="arrow-back" size={20} color={colors.text} />
+          <ArrowLeftIcon weight="bold" size={20} color={colors.text} />
         </TouchableOpacity>
         <View style={{ flex: 1 }}>
           <Text style={[styles.headerTitle, { color: colors.text }]}>Awoof Checkout</Text>
@@ -613,7 +615,7 @@ export default function AwoofCheckoutScreen({ route, navigation }: any) {
           {address ? (
             <View style={[styles.addressCard, { backgroundColor: colors.surface }]}>
               <View style={styles.addressInfo}>
-                <Ionicons name="location" size={20} color={colors.primary} />
+                <MapPinIcon weight="fill" size={20} color={colors.primary} />
                 <View style={styles.addressTextContainer}>
                   <Text style={[styles.addressName, { color: colors.text }]}>
                     {address.firstName} {address.lastName}
@@ -635,7 +637,7 @@ export default function AwoofCheckoutScreen({ route, navigation }: any) {
               style={[styles.emptyAddress, { borderColor: colors.border }]}
               onPress={() => router.push('/addresses')}
             >
-              <Ionicons name="add-circle-outline" size={24} color={colors.textSecondary} />
+              <PlusCircleIcon size={24} color={colors.textSecondary} />
               <Text style={{ color: colors.textSecondary, marginLeft: 8 }}>Add Shipping Address</Text>
             </TouchableOpacity>
           )}
@@ -661,7 +663,7 @@ export default function AwoofCheckoutScreen({ route, navigation }: any) {
                     <Text style={[styles.deliveryMethodTitle, { color: colors.text }, isSelected && { color: colors.primary }]}>
                       {item.title || item.method_title}
                     </Text>
-                    {isSelected && <Ionicons name="checkmark" size={20} color={colors.primary} />}
+                    {isSelected && <CheckIcon weight="bold" size={20} color={colors.primary} />}
                   </View>
                   {item.zone_name && (
                     <Text style={[styles.deliveryMethodDescription, { color: colors.textSecondary }]}>
@@ -761,7 +763,7 @@ export default function AwoofCheckoutScreen({ route, navigation }: any) {
         </View>
 
         <View style={styles.secureInfo}>
-          <Ionicons name="shield-checkmark" size={16} color={colors.success} />
+          <ShieldCheckIcon weight="fill" size={16} color={colors.success} />
           <Text style={[styles.secureText, { color: colors.textSecondary }]}>
             Secure payment powered by Paystack. Your data is encrypted.
           </Text>
@@ -790,7 +792,7 @@ export default function AwoofCheckoutScreen({ route, navigation }: any) {
           ) : (
             <>
               <Text style={styles.payButtonText}>{isAuthenticated ? `Pay ₦${total.toLocaleString()}` : 'Login to Pay'}</Text>
-              <Ionicons name="arrow-forward" size={20} color="#fff" />
+              <ArrowRightIcon weight="bold" size={20} color="#fff" />
             </>
           )}
         </TouchableOpacity>
@@ -817,13 +819,13 @@ export default function AwoofCheckoutScreen({ route, navigation }: any) {
               style={[styles.closeButton, { backgroundColor: colors.surface }]}
               onPress={handlePaymentCancel}
             >
-              <Ionicons name="close" size={20} color={colors.text} />
+              <XIcon weight="bold" size={20} color={colors.text} />
             </TouchableOpacity>
 
             <View style={styles.webHeaderContent}>
               <Text style={[styles.headerTitle, { color: colors.text }]}>Secure Checkout</Text>
               <View style={[styles.securityBadge, { backgroundColor: colors.success + '15' }]}>
-                <Ionicons name="lock-closed" size={10} color={colors.success} />
+                <LockIcon weight="fill" size={10} color={colors.success} />
                 <Text style={[styles.securityText, { color: colors.success }]}>Paystack</Text>
               </View>
             </View>

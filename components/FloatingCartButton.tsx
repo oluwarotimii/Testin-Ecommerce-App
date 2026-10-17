@@ -3,7 +3,7 @@ import { TouchableOpacity, Text, View, StyleSheet, Animated } from 'react-native
 import { useCart } from '@/context/CartContext';
 import { useThemeColors } from '@/hooks/useColorScheme';
 import { useRouter, usePathname } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
+import { ShoppingCartIcon } from 'phosphor-react-native';
 
 const FloatingCartButton: React.FC = () => {
   const { cartCount } = useCart();
@@ -63,7 +63,7 @@ const FloatingCartButton: React.FC = () => {
         onPress={() => router.push('/(tabs)/cart')}
         activeOpacity={0.8}
       >
-        <Ionicons name="cart" size={24} color={colors.white} />
+        <ShoppingCartIcon weight="fill" size={24} color={colors.white} />
         {cartCount > 0 && (
           <View style={styles.badge}>
             <Text style={styles.badgeText}>

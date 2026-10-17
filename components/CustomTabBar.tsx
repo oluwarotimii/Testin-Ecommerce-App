@@ -4,7 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useThemeColors } from '@/hooks/useColorScheme';
 import { useCart } from '@/context/CartContext';
 import { useTheme } from '@/context/ThemeContext';
-import { HouseIcon, ListIcon, TagIcon, ShoppingCartIcon, UserIcon, IconProps } from 'phosphor-react-native';
+import { HouseIcon, GridFourIcon, TagIcon, ShoppingCartIcon, UserIcon, IconProps } from 'phosphor-react-native';
 import type { ComponentType } from 'react';
 
 interface CustomTabBarProps {
@@ -74,7 +74,7 @@ const CustomTabBar: React.FC<CustomTabBarProps> = ({ state, descriptors, navigat
 
   const tabIcons: Record<string, ComponentType<IconProps>> = {
     index: HouseIcon,
-    categories: ListIcon,
+    categories: GridFourIcon,
     awoof: TagIcon,
     cart: ShoppingCartIcon,
     account: UserIcon,

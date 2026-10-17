@@ -10,7 +10,7 @@ import {
   Animated,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
+import { ShoppingCartIcon, XIcon, LockIcon, CubeIcon, ArrowRightIcon, MinusIcon, PlusIcon, TrashIcon } from 'phosphor-react-native';
 import { useThemeColors } from '@/hooks/useColorScheme';
 import { awoofCart, CartItem } from '@/utils/awoof/AwoofUtils';
 import SafeImage from '@/components/SafeImage';
@@ -126,7 +126,7 @@ export default function AwoofMiniCartModal({ navigation, route }: any) {
           <TouchableOpacity style={styles.backdrop} activeOpacity={1} onPress={handleClose} />
           <Animated.View style={[styles.modalContent, { backgroundColor: colors.card, paddingBottom: insets.bottom + 16, transform: [{ translateY: slideAnim }] }]}>
             <View style={[styles.emptyContainer, { paddingBottom: 60 }]}>
-              <Ionicons name="cart-outline" size={64} color={colors.textSecondary} />
+              <ShoppingCartIcon weight="regular" size={64} color={colors.textSecondary} />
               <Text style={[styles.emptyTitle, { color: colors.text }]}>Your cart is empty</Text>
               <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>Browse deals and add items to get started</Text>
               <TouchableOpacity style={[styles.emptyButton, { backgroundColor: colors.primary }]} onPress={handleClose}>
@@ -155,7 +155,7 @@ export default function AwoofMiniCartModal({ navigation, route }: any) {
               <Text style={[styles.headerSubtitle, { color: colors.textSecondary }]}>{cartItems.length} item{cartItems.length > 1 ? 's' : ''}</Text>
             </View>
             <TouchableOpacity onPress={handleClose}>
-              <Ionicons name="close" size={28} color={colors.textSecondary} />
+              <XIcon weight="bold" size={28} color={colors.textSecondary} />
             </TouchableOpacity>
           </View>
 
@@ -203,11 +203,11 @@ export default function AwoofMiniCartModal({ navigation, route }: any) {
             {/* Trust Badges */}
             <View style={styles.trustSection}>
               <View style={styles.trustBadge}>
-                <Ionicons name="lock-closed" size={18} color={colors.textSecondary} />
+                <LockIcon size={18} color={colors.textSecondary} />
                 <Text style={[styles.trustText, { color: colors.textSecondary }]}>Secure Checkout</Text>
               </View>
               <View style={styles.trustBadge}>
-                <Ionicons name="cube" size={18} color={colors.textSecondary} />
+                <CubeIcon size={18} color={colors.textSecondary} />
                 <Text style={[styles.trustText, { color: colors.textSecondary }]}>Fast Delivery</Text>
               </View>
             </View>
@@ -228,7 +228,7 @@ export default function AwoofMiniCartModal({ navigation, route }: any) {
                 onPress={handleCheckout}
               >
                 <Text style={styles.checkoutText}>Proceed to Secure Payment</Text>
-                <Ionicons name="arrow-forward" size={18} color="#fff" />
+                <ArrowRightIcon weight="bold" size={18} color="#fff" />
               </TouchableOpacity>
             </View>
           </View>
@@ -262,7 +262,7 @@ function CartItemRow({ item, colors, isDarkMode, onUpdateQuantity, onRemove }: a
               style={[styles.quantityBtn, { backgroundColor: colors.primary }]}
               onPress={() => onUpdateQuantity(-1)}
             >
-              <Ionicons name="remove" size={16} color="#fff" />
+              <MinusIcon weight="bold" size={16} color="#fff" />
             </TouchableOpacity>
 
             <Text style={[styles.quantityValue, { color: colors.text }]}>{item.quantity}</Text>
@@ -271,12 +271,12 @@ function CartItemRow({ item, colors, isDarkMode, onUpdateQuantity, onRemove }: a
               style={[styles.quantityBtn, { backgroundColor: colors.primary }]}
               onPress={() => onUpdateQuantity(1)}
             >
-              <Ionicons name="add" size={16} color="#fff" />
+              <PlusIcon weight="bold" size={16} color="#fff" />
             </TouchableOpacity>
           </View>
 
           <TouchableOpacity style={styles.removeButton} onPress={onRemove}>
-            <Ionicons name="trash-outline" size={20} color={colors.error} />
+            <TrashIcon size={20} color={colors.error} />
           </TouchableOpacity>
         </View>
       </View>

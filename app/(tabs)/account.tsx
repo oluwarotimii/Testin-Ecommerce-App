@@ -15,7 +15,6 @@ import {
   MoonIcon,
   QuestionIcon,
   CaretRightIcon,
-  PaletteIcon,
   NotePencilIcon,
   GridFourIcon,
   HeadsetIcon,
@@ -31,7 +30,6 @@ import Button from '@/components/Button';
 export default function AccountScreen() {
   const router = useRouter();
   const colors = useThemeColors();
-  const isDarkMode = String(colors.background).toLowerCase() === '#000000';
   const { colorScheme, setColorScheme } = useTheme();
   const { isAuthenticated, apiService, signOut, loadingAuth } = useAuth();
   const [showSignOutModal, setShowSignOutModal] = useState(false);
@@ -152,8 +150,13 @@ export default function AccountScreen() {
     }
   };
 
-  const renderMenuItem = (item: any) => (
-    <TouchableOpacity key={item.id} style={styles.menuItem} onPress={item.onPress}>
+  const renderMenuItem = (item: any, isLast = false) => (
+    <TouchableOpacity
+      key={item.id}
+      style={[styles.menuItem, !isLast && { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border }]}
+      onPress={item.onPress}
+      activeOpacity={0.6}
+    >
       <View style={styles.menuItemLeft}>
         <View style={[styles.iconContainer, { backgroundColor: colors.primary + '15' }]}>
           {item.icon()}
@@ -195,7 +198,10 @@ export default function AccountScreen() {
       >
         {/* Header */}
         <View style={styles.header}>
-          <Text style={[styles.title, { color: colors.text }]}>Account</Text>
+          <View>
+            <Text style={[styles.title, { color: colors.text }]}>Account</Text>
+            <Text style={[styles.subtitle, { color: colors.textSecondary }]}>Manage your profile and preferences</Text>
+          </View>
         </View>
 
         {loadingAuth || loading ? (
@@ -204,20 +210,16 @@ export default function AccountScreen() {
           <>
             {/* Theme Settings - Always visible */}
             <View style={styles.section}>
-              <View style={styles.sectionHeaderRow}>
-                <PaletteIcon weight="regular" size={18} color={colors.primary} />
-                <Text style={[styles.sectionTitle, { color: colors.text }]}>Appearance</Text>
-              </View>
-              <View style={[styles.menuContainer, { backgroundColor: colors.surface }]}>
+              <View style={[styles.menuContainer, { backgroundColor: colors.card, borderColor: colors.border }]}>
                 {themeItems.map(renderSettingsItem)}
               </View>
             </View>
             {isAuthenticated && userDetails ? (
               <>
                 {/* User Profile */}
-                <View style={[styles.profileSection, { backgroundColor: isDarkMode ? colors.surface : colors.primary + '12' }]}>
+                <View style={[styles.profileSection, { backgroundColor: colors.card, borderColor: colors.border }]}>
                   <View style={styles.profileInfo}>
-                    <View style={[styles.avatar, { backgroundColor: colors.primary }]}>
+                    <View style={[styles.avatar, { backgroundColor: colors.primary, shadowColor: colors.primary }]}>
                       <Text style={[styles.avatarText, { color: colors.white }]}>
                         {userDetails.first_name ? userDetails.first_name.charAt(0) :
                           userDetails.name?.firstname ? userDetails.name.firstname.charAt(0) :
@@ -230,14 +232,20 @@ export default function AccountScreen() {
                       </Text>
                     </View>
                     <View style={styles.userDetails}>
-                      <Text style={[styles.userName, { color: colors.text }]}>
+                      <Text style={[styles.userName, { color: colors.text }]} numberOfLines={1}>
                         {userDetails.first_name || userDetails.name?.firstname || userDetails.firstname || 'User'} {userDetails.last_name || userDetails.name?.lastname || userDetails.lastname || ''}
                       </Text>
-                      <Text style={[styles.userEmail, { color: colors.textSecondary }]}>{userDetails.email}</Text>
-                      <Text style={[styles.memberSince, { color: colors.textSecondary }]}>Account member</Text>
+                      <Text style={[styles.userEmail, { color: colors.textSecondary }]} numberOfLines={1}>{userDetails.email}</Text>
+                      <View style={[styles.memberBadge, { backgroundColor: colors.primary + '15' }]}>
+                        <Text style={[styles.memberSince, { color: colors.primary }]}>Account member</Text>
+                      </View>
                     </View>
                   </View>
-                  <TouchableOpacity style={[styles.editButton, { backgroundColor: colors.primary }]} onPress={() => router.push('/profile')}>
+                  <TouchableOpacity
+                    style={[styles.editButton, { backgroundColor: colors.primary, shadowColor: colors.primary }]}
+                    onPress={() => router.push('/profile')}
+                    activeOpacity={0.8}
+                  >
                     <NotePencilIcon weight="regular" size={18} color={colors.white} />
                   </TouchableOpacity>
                 </View>
@@ -248,8 +256,8 @@ export default function AccountScreen() {
                     <GridFourIcon weight="regular" size={18} color={colors.primary} />
                     <Text style={[styles.sectionTitle, { color: colors.text }]}>Account</Text>
                   </View>
-                  <View style={[styles.menuContainer, { backgroundColor: colors.surface }]}>
-                    {menuItems.map(renderMenuItem)}
+                  <View style={[styles.menuContainer, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                    {menuItems.map((item, i) => renderMenuItem(item, i === menuItems.length - 1))}
                   </View>
                 </View>
 
@@ -259,8 +267,8 @@ export default function AccountScreen() {
                     <HeadsetIcon weight="regular" size={18} color={colors.primary} />
                     <Text style={[styles.sectionTitle, { color: colors.text }]}>Support</Text>
                   </View>
-                  <View style={[styles.menuContainer, { backgroundColor: colors.surface }]}>
-                    {supportItems.map(renderMenuItem)}
+                  <View style={[styles.menuContainer, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                    {supportItems.map((item, i) => renderMenuItem(item, i === supportItems.length - 1))}
                   </View>
                 </View>
 
@@ -273,7 +281,11 @@ export default function AccountScreen() {
 
                 {/* Logout */}
                 <View style={styles.section}>
-                  <TouchableOpacity style={[styles.logoutCard, { backgroundColor: colors.surface, borderColor: colors.error + '20' }]} onPress={() => setShowSignOutModal(true)}>
+                  <TouchableOpacity
+                    style={[styles.logoutCard, { backgroundColor: colors.card, borderColor: colors.error + '30' }]}
+                    onPress={() => setShowSignOutModal(true)}
+                    activeOpacity={0.8}
+                  >
                     <View style={[styles.logoutIconContainer, { backgroundColor: colors.error + '15' }]}>
                       <SignOutIcon weight="regular" size={22} color={colors.error} />
                     </View>
@@ -285,7 +297,7 @@ export default function AccountScreen() {
             ) : (
               <>
                 <View style={[styles.emptyContainer, { backgroundColor: colors.background }]}>
-                  <View style={[styles.emptyIconCircle, { backgroundColor: colors.primary + '10' }]}>
+                  <View style={[styles.emptyIconCircle, { backgroundColor: colors.primary + '12' }]}>
                     <UserIcon weight="regular" size={40} color={colors.primary} />
                   </View>
                   <Text style={[styles.emptyTitle, { color: colors.text }]}>You are not logged in.</Text>
@@ -312,7 +324,7 @@ export default function AccountScreen() {
           onPress={() => setShowReferralModal(true)}
           activeOpacity={0.7}
         >
-          <Text style={[styles.versionText, { color: colors.textSecondary }]}>Femtech Mobile App v3.3.0</Text>
+          <Text style={[styles.versionText, { color: colors.textSecondary }]}>Femtech Mobile App v3.5.0</Text>
         </TouchableOpacity>
       </ScrollView>
 
@@ -346,7 +358,7 @@ export default function AccountScreen() {
         onRequestClose={() => setShowSignOutModal(false)}
       >
         <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, { backgroundColor: colors.surface }]}>
+          <View style={[styles.modalContent, { backgroundColor: colors.card }]}>
             <View style={[styles.modalIconContainer, { backgroundColor: colors.error + '20' }]}>
               <SignOutIcon weight="regular" size={40} color={colors.error} />
             </View>
@@ -378,7 +390,7 @@ export default function AccountScreen() {
       {/* Activity Indicator Overlay */}
       {signingOut && (
         <View style={styles.loadingOverlay}>
-          <View style={[styles.loadingContainer, { backgroundColor: colors.surface }]}>
+          <View style={[styles.loadingContainer, { backgroundColor: colors.card }]}>
             <ActivityIndicator size="large" color={colors.primary} />
             <Text style={[styles.loadingText, { color: colors.text }]}>Signing out...</Text>
           </View>
@@ -401,8 +413,12 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 28,
-    fontFamily: fontFamily.bold,
-    flex: 1,
+    fontFamily: fontFamily.display.bold,
+  },
+  subtitle: {
+    fontSize: 14,
+    fontFamily: fontFamily.regular,
+    marginTop: 2,
   },
   profileSection: {
     flexDirection: 'row',
@@ -413,21 +429,26 @@ const styles = StyleSheet.create({
     marginHorizontal: 20,
     borderRadius: radius.xxl,
     marginBottom: 32,
-    ...shadow.raised,
+    borderWidth: 1,
+    ...shadow.card,
   },
   profileInfo: {
     flexDirection: 'row',
     alignItems: 'center',
     flex: 1,
+    marginRight: 12,
   },
   avatar: {
-    width: 56,
-    height: 56,
+    width: 58,
+    height: 58,
     borderRadius: radius.pill,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 14,
-    ...shadow.card,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 10,
+    elevation: 4,
   },
   avatarText: {
     fontSize: 20,
@@ -437,24 +458,34 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   userName: {
-    fontSize: 18,
+    fontSize: 17,
     fontFamily: fontFamily.bold,
   },
   userEmail: {
     fontSize: 13,
     marginTop: 2,
   },
+  memberBadge: {
+    alignSelf: 'flex-start',
+    borderRadius: radius.pill,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    marginTop: 6,
+  },
   memberSince: {
-    fontSize: 12,
-    marginTop: 4,
-    opacity: 0.7,
+    fontSize: 11,
+    fontFamily: fontFamily.semiBold,
   },
   editButton: {
-    width: 36,
-    height: 36,
+    width: 38,
+    height: 38,
     borderRadius: radius.pill,
     alignItems: 'center',
     justifyContent: 'center',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
   },
   section: {
     marginBottom: 24,
@@ -473,7 +504,9 @@ const styles = StyleSheet.create({
   menuContainer: {
     marginHorizontal: 20,
     borderRadius: radius.xl,
+    borderWidth: 1,
     overflow: 'hidden',
+    ...shadow.card,
   },
   menuItem: {
     flexDirection: 'row',
@@ -507,6 +540,7 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     borderRadius: radius.lg,
     borderWidth: 1,
+    ...shadow.card,
   },
   logoutIconContainer: {
     width: 36,
@@ -547,6 +581,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 24,
+    ...shadow.card,
   },
   emptyTitle: {
     fontSize: 22,
@@ -584,6 +619,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.xxl,
     padding: 24,
     alignItems: 'center',
+    ...shadow.raised,
   },
   modalIconContainer: {
     width: 80,

@@ -7,6 +7,7 @@ import { ArrowLeftIcon, UserIcon, EnvelopeIcon, PhoneIcon, LockIcon, EyeIcon, Ey
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Button from '@/components/Button';
 import { radius, fontFamily } from '@/constants/designTokens';
+import { getFriendlyErrorMessage } from '@/utils/networkError';
 
 export default function RegisterScreen() {
   const router = useRouter();
@@ -52,8 +53,9 @@ export default function RegisterScreen() {
         errorMessage = 'This email is already registered. Please log in or use a different email address.';
       } else if (error?.code === 'registration-error-username-exists') {
         errorMessage = 'This username is already taken. Please try a different email address.';
-      } else if (error?.message) {
-        errorMessage = error.message;
+      } else {
+        // Never surface a raw status code / HTML challenge to the user.
+        errorMessage = getFriendlyErrorMessage(error, errorMessage);
       }
 
       setError(errorMessage);

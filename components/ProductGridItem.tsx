@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import SafeImage from './SafeImage';
-import { Ionicons } from '@expo/vector-icons';
+import { ShoppingCartIcon } from 'phosphor-react-native';
 import { useThemeColors } from '@/hooks/useColorScheme';
 
 interface ProductGridItemProps {
@@ -35,7 +35,7 @@ const ProductGridItem: React.FC<ProductGridItemProps> = ({ product, onPress, onA
                 onAddToCart();
               }}
             >
-              <Ionicons name="cart" size={20} color="#FFFFFF" />
+              <ShoppingCartIcon weight="fill" size={20} color="#FFFFFF" />
             </TouchableOpacity>
           </View>
         </View>

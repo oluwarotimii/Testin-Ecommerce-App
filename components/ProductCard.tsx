@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, StyleProp, ViewStyle } from 'react-native';
 import SafeImage from '@/components/SafeImage';
-import { Ionicons } from '@expo/vector-icons';
+import { HeartIcon, ShoppingCartIcon, CheckIcon, CheckCircleIcon } from 'phosphor-react-native';
 import { useThemeColors } from '@/hooks/useColorScheme';
 import { formatPrice } from '@/utils/formatNumber';
 import { spacing, radius, typeScale, fontFamily, shadow } from '@/constants/designTokens';
@@ -54,8 +54,8 @@ export default function ProductCard({ product, onPress, isLiked, onToggleWishlis
                             onToggleWishlist();
                         }}
                     >
-                        <Ionicons
-                            name={isLiked ? "heart" : "heart-outline"}
+                        <HeartIcon
+                            weight={isLiked ? "fill" : "regular"}
                             size={16}
                             color={isLiked ? colors.error : colors.text}
                         />
@@ -72,13 +72,15 @@ export default function ProductCard({ product, onPress, isLiked, onToggleWishlis
                             }
                         }}
                     >
-                        <Ionicons name={addingToCart ? "checkmark" : "cart"} size={18} color={colors.white} />
+                        {addingToCart
+                            ? <CheckIcon weight="bold" size={18} color={colors.white} />
+                            : <ShoppingCartIcon weight="fill" size={18} color={colors.white} />}
                     </TouchableOpacity>
                 </View>
 
                 {cartSuccess && (
                     <View style={styles.successOverlay}>
-                        <Ionicons name="checkmark-circle" size={24} color="#4CD964" />
+                        <CheckCircleIcon weight="fill" size={24} color="#4CD964" />
                     </View>
                 )}
             </View>

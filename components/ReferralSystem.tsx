@@ -5,7 +5,7 @@ import { useAuth } from '@/context/AuthContext';
 import * as Device from 'expo-device';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { DASHBOARD_API_BASE_URL } from '@/services/config';
-import { Ionicons } from '@expo/vector-icons';
+import { CheckCircleIcon, ShareNetworkIcon } from 'phosphor-react-native';
 
 interface ReferralSystemProps {
   onClose?: () => void;
@@ -135,7 +135,7 @@ const ReferralSystem: React.FC<ReferralSystemProps> = ({ onClose, initialCode })
   if (submitted) {
     return (
       <View style={[styles.container, { backgroundColor: colors.surface, alignItems: 'center' }]}>
-        <Ionicons name="checkmark-circle" size={64} color={colors.success || '#4CD964'} />
+        <CheckCircleIcon weight="fill" size={64} color={colors.success || '#4CD964'} />
         <Text style={[styles.title, { color: colors.text, marginTop: 16 }]}>Referral Tracked!</Text>
         <Text style={[styles.description, { color: colors.textSecondary, textAlign: 'center' }]}>
           Thank you for being part of our community. Your referral has been successfully recorded.
@@ -144,7 +144,7 @@ const ReferralSystem: React.FC<ReferralSystemProps> = ({ onClose, initialCode })
           style={[styles.shareContainer, { backgroundColor: colors.primary + '20' }]}
           onPress={shareApp}
         >
-          <Ionicons name="share-social" size={20} color={colors.primary} />
+          <ShareNetworkIcon weight="bold" size={20} color={colors.primary} />
           <Text style={[styles.shareText, { color: colors.primary }]}>Invite Friends</Text>
         </TouchableOpacity>
       </View>

@@ -5,7 +5,7 @@ import { useIsFocused } from '@react-navigation/native';
 import { useAuth } from '@/context/AuthContext';
 import { useCart } from '@/context/CartContext';
 import { useThemeColors } from '@/hooks/useColorScheme';
-import { Ionicons } from '@expo/vector-icons';
+import { LockIcon, MapPinIcon, CheckCircleIcon, CheckIcon, InfoIcon } from 'phosphor-react-native';
 import { formatPrice } from '@/utils/formatNumber';
 import SkeletonLoader from '@/components/SkeletonLoader';
 import BackButton from '@/components/BackButton';
@@ -326,7 +326,7 @@ export default function CheckoutScreen() {
         <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
           <View style={[styles.loginPromptContainer, { backgroundColor: colors.background }]}>
             <View style={styles.loginIconContainer}>
-              <Ionicons name="lock-closed" size={64} color={colors.primary} />
+              <LockIcon weight="regular" size={64} color={colors.primary} />
             </View>
 
             <Text style={[styles.loginPromptTitle, { color: colors.text }]}>Login Required</Text>
@@ -425,7 +425,7 @@ export default function CheckoutScreen() {
         {/* Shipping Address */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Ionicons name="location" size={20} color={colors.primary} />
+            <MapPinIcon weight="fill" size={20} color={colors.primary} />
             <Text style={[styles.sectionTitle, { color: colors.text }]}>Shipping Address</Text>
           </View>
           {addresses.map((address, index) => (
@@ -448,7 +448,7 @@ export default function CheckoutScreen() {
                   )}
                 </View>
                 {selectedAddress === index && (
-                  <Ionicons name="checkmark-circle" size={24} color={colors.primary} />
+                  <CheckCircleIcon weight="fill" size={24} color={colors.primary} />
                 )}
               </View>
             </TouchableOpacity>
@@ -486,7 +486,7 @@ export default function CheckoutScreen() {
                     <Text style={[styles.paymentMethodTitle, { color: colors.text }, isSelected && { color: colors.primary }]}>
                       {item.title}
                     </Text>
-                    {isSelected && <Ionicons name="checkmark" size={20} color={colors.primary} />}
+                    {isSelected && <CheckIcon weight="bold" size={20} color={colors.primary} />}
                   </View>
                   {item.zone_name && (
                     <Text style={[styles.paymentMethodDescription, { color: colors.textSecondary }]}>
@@ -512,7 +512,7 @@ export default function CheckoutScreen() {
           <View style={styles.section}>
             <Text style={[styles.sectionTitle, { color: colors.text }]}>Payment</Text>
             <View style={[styles.instructionsBox, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-              <Ionicons name="information-circle" size={18} color={colors.primary} />
+              <InfoIcon weight="fill" size={18} color={colors.primary} />
               <Text style={[styles.instructionsText, { color: colors.text }]}>
                 {selectedShippingMethod.method_id === 'local_pickup'
                   ? "Payment on Delivery - pay in store when you arrive to pick up your order. We'll be expecting you!"

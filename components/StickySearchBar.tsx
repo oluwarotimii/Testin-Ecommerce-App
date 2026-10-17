@@ -1,5 +1,5 @@
 import { View, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { MagnifyingGlassIcon, XCircleIcon } from 'phosphor-react-native';
 import { useThemeColors } from '@/hooks/useColorScheme';
 
 interface StickySearchBarProps {
@@ -18,7 +18,7 @@ export default function StickySearchBar({
     return (
         <View style={[styles.container, { backgroundColor: colors.background }]}>
             <View style={[styles.searchBar, { backgroundColor: colors.surface }]}>
-                <Ionicons name="search" size={20} color={colors.textSecondary} />
+                <MagnifyingGlassIcon size={20} color={colors.textSecondary} />
                 <TextInput
                     style={[styles.searchInput, { color: colors.text }]}
                     placeholder={placeholder}
@@ -28,7 +28,7 @@ export default function StickySearchBar({
                 />
                 {searchQuery.length > 0 && (
                     <TouchableOpacity onPress={() => onSearchChange('')}>
-                        <Ionicons name="close-circle" size={20} color={colors.textSecondary} />
+                        <XCircleIcon weight="fill" size={20} color={colors.textSecondary} />
                     </TouchableOpacity>
                 )}
             </View>

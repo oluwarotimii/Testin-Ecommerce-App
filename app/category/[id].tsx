@@ -3,7 +3,7 @@ import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
 import { useCart } from '@/context/CartContext';
-import { Ionicons } from '@expo/vector-icons';
+import { WarningCircleIcon, CubeIcon, ArrowLeftIcon, MagnifyingGlassIcon, XIcon, XCircleIcon } from 'phosphor-react-native';
 import { useThemeColors } from '@/hooks/useColorScheme';
 import { transformProducts } from '@/utils/woocommerceTransformers';
 import ProductCard from '@/components/ProductCard';
@@ -287,7 +287,7 @@ export default function CategoryScreen() {
         if (error) {
             return (
                 <View style={styles.centerContainer}>
-                    <Ionicons name="alert-circle" size={64} color={colors.error} />
+                    <WarningCircleIcon weight="fill" size={64} color={colors.error} />
                     <Text style={[styles.errorText, { color: colors.error }]}>{error}</Text>
                 </View>
             );
@@ -295,7 +295,7 @@ export default function CategoryScreen() {
 
         return (
             <View style={styles.centerContainer}>
-                <Ionicons name="cube-outline" size={64} color={colors.textSecondary} />
+                <CubeIcon size={64} color={colors.textSecondary} />
                 <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
                     No products found in this category
                 </Text>
@@ -308,7 +308,7 @@ export default function CategoryScreen() {
             {/* Header */}
             <View style={styles.header}>
                 <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-                    <Ionicons name="arrow-back" size={22} color={colors.text} />
+                    <ArrowLeftIcon weight="bold" size={22} color={colors.text} />
                 </TouchableOpacity>
                 <Text style={[styles.title, { color: colors.text }]} numberOfLines={1}>
                     {categoryName}
@@ -317,14 +317,16 @@ export default function CategoryScreen() {
                     style={[styles.searchIcon, { backgroundColor: colors.surface }]}
                     onPress={() => setShowSearch(!showSearch)}
                 >
-                    <Ionicons name={showSearch ? "close" : "search"} size={20} color={colors.text} />
+                    {showSearch
+                        ? <XIcon weight="bold" size={20} color={colors.text} />
+                        : <MagnifyingGlassIcon size={20} color={colors.text} />}
                 </TouchableOpacity>
             </View>
 
             {/* Search Bar */}
             {showSearch && (
                 <View style={[styles.searchContainer, { backgroundColor: colors.surface }]}>
-                    <Ionicons name="search" size={18} color={colors.textSecondary} />
+                    <MagnifyingGlassIcon size={18} color={colors.textSecondary} />
                     <TextInput
                         style={[styles.searchInput, { color: colors.text }]}
                         placeholder="Search in this category..."
@@ -334,7 +336,7 @@ export default function CategoryScreen() {
                     />
                     {searchQuery.length > 0 && (
                         <TouchableOpacity onPress={() => setSearchQuery('')}>
-                            <Ionicons name="close-circle" size={18} color={colors.textSecondary} />
+                            <XCircleIcon weight="fill" size={18} color={colors.textSecondary} />
                         </TouchableOpacity>
                     )}
                 </View>

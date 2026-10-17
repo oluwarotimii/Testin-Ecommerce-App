@@ -1,20 +1,20 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions, Alert, Share } from 'react-native';
-import { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions, Alert } from 'react-native';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
 import { useCart } from '@/context/CartContext';
-import { Ionicons } from '@expo/vector-icons';
+import { CaretLeftIcon, MagnifyingGlassIcon, HeartIcon, StarIcon, StarHalfIcon, MinusIcon, PlusIcon, ShoppingCartIcon, CubeIcon, WarningCircleIcon } from 'phosphor-react-native';
 import { useThemeColors } from '@/hooks/useColorScheme';
 import { transformProduct } from '@/utils/woocommerceTransformers';
 import { formatPrice } from '@/utils/formatNumber';
 import { stripHtml } from '@/utils/htmlUtils';
 import PriceNoticeBanner from '@/components/PriceNoticeBanner';
-import Constants from 'expo-constants';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import SkeletonProductDetail from '@/components/SkeletonProductDetail';
 import SafeImage from '@/components/SafeImage';
 import Button from '@/components/Button';
 import BackButton from '@/components/BackButton';
+import AwoofToast, { AwoofToastRef } from '@/components/AwoofToast';
 import { spacing, radius, typeScale, fontFamily, shadow } from '@/constants/designTokens';
 
 const { width } = Dimensions.get('window');
@@ -27,6 +27,7 @@ export default function ProductDetailScreen() {
   const colors = useThemeColors();
   const isDarkMode = String(colors.background).toLowerCase() === '#000000';
   const insets = useSafeAreaInsets();
+  const toastRef = useRef<AwoofToastRef>(null);
   const [quantity, setQuantity] = useState(1);
   const [selectedImage, setSelectedImage] = useState(0);
   const [isInWishlist, setIsInWishlist] = useState(false);
@@ -170,18 +171,15 @@ export default function ProductDetailScreen() {
     const fetchSimilarProducts = async () => {
       if (product && product.category_id) {
         try {
-          // Get all products and filter for similar ones based on category
-          const allProducts = await apiService.getProducts();
+          // Fetch products from the same category server-side instead of
+          // pulling a default/unfiltered page and filtering client-side -
+          // the old approach often returned few or zero same-category
+          // matches since the default page isn't sorted by category.
+          const categoryProducts = await apiService.getProductsByCategory?.(String(product.category_id), 11);
 
-          // Transform products using utility
-          const transformedProducts = allProducts.map((p: any) => transformProduct(p));
+          const transformedProducts = (categoryProducts || []).map((p: any) => transformProduct(p));
+          const filteredProducts = transformedProducts.filter((p: any) => p.id !== product.id);
 
-          // Filter products by same category, excluding the current product
-          const filteredProducts = transformedProducts.filter((p: any) =>
-            p.category_id === product.category_id && p.id !== product.id
-          );
-
-          // Limit to 10 similar products
           if (isMounted) {
             setSimilarProducts(filteredProducts.slice(0, 10));
           }
@@ -234,11 +232,9 @@ export default function ProductDetailScreen() {
           <BackButton />
         </View>
         <View style={styles.notFoundContent}>
-          <Ionicons
-            name={notFound ? 'cube-outline' : 'alert-circle-outline'}
-            size={56}
-            color={colors.textSecondary}
-          />
+          {notFound
+            ? <CubeIcon size={56} color={colors.textSecondary} />
+            : <WarningCircleIcon size={56} color={colors.textSecondary} />}
           <Text style={[styles.notFoundText, { color: colors.text }]}>
             {notFound ? 'Product not found.' : fetchError}
           </Text>
@@ -263,15 +259,15 @@ export default function ProductDetailScreen() {
       if (isInWishlist) {
         await apiService.removeFromWishlist(product.id);
         setIsInWishlist(false);
-        Alert.alert("Success", "Product removed from wishlist!");
+        toastRef.current?.show('Removed from wishlist', 'success');
       } else {
         await apiService.addToWishlist(product.id);
         setIsInWishlist(true);
-        Alert.alert("Success", "Product added to wishlist!");
+        toastRef.current?.show('Added to wishlist', 'success');
       }
     } catch (error) {
       console.error("Wishlist error:", error);
-      Alert.alert("Error", "Failed to update wishlist. Please try again.");
+      toastRef.current?.show('Failed to update wishlist. Please try again.', 'error');
     }
   };
 
@@ -314,41 +310,6 @@ export default function ProductDetailScreen() {
     }
   };
 
-  const handleShare = async () => {
-    try {
-      // Get the app URL scheme from constants - using centralized config approach
-      const { expoPublicAppUrl } = Constants.expoConfig?.extra || {};
-      const appUrl = expoPublicAppUrl || 'https://invalid-url-for-testing.com/product';
-
-      // Create deep link to the specific product
-      const productLink = `${appUrl}/${product.id}`;
-
-      const shareMessage = `🛍️ Check out this amazing product!\n\n${product.title}\n\n💰 Price: ${formatPrice(typeof product.price === 'number' ? product.price : parseFloat(product.price || '0'))}\n\n${stripHtml(product.description).substring(0, 150)}${stripHtml(product.description).length > 150 ? '...' : ''}\n\n${productLink}`;
-
-      const result = await Share.share({
-        message: shareMessage,
-        url: productLink, // Include the URL in the share
-        title: `${product.title} - Femtech Mobile App`,
-      });
-
-      if (result.action === Share.sharedAction) {
-        if (result.activityType) {
-          // Shared with activity type
-          console.log('Shared with activity type:', result.activityType);
-        } else {
-          // Shared
-          console.log('Product shared successfully');
-        }
-      } else if (result.action === Share.dismissedAction) {
-        // Dismissed
-        console.log('Share dismissed');
-      }
-    } catch (error: any) {
-      console.error('Share error:', error);
-      Alert.alert('Error', 'Failed to share product. Please try again.');
-    }
-  };
-
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <ScrollView
@@ -361,18 +322,15 @@ export default function ProductDetailScreen() {
           {/* Header Overlay */}
           <View style={styles.headerOverlay}>
             <TouchableOpacity onPress={() => router.back()} style={[styles.headerIconBg, { backgroundColor: colors.background + 'CC' }]}>
-              <Ionicons name="chevron-back" size={22} color={colors.text} />
+              <CaretLeftIcon weight="bold" size={22} color={colors.text} />
             </TouchableOpacity>
             <View style={styles.headerOverlayRight}>
               <TouchableOpacity style={[styles.headerIconBg, { backgroundColor: colors.background + 'CC' }]} onPress={() => router.push('/search')}>
-                <Ionicons name="search" size={20} color={colors.text} />
-              </TouchableOpacity>
-              <TouchableOpacity style={[styles.headerIconBg, { backgroundColor: colors.background + 'CC' }]} onPress={handleShare}>
-                <Ionicons name="share-outline" size={20} color={colors.text} />
+                <MagnifyingGlassIcon size={20} color={colors.text} />
               </TouchableOpacity>
               <TouchableOpacity style={[styles.headerIconBg, { backgroundColor: colors.background + 'CC' }]} onPress={toggleWishlist}>
-                <Ionicons
-                  name={isInWishlist ? "heart" : "heart-outline"}
+                <HeartIcon
+                  weight={isInWishlist ? "fill" : "regular"}
                   size={20}
                   color={isInWishlist ? "#FF3B30" : colors.text}
                 />
@@ -446,11 +404,11 @@ export default function ProductDetailScreen() {
             <Text style={[styles.productName, { color: colors.text }]}>{product.title}</Text>
             <View style={styles.ratingRow}>
               <View style={styles.starsContainer}>
-                <Ionicons name="star" size={14} color="#FFB800" />
-                <Ionicons name="star" size={14} color="#FFB800" />
-                <Ionicons name="star" size={14} color="#FFB800" />
-                <Ionicons name="star" size={14} color="#FFB800" />
-                <Ionicons name="star-half" size={14} color="#FFB800" />
+                <StarIcon weight="fill" size={14} color="#FFB800" />
+                <StarIcon weight="fill" size={14} color="#FFB800" />
+                <StarIcon weight="fill" size={14} color="#FFB800" />
+                <StarIcon weight="fill" size={14} color="#FFB800" />
+                <StarHalfIcon weight="fill" size={14} color="#FFB800" />
               </View>
             </View>
           </View>
@@ -482,14 +440,14 @@ export default function ProductDetailScreen() {
                 style={styles.quantityButton}
                 onPress={() => updateQuantity(-1)}
               >
-                <Ionicons name="remove" size={18} color={colors.primary} />
+                <MinusIcon weight="bold" size={18} color={colors.primary} />
               </TouchableOpacity>
               <Text style={[styles.quantity, { color: colors.text }]}>{quantity}</Text>
               <TouchableOpacity
                 style={styles.quantityButton}
                 onPress={() => updateQuantity(1)}
               >
-                <Ionicons name="add" size={18} color={colors.primary} />
+                <PlusIcon weight="bold" size={18} color={colors.primary} />
               </TouchableOpacity>
             </View>
           </View>
@@ -521,8 +479,8 @@ export default function ProductDetailScreen() {
                       style={[styles.similarWishlistButton, { backgroundColor: colors.background + 'CC' }]}
                       onPress={(e) => { e.stopPropagation(); toggleSimilarProductWishlist(item.id); }}
                     >
-                      <Ionicons
-                        name={similarProductsInWishlist.has(item.id) ? 'heart' : 'heart-outline'}
+                      <HeartIcon
+                        weight={similarProductsInWishlist.has(item.id) ? 'fill' : 'regular'}
                         size={14}
                         color={similarProductsInWishlist.has(item.id) ? '#FF3B30' : colors.text}
                       />
@@ -554,11 +512,12 @@ export default function ProductDetailScreen() {
           style={[styles.addToCartOutline, { borderColor: colors.primary, backgroundColor: colors.background }]}
           onPress={addToCart}
         >
-          <Ionicons name="cart-outline" size={18} color={colors.primary} />
+          <ShoppingCartIcon size={18} color={colors.primary} />
           <Text style={[styles.addToCartOutlineText, { color: colors.primary }]}>Cart</Text>
         </TouchableOpacity>
       </View>
 
+      <AwoofToast ref={toastRef} />
     </SafeAreaView>
   );
 }

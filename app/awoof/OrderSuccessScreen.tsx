@@ -7,7 +7,7 @@ import {
   Animated,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
+import { ArrowLeftIcon, CheckIcon, EnvelopeIcon, FireIcon } from 'phosphor-react-native';
 import { useThemeColors } from '@/hooks/useColorScheme';
 import { useRouter } from 'expo-router';
 import { radius, fontFamily } from '@/constants/designTokens';
@@ -64,13 +64,13 @@ export default function OrderSuccessScreen({ route, navigation }: any) {
         style={[styles.backButton, { top: insets.top + 16, backgroundColor: colors.surface }]}
         onPress={() => navigation.navigate('AwoofFeed')}
       >
-        <Ionicons name="arrow-back" size={20} color={colors.text} />
+        <ArrowLeftIcon weight="bold" size={20} color={colors.text} />
       </TouchableOpacity>
 
       <View style={[styles.content, { paddingTop: insets.top + 40, paddingHorizontal: 24 }]}>
         {/* Success Animation */}
         <Animated.View style={[styles.successCircle, { transform: [{ scale: scaleAnim }], backgroundColor: colors.success }]}>
-          <Ionicons name="checkmark" size={48} color="#fff" />
+          <CheckIcon weight="bold" size={48} color="#fff" />
         </Animated.View>
 
         {/* Success Message */}
@@ -133,7 +133,7 @@ export default function OrderSuccessScreen({ route, navigation }: any) {
             },
           ]}
         >
-          <Ionicons name="mail-outline" size={22} color={colors.warning} />
+          <EnvelopeIcon size={22} color={colors.warning} />
           <Text style={[styles.infoText, { color: colors.textSecondary }]}>
             Order confirmation sent to your email
           </Text>
@@ -204,7 +204,7 @@ export default function OrderSuccessScreen({ route, navigation }: any) {
           onPress={handleContinueShopping}
         >
           <Text style={styles.continueText}>Keep Shopping Deals</Text>
-          <Ionicons name="flame" size={18} color="#fff" />
+          <FireIcon weight="fill" size={18} color="#fff" />
         </TouchableOpacity>
       </Animated.View>
     </View>

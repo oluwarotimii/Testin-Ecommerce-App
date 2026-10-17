@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Modal, ScrollView } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { XIcon, CheckCircleIcon, StarIcon, ArrowUpIcon, ArrowDownIcon, ClockIcon, TextAaIcon } from 'phosphor-react-native';
 import { useThemeColors } from '@/hooks/useColorScheme';
 import Slider from '@react-native-community/slider';
 
@@ -51,11 +51,11 @@ export default function FilterModal({
   };
 
   const sortOptions = [
-    { value: 'price-asc', label: 'Price: Low to High', icon: 'arrow-up' },
-    { value: 'price-desc', label: 'Price: High to Low', icon: 'arrow-down' },
-    { value: 'rating', label: 'Highest Rated', icon: 'star' },
-    { value: 'newest', label: 'Newest First', icon: 'time' },
-    { value: 'name', label: 'Name: A-Z', icon: 'text' },
+    { value: 'price-asc', label: 'Price: Low to High', icon: ArrowUpIcon },
+    { value: 'price-desc', label: 'Price: High to Low', icon: ArrowDownIcon },
+    { value: 'rating', label: 'Highest Rated', icon: StarIcon },
+    { value: 'newest', label: 'Newest First', icon: ClockIcon },
+    { value: 'name', label: 'Name: A-Z', icon: TextAaIcon },
   ];
 
   const ratingOptions = [0, 1, 2, 3, 4, 5];
@@ -73,7 +73,7 @@ export default function FilterModal({
           <View style={[styles.modalHeader, { borderBottomColor: colors.border }]}>
             <Text style={[styles.modalTitle, { color: colors.text }]}>Filters & Sort</Text>
             <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-              <Ionicons name="close" size={24} color={colors.text} />
+              <XIcon weight="bold" size={24} color={colors.text} />
             </TouchableOpacity>
           </View>
 
@@ -123,34 +123,37 @@ export default function FilterModal({
             {/* Sort By */}
             <View style={styles.section}>
               <Text style={[styles.sectionTitle, { color: colors.text }]}>Sort By</Text>
-              {sortOptions.map((option) => (
-                <TouchableOpacity
-                  key={option.value}
-                  style={[
-                    styles.sortOption,
-                    { backgroundColor: colors.surface },
-                    sortBy === option.value && { backgroundColor: colors.primaryLight }
-                  ]}
-                  onPress={() => setSortBy(option.value as any)}
-                >
-                  <Ionicons 
-                    name={option.icon as any} 
-                    size={20} 
-                    color={sortBy === option.value ? colors.primary : colors.textSecondary} 
-                  />
-                  <Text
+              {sortOptions.map((option) => {
+                const SortIcon = option.icon;
+                return (
+                  <TouchableOpacity
+                    key={option.value}
                     style={[
-                      styles.sortOptionText,
-                      { color: sortBy === option.value ? (isDarkMode ? colors.white : colors.primary) : colors.textSecondary }
+                      styles.sortOption,
+                      { backgroundColor: colors.surface },
+                      sortBy === option.value && { backgroundColor: colors.primaryLight }
                     ]}
+                    onPress={() => setSortBy(option.value as any)}
                   >
-                    {option.label}
-                  </Text>
-                  {sortBy === option.value && (
-                    <Ionicons name="checkmark-circle" size={20} color={colors.primary} />
-                  )}
-                </TouchableOpacity>
-              ))}
+                    <SortIcon
+                      weight="bold"
+                      size={20}
+                      color={sortBy === option.value ? colors.primary : colors.textSecondary}
+                    />
+                    <Text
+                      style={[
+                        styles.sortOptionText,
+                        { color: sortBy === option.value ? (isDarkMode ? colors.white : colors.primary) : colors.textSecondary }
+                      ]}
+                    >
+                      {option.label}
+                    </Text>
+                    {sortBy === option.value && (
+                      <CheckCircleIcon weight="fill" size={20} color={colors.primary} />
+                    )}
+                  </TouchableOpacity>
+                );
+              })}
             </View>
 
             {/* Rating Filter */}
@@ -171,7 +174,7 @@ export default function FilterModal({
                       <Text style={[styles.ratingText, { color: colors.textSecondary }]}>Any</Text>
                     ) : (
                       <>
-                        <Ionicons name="star" size={16} color={rating === stars ? colors.warning : colors.textSecondary } />
+                        <StarIcon weight="fill" size={16} color={rating === stars ? colors.warning : colors.textSecondary } />
                         <Text style={[styles.ratingText, { color: rating === stars ? (isDarkMode ? colors.white : colors.primary) : colors.textSecondary }]}>
                           {stars}+
                         </Text>

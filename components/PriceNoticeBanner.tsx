@@ -1,5 +1,5 @@
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { TagIcon, XIcon } from 'phosphor-react-native';
 import { useThemeColors } from '@/hooks/useColorScheme';
 
 interface PriceNoticeBannerProps {
@@ -18,7 +18,7 @@ export default function PriceNoticeBanner({ onPress, onDismiss }: PriceNoticeBan
       activeOpacity={0.8}
     >
       <View style={[styles.iconWrapper, { backgroundColor: isDarkMode ? '#2E7D3220' : '#4CAF5020' }]}>
-        <Ionicons name="pricetag-outline" size={20} color={isDarkMode ? '#81C784' : '#2E7D32'} />
+        <TagIcon weight="fill" size={20} color={isDarkMode ? '#81C784' : '#2E7D32'} />
       </View>
       <View style={styles.textContainer}>
         <Text style={[styles.title, { color: isDarkMode ? '#A5D6A7' : '#1B5E20' }]}>
@@ -33,7 +33,7 @@ export default function PriceNoticeBanner({ onPress, onDismiss }: PriceNoticeBan
       </View>
       {onDismiss && (
         <TouchableOpacity style={styles.dismissButton} onPress={onDismiss} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-          <Ionicons name="close" size={18} color={isDarkMode ? '#81C784' : '#2E7D32'} />
+          <XIcon weight="bold" size={18} color={isDarkMode ? '#81C784' : '#2E7D32'} />
         </TouchableOpacity>
       )}
     </TouchableOpacity>

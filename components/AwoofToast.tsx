@@ -1,6 +1,6 @@
 import React, { useState, forwardRef, useImperativeHandle } from 'react';
 import { Text, StyleSheet, Animated } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { CheckCircleIcon, WarningCircleIcon } from 'phosphor-react-native';
 import * as Haptics from 'expo-haptics';
 
 export interface AwoofToastRef {
@@ -76,11 +76,11 @@ const AwoofToast = forwardRef<AwoofToastRef>((props, ref) => {
         },
       ]}
     >
-      <Ionicons 
-        name={type === 'success' ? 'checkmark-circle' : 'alert-circle'} 
-        size={20} 
-        color="#fff" 
-      />
+      {type === 'success' ? (
+        <CheckCircleIcon weight="fill" size={20} color="#fff" />
+      ) : (
+        <WarningCircleIcon weight="fill" size={20} color="#fff" />
+      )}
       <Text style={styles.text}>{message}</Text>
     </Animated.View>
   );

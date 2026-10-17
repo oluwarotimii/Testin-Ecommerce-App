@@ -4,6 +4,20 @@ import {
   clearCartAbandonmentReminder,
   scheduleCartAbandonmentReminder,
 } from '@/services/notificationService';
+import {
+  getFriendlyErrorMessage,
+  isTransientServerError,
+  isWafBlockError,
+  isNetworkError,
+} from '@/utils/networkError';
+import { CLIENT_USER_AGENT } from '@/services/config';
+
+const MAX_RETRIES = 3;
+const RETRY_BASE_DELAY_MS = 500;
+const REQUEST_TIMEOUT_MS = 20000;
+const IDEMPOTENT_METHODS = new Set(['get', 'head', 'options']);
+
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 interface Customer {
   id: number;
@@ -85,6 +99,11 @@ class WordPressApiService {
     // Create axios instance with base configuration
     this.api = axios.create({
       baseURL: `${cleanWordpressUrl}/wp-json/wc/v3`,
+      timeout: REQUEST_TIMEOUT_MS,
+      headers: {
+        Accept: 'application/json',
+        'User-Agent': CLIENT_USER_AGENT,
+      },
     });
 
     this.wordpressUrl = cleanWordpressUrl;
@@ -112,12 +131,9 @@ class WordPressApiService {
         const base64Auth = this.toBase64(authString);
         config.headers.Authorization = `Basic ${base64Auth}`;
 
-        console.log('API Request:', {
-          url: `${config.baseURL}${config.url}`,
-          method: config.method,
-          hasAuth: !!config.headers.Authorization,
-          authType: 'Basic (Consumer Key/Secret) - WooCommerce'
-        });
+        // Keep a consistent, non-bot-like identity on every request.
+        if (!config.headers.Accept) config.headers.Accept = 'application/json';
+        if (!config.headers['User-Agent']) config.headers['User-Agent'] = CLIENT_USER_AGENT;
 
         return config;
       },
@@ -127,19 +143,45 @@ class WordPressApiService {
       }
     );
 
-    // Add response interceptor for better error handling
+    // Response interceptor: transparently retry transient failures (WAF/rate
+    // -limit blocks, network drops, timeouts, 5xx) with exponential backoff.
+    // A Cloudflare 403 block means the request never reached WooCommerce, so
+    // retrying is safe even for writes; other transient errors are only
+    // retried for idempotent (GET/HEAD/OPTIONS) requests.
     this.api.interceptors.response.use(
       (response) => response,
-      (error) => {
-        if (error.response) {
+      async (error) => {
+        const config: any = error?.config;
+        const method = String(config?.method || 'get').toLowerCase();
+
+        if (config) {
+          config.__retryCount = config.__retryCount || 0;
+
+          const retryable =
+            config.__retryCount < MAX_RETRIES &&
+            (isWafBlockError(error) ||
+              (IDEMPOTENT_METHODS.has(method) && isTransientServerError(error)));
+
+          if (retryable) {
+            config.__retryCount += 1;
+            const delay = RETRY_BASE_DELAY_MS * 2 ** (config.__retryCount - 1);
+            console.log(
+              `Transient API failure, retrying (${config.__retryCount}/${MAX_RETRIES}) in ${delay}ms: ${config.url}`
+            );
+            await sleep(delay);
+            return this.api(config);
+          }
+        }
+
+        // Log a concise, non-verbose summary - never dump HTML challenge pages.
+        if (error?.response) {
           console.error('API Error Response:', {
             status: error.response.status,
-            statusText: error.response.statusText,
-            data: error.response.data,
-            url: error.config?.url,
+            url: config?.url,
+            wafBlock: isWafBlockError(error),
           });
-        } else if (error.request) {
-          console.error('API No Response:', error.request);
+        } else if (error?.request) {
+          console.error('API No Response (network/connectivity):', error.message);
         } else {
           console.error('API Request Setup Error:', error.message);
         }
@@ -165,17 +207,10 @@ class WordPressApiService {
       const response = await this.api(endpoint, options);
       return response.data as T;
     } catch (error: any) {
-      // Enhanced error logging for 403 errors
-      if (error.response?.status === 403) {
-        console.error(`403 Forbidden error for ${endpoint}:`, {
-          endpoint,
-          hasToken: !!this.sessionToken,
-          tokenPreview: this.sessionToken ? `${this.sessionToken.substring(0, 20)}...` : 'none',
-          errorData: error.response?.data,
-          errorMessage: error.message
-        });
-      } else {
-        console.error(`Error making request to ${endpoint}:`, error.response?.data || error.message);
+      // The response interceptor already logs a concise summary, and a WAF
+      // block is retried there - don't dump (possibly HTML) bodies here.
+      if (!isWafBlockError(error)) {
+        console.error(`Request to ${endpoint} failed:`, error.response?.status || error.message);
       }
       throw error;
     }
@@ -208,11 +243,38 @@ class WordPressApiService {
     }
   }
 
+  // POST JSON to a non-WooCommerce endpoint (e.g. the JWT token route) with
+  // CDN-friendly headers and retry-on-WAF-block, since the JWT route sits
+  // behind the same Cloudflare/Wordfence layer as the rest of the site.
+  private async postJsonWithRetry(url: string, body: any): Promise<any> {
+    let attempt = 0;
+    // eslint-disable-next-line no-constant-condition
+    while (true) {
+      try {
+        return await axios.post(url, body, {
+          timeout: REQUEST_TIMEOUT_MS,
+          headers: {
+            'Content-Type': 'application/json',
+            Accept: 'application/json',
+            'User-Agent': CLIENT_USER_AGENT,
+          },
+        });
+      } catch (error: any) {
+        if (attempt < MAX_RETRIES && isWafBlockError(error)) {
+          attempt += 1;
+          await sleep(RETRY_BASE_DELAY_MS * attempt);
+          continue;
+        }
+        throw error;
+      }
+    }
+  }
+
   // Authentication methods
   async login(email: string, password: string) {
     try {
       // Authenticate using JWT plugin
-      const response = await axios.post(this.jwtEndpoint, {
+      const response = await this.postJsonWithRetry(this.jwtEndpoint, {
         username: email,
         password: password
       });
@@ -247,10 +309,27 @@ class WordPressApiService {
         throw new Error('Invalid response from authentication server');
       }
     } catch (error: any) {
-      console.error('Login error:', error.response?.data || error.message);
+      console.error('Login error:', error.response?.status || error.message);
 
-      // Format error message for better user experience
-      const errorMessage = error.response?.data?.message || error.message || 'Login failed';
+      // A WAF/connectivity failure is not a credential problem - surface a
+      // friendly, retryable message instead of a raw 403/network error.
+      if (isWafBlockError(error) || isNetworkError(error)) {
+        throw {
+          code: 'service_unavailable',
+          message: getFriendlyErrorMessage(
+            error,
+            'We could not reach the server. Please check your connection and try again.'
+          ),
+          data: error.response?.data,
+        };
+      }
+
+      // Format error message for better user experience (also strips any HTML
+      // that the JWT plugin wraps its messages in).
+      const errorMessage = getFriendlyErrorMessage(
+        error,
+        error.response?.data?.message || 'Login failed'
+      );
       const errorCode = error.response?.data?.code || 'login_error';
 
       throw {
@@ -400,7 +479,15 @@ class WordPressApiService {
 
   async getProduct(product_id: number) {
     try {
-      const response = await this.api.get(`/products/${product_id}`);
+      // The default WooCommerce product response includes meta_data,
+      // variations, attributes, related/cross-sell ids, etc. that the app
+      // never reads (see transformProduct) - trimming the response fields
+      // noticeably cuts payload size and load time on the product page.
+      const response = await this.api.get(`/products/${product_id}`, {
+        params: {
+          _fields: 'id,name,images,price,regular_price,description,short_description,categories,average_rating,rating_count',
+        },
+      });
       return response.data;
     } catch (error: any) {
       console.error(`Error fetching product ${product_id}:`, error.response?.data || error.message);
@@ -452,7 +539,6 @@ class WordPressApiService {
   async searchProductsExtended(search: string, page?: number, limit?: number) {
     const params: Record<string, any> = {
       search,
-      search_exclude: '', // Include all fields (title, description, excerpt, SKU)
       status: 'publish',
       per_page: limit || 50,
       page: page || 1

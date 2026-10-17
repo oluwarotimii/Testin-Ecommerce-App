@@ -19,3 +19,8 @@ export const FEATURED_CATEGORY_CACHE_KEY = '@config:featuredCategoryId';
 export const PRODUCTS_PER_PAGE = 20;
 export const FEATURED_PRODUCTS_LIMIT = 8; // Show 8 products (4 rows x 2 columns on home)
 export const CATEGORIES_LIMIT = 100;
+
+// Identifies the app to the CDN/WAF (Cloudflare + Wordfence) in front of the
+// store. React Native otherwise sends a blank/bot-like User-Agent, which is
+// the main trigger for the intermittent 403 bot-challenge pages.
+export const CLIENT_USER_AGENT = 'FemtechMobile/3.1.0 (React Native; +https://femtechit.com)';

@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useThemeColors } from '@/hooks/useColorScheme';
 import { useAuth } from '@/context/AuthContext';
-import { Ionicons } from '@expo/vector-icons';
+import { CubeIcon, BicycleIcon, MapPinIcon, EnvelopeIcon, XCircleIcon, WhatsappLogoIcon } from 'phosphor-react-native';
 import BackButton from '@/components/BackButton';
 import { getOrderStatus } from '@/constants/orderStatus';
 import SafeImage from '@/components/SafeImage';
@@ -259,7 +259,7 @@ export default function OrderDetailsScreen() {
         <View style={[styles.card, { backgroundColor: colors.surface }]}>
           <View style={styles.statusHeader}>
             <View style={[styles.statusIconContainer, { backgroundColor: orderStatus.color + '20' }]}>
-              <Ionicons name="cube" size={24} color={orderStatus.color} />
+              <CubeIcon weight="fill" size={24} color={orderStatus.color} />
             </View>
             <View style={{ flex: 1 }}>
               <Text style={[styles.statusText, { color: orderStatus.color }]}>
@@ -342,7 +342,7 @@ export default function OrderDetailsScreen() {
           <Text style={[styles.sectionTitle, { color: colors.text }]}>Delivery Method</Text>
           <View style={[styles.card, { backgroundColor: colors.surface }]}>
             <View style={styles.infoRow}>
-              <Ionicons name="bicycle-outline" size={20} color={colors.textSecondary} style={styles.infoIcon} />
+              <BicycleIcon size={20} color={colors.textSecondary} style={styles.infoIcon} />
               <View>
                 <Text style={[styles.infoTitle, { color: colors.text }]}>{deliveryMethod}</Text>
                 <Text style={[styles.infoText, { color: colors.textSecondary }]}>
@@ -360,7 +360,7 @@ export default function OrderDetailsScreen() {
           <Text style={[styles.sectionTitle, { color: colors.text }]}>Shipping Details</Text>
           <View style={[styles.card, { backgroundColor: colors.surface }]}>
             <View style={styles.infoRow}>
-              <Ionicons name="location-outline" size={20} color={colors.textSecondary} style={styles.infoIcon} />
+              <MapPinIcon size={20} color={colors.textSecondary} style={styles.infoIcon} />
               <View>
                 <Text style={[styles.infoTitle, { color: colors.text }]}>{order.shipping_address.name}</Text>
                 <Text style={[styles.infoText, { color: colors.textSecondary }]}>
@@ -376,7 +376,7 @@ export default function OrderDetailsScreen() {
             </View>
             <View style={[styles.divider, { backgroundColor: colors.border }]} />
             <View style={styles.infoRow}>
-              <Ionicons name="mail-outline" size={20} color={colors.textSecondary} style={styles.infoIcon} />
+              <EnvelopeIcon size={20} color={colors.textSecondary} style={styles.infoIcon} />
               <View>
                 <Text style={[styles.infoTitle, { color: colors.text }]}>Billing Address</Text>
                 <Text style={[styles.infoText, { color: colors.textSecondary }]}>{order.billing_address.name}</Text>
@@ -407,7 +407,7 @@ export default function OrderDetailsScreen() {
                 </View>
               ) : (
                 <>
-                  <Ionicons name="close-circle-outline" size={20} color={colors.white} style={{ marginRight: 8 }} />
+                  <XCircleIcon size={20} color={colors.white} style={{ marginRight: 8 }} />
                   <Text style={[styles.cancelButtonText, { color: colors.white }]}>Cancel Order</Text>
                 </>
               )}
@@ -421,7 +421,7 @@ export default function OrderDetailsScreen() {
             ]}
             onPress={() => Linking.openURL('https://wa.me/2348051516565')}
           >
-            <Ionicons name="logo-whatsapp" size={20} color="#25D366" style={{ marginRight: 8 }} />
+            <WhatsappLogoIcon weight="fill" size={20} color="#25D366" style={{ marginRight: 8 }} />
             <Text style={[styles.outlineButtonText, { color: colors.text }]}>Contact Support</Text>
           </TouchableOpacity>
           {/* <TouchableOpacity style={[styles.primaryButton, { backgroundColor: colors.primary }]}>

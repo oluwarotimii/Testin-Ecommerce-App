@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
+import { HeartIcon, ShoppingCartIcon, CheckIcon } from 'phosphor-react-native';
 import SafeImage from '@/components/SafeImage';
 import SkeletonProductItem from '@/components/SkeletonProductItem';
 import SalePill from '@/components/SalePill';
@@ -77,8 +77,8 @@ export default function BestDealsSection({
                             toggleWishlist(item.id);
                         }}
                     >
-                        <Ionicons
-                            name={wishlist.includes(item.id) ? "heart" : "heart-outline"}
+                        <HeartIcon
+                            weight={wishlist.includes(item.id) ? "fill" : "regular"}
                             size={16}
                             color={wishlist.includes(item.id) ? colors.error : colors.text}
                         />
@@ -115,7 +115,9 @@ export default function BestDealsSection({
                             }
                         }}
                     >
-                        <Ionicons name={cartSuccess[item.id] ? "checkmark" : "cart"} size={18} color={colors.white} />
+                        {cartSuccess[item.id]
+                            ? <CheckIcon weight="bold" size={18} color={colors.white} />
+                            : <ShoppingCartIcon weight="fill" size={18} color={colors.white} />}
                     </TouchableOpacity>
                 </View>
             </View>

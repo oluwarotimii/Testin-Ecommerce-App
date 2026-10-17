@@ -18,8 +18,14 @@ import SafeImage from '@/components/SafeImage';
 import SkeletonProductItem from '@/components/SkeletonProductItem';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { radius, fontFamily } from '@/constants/designTokens';
+import { rankSearchResults } from '@/utils/searchRelevance';
 
 const RESULTS_PAGE_SIZE = 20;
+// The server has no relevance ordering, so a larger raw batch is pulled per
+// fetch and ranked/filtered client-side (see utils/searchRelevance.ts) -
+// pagination below is then served from this ranked pool before going back
+// to the server for more.
+const RAW_FETCH_SIZE = 40;
 const MIN_QUERY_LENGTH = 2;
 
 export default function SearchScreen() {
@@ -28,15 +34,30 @@ export default function SearchScreen() {
   const { apiService } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
-  const [searchResults, setSearchResults] = useState<any[]>([]);
+  // The raw (unranked) products fetched so far for the active query, deduped
+  // by id. Ranking/filtering is derived from this, not stored separately, so
+  // it can't drift out of sync with the query it was computed for.
+  const [rawResults, setRawResults] = useState<any[]>([]);
+  const [activeQuery, setActiveQuery] = useState('');
+  const [visibleCount, setVisibleCount] = useState(RESULTS_PAGE_SIZE);
+  const [serverPage, setServerPage] = useState(1);
+  const [serverHasMore, setServerHasMore] = useState(false);
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [hasMore, setHasMore] = useState(true);
-  const [currentPage, setCurrentPage] = useState(1);
   // Guards against a slow earlier keystroke's response landing after a
   // later one and overwriting fresher results with stale ones.
   const latestQueryRef = useRef('');
+
+  const rankedResults = useMemo(
+    () => rankSearchResults(rawResults, activeQuery),
+    [rawResults, activeQuery]
+  );
+  const searchResults = useMemo(
+    () => rankedResults.slice(0, visibleCount),
+    [rankedResults, visibleCount]
+  );
+  const hasMore = visibleCount < rankedResults.length || serverHasMore;
 
   // Load recent searches from storage
   useEffect(() => {
@@ -73,17 +94,24 @@ export default function SearchScreen() {
   const performSearch = useCallback(async (query: string, reset: boolean = false) => {
     latestQueryRef.current = query;
 
+    // More of the already-fetched (ranked) pool is still unused - reveal it
+    // locally instead of hitting the server again.
+    if (!reset && visibleCount < rankedResults.length) {
+      setVisibleCount((prev) => Math.min(prev + RESULTS_PAGE_SIZE, rankedResults.length));
+      return;
+    }
+
     try {
       if (reset) {
         setLoading(true);
-        setCurrentPage(1);
+        setActiveQuery(query);
       } else {
         setLoadingMore(true);
       }
 
       setError(null);
-      const page = reset ? 1 : currentPage + 1;
-      const results = await apiService.searchProductsExtended(query, page, RESULTS_PAGE_SIZE);
+      const page = reset ? 1 : serverPage + 1;
+      const results = await apiService.searchProductsExtended(query, page, RAW_FETCH_SIZE);
 
       // A newer search started while this one was in flight - its response
       // will win instead, so drop this stale one rather than overwrite.
@@ -92,18 +120,19 @@ export default function SearchScreen() {
       }
 
       if (reset) {
-        setSearchResults(results);
+        setRawResults(results);
+        setVisibleCount(Math.min(RESULTS_PAGE_SIZE, results.length));
       } else {
-        // Append new results, avoiding duplicates
-        setSearchResults(prev => {
+        setRawResults(prev => {
           const existingIds = new Set(prev.map((p: any) => p.id));
           const newResults = results.filter((p: any) => !existingIds.has(p.id));
           return [...prev, ...newResults];
         });
+        setVisibleCount((prev) => prev + RESULTS_PAGE_SIZE);
       }
 
-      setHasMore(results.length === RESULTS_PAGE_SIZE);
-      setCurrentPage(page);
+      setServerHasMore(results.length === RAW_FETCH_SIZE);
+      setServerPage(page);
     } catch (err: any) {
       if (latestQueryRef.current !== query) {
         return;
@@ -111,7 +140,7 @@ export default function SearchScreen() {
       console.error('Search error:', err);
       setError('Unable to search right now. Please try again.');
       if (reset) {
-        setSearchResults([]);
+        setRawResults([]);
       }
     } finally {
       if (latestQueryRef.current === query) {
@@ -119,7 +148,7 @@ export default function SearchScreen() {
         setLoadingMore(false);
       }
     }
-  }, [apiService, currentPage]);
+  }, [apiService, serverPage, visibleCount, rankedResults.length]);
 
   const loadMoreResults = useCallback(() => {
     const trimmed = searchQuery.trim();

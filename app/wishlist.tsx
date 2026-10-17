@@ -1,6 +1,7 @@
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'expo-router';
+import { useIsFocused } from '@react-navigation/native';
 import { useAuth } from '@/context/AuthContext';
 import { useThemeColors } from '@/hooks/useColorScheme';
 import { HeartIcon, TrashIcon, ShoppingCartIcon } from 'phosphor-react-native';
@@ -17,26 +18,32 @@ export default function WishlistScreen() {
   const colors = useThemeColors();
   const isDarkMode = String(colors.background).toLowerCase() === '#000000';
   const { apiService } = useAuth();
+  const isFocused = useIsFocused();
   const [wishlist, setWishlist] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const numColumns = useResponsiveColumns(2);
   const gridItemWidthPercent = numColumns >= 4 ? 23 : numColumns === 3 ? 31 : 48;
 
-  useEffect(() => {
-    const fetchWishlist = async () => {
-      try {
-        setLoading(true);
-        const response = await apiService.getWishlist();
-        setWishlist(response);
-      } catch (error) {
-        console.error("Failed to fetch wishlist:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
+  const fetchWishlist = useCallback(async () => {
+    try {
+      setLoading(true);
+      const response = await apiService.getWishlist();
+      setWishlist(response);
+    } catch (error) {
+      console.error("Failed to fetch wishlist:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, [apiService]);
 
-    fetchWishlist();
-  }, []);
+  // Refetch on every focus - without this, adding/removing an item from the
+  // product page and coming back here showed whatever this tab had loaded
+  // on its last mount, making wishlist changes look like they didn't save.
+  useEffect(() => {
+    if (isFocused) {
+      fetchWishlist();
+    }
+  }, [isFocused, fetchWishlist]);
 
   const removeFromWishlist = async (productId: number) => {
     try {

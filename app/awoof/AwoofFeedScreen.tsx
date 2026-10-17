@@ -10,7 +10,7 @@ import {
   Alert,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
+import { ShoppingCartIcon } from 'phosphor-react-native';
 import { useThemeColors } from '@/hooks/useColorScheme';
 import { awoofCart, AwoofProduct, AwoofEvents, trackAwoofEvent, mapToAwoofProduct } from '@/utils/awoof/AwoofUtils';
 import SafeImage from '@/components/SafeImage';
@@ -289,7 +289,7 @@ export default function AwoofFeedScreen({ navigation }: any) {
             style={[styles.cartButton, { backgroundColor: colors.primary }]}
             onPress={handleCartPress}
           >
-            <Ionicons name="cart-outline" size={24} color="#fff" />
+            <ShoppingCartIcon size={24} color="#fff" />
             {cartCount > 0 && (
               <View style={styles.cartBadge}>
                 <Text style={styles.cartBadgeText}>{cartCount}</Text>
@@ -387,7 +387,7 @@ function DealCard({ deal, colors, isDarkMode, onPress, onQuickAdd }: any) {
             onQuickAdd();
           }}
         >
-          <Ionicons name="cart-outline" size={14} color="#fff" />
+          <ShoppingCartIcon size={14} color="#fff" />
           <Text style={styles.quickAddText}> Quick Add</Text>
         </TouchableOpacity>
       </View>
