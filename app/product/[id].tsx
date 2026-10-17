@@ -14,6 +14,7 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import SkeletonProductDetail from '@/components/SkeletonProductDetail';
 import SafeImage from '@/components/SafeImage';
 import Button from '@/components/Button';
+import BackButton from '@/components/BackButton';
 import { spacing, radius, typeScale, fontFamily, shadow } from '@/constants/designTokens';
 
 const { width } = Dimensions.get('window');
@@ -70,6 +71,12 @@ export default function ProductDetailScreen() {
   const [similarProducts, setSimilarProducts] = useState<any[]>([]);
   const [similarProductsInWishlist, setSimilarProductsInWishlist] = useState<Set<number>>(new Set());
   const [loading, setLoading] = useState(true);
+  // Distinguishes "this product genuinely doesn't exist" (server 404) from
+  // "the fetch failed for some other reason" (network/server error) - both
+  // used to collapse into the same misleading "Product not found" message.
+  const [notFound, setNotFound] = useState(false);
+  const [fetchError, setFetchError] = useState<string | null>(null);
+  const [retryKey, setRetryKey] = useState(0);
 
   useEffect(() => {
     let isMounted = true; // Flag to prevent state updates on unmounted components
@@ -78,6 +85,8 @@ export default function ProductDetailScreen() {
       const fetchProduct = async () => {
         try {
           setLoading(true);
+          setNotFound(false);
+          setFetchError(null);
           const idStr = id.toString();
           let fetchedProduct;
 
@@ -97,10 +106,19 @@ export default function ProductDetailScreen() {
           if (isMounted) {
             setProduct(transformedProduct);
           }
-        } catch (error) {
+        } catch (error: any) {
           console.error("Error fetching product:", error);
           if (isMounted) {
             setProduct(null);
+            // WooCommerce returns a real 404 when the product genuinely
+            // doesn't exist - anything else (network error, Cloudflare
+            // block, timeout, 5xx) is a fetch failure, not a missing
+            // product, and should offer a retry instead of a dead end.
+            if (error?.response?.status === 404) {
+              setNotFound(true);
+            } else {
+              setFetchError('Unable to load this product right now. Please try again.');
+            }
           }
         } finally {
           if (isMounted) {
@@ -114,7 +132,7 @@ export default function ProductDetailScreen() {
     return () => {
       isMounted = false; // Cleanup function to set flag to false
     };
-  }, [id]);
+  }, [id, retryKey]);
 
   // Check if product and similar products are in wishlist when product loads
   useEffect(() => {
@@ -211,9 +229,28 @@ export default function ProductDetailScreen() {
 
   if (!product) {
     return (
-      <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
-        <Text style={{ color: colors.text }}>Product not found.</Text>
-      </View>
+      <SafeAreaView style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
+        <View style={styles.notFoundHeader}>
+          <BackButton />
+        </View>
+        <View style={styles.notFoundContent}>
+          <Ionicons
+            name={notFound ? 'cube-outline' : 'alert-circle-outline'}
+            size={56}
+            color={colors.textSecondary}
+          />
+          <Text style={[styles.notFoundText, { color: colors.text }]}>
+            {notFound ? 'Product not found.' : fetchError}
+          </Text>
+          {!notFound && (
+            <Button
+              title="Retry"
+              onPress={() => setRetryKey((k) => k + 1)}
+              style={{ marginTop: 16 }}
+            />
+          )}
+        </View>
+      </SafeAreaView>
     );
   }
 
@@ -816,7 +853,21 @@ const styles = StyleSheet.create({
   },
   loadingContainer: {
     flex: 1,
+  },
+  notFoundHeader: {
+    paddingHorizontal: 20,
+    paddingTop: 15,
+  },
+  notFoundContent: {
+    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    paddingHorizontal: 40,
+    gap: 12,
+  },
+  notFoundText: {
+    fontSize: 16,
+    fontFamily: fontFamily.medium,
+    textAlign: 'center',
   },
 });
