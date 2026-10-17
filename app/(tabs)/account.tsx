@@ -1,36 +1,30 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch, ActivityIndicator, Image, Linking, Modal, Clipboard, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch, ActivityIndicator, Modal } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'expo-router';
-import * as Notifications from 'expo-notifications';
-import * as Device from 'expo-device';
-import Constants from 'expo-constants';
-import updateService from '@/services/updateService';
 import { useThemeColors } from '@/hooks/useColorScheme';
 import { useAuth } from '@/context/AuthContext';
 import { useTheme } from '@/context/ThemeContext';
 import ReferralSystem from '@/components/ReferralSystem';
-import { MaterialIcons, FontAwesome, Ionicons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { radius, fontFamily, shadow } from '@/constants/designTokens';
+import Button from '@/components/Button';
 
 export default function AccountScreen() {
   const router = useRouter();
   const colors = useThemeColors();
   const isDarkMode = String(colors.background).toLowerCase() === '#000000';
-  const { colorScheme, toggleColorScheme, setColorScheme } = useTheme();
+  const { colorScheme, setColorScheme } = useTheme();
   const { isAuthenticated, apiService, signOut, loadingAuth } = useAuth();
   const [showSignOutModal, setShowSignOutModal] = useState(false);
   const [showReferralModal, setShowReferralModal] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
-  // console.log('isAuthenticated:', isAuthenticated, 'loadingAuth:', loadingAuth);
   const [darkMode, setDarkMode] = useState(colorScheme === 'dark');
-  const [pushToken, setPushToken] = useState<string | null>(null);
-  const [loadingToken, setLoadingToken] = useState(false);
 
   useEffect(() => {
     setDarkMode(colorScheme === 'dark');
   }, [colorScheme]);
-  const [notifications, setNotifications] = useState(true);
   const [userDetails, setUserDetails] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
@@ -54,7 +48,7 @@ export default function AccountScreen() {
       if (isAuthenticated) {
         try {
           setLoading(true);
-          const response = await apiService.getAccountDetails(1);
+          const response = await apiService.getAccountDetails();
           setUserDetails(response);
         } catch (error) {
           console.error('Error fetching account details:', error);
@@ -90,12 +84,12 @@ export default function AccountScreen() {
       icon: () => <Ionicons name="location" size={20} color={colors.primary} />,
       onPress: () => router.push('/addresses'),
     },
-    // {
-    //   id: 'payment',
-    //   title: 'Payment Methods',
-    //   icon: () => <Ionicons name="card" size={20} color={colors.primary} />,
-    //   onPress: () => router.push('/payment-methods'),
-    // },
+    {
+      id: 'payment',
+      title: 'Payment Method',
+      icon: () => <Ionicons name="card" size={20} color={colors.primary} />,
+      onPress: () => router.push('/payment-methods'),
+    },
     {
       id: 'wishlist',
       title: 'Wishlist',
@@ -144,67 +138,6 @@ export default function AccountScreen() {
       console.error('Sign out error:', error);
     } finally {
       setSigningOut(false);
-    }
-  };
-
-  const fetchPushToken = async () => {
-    try {
-      setLoadingToken(true);
-      
-      if (!Device.isDevice) {
-        Alert.alert(
-          'Device Not Supported',
-          'Push notifications require a physical device. Please test on a real device.'
-        );
-        setLoadingToken(false);
-        return;
-      }
-
-      // Check permissions
-      const { status: existingStatus } = await Notifications.getPermissionsAsync();
-      let finalStatus = existingStatus;
-
-      if (existingStatus !== 'granted') {
-        const { status } = await Notifications.requestPermissionsAsync();
-        finalStatus = status;
-      }
-
-      if (finalStatus !== 'granted') {
-        Alert.alert(
-          'Permission Denied',
-          'Push notification permission is required. Please enable it in your device settings.'
-        );
-        setLoadingToken(false);
-        return;
-      }
-
-      // Get the push token
-      const projectId = Constants?.expoConfig?.extra?.eas?.projectId ?? Constants?.easConfig?.projectId;
-      const token = (await Notifications.getExpoPushTokenAsync({ projectId })).data;
-      setPushToken(token);
-      
-      // Copy to clipboard automatically
-      Clipboard.setString(token);
-      Alert.alert(
-        'Push Token Retrieved',
-        `Token copied to clipboard:\n\n${token}`,
-        [{ text: 'OK' }]
-      );
-    } catch (error: any) {
-      console.error('Error fetching push token:', error);
-      Alert.alert(
-        'Error',
-        `Failed to get push token: ${error.message || 'Unknown error'}`
-      );
-    } finally {
-      setLoadingToken(false);
-    }
-  };
-
-  const copyPushTokenToClipboard = () => {
-    if (pushToken) {
-      Clipboard.setString(pushToken);
-      Alert.alert('Copied!', 'Push token copied to clipboard.', [{ text: 'OK' }]);
     }
   };
 
@@ -349,20 +282,8 @@ export default function AccountScreen() {
                   </View>
                   <Text style={[styles.emptyTitle, { color: colors.text }]}>You are not logged in.</Text>
                   <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>Please log in or create an account to view your profile, orders, and more.</Text>
-                  <TouchableOpacity
-                    style={[styles.loginButton, { backgroundColor: colors.primary }]}
-                    onPress={() => router.push('/login')}
-                  >
-                    <Ionicons name="log-in-outline" size={18} color={colors.white} />
-                    <Text style={[styles.loginButtonText, { color: colors.white }]}>Log In</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={[styles.registerButton, { borderColor: colors.primary }]}
-                    onPress={() => router.push('/register')}
-                  >
-                    <Ionicons name="person-add-outline" size={18} color={colors.primary} />
-                    <Text style={[styles.registerButtonText, { color: colors.primary }]}>Create Account</Text>
-                  </TouchableOpacity>
+                  <Button title="Log In" icon="log-in-outline" onPress={() => router.push('/login')} style={{ marginBottom: 14 }} />
+                  <Button title="Create Account" icon="person-add-outline" onPress={() => router.push('/register')} variant="outline" />
 
                   {/* Privacy Policy Link for non-authenticated users */}
                   <TouchableOpacity
@@ -472,7 +393,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 28,
-    fontWeight: 'bold',
+    fontFamily: fontFamily.bold,
     flex: 1,
   },
   profileSection: {
@@ -482,13 +403,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 20,
     marginHorizontal: 20,
-    borderRadius: 20,
+    borderRadius: radius.xxl,
     marginBottom: 32,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 4,
+    ...shadow.raised,
   },
   profileInfo: {
     flexDirection: 'row',
@@ -498,26 +415,22 @@ const styles = StyleSheet.create({
   avatar: {
     width: 56,
     height: 56,
-    borderRadius: 28,
+    borderRadius: radius.pill,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 14,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.12,
-    shadowRadius: 4,
-    elevation: 3,
+    ...shadow.card,
   },
   avatarText: {
     fontSize: 20,
-    fontWeight: '700',
+    fontFamily: fontFamily.bold,
   },
   userDetails: {
     flex: 1,
   },
   userName: {
     fontSize: 18,
-    fontWeight: '700',
+    fontFamily: fontFamily.bold,
   },
   userEmail: {
     fontSize: 13,
@@ -531,7 +444,7 @@ const styles = StyleSheet.create({
   editButton: {
     width: 36,
     height: 36,
-    borderRadius: 18,
+    borderRadius: radius.pill,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -547,11 +460,11 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 17,
-    fontWeight: '700',
+    fontFamily: fontFamily.bold,
   },
   menuContainer: {
     marginHorizontal: 20,
-    borderRadius: 16,
+    borderRadius: radius.xl,
     overflow: 'hidden',
   },
   menuItem: {
@@ -569,14 +482,14 @@ const styles = StyleSheet.create({
   iconContainer: {
     width: 36,
     height: 36,
-    borderRadius: 18,
+    borderRadius: radius.pill,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
   },
   menuItemText: {
     fontSize: 15,
-    fontWeight: '500',
+    fontFamily: fontFamily.medium,
   },
   logoutCard: {
     flexDirection: 'row',
@@ -584,20 +497,20 @@ const styles = StyleSheet.create({
     marginHorizontal: 20,
     paddingHorizontal: 16,
     paddingVertical: 14,
-    borderRadius: 12,
+    borderRadius: radius.lg,
     borderWidth: 1,
   },
   logoutIconContainer: {
     width: 36,
     height: 36,
-    borderRadius: 18,
+    borderRadius: radius.pill,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
   },
   logoutText: {
     fontSize: 15,
-    fontWeight: '600',
+    fontFamily: fontFamily.semiBold,
     flex: 1,
   },
   footer: {
@@ -611,10 +524,6 @@ const styles = StyleSheet.create({
   loadingIndicator: {
     marginTop: 50,
     marginBottom: 50,
-  },
-  noAccountText: {
-    textAlign: 'center',
-    paddingVertical: 20,
   },
   emptyContainer: {
     flex: 1,
@@ -633,7 +542,7 @@ const styles = StyleSheet.create({
   },
   emptyTitle: {
     fontSize: 22,
-    fontWeight: '700',
+    fontFamily: fontFamily.bold,
     marginBottom: 10,
     textAlign: 'center',
   },
@@ -644,53 +553,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     lineHeight: 22,
   },
-  loginButton: {
-    width: '100%',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    paddingVertical: 16,
-    borderRadius: 12,
-    marginBottom: 14,
-  },
-  loginButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  registerButton: {
-    width: '100%',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    paddingVertical: 16,
-    borderRadius: 12,
-    borderWidth: 1,
-  },
-  registerButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  privacyButton: {
-    width: '100%',
-    paddingVertical: 15,
-    borderRadius: 10,
-    alignItems: 'center',
-    borderWidth: 1,
-    marginTop: 15,
-  },
-  privacyButtonText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
   privacyLink: {
     marginTop: 15,
     alignSelf: 'center',
   },
   privacyLinkText: {
     fontSize: 14,
-    fontWeight: '500',
+    fontFamily: fontFamily.medium,
     textDecorationLine: 'underline',
   },
   // Modal styles
@@ -704,21 +573,21 @@ const styles = StyleSheet.create({
   modalContent: {
     width: '100%',
     maxWidth: 340,
-    borderRadius: 20,
+    borderRadius: radius.xxl,
     padding: 24,
     alignItems: 'center',
   },
   modalIconContainer: {
     width: 80,
     height: 80,
-    borderRadius: 40,
+    borderRadius: radius.pill,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 16,
   },
   modalTitle: {
     fontSize: 22,
-    fontWeight: '700',
+    fontFamily: fontFamily.bold,
     marginBottom: 8,
     textAlign: 'center',
   },
@@ -736,7 +605,7 @@ const styles = StyleSheet.create({
   modalButton: {
     flex: 1,
     paddingVertical: 14,
-    borderRadius: 12,
+    borderRadius: radius.pill,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -748,7 +617,7 @@ const styles = StyleSheet.create({
   },
   modalButtonText: {
     fontSize: 16,
-    fontWeight: '600',
+    fontFamily: fontFamily.semiBold,
   },
   // Loading overlay styles
   loadingOverlay: {
@@ -764,68 +633,14 @@ const styles = StyleSheet.create({
   },
   loadingContainer: {
     padding: 30,
-    borderRadius: 16,
+    borderRadius: radius.xl,
     alignItems: 'center',
     minWidth: 150,
   },
   loadingText: {
     marginTop: 16,
     fontSize: 16,
-    fontWeight: '600',
-  },
-  // Push Token Display styles
-  pushTokenContainer: {
-    marginHorizontal: 20,
-    borderRadius: 16,
-    padding: 16,
-    overflow: 'hidden',
-  },
-  pushTokenHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 8,
-  },
-  pushTokenTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  pushTokenDescription: {
-    fontSize: 13,
-    lineHeight: 18,
-    marginBottom: 12,
-  },
-  tokenDisplay: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderRadius: 8,
-    borderWidth: 1,
-    padding: 12,
-    gap: 8,
-  },
-  tokenText: {
-    flex: 1,
-    fontSize: 12,
-    fontFamily: 'monospace',
-  },
-  copyButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  getTokenButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 12,
-    borderRadius: 8,
-    gap: 8,
-  },
-  getTokenButtonText: {
-    fontSize: 14,
-    fontWeight: '600',
+    fontFamily: fontFamily.semiBold,
   },
   referralModalOverlay: {
     flex: 1,
@@ -834,8 +649,8 @@ const styles = StyleSheet.create({
   },
   referralModalContent: {
     height: '80%',
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
+    borderTopLeftRadius: radius.xxl,
+    borderTopRightRadius: radius.xxl,
     paddingTop: 20,
   },
   referralModalHeader: {
@@ -849,7 +664,7 @@ const styles = StyleSheet.create({
   },
   referralModalTitle: {
     fontSize: 20,
-    fontWeight: 'bold',
+    fontFamily: fontFamily.bold,
   },
   closeModalButton: {
     padding: 4,

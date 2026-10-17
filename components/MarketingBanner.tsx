@@ -5,11 +5,7 @@ import { useThemeColors } from '@/hooks/useColorScheme';
 import { fetchBanner, BannerItem } from '@/services/banner';
 import SafeImage from '@/components/SafeImage';
 
-interface MarketingBannerProps {
-    // No props needed as it fetches its own data
-}
-
-const MarketingBanner: React.FC<MarketingBannerProps> = () => {
+const MarketingBanner: React.FC = () => {
     const router = useRouter();
     const colors = useThemeColors();
     const [loading, setLoading] = useState(true);

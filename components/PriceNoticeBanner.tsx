@@ -22,13 +22,13 @@ export default function PriceNoticeBanner({ onPress, onDismiss }: PriceNoticeBan
       </View>
       <View style={styles.textContainer}>
         <Text style={[styles.title, { color: isDarkMode ? '#A5D6A7' : '#1B5E20' }]}>
-          Awoof Corner Deal
+          Awoof Deal
         </Text>
         <Text
           style={[styles.message, { color: isDarkMode ? '#C8E6C9' : '#388E3C' }]}
           numberOfLines={2}
         >
-         Only Awoof Corner items have exclusive prices!
+         Only Awoof items have exclusive prices!
         </Text>
       </View>
       {onDismiss && (

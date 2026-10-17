@@ -1,13 +1,10 @@
 import React, { useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Dimensions, Animated, Easing } from 'react-native';
-import { Tabs } from 'expo-router';
+import { View, Text, StyleSheet, TouchableOpacity, Animated, Easing } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useThemeColors } from '@/hooks/useColorScheme';
 import { useCart } from '@/context/CartContext';
 import { useTheme } from '@/context/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
-
-const { width } = Dimensions.get('window');
 
 interface CustomTabBarProps {
   state: any;
@@ -57,10 +54,9 @@ const CustomTabBar: React.FC<CustomTabBarProps> = ({ state, descriptors, navigat
     nestedRouteName = nestedState.routes[nestedState.index]?.name;
   }
 
-  const hideTabBar = 
-    currentRouteName === 'cart' || 
+  const hideTabBar =
+    currentRouteName === 'cart' ||
     nestedRouteName === 'AwoofCheckout' ||
-    nestedRouteName === 'AwoofCheckoutWebView' ||
     nestedRouteName === 'OrderSuccess';
 
   // If we need to hide the tab bar, return null

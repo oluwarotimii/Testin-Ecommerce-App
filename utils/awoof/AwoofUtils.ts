@@ -4,7 +4,7 @@
 // Helper functions and utilities for managing Awoof Corner functionality
 
 import { scheduleCartAbandonmentReminder, clearCartAbandonmentReminder } from '@/services/notificationService';
-import appConfig from '@/hooks/useAppConfig';
+import { AppProduct } from '@/utils/woocommerceTransformers';
 
 export type AwoofProduct = {
   id: string;
@@ -24,7 +24,7 @@ export type CartItem = AwoofProduct & {
 // Simple cart state manager (replace with your state management solution)
 class AwoofCartManager {
   private cart: CartItem[] = [];
-  private listeners: Array<(cart: CartItem[]) => void> = [];
+  private listeners: ((cart: CartItem[]) => void)[] = [];
 
   setCart(items: CartItem[]) {
     this.cart = Array.isArray(items) ? items.map((item) => ({ ...item })) : [];
@@ -117,8 +117,6 @@ export const awoofCart = new AwoofCartManager();
 // ============================================
 // API INTEGRATION HELPERS
 // ============================================
-
-import { AppProduct } from '@/utils/woocommerceTransformers';
 
 /**
  * Maps a standard AppProduct to the AwoofProduct format

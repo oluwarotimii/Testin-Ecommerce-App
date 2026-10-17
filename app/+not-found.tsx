@@ -1,14 +1,22 @@
 import { Link, Stack } from 'expo-router';
 import { StyleSheet, Text, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { useThemeColors } from '@/hooks/useColorScheme';
+import { fontFamily } from '@/constants/designTokens';
 
 export default function NotFoundScreen() {
+  const colors = useThemeColors();
+
   return (
     <>
       <Stack.Screen options={{ title: 'Oops!' }} />
-      <View style={styles.container}>
-        <Text style={styles.text}>This screen doesn't exist.</Text>
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
+        <Ionicons name="compass-outline" size={64} color={colors.textSecondary} />
+        <Text style={[styles.text, { color: colors.text }]}>This screen doesn&apos;t exist.</Text>
         <Link href="/" style={styles.link}>
-          <Text>Go to home screen!</Text>
+          <Text style={{ color: colors.primary, fontFamily: fontFamily.semiBold, fontSize: 16 }}>
+            Go to home screen
+          </Text>
         </Link>
       </View>
     </>
@@ -24,7 +32,8 @@ const styles = StyleSheet.create({
   },
   text: {
     fontSize: 20,
-    fontWeight: 600,
+    fontFamily: fontFamily.semiBold,
+    marginTop: 16,
   },
   link: {
     marginTop: 15,

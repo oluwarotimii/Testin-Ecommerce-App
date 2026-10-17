@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, Alert, ActivityIndicator, Share } from 'react-native';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, Alert, ActivityIndicator, Share, Platform } from 'react-native';
 import { useThemeColors } from '@/hooks/useColorScheme';
 import { useAuth } from '@/context/AuthContext';
 import * as Device from 'expo-device';
-import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { DASHBOARD_API_BASE_URL } from '@/services/config';
 import { Ionicons } from '@expo/vector-icons';
@@ -82,7 +81,7 @@ const ReferralSystem: React.FC<ReferralSystemProps> = ({ onClose, initialCode })
       let data;
       try {
         data = JSON.parse(responseText);
-      } catch (jsonError) {
+      } catch {
         // If it's not JSON, it's likely an HTML error page
         console.error('Non-JSON response received:', responseText);
         throw new Error('Invalid response from server. Please check the API endpoint.');
@@ -191,7 +190,7 @@ const ReferralSystem: React.FC<ReferralSystemProps> = ({ onClose, initialCode })
         style={[styles.inviteButton, { marginTop: 16 }]} 
         onPress={shareApp}
       >
-        <Text style={[styles.inviteButtonText, { color: colors.primary }]}>Don't have a code? Invite friends instead</Text>
+        <Text style={[styles.inviteButtonText, { color: colors.primary }]}>Don&apos;t have a code? Invite friends instead</Text>
       </TouchableOpacity>
 
       <Text style={[styles.note, { color: colors.textSecondary }]}>

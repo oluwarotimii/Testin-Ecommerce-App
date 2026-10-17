@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { Platform, Linking } from 'react-native';
-import * as Updates from 'expo-updates';
 import Constants from 'expo-constants';
 
 interface ForceUpdateContextType {
@@ -35,38 +34,35 @@ const ForceUpdateContext = createContext<ForceUpdateContextType | undefined>(und
  * - Wait for native build approval from app stores
  * - THEN enable force update via another OTA update
  *
- * ⚠️ PRODUCTION SETTINGS (as of Feb 27, 2026):
- * - enabled: false (disabled until store approval)
- * - minimumVersion: 2.2.0 (current store version, no blocking)
+ * ⚠️ PRODUCTION SETTINGS (confirmed 2026-10-17):
+ * - enabled: false - native 3.0.0+ is NOT yet live on the App Store or
+ *   Google Play. Leaving this enabled blocks every user behind the
+ *   "Update Required" screen with no update actually available to install -
+ *   this previously happened in production ("nothing loads on launch").
+ * - minimumVersion: matches app.json's current version, so if this is ever
+ *   flipped back on by mistake before a real native build ships, the
+ *   comparison is a no-op (current == minimum) instead of blocking everyone.
  *
- * TO ENABLE FORCE UPDATE:
- * 1. Wait until iOS & Android 2.3.0 are LIVE in stores
+ * TO ENABLE FORCE UPDATE (only after the new native build is LIVE on both
+ * stores):
+ * 1. Confirm the new version is approved and installable on iOS & Android
  * 2. Change enabled to true
- * 3. Change minimumVersion to '2.3.0'
+ * 3. Change minimumVersion to that new native version
  * 4. Deploy OTA: eas update --branch production --message "Enable force update"
  */
 const FORCE_UPDATE_CONFIG = {
   /**
-   * The minimum version required to use the app
-   * Users below this version will be forced to update
-   *
-   * ⚠️ PRODUCTION: Set to current store version to avoid blocking
-   * ✅ CURRENT: 2.2.0 (matches app.json version)
-   *
-   * TO ENABLE: Change to '2.3.0' after native build is live
+   * The minimum version required to use the app.
+   * Users below this version will be forced to update.
    */
-  minimumVersion: '3.0.0', // Production: matches current store version
+  minimumVersion: '3.1.0',
 
   /**
-   * Enable/disable the forced update check
-   * Set to false to disable the gatekeeper temporarily
-   *
-   * ⚠️ PRODUCTION: false (disabled until store approval)
-   * ✅ CURRENT: false (DISABLED FOR TESTING)
-   *
-   * TO ENABLE: Change to true after native build is live
+   * Enable/disable the forced update check.
+   * Must stay false until the target native version is confirmed live on
+   * both app stores - see the block comment above.
    */
-  enabled: true, // Production: disabled by default
+  enabled: false,
 
   /**
    * Custom message shown to users
@@ -83,19 +79,16 @@ const FORCE_UPDATE_CONFIG = {
 export function ForceUpdateProvider({ children }: { children: ReactNode }) {
   const [isUpdateRequired, setIsUpdateRequired] = useState(false);
   const [updateInfo, setUpdateInfo] = useState<UpdateInfo | null>(null);
-  const [currentVersion, setCurrentVersion] = useState<string>('');
 
   /**
-   * Get the current app version from expo-updates or constants
+   * Get the current app version from Constants. Returns null when the
+   * version genuinely can't be read, rather than a fake '0.0.0' - a made-up
+   * low version would always compare as "below minimum" and block every
+   * user on a read failure, which is exactly the bug this gate caused
+   * before (see the config comment above).
    */
-  const getCurrentVersion = (): string => {
-    // Try to get from Updates first (works for OTA builds)
-    if (Updates.updateId) {
-      // For OTA builds, we need to get the base app version
-      return Constants.expoConfig?.version || '0.0.0';
-    }
-    // Fallback to expo config version
-    return Constants.expoConfig?.version || '0.0.0';
+  const getCurrentVersion = (): string | null => {
+    return Constants.expoConfig?.version || null;
   };
 
   /**
@@ -133,7 +126,12 @@ export function ForceUpdateProvider({ children }: { children: ReactNode }) {
     }
 
     const version = getCurrentVersion();
-    setCurrentVersion(version);
+    if (!version) {
+      // Couldn't read a version to compare - fail open rather than block
+      // every user behind a mandatory update with no real basis for it.
+      console.warn('Force update check: could not read current app version, skipping');
+      return;
+    }
 
     const comparison = compareVersions(version, FORCE_UPDATE_CONFIG.minimumVersion);
 
@@ -166,24 +164,6 @@ export function ForceUpdateProvider({ children }: { children: ReactNode }) {
       setIsUpdateRequired(false);
       setUpdateInfo(null);
       console.log('Update dismissed (DEV mode only)');
-    }
-  };
-
-  /**
-   * Open the app store to the update page
-   */
-  const openAppStore = async () => {
-    if (updateInfo?.updateUrl) {
-      const supported = await Linking.canOpenURL(updateInfo.updateUrl);
-      if (supported) {
-        await Linking.openURL(updateInfo.updateUrl);
-      } else {
-        // Fallback to generic store URL
-        const storeUrl = Platform.OS === 'ios'
-          ? 'https://apps.apple.com'
-          : 'https://play.google.com/store';
-        await Linking.openURL(storeUrl);
-      }
     }
   };
 

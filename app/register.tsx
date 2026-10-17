@@ -1,10 +1,12 @@
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Alert, Image, ActivityIndicator, KeyboardAvoidingView, Platform, TouchableWithoutFeedback, Keyboard } from 'react-native';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Image, KeyboardAvoidingView, Platform, TouchableWithoutFeedback, Keyboard } from 'react-native';
 import { useState } from 'react';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
 import { useThemeColors } from '@/hooks/useColorScheme';
-import { MaterialIcons, FontAwesome, Ionicons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import Button from '@/components/Button';
+import { radius, fontFamily } from '@/constants/designTokens';
 
 export default function RegisterScreen() {
   const router = useRouter();
@@ -183,12 +185,7 @@ export default function RegisterScreen() {
                 </TouchableOpacity>
               </View>
 
-              <TouchableOpacity style={[styles.registerButton, { backgroundColor: colors.primary }]} onPress={handleRegister} disabled={loadingAuth}>
-                <View style={styles.buttonContent}>
-                  {loadingAuth && <ActivityIndicator size="small" color={colors.white} style={styles.buttonSpinner} />}
-                  <Text style={[styles.registerButtonText, { color: colors.white }]}>{loadingAuth ? 'Registering...' : 'Create Account'}</Text>
-                </View>
-              </TouchableOpacity>
+              <Button title="Create Account" onPress={handleRegister} loading={loadingAuth} size="lg" style={styles.registerButton} />
             </View>
 
             <View style={styles.footer}>
@@ -226,11 +223,11 @@ const styles = StyleSheet.create({
   appIcon: {
     width: 80,
     height: 80,
-    borderRadius: 20,
+    borderRadius: radius.xl,
   },
   title: {
     fontSize: 32,
-    fontWeight: 'bold',
+    fontFamily: fontFamily.bold,
     marginBottom: 8,
   },
   subtitle: {
@@ -242,7 +239,7 @@ const styles = StyleSheet.create({
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 12,
+    borderRadius: radius.pill,
     paddingHorizontal: 16,
     marginBottom: 16,
     height: 56,
@@ -258,22 +255,7 @@ const styles = StyleSheet.create({
     padding: 4,
   },
   registerButton: {
-    paddingVertical: 16,
-    borderRadius: 12,
-    alignItems: 'center',
     marginTop: 8,
-  },
-  registerButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  buttonContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  buttonSpinner: {
-    marginRight: 8,
   },
   footer: {
     flexDirection: 'row',
@@ -285,20 +267,20 @@ const styles = StyleSheet.create({
   },
   footerLink: {
     fontSize: 14,
-    fontWeight: '500',
+    fontFamily: fontFamily.medium,
   },
   errorContainer: {
     marginVertical: 8,
   },
   errorText: {
     fontSize: 14,
-    fontWeight: '500',
+    fontFamily: fontFamily.medium,
   },
   successContainer: {
     marginVertical: 8,
   },
   successText: {
     fontSize: 14,
-    fontWeight: '500',
+    fontFamily: fontFamily.medium,
   },
 });

@@ -3,12 +3,14 @@ import { useState } from 'react';
 import { useRouter } from 'expo-router';
 import { useThemeColors } from '@/hooks/useColorScheme';
 import { Ionicons } from '@expo/vector-icons';
+import { radius, fontFamily } from '@/constants/designTokens';
 
 export default function HelpScreen() {
   const router = useRouter();
   const colors = useThemeColors();
+  const [expandedFaqId, setExpandedFaqId] = useState<string | null>(null);
 
-  const faqItems = [
+  const faqItems: { id: string; question: string; answer: string }[] = [
     {
       id: '1',
       question: 'How do I place an order?',
@@ -36,7 +38,7 @@ export default function HelpScreen() {
     }
   ];
 
-  const contactOptions = [
+  const contactOptions: { id: string; title: string; icon: keyof typeof Ionicons.glyphMap; subtitle: string; onPress: () => void }[] = [
     {
       id: 'whatsapp',
       title: 'WhatsApp Support',
@@ -58,8 +60,6 @@ export default function HelpScreen() {
       subtitle: '+2348051516565',
       onPress: () => Linking.openURL(`tel:${Platform.OS === 'ios' ? '+' : ''}+2348051516565`)
     },
-   
-   
   ];
 
   return (
@@ -103,65 +103,26 @@ export default function HelpScreen() {
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: colors.text }]}>Frequently Asked Questions</Text>
           <View style={[styles.faqContainer, { backgroundColor: colors.surface }]}>
-            {faqItems.map((faq) => (
-              <TouchableOpacity
-                key={faq.id}
-                style={[styles.faqItem, { borderBottomColor: colors.border }]}
-              >
-                <View style={styles.faqHeader}>
-                  <Text style={[styles.faqQuestion, { color: colors.text }]}>{faq.question}</Text>
-                  <Ionicons name="chevron-down" size={20} color={colors.textSecondary} />
-                </View>
-                <Text style={[styles.faqAnswer, { color: colors.text }]}>{faq.answer}</Text>
-              </TouchableOpacity>
-            ))}
+            {faqItems.map((faq) => {
+              const isExpanded = expandedFaqId === faq.id;
+              return (
+                <TouchableOpacity
+                  key={faq.id}
+                  style={[styles.faqItem, { borderBottomColor: colors.border }]}
+                  onPress={() => setExpandedFaqId(isExpanded ? null : faq.id)}
+                >
+                  <View style={styles.faqHeader}>
+                    <Text style={[styles.faqQuestion, { color: colors.text }]}>{faq.question}</Text>
+                    <Ionicons name={isExpanded ? 'chevron-up' : 'chevron-down'} size={20} color={colors.textSecondary} />
+                  </View>
+                  {isExpanded && (
+                    <Text style={[styles.faqAnswer, { color: colors.text }]}>{faq.answer}</Text>
+                  )}
+                </TouchableOpacity>
+              );
+            })}
           </View>
         </View>
-
-        {/* Additional Resources
-        <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>Additional Resources</Text>
-          <View style={[styles.menuContainer, { backgroundColor: colors.surface }]}>
-            <TouchableOpacity
-              style={[styles.menuItem, { borderBottomColor: colors.border }]}
-              onPress={() => console.log('Returns pressed')}
-            >
-              <View style={styles.menuItemLeft}>
-                <View style={[styles.iconContainer, { backgroundColor: colors.surface }]}>
-                  <Ionicons name="return-down-back" size={20} color={colors.primary} />
-                </View>
-                <Text style={[styles.menuItemText, { color: colors.text }]}>Returns & Exchanges</Text>
-              </View>
-              <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.menuItem, { borderBottomColor: colors.border }]}
-              onPress={() => console.log('Shipping pressed')}
-            >
-              <View style={styles.menuItemLeft}>
-                <View style={[styles.iconContainer, { backgroundColor: colors.surface }]}>
-                  <Ionicons name="boat" size={20} color={colors.primary} />
-                </View>
-                <Text style={[styles.menuItemText, { color: colors.text }]}>Shipping Information</Text>
-              </View>
-              <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.menuItem, { borderBottomColor: colors.border }]}
-              onPress={() => console.log('Warranty pressed')}
-            >
-              <View style={styles.menuItemLeft}>
-                <View style={[styles.iconContainer, { backgroundColor: colors.surface }]}>
-                  <Ionicons name="shield-checkmark" size={20} color={colors.primary} />
-                </View>
-                <Text style={[styles.menuItemText, { color: colors.text }]}>Warranty Information</Text>
-              </View>
-              <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
-            </TouchableOpacity>
-          </View>
-        </View> */}
       </View>
     </ScrollView>
   );
@@ -184,7 +145,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 20,
-    fontWeight: 'bold',
+    fontFamily: fontFamily.bold,
   },
   content: {
     paddingHorizontal: 20,
@@ -194,11 +155,11 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
+    fontFamily: fontFamily.bold,
     marginBottom: 16,
   },
   menuContainer: {
-    borderRadius: 16,
+    borderRadius: radius.xl,
     overflow: 'hidden',
   },
   menuItem: {
@@ -217,21 +178,21 @@ const styles = StyleSheet.create({
   iconContainer: {
     width: 32,
     height: 32,
-    borderRadius: 8,
+    borderRadius: radius.sm,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
   },
   menuItemText: {
     fontSize: 16,
-    fontWeight: '500',
+    fontFamily: fontFamily.medium,
   },
   menuItemSubtitle: {
     fontSize: 14,
     marginTop: 2,
   },
   faqContainer: {
-    borderRadius: 16,
+    borderRadius: radius.xl,
     overflow: 'hidden',
   },
   faqItem: {
@@ -247,11 +208,12 @@ const styles = StyleSheet.create({
   },
   faqQuestion: {
     fontSize: 16,
-    fontWeight: '500',
+    fontFamily: fontFamily.medium,
     flex: 1,
   },
   faqAnswer: {
     fontSize: 14,
     lineHeight: 20,
+    marginTop: 8,
   },
 });

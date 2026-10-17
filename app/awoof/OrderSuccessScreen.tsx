@@ -9,6 +9,8 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useThemeColors } from '@/hooks/useColorScheme';
+import { useRouter } from 'expo-router';
+import { radius, fontFamily } from '@/constants/designTokens';
 
 // ============================================
 // MAIN COMPONENT
@@ -16,6 +18,7 @@ import { useThemeColors } from '@/hooks/useColorScheme';
 export default function OrderSuccessScreen({ route, navigation }: any) {
   const colors = useThemeColors();
   const insets = useSafeAreaInsets();
+  const router = useRouter();
   const { orderId = 'N/A' } = route.params || {};
   const isDarkMode = String(colors.background).toLowerCase() === '#000000';
 
@@ -52,14 +55,7 @@ export default function OrderSuccessScreen({ route, navigation }: any) {
   };
 
   const handleViewOrder = () => {
-    try {
-      navigation.navigate('Orders' as never, {
-        screen: 'OrderDetail',
-        params: { orderId },
-      } as never);
-    } catch (e) {
-      handleContinueShopping();
-    }
+    router.push(`/order/${orderId}`);
   };
 
   return (
@@ -154,14 +150,14 @@ export default function OrderSuccessScreen({ route, navigation }: any) {
             },
           ]}
         >
-          <Text style={[styles.nextStepsTitle, { color: colors.text }]}>What's Next?</Text>
+          <Text style={[styles.nextStepsTitle, { color: colors.text }]}>What&apos;s Next?</Text>
 
           <View style={styles.stepRow}>
             <View style={[styles.stepNumber, { backgroundColor: colors.primary + '20' }]}>
               <Text style={[styles.stepNumberText, { color: colors.primary }]}>1</Text>
             </View>
             <Text style={[styles.stepText, { color: colors.textSecondary }]}>
-              We'll prepare your order for shipping
+              We&apos;ll prepare your order for shipping
             </Text>
           </View>
 
@@ -170,7 +166,7 @@ export default function OrderSuccessScreen({ route, navigation }: any) {
               <Text style={[styles.stepNumberText, { color: colors.primary }]}>2</Text>
             </View>
             <Text style={[styles.stepText, { color: colors.textSecondary }]}>
-              You'll receive tracking details via email
+              You&apos;ll receive tracking details via email
             </Text>
           </View>
 
@@ -227,7 +223,7 @@ const styles = StyleSheet.create({
     left: 16,
     width: 44,
     height: 44,
-    borderRadius: 22,
+    borderRadius: radius.pill,
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 20,
@@ -240,7 +236,7 @@ const styles = StyleSheet.create({
   successCircle: {
     width: 100,
     height: 100,
-    borderRadius: 50,
+    borderRadius: radius.pill,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 24,
@@ -251,7 +247,7 @@ const styles = StyleSheet.create({
   },
   successTitle: {
     fontSize: 28,
-    fontWeight: '700',
+    fontFamily: fontFamily.bold,
     marginBottom: 8,
   },
   successSubtitle: {
@@ -259,7 +255,7 @@ const styles = StyleSheet.create({
   },
   orderCard: {
     width: '100%',
-    borderRadius: 16,
+    borderRadius: radius.lg,
     padding: 20,
     marginBottom: 16,
     borderWidth: 1,
@@ -271,11 +267,11 @@ const styles = StyleSheet.create({
   },
   orderLabel: {
     fontSize: 13,
-    fontWeight: '500',
+    fontFamily: fontFamily.medium,
   },
   orderValue: {
     fontSize: 15,
-    fontWeight: '600',
+    fontFamily: fontFamily.semiBold,
   },
   divider: {
     height: 1,
@@ -286,7 +282,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: 12,
+    borderRadius: radius.md,
     gap: 6,
   },
   statusDot: {
@@ -296,12 +292,12 @@ const styles = StyleSheet.create({
   },
   statusText: {
     fontSize: 12,
-    fontWeight: '600',
+    fontFamily: fontFamily.semiBold,
   },
   infoBox: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 12,
+    borderRadius: radius.md,
     padding: 14,
     marginBottom: 20,
     borderWidth: 1,
@@ -310,16 +306,16 @@ const styles = StyleSheet.create({
   infoText: {
     flex: 1,
     fontSize: 13,
-    fontWeight: '500',
+    fontFamily: fontFamily.medium,
   },
   nextSteps: {
     width: '100%',
-    borderRadius: 16,
+    borderRadius: radius.lg,
     padding: 20,
   },
   nextStepsTitle: {
     fontSize: 15,
-    fontWeight: '600',
+    fontFamily: fontFamily.semiBold,
     marginBottom: 14,
   },
   stepRow: {
@@ -330,14 +326,14 @@ const styles = StyleSheet.create({
   stepNumber: {
     width: 28,
     height: 28,
-    borderRadius: 14,
+    borderRadius: radius.pill,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
   },
   stepNumberText: {
     fontSize: 13,
-    fontWeight: '700',
+    fontFamily: fontFamily.bold,
   },
   stepText: {
     flex: 1,
@@ -349,17 +345,17 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   viewOrderButton: {
-    borderRadius: 12,
+    borderRadius: radius.md,
     paddingVertical: 14,
     alignItems: 'center',
     borderWidth: 1.5,
   },
   viewOrderText: {
     fontSize: 15,
-    fontWeight: '600',
+    fontFamily: fontFamily.semiBold,
   },
   continueButton: {
-    borderRadius: 12,
+    borderRadius: radius.md,
     paddingVertical: 14,
     flexDirection: 'row',
     justifyContent: 'center',
@@ -368,7 +364,7 @@ const styles = StyleSheet.create({
   },
   continueText: {
     fontSize: 16,
-    fontWeight: '600',
+    fontFamily: fontFamily.semiBold,
     color: '#fff',
   },
 });

@@ -44,13 +44,13 @@ export function useFeaturedProducts(
 
         if (categories && categories.length > 0) {
           featuredCategoryId = categories[0].id;
-          await setCachedFeaturedCategoryId(featuredCategoryId);
+          await setCachedFeaturedCategoryId(featuredCategoryId!);
         } else {
           // Fallback: use first available category
           const fallbackCategories = await apiService.getCategories({ per_page: 1 });
           if (fallbackCategories && fallbackCategories.length > 0) {
             featuredCategoryId = fallbackCategories[0].id;
-            await setCachedFeaturedCategoryId(featuredCategoryId);
+            await setCachedFeaturedCategoryId(featuredCategoryId!);
           }
         }
       }

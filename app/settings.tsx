@@ -5,20 +5,26 @@ import { useThemeColors } from '@/hooks/useColorScheme';
 import { useTheme } from '@/context/ThemeContext';
 import { useAuth } from '@/context/AuthContext';
 import { Ionicons } from '@expo/vector-icons';
-import updateService from '@/services/updateService';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { radius, fontFamily } from '@/constants/designTokens';
+
+type SettingsItem = {
+  id: string;
+  title: string;
+  icon: keyof typeof Ionicons.glyphMap;
+  onPress: () => void;
+  type?: 'switch';
+  value?: boolean;
+};
 
 export default function SettingsScreen() {
   const router = useRouter();
   const colors = useThemeColors();
-  const { colorScheme, toggleColorScheme, setColorScheme } = useTheme();
+  const { colorScheme, setColorScheme } = useTheme();
   const { signOut } = useAuth();
   const [darkMode, setDarkMode] = useState(colorScheme === 'dark');
-  const [notifications, setNotifications] = useState(true);
-  const [emailNotifications, setEmailNotifications] = useState(true);
-  const [newsletter, setNewsletter] = useState(false);
 
-  const settingsItems = [
+  const settingsItems: SettingsItem[] = [
     {
       id: 'appearance',
       title: 'Appearance',
@@ -31,72 +37,15 @@ export default function SettingsScreen() {
       type: 'switch',
       value: darkMode,
     },
-    // {
-    //   id: 'notifications',
-    //   title: 'Push Notifications',
-    //   icon: 'notifications',
-    //   type: 'switch',
-    //   value: notifications,
-    //   onToggle: setNotifications,
-    // },
-    // {
-  //     id: 'email-notifications',
-  //     title: 'Email Notifications',
-  //     icon: 'mail',
-  //     type: 'switch',
-  //     value: emailNotifications,
-  //     onToggle: setEmailNotifications,
-  //   },
-  //   {
-  //     id: 'newsletter',
-  //     title: 'Subscribe to Newsletter',
-  //     icon: 'newspaper',
-  //     type: 'switch',
-  //     value: newsletter,
-  //     onToggle: setNewsletter,
-  //   },
   ];
 
-  const appSettingsItems = [
-    // {
-    //   id: 'language',
-    //   title: 'Language',
-    //   icon: 'globe',
-    //   onPress: () => console.log('Language setting pressed'),
-    // },
-    // {
-    //   id: 'currency',
-    //   title: 'Currency',
-    //   icon: 'cash',
-    //   onPress: () => console.log('Currency setting pressed'),
-    // },
-    // {
-    //   id: 'updates',
-    //   title: 'Check for Updates',
-    //   icon: 'download',
-    //   onPress: () => updateService.forceCheckForUpdates(),
-    // },
+  const appSettingsItems: SettingsItem[] = [
     {
       id: 'privacy',
       title: 'Privacy Policy',
       icon: 'shield-checkmark',
       onPress: () => router.push('/privacy-policy'),
     },
-    {
-      id: 'terms',
-      title: 'Terms of Service',
-      icon: 'document-text',
-      onPress: () => console.log('Terms of Service pressed'),
-    },
-  ];
-
-  const accountItems = [
-    // {
-    //   id: 'delete-account',
-    //   title: 'Delete Account',
-    //   icon: 'trash',
-    //   onPress: () => console.log('Delete Account pressed'),
-    // },
   ];
 
   const handleLogout = async () => {
@@ -131,11 +80,7 @@ export default function SettingsScreen() {
                 {item.type === 'switch' ? (
                   <Switch
                     value={item.value}
-                    onValueChange={item.onToggle || (() => {
-                      const newScheme = darkMode ? 'light' : 'dark';
-                      setColorScheme(newScheme);
-                      setDarkMode(!darkMode);
-                    })}
+                    onValueChange={item.onPress}
                     trackColor={{ false: colors.border, true: colors.primary }}
                     thumbColor={colors.white}
                   />
@@ -173,21 +118,6 @@ export default function SettingsScreen() {
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: colors.text }]}>Account</Text>
           <View style={[styles.menuContainer, { backgroundColor: colors.surface }]}>
-            {accountItems.map((item) => (
-              <TouchableOpacity
-                key={item.id}
-                style={[styles.menuItem, { borderBottomColor: colors.border }]}
-                onPress={item.onPress}
-              >
-                <View style={styles.menuItemLeft}>
-                  <View style={[styles.iconContainer, { backgroundColor: colors.surface }]}>
-                    <Ionicons name={item.icon} size={20} color={colors.primary} />
-                  </View>
-                  <Text style={[styles.menuItemText, { color: colors.text }]}>{item.title}</Text>
-                </View>
-                <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
-              </TouchableOpacity>
-            ))}
             <TouchableOpacity
               style={[styles.logoutButton, { backgroundColor: colors.surface }]}
               onPress={handleLogout}
@@ -224,20 +154,20 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 20,
-    fontWeight: 'bold',
+    fontFamily: fontFamily.bold,
   },
   section: {
     marginBottom: 32,
   },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
+    fontFamily: fontFamily.bold,
     paddingHorizontal: 20,
     marginBottom: 16,
   },
   menuContainer: {
     marginHorizontal: 20,
-    borderRadius: 16,
+    borderRadius: radius.xl,
     overflow: 'hidden',
   },
   menuItem: {
@@ -256,7 +186,7 @@ const styles = StyleSheet.create({
   iconContainer: {
     width: 32,
     height: 32,
-    borderRadius: 8,
+    borderRadius: radius.sm,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
@@ -269,13 +199,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 16,
-    borderRadius: 16,
+    borderRadius: radius.xl,
     gap: 8,
     marginTop: 8,
   },
   logoutText: {
     fontSize: 16,
-    fontWeight: '500',
+    fontFamily: fontFamily.medium,
   },
   footer: {
     alignItems: 'center',

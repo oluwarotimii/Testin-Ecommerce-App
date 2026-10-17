@@ -1,9 +1,10 @@
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl } from 'react-native';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'expo-router';
 import { useThemeColors } from '@/hooks/useColorScheme';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { radius, fontFamily } from '@/constants/designTokens';
 
 // Empty mock notification data as requested
 const mockNotifications: any[] = [];
@@ -114,7 +115,7 @@ export default function NotificationsScreen() {
             <Ionicons name="notifications-off" size={80} color={colors.textSecondary} />
             <Text style={[styles.emptyTitle, { color: colors.text }]}>No notifications</Text>
             <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>
-              You'll see updates here when they arrive
+              You&apos;ll see updates here when they arrive
             </Text>
           </View>
         ) : (
@@ -132,7 +133,7 @@ export default function NotificationsScreen() {
                   {getNotificationIcon(notification.type)}
                 </View>
                 <View style={styles.notificationContent}>
-                  <Text style={[styles.notificationTitle, { color: colors.text, fontWeight: notification.read ? 'normal' : 'bold' }]}>
+                  <Text style={[styles.notificationTitle, { color: colors.text, fontFamily: notification.read ? fontFamily.regular : fontFamily.bold }]}>
                     {notification.title}
                   </Text>
                   <Text style={[styles.notificationMessage, { color: colors.textSecondary }]}>
@@ -188,7 +189,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 28,
-    fontWeight: 'bold',
+    fontFamily: fontFamily.bold,
   },
   markAllButton: {
     padding: 8,
@@ -209,7 +210,7 @@ const styles = StyleSheet.create({
   },
   emptyTitle: {
     fontSize: 20,
-    fontWeight: 'bold',
+    fontFamily: fontFamily.bold,
     marginTop: 16,
     marginBottom: 8,
   },
@@ -218,7 +219,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   notificationItem: {
-    borderRadius: 12,
+    borderRadius: radius.lg,
     padding: 16,
     marginBottom: 12,
   },
@@ -236,7 +237,6 @@ const styles = StyleSheet.create({
   },
   notificationTitle: {
     fontSize: 16,
-    fontWeight: '600',
     marginBottom: 4,
   },
   notificationMessage: {

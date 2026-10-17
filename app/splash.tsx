@@ -4,6 +4,7 @@ import { useRouter } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
 import { useThemeColors } from '@/hooks/useColorScheme';
 import { hasSeenWelcomeScreen } from '@/utils/welcomeState';
+import { fontFamily } from '@/constants/designTokens';
 
 export default function SplashScreen() {
   const router = useRouter();
@@ -78,7 +79,7 @@ const styles = StyleSheet.create({
   },
   appName: {
     fontSize: 32,
-    fontWeight: 'bold',
+    fontFamily: fontFamily.bold,
     marginBottom: 8,
   },
   tagline: {

@@ -1,9 +1,16 @@
 import { useEffect, useRef, useCallback } from 'react';
-import { Stack } from 'expo-router';
+import { Stack, useRouter } from 'expo-router';
 import { View, Alert, AppState } from 'react-native';
-import { usePathname } from 'expo-router';
-import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import * as SplashScreen from 'expo-splash-screen';
+import {
+  useFonts,
+  Roboto_400Regular,
+  Roboto_500Medium,
+  Roboto_600SemiBold,
+  Roboto_700Bold,
+  Roboto_800ExtraBold,
+} from '@expo-google-fonts/roboto';
 import { useFrameworkReady } from '@/hooks/useFrameworkReady';
 import notificationService from '@/services/notificationService';
 import updateService from '@/services/updateService';
@@ -18,6 +25,10 @@ import ForceUpdateScreen from '@/components/ForceUpdateScreen';
 import * as Notifications from 'expo-notifications';
 import * as Linking from 'expo-linking';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+
+// Keep the native splash up until the custom fonts are ready, so the app
+// never flashes system-font text before swapping to Roboto.
+SplashScreen.preventAutoHideAsync().catch(() => {});
 
 function AppContent() {
   const { colorScheme } = useTheme();
@@ -46,6 +57,20 @@ export default function RootLayout() {
   const router = useRouter();
   const updateSubscriptionRef = useRef<any>(null);
   useFrameworkReady();
+
+  const [fontsLoaded, fontError] = useFonts({
+    Roboto_400Regular,
+    Roboto_500Medium,
+    Roboto_600SemiBold,
+    Roboto_700Bold,
+    Roboto_800ExtraBold,
+  });
+
+  useEffect(() => {
+    if (fontsLoaded || fontError) {
+      SplashScreen.hideAsync().catch(() => {});
+    }
+  }, [fontsLoaded, fontError]);
 
   // Helper function to handle notification navigation
   const handleNotificationNavigation = useCallback((notificationData: any) => {
@@ -104,7 +129,7 @@ export default function RootLayout() {
       } else if (linkType === 'page') {
         // Navigate to a specific page
         console.log('📄 Navigating to page:', linkValue);
-        router.push(`/${linkValue}`);
+        router.push(`/${linkValue}` as Parameters<typeof router.push>[0]);
       } else if (linkType === 'awoof') {
         // Shortcut link type for Awoof Corner
         router.push('/awoof');
@@ -258,6 +283,10 @@ export default function RootLayout() {
       subscription.remove();
     };
   }, [handleNotificationNavigation, handleDeepLink]);
+
+  if (!fontsLoaded && !fontError) {
+    return null;
+  }
 
   return (
     <ThemeProvider>

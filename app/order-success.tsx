@@ -1,8 +1,10 @@
-import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useThemeColors } from '@/hooks/useColorScheme';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import Button from '@/components/Button';
+import { radius, fontFamily, shadow } from '@/constants/designTokens';
 
 export default function OrderSuccessScreen() {
     const router = useRouter();
@@ -27,19 +29,8 @@ export default function OrderSuccessScreen() {
                     </Text>
                 </View>
 
-                <TouchableOpacity
-                    style={[styles.button, { backgroundColor: colors.primary }]}
-                    onPress={() => router.push('/(tabs)')}
-                >
-                    <Text style={[styles.buttonText, { color: colors.white }]}>Continue Shopping</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                    style={[styles.secondaryButton, { borderColor: colors.primary }]}
-                    onPress={() => router.push('/orders')}
-                >
-                    <Text style={[styles.secondaryButtonText, { color: colors.primary }]}>View My Orders</Text>
-                </TouchableOpacity>
+                <Button title="Continue Shopping" onPress={() => router.push('/(tabs)')} size="lg" style={{ marginBottom: 16 }} />
+                <Button title="View My Orders" onPress={() => router.push('/orders')} variant="outline" size="lg" />
             </View>
         </SafeAreaView>
     );
@@ -61,7 +52,7 @@ const styles = StyleSheet.create({
     },
     title: {
         fontSize: 28,
-        fontWeight: 'bold',
+        fontFamily: fontFamily.bold,
         marginBottom: 12,
     },
     subtitle: {
@@ -71,35 +62,14 @@ const styles = StyleSheet.create({
     },
     infoCard: {
         padding: 20,
-        borderRadius: 16,
+        borderRadius: radius.xl,
         marginBottom: 32,
         width: '100%',
+        ...shadow.card,
     },
     infoText: {
         fontSize: 16,
         textAlign: 'center',
         lineHeight: 24,
-    },
-    button: {
-        width: '100%',
-        paddingVertical: 16,
-        borderRadius: 12,
-        alignItems: 'center',
-        marginBottom: 16,
-    },
-    buttonText: {
-        fontSize: 16,
-        fontWeight: '600',
-    },
-    secondaryButton: {
-        width: '100%',
-        paddingVertical: 16,
-        borderRadius: 12,
-        alignItems: 'center',
-        borderWidth: 1,
-    },
-    secondaryButtonText: {
-        fontSize: 16,
-        fontWeight: '600',
     },
 });

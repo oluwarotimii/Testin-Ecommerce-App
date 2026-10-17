@@ -12,7 +12,7 @@ export interface AppProduct {
     description: string;
     category: string;
     category_id?: number;
-    categories?: Array<{ id: number; name: string; slug: string }>; // Full categories array from WooCommerce
+    categories?: { id: number; name: string; slug: string }[]; // Full categories array from WooCommerce
     rating?: {
         rate: number;
         count: number;
@@ -68,7 +68,7 @@ export function transformProduct(wcProduct: any): AppProduct {
                 }
                 return '';
             })
-            .filter(img => img !== ''); // Remove empty strings
+            .filter((img: string) => img !== ''); // Remove empty strings
     }
 
     return {

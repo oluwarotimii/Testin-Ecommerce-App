@@ -3,7 +3,7 @@ import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { useThemeColors } from '@/hooks/useColorScheme';
 import { useTheme } from '@/context/ThemeContext';
-import { MaterialIcons, FontAwesome, Ionicons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 
 export default function DevToolsScreen() {
   const router = useRouter();

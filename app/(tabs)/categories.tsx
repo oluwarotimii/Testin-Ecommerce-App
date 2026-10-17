@@ -1,12 +1,14 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, ActivityIndicator, Image } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
 import { useThemeColors } from '@/hooks/useColorScheme';
-import { MaterialIcons, FontAwesome, Ionicons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import { transformCategories } from '@/utils/woocommerceTransformers';
 import SafeImage from '@/components/SafeImage';
+import { radius, fontFamily, shadow } from '@/constants/designTokens';
+import { useResponsiveColumns } from '@/hooks/useResponsiveColumns';
 
 // Function to get icon for category
 const getCategoryIcon = (categoryName: string): string => {
@@ -69,7 +71,8 @@ export default function CategoriesScreen() {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState('');
+  const numColumns = useResponsiveColumns(2);
+  const gridItemWidthPercent = numColumns >= 4 ? 23 : numColumns === 3 ? 31 : 47;
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -95,17 +98,12 @@ export default function CategoriesScreen() {
     fetchCategories();
   }, []);
 
-  const filteredCategories = categories.filter(category =>
-    category.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
-
   const renderGridView = () => (
     <View style={styles.gridContainer}>
-      {filteredCategories.map((category) => (
+      {categories.map((category) => (
         <TouchableOpacity
           key={category.id}
-          style={[styles.gridItem, { backgroundColor: colors.surface }]}
+          style={[styles.gridItem, { backgroundColor: colors.surface, width: `${gridItemWidthPercent}%` }]}
           onPress={() => router.push(`/category/${category.id}` as any)}
           activeOpacity={0.7}
         >
@@ -129,7 +127,7 @@ export default function CategoriesScreen() {
 
   const renderListView = () => (
     <View style={styles.listContainer}>
-      {filteredCategories.map((category) => (
+      {categories.map((category) => (
         <TouchableOpacity
           key={category.id}
           style={[styles.listItem, { borderBottomColor: colors.border }]}
@@ -181,18 +179,6 @@ export default function CategoriesScreen() {
         </View>
       </View>
 
-      {/* Search Bar */}
-      {/* <View style={[styles.searchContainer, { backgroundColor: colors.surface }]}>
-        <Ionicons name="search" size={20} color={colors.textSecondary} />
-        <TextInput
-          style={[styles.searchInput, { color: colors.text }]}
-          placeholder="Search categories..."
-          placeholderTextColor={colors.textSecondary}
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-        />
-      </View> */}
-
       {/* Categories */}
       <ScrollView
         style={styles.content}
@@ -201,7 +187,7 @@ export default function CategoriesScreen() {
       >
         {loading ? (
           <ActivityIndicator size="large" color={colors.primary} style={styles.loadingIndicator} />
-        ) : filteredCategories.length === 0 ? (
+        ) : categories.length === 0 ? (
           <Text style={[styles.noCategoriesText, { color: colors.textSecondary }]}>No categories found</Text>
         ) : (
           viewMode === 'grid' ? renderGridView() : renderListView()
@@ -230,25 +216,25 @@ const styles = StyleSheet.create({
   backButton: {
     width: 36,
     height: 36,
-    borderRadius: 18,
+    borderRadius: radius.pill,
     alignItems: 'center',
     justifyContent: 'center',
   },
   title: {
     fontSize: 22,
-    fontWeight: '700',
+    fontFamily: fontFamily.bold,
     marginLeft: 8,
   },
   viewToggle: {
     flexDirection: 'row',
-    borderRadius: 10,
+    borderRadius: radius.pill,
     padding: 3,
     gap: 2,
   },
   toggleButton: {
     width: 36,
     height: 36,
-    borderRadius: 8,
+    borderRadius: radius.pill,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -265,12 +251,12 @@ const styles = StyleSheet.create({
     gap: 14,
   },
   gridItem: {
-    width: '47%',
-    borderRadius: 16,
+    borderRadius: radius.xl,
     padding: 20,
     alignItems: 'center',
     justifyContent: 'center',
     gap: 10,
+    ...shadow.card,
   },
   iconCircle: {
     width: 72,
@@ -286,7 +272,7 @@ const styles = StyleSheet.create({
   },
   categoryNameGrid: {
     fontSize: 13,
-    fontWeight: '600',
+    fontFamily: fontFamily.semiBold,
     textAlign: 'center',
   },
   listContainer: {
@@ -314,7 +300,7 @@ const styles = StyleSheet.create({
   categoryNameList: {
     flex: 1,
     fontSize: 15,
-    fontWeight: '600',
+    fontFamily: fontFamily.semiBold,
   },
   loadingIndicator: {
     marginTop: 50,

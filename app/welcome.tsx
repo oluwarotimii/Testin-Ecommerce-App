@@ -1,9 +1,10 @@
 import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
 import { useThemeColors } from '@/hooks/useColorScheme';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { markWelcomeScreenAsSeen } from '@/utils/welcomeState';
+import Button from '@/components/Button';
+import { fontFamily } from '@/constants/designTokens';
 
 export default function WelcomeScreen() {
   const router = useRouter();
@@ -42,28 +43,15 @@ export default function WelcomeScreen() {
         </View>
 
         <View style={styles.buttonContainer}>
-        <TouchableOpacity
-          style={[styles.primaryButton, { backgroundColor: colors.primary }]}
-          onPress={handleLogin}
-        >
-          <Ionicons name="person" size={20} color={colors.white} />
-          <Text style={[styles.primaryButtonText, { color: colors.white }]}>Login</Text>
-        </TouchableOpacity>
+          <Button title="Login" icon="person" onPress={handleLogin} size="lg" />
+          <Button title="Register" icon="person-add" onPress={handleRegister} variant="outline" size="lg" />
 
-        <TouchableOpacity
-          style={[styles.secondaryButton, { backgroundColor: colors.surface }]}
-          onPress={handleRegister}
-        >
-          <Ionicons name="person-add" size={20} color={colors.primary} />
-          <Text style={[styles.secondaryButtonText, { color: colors.primary }]}>Register</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.guestButton}
-          onPress={handleContinueAsGuest}
-        >
-          <Text style={[styles.guestButtonText, { color: colors.textSecondary }]}>Continue as Guest</Text>
-        </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.guestButton}
+            onPress={handleContinueAsGuest}
+          >
+            <Text style={[styles.guestButtonText, { color: colors.textSecondary }]}>Continue as Guest</Text>
+          </TouchableOpacity>
         </View>
       </View>
     </SafeAreaView>
@@ -96,7 +84,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 28,
-    fontWeight: 'bold',
+    fontFamily: fontFamily.bold,
     marginBottom: 12,
     textAlign: 'center',
   },
@@ -108,36 +96,12 @@ const styles = StyleSheet.create({
   buttonContainer: {
     gap: 16,
   },
-  primaryButton: {
-    paddingVertical: 16,
-    borderRadius: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-  },
-  primaryButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  secondaryButton: {
-    paddingVertical: 16,
-    borderRadius: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-  },
-  secondaryButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-  },
   guestButton: {
     paddingVertical: 16,
     alignItems: 'center',
   },
   guestButtonText: {
     fontSize: 16,
-    fontWeight: '500',
+    fontFamily: fontFamily.medium,
   },
 });

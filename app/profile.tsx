@@ -1,12 +1,12 @@
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, ActivityIndicator, Alert } from 'react-native';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'expo-router';
-import * as Linking from 'expo-linking';
 import { useAuth } from '@/context/AuthContext';
 import { useThemeColors } from '@/hooks/useColorScheme';
 import { Ionicons } from '@expo/vector-icons';
-import notificationService from '@/services/notificationService';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import Button from '@/components/Button';
+import { radius, fontFamily, shadow } from '@/constants/designTokens';
 
 export default function ProfileScreen() {
   const router = useRouter();
@@ -99,7 +99,7 @@ export default function ProfileScreen() {
               Alert.alert("Account Deleted", "Your account has been successfully deleted.");
             } catch (error: any) {
               console.error('Error deleting account:', error);
-              Alert.alert("Error", error.message || "Failed to delete account. Please try again.");
+              Alert.alert("Error", "Failed to delete account. Please try again.");
             }
           }
         }
@@ -131,18 +131,8 @@ export default function ProfileScreen() {
           <Ionicons name="person-circle-outline" size={80} color={colors.textSecondary} style={styles.emptyIcon} />
           <Text style={[styles.emptyTitle, { color: colors.text }]}>You are not logged in.</Text>
           <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>Please log in to view and edit your profile.</Text>
-          <TouchableOpacity
-            style={[styles.loginButton, { backgroundColor: colors.primary }]}
-            onPress={() => router.push('/login')}
-          >
-            <Text style={[styles.loginButtonText, { color: colors.white }]}>Log In</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.registerButton, { borderColor: colors.primary }]}
-            onPress={() => router.push('/register')}
-          >
-            <Text style={[styles.registerButtonText, { color: colors.primary }]}>Create Account</Text>
-          </TouchableOpacity>
+          <Button title="Log In" onPress={() => router.push('/login')} style={{ marginBottom: 15 }} />
+          <Button title="Create Account" onPress={() => router.push('/register')} variant="outline" />
 
           {/* Privacy Policy Link */}
           <TouchableOpacity
@@ -166,7 +156,7 @@ export default function ProfileScreen() {
           </TouchableOpacity>
           <Text style={[styles.title, { color: colors.text }]}>My Profile</Text>
           <TouchableOpacity onPress={() => router.push('/edit-profile')}>
-            <Text style={{ color: colors.primary, fontSize: 16, fontWeight: '500' }}>
+            <Text style={{ color: colors.primary, fontSize: 16, fontFamily: fontFamily.medium }}>
               Edit
             </Text>
           </TouchableOpacity>
@@ -223,49 +213,6 @@ export default function ProfileScreen() {
             <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
           </TouchableOpacity>
 
-          {/* <TouchableOpacity
-            style={[styles.menuItem, { backgroundColor: colors.surface }]}
-            onPress={async () => {
-              try {
-                console.log("Attempting to register for push notifications...");
-                const token = await notificationService.registerForPushNotificationsAsync();
-
-                if (!token) {
-                  // Show alert prompting user to enable notifications in settings
-                  Alert.alert(
-                    "Enable Notifications",
-                    "To receive push notifications, please enable them in your device settings.",
-                    [
-                      { text: "Not now" },
-                      {
-                        text: "Open Settings",
-                        onPress: () => Linking.openSettings()
-                      }
-                    ]
-                  );
-                  return;
-                }
-
-                console.log("Sending local notification...");
-                await notificationService.sendLocalNotification(
-                  "Test Notification",
-                  "This is a test notification to verify push notifications are working."
-                );
-                console.log("Successfully sent notification");
-                Alert.alert("Success", "Notification sent! Check your notification center.");
-              } catch (error) {
-                console.error("Notification error:", error);
-                Alert.alert("Error", `Failed to send notification: ${error.message || 'Unknown error'}`);
-              }
-            }}
-          >
-            <View style={[styles.menuIcon, { backgroundColor: '#E0F7FA' }]}>
-              <Ionicons name="notifications-outline" size={22} color="#00BCD4" />
-            </View>
-            <Text style={[styles.menuText, { color: colors.text }]}>Test Notification</Text>
-            <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
-          </TouchableOpacity> */}
-
           <TouchableOpacity style={[styles.menuItem, { backgroundColor: colors.surface, marginTop: 20 }]} onPress={handleLogout}>
             <View style={[styles.menuIcon, { backgroundColor: '#FFEBEE' }]}>
               <Ionicons name="log-out-outline" size={22} color="#D32F2F" />
@@ -311,17 +258,13 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 20,
-    fontWeight: 'bold',
+    fontFamily: fontFamily.bold,
   },
   profileCard: {
     margin: 20,
     padding: 20,
-    borderRadius: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
+    borderRadius: radius.xl,
+    ...shadow.card,
   },
   profileHeader: {
     flexDirection: 'row',
@@ -331,7 +274,7 @@ const styles = StyleSheet.create({
   profilePicture: {
     width: 70,
     height: 70,
-    borderRadius: 35,
+    borderRadius: radius.pill,
     marginRight: 16,
   },
   profileTexts: {
@@ -339,40 +282,11 @@ const styles = StyleSheet.create({
   },
   profileName: {
     fontSize: 20,
-    fontWeight: 'bold',
+    fontFamily: fontFamily.bold,
     marginBottom: 4,
   },
   profileEmail: {
     fontSize: 14,
-  },
-  editForm: {
-    marginTop: 10,
-  },
-  inputGroup: {
-    marginBottom: 16,
-  },
-  label: {
-    fontSize: 12,
-    marginBottom: 6,
-    fontWeight: '500',
-  },
-  input: {
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 12,
-    borderWidth: 1,
-    fontSize: 16,
-  },
-  saveButton: {
-    paddingVertical: 14,
-    borderRadius: 12,
-    alignItems: 'center',
-    marginTop: 10,
-  },
-  saveButtonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: '600',
   },
   infoGrid: {
     flexDirection: 'row',
@@ -394,13 +308,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     padding: 16,
-    borderRadius: 16,
+    borderRadius: radius.xl,
     marginBottom: 12,
   },
   menuIcon: {
     width: 40,
     height: 40,
-    borderRadius: 20,
+    borderRadius: radius.pill,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 16,
@@ -408,7 +322,7 @@ const styles = StyleSheet.create({
   menuText: {
     flex: 1,
     fontSize: 16,
-    fontWeight: '500',
+    fontFamily: fontFamily.medium,
   },
   emptyContainer: {
     flex: 1,
@@ -422,7 +336,7 @@ const styles = StyleSheet.create({
   },
   emptyTitle: {
     fontSize: 22,
-    fontWeight: 'bold',
+    fontFamily: fontFamily.bold,
     marginBottom: 10,
     textAlign: 'center',
   },
@@ -432,40 +346,6 @@ const styles = StyleSheet.create({
     marginBottom: 30,
     paddingHorizontal: 20,
   },
-  loginButton: {
-    width: '100%',
-    paddingVertical: 15,
-    borderRadius: 10,
-    alignItems: 'center',
-    marginBottom: 15,
-  },
-  loginButtonText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  registerButton: {
-    width: '100%',
-    paddingVertical: 15,
-    borderRadius: 10,
-    alignItems: 'center',
-    borderWidth: 1,
-  },
-  registerButtonText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  privacyButton: {
-    width: '100%',
-    paddingVertical: 15,
-    // borderRadius: 10,
-    alignItems: 'center',
-    // borderWidth: 1,
-    marginTop: 15,
-  },
-  privacyButtonText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
   privacyLink: {
     marginTop: 15,
     alignSelf: 'flex-start',
@@ -474,12 +354,5 @@ const styles = StyleSheet.create({
   privacyLinkText: {
     fontSize: 16,
     textDecorationLine: 'underline',
-  },
-  privacyMenuLink: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 16,
-    borderRadius: 16,
-    marginBottom: 12,
   },
 });

@@ -5,115 +5,6 @@ import {
   scheduleCartAbandonmentReminder,
 } from '@/services/notificationService';
 
-interface Product {
-  id: number;
-  name: string;
-  slug: string;
-  permalink: string;
-  date_created: string;
-  date_created_gmt: string;
-  date_modified: string;
-  date_modified_gmt: string;
-  type: string;
-  status: string;
-  featured: boolean;
-  catalog_visibility: string;
-  description: string;
-  short_description: string;
-  sku: string;
-  price: string;
-  regular_price: string;
-  sale_price: string;
-  date_on_sale_from: string | null;
-  date_on_sale_from_gmt: string | null;
-  date_on_sale_to: string | null;
-  date_on_sale_to_gmt: string | null;
-  on_sale: boolean;
-  purchasable: boolean;
-  total_sales: number;
-  virtual: boolean;
-  downloadable: boolean;
-  downloads: any[];
-  download_limit: number;
-  download_expiry: number;
-  external_url: string;
-  button_text: string;
-  tax_status: string;
-  tax_class: string;
-  manage_stock: boolean;
-  stock_quantity: number | null;
-  stock_status: string;
-  backorders: string;
-  backorders_allowed: boolean;
-  backordered: boolean;
-  sold_individually: boolean;
-  weight: string;
-  dimensions: {
-    length: string;
-    width: string;
-    height: string;
-  };
-  shipping_required: boolean;
-  shipping_taxable: boolean;
-  shipping_class: string;
-  shipping_class_id: number;
-  reviews_allowed: boolean;
-  average_rating: string;
-  rating_count: number;
-  related_ids: number[];
-  upsell_ids: number[];
-  cross_sell_ids: number[];
-  parent_id: number;
-  purchase_note: string;
-  categories: Array<{
-    id: number;
-    name: string;
-    slug: string;
-  }>;
-  tags: any[];
-  images: Array<{
-    id: number;
-    date_created: string;
-    date_created_gmt: string;
-    date_modified: string;
-    date_modified_gmt: string;
-    src: string;
-    name: string;
-    alt: string;
-  }>;
-  attributes: any[];
-  default_attributes: any[];
-  variations: number[];
-  grouped_products: any[];
-  menu_order: number;
-  price_html: string;
-  has_options: boolean;
-  post_password: string;
-  meta_data: any[];
-}
-
-interface Category {
-  id: number;
-  name: string;
-  slug: string;
-  parent: number;
-  description: string;
-  display: string;
-  image: {
-    id: number;
-    date_created: string;
-    date_created_gmt: string;
-    date_modified: string;
-    date_modified_gmt: string;
-    src: string;
-    name: string;
-    alt: string;
-  } | null;
-  menu_order: number;
-  count: number;
-  _links: any;
-}
-
 interface Customer {
   id: number;
   date_created: string;
@@ -155,72 +46,6 @@ interface Customer {
   _links: any;
 }
 
-interface Order {
-  id: number;
-  parent_id: number;
-  number: string;
-  order_key: string;
-  created_via: string;
-  version: string;
-  status: string;
-  currency: string;
-  date_created: string;
-  date_created_gmt: string;
-  date_modified: string;
-  date_modified_gmt: string;
-  discount_total: string;
-  discount_tax: string;
-  shipping_total: string;
-  shipping_tax: string;
-  cart_tax: string;
-  total: string;
-  total_tax: string;
-  prices_include_tax: boolean;
-  customer_id: number;
-  customer_ip_address: string;
-  customer_user_agent: string;
-  customer_note: string;
-  billing: {
-    first_name: string;
-    last_name: string;
-    company: string;
-    address_1: string;
-    address_2: string;
-    city: string;
-    state: string;
-    postcode: string;
-    country: string;
-    email: string;
-    phone: string;
-  };
-  shipping: {
-    first_name: string;
-    last_name: string;
-    company: string;
-    address_1: string;
-    address_2: string;
-    city: string;
-    state: string;
-    postcode: string;
-    country: string;
-  };
-  payment_method: string;
-  payment_method_title: string;
-  transaction_id: string;
-  date_paid: string;
-  date_paid_gmt: string;
-  date_completed: string;
-  date_completed_gmt: string;
-  cart_hash: string;
-  meta_data: any[];
-  line_items: any[];
-  tax_lines: any[];
-  shipping_lines: any[];
-  fee_lines: any[];
-  coupon_lines: any[];
-  refunds: any[];
-  _links: any;
-}
 
 class WordPressApiService {
   sessionToken: string | null;
@@ -230,6 +55,14 @@ class WordPressApiService {
   private jwtEndpoint: string;
   private consumerKey: string;
   private consumerSecret: string;
+  // Categories change rarely but were being re-fetched independently by every
+  // screen that shows them (home, products, categories tab, category detail),
+  // multiplying the same request on every navigation. A short TTL cache plus
+  // in-flight de-duplication means only one request goes out per cache
+  // window, no matter how many screens ask for categories at once.
+  private categoriesCache: Map<string, { data: any; timestamp: number }> = new Map();
+  private categoriesInFlight: Map<string, Promise<any>> = new Map();
+  private static CATEGORIES_CACHE_TTL = 5 * 60 * 1000;
 
   constructor(wordpressUrl: string, consumerKey: string, consumerSecret: string, sessionToken: string | null = null) {
     // Ensure wordpressUrl doesn't end with a slash to avoid double slash in URL
@@ -315,11 +148,22 @@ class WordPressApiService {
     );
   }
 
+  // A WAF/bot-challenge in front of the site can return HTTP 200 with an
+  // HTML interstitial page instead of the real JSON array - silently
+  // treating that as "zero results" hides a real outage from the user.
+  // Call this on any endpoint that's expected to return a JSON array.
+  private assertJsonArray(data: any, context: string): any[] {
+    if (!Array.isArray(data)) {
+      throw new Error(`Unexpected response for ${context} - the server did not return the expected data.`);
+    }
+    return data;
+  }
+
   // Helper method to handle API requests with error handling
-  private async handleRequest<T>(endpoint: string, options: any = {}) {
+  private async handleRequest<T = any>(endpoint: string, options: any = {}): Promise<T> {
     try {
       const response = await this.api(endpoint, options);
-      return response.data;
+      return response.data as T;
     } catch (error: any) {
       // Enhanced error logging for 403 errors
       if (error.response?.status === 403) {
@@ -349,9 +193,18 @@ class WordPressApiService {
         }
       );
       return response.status === 200;
-    } catch (error) {
-      console.error('Token validation failed:', error);
-      return false;
+    } catch (error: any) {
+      const status = error?.response?.status;
+      if (status === 401 || status === 403) {
+        // The JWT plugin explicitly rejected the token (expired/invalid) -
+        // safe to report as "not valid".
+        return false;
+      }
+      // Network error, timeout, 5xx, etc. - we can't confirm either way,
+      // so don't punish the user for a connectivity blip. Rethrow and let
+      // the caller decide to keep the session rather than force a logout.
+      console.error('Token validation request failed (not a rejection):', error);
+      throw error;
     }
   }
 
@@ -538,7 +391,7 @@ class WordPressApiService {
 
       // Return just the requested page
       // The calling component can implement pagination if needed
-      return response.data;
+      return this.assertJsonArray(response.data, 'products');
     } catch (error: any) {
       console.error('Error fetching products:', error.response?.data || error.message);
       throw error;
@@ -617,18 +470,37 @@ class WordPressApiService {
 
   // Categories
   async getCategories(params: any = {}) {
-    try {
-      const response = await this.api.get('/products/categories', {
-        params: {
-          per_page: 100,
-          ...params
-        }
-      });
-      return response.data;
-    } catch (error: any) {
-      console.error('Error fetching categories:', error.response?.data || error.message);
-      throw error;
+    const cacheKey = JSON.stringify(params);
+
+    const cached = this.categoriesCache.get(cacheKey);
+    if (cached && Date.now() - cached.timestamp < WordPressApiService.CATEGORIES_CACHE_TTL) {
+      return cached.data;
     }
+
+    const inFlight = this.categoriesInFlight.get(cacheKey);
+    if (inFlight) return inFlight;
+
+    const request = (async () => {
+      try {
+        const response = await this.api.get('/products/categories', {
+          params: {
+            per_page: 100,
+            ...params
+          }
+        });
+        const categories = this.assertJsonArray(response.data, 'categories');
+        this.categoriesCache.set(cacheKey, { data: categories, timestamp: Date.now() });
+        return categories;
+      } catch (error: any) {
+        console.error('Error fetching categories:', error.response?.data || error.message);
+        throw error;
+      } finally {
+        this.categoriesInFlight.delete(cacheKey);
+      }
+    })();
+
+    this.categoriesInFlight.set(cacheKey, request);
+    return request;
   }
 
   async getCategory(category_id: number | string) {
@@ -1308,8 +1180,10 @@ class WordPressApiService {
 
     while (i < str.length) {
       const char1 = str.charCodeAt(i++);
-      const char2 = i < str.length ? str.charCodeAt(i++) : 0;
-      const char3 = i < str.length ? str.charCodeAt(i++) : 0;
+      const hasChar2 = i < str.length;
+      const char2 = hasChar2 ? str.charCodeAt(i++) : 0;
+      const hasChar3 = i < str.length;
+      const char3 = hasChar3 ? str.charCodeAt(i++) : 0;
 
       const bits = (char1 << 16) | (char2 << 8) | char3;
       const enc1 = (bits >> 18) & 63;
@@ -1318,8 +1192,8 @@ class WordPressApiService {
       const enc4 = bits & 63;
 
       output += base64Chars.charAt(enc1) + base64Chars.charAt(enc2) +
-        (isNaN(char2) ? '=' : base64Chars.charAt(enc3)) +
-        (isNaN(char3) ? '=' : base64Chars.charAt(enc4));
+        (hasChar2 ? base64Chars.charAt(enc3) : '=') +
+        (hasChar3 ? base64Chars.charAt(enc4) : '=');
     }
 
     return output;
@@ -1404,7 +1278,7 @@ class WordPressApiService {
         const sessionToken = this.sessionToken;
 
         if (sessionToken) {
-          const fallbackResponse = await axios.post(
+          await axios.post(
             `${wordpressUrl}/wp-json/wc/v3/customers/push-token`,
             {
               push_token: token,

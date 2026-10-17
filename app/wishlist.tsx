@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
@@ -8,6 +8,9 @@ import SkeletonProductItem from '@/components/SkeletonProductItem';
 import SkeletonLoader from '@/components/SkeletonLoader';
 import BackButton from '@/components/BackButton';
 import SafeImage from '@/components/SafeImage';
+import Button from '@/components/Button';
+import { radius, fontFamily, shadow } from '@/constants/designTokens';
+import { useResponsiveColumns } from '@/hooks/useResponsiveColumns';
 
 export default function WishlistScreen() {
   const router = useRouter();
@@ -16,6 +19,8 @@ export default function WishlistScreen() {
   const { apiService } = useAuth();
   const [wishlist, setWishlist] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const numColumns = useResponsiveColumns(2);
+  const gridItemWidthPercent = numColumns >= 4 ? 23 : numColumns === 3 ? 31 : 48;
 
   useEffect(() => {
     const fetchWishlist = async () => {
@@ -86,12 +91,7 @@ export default function WishlistScreen() {
           <Ionicons name="heart-outline" size={80} color={colors.textSecondary} />
           <Text style={[styles.emptyTitle, { color: colors.text }]}>Your wishlist is empty</Text>
           <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>Add items to your wishlist to see them here</Text>
-          <TouchableOpacity
-            style={[styles.browseButton, { backgroundColor: colors.primary }]}
-            onPress={() => router.push('/(tabs)')}
-          >
-            <Text style={[styles.browseButtonText, { color: colors.white }]}>Browse Products</Text>
-          </TouchableOpacity>
+          <Button title="Browse Products" onPress={() => router.push('/(tabs)')} fullWidth={false} style={styles.browseButton} />
         </View>
       </View>
     );
@@ -123,7 +123,7 @@ export default function WishlistScreen() {
             const formattedPrice = productPrice.toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
             return (
-              <View key={item.id} style={[styles.gridItem, { backgroundColor: colors.surface }]}>
+              <View key={item.id} style={[styles.gridItem, { backgroundColor: colors.surface, width: `${gridItemWidthPercent}%` }]}>
                 <TouchableOpacity
                   style={styles.gridImageContainer}
                   onPress={() => router.push(`/product/${item.id}`)}
@@ -175,7 +175,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 28,
-    fontWeight: 'bold',
+    fontFamily: fontFamily.bold,
   },
   itemCount: {
     fontSize: 14,
@@ -193,15 +193,10 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   gridItem: {
-    width: '48%', // 2 columns with spacing
-    borderRadius: 12,
+    borderRadius: radius.xl,
     marginBottom: 16,
     overflow: 'hidden',
-    elevation: 2, // Shadow for Android
-    shadowColor: '#000', // Shadow for iOS
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    ...shadow.card,
   },
   gridImageContainer: {
     width: '100%',
@@ -214,7 +209,7 @@ const styles = StyleSheet.create({
     right: 8,
     width: 32,
     height: 32,
-    borderRadius: 16,
+    borderRadius: radius.pill,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -228,7 +223,7 @@ const styles = StyleSheet.create({
     right: 8,
     width: 32,
     height: 32,
-    borderRadius: 16,
+    borderRadius: radius.pill,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -237,7 +232,7 @@ const styles = StyleSheet.create({
   },
   gridName: {
     fontSize: 14,
-    fontWeight: '500',
+    fontFamily: fontFamily.medium,
     marginBottom: 8,
     height: 40, // Fixed height for 2 lines
   },
@@ -246,16 +241,16 @@ const styles = StyleSheet.create({
   },
   gridPrice: {
     fontSize: 16,
-    fontWeight: 'bold',
+    fontFamily: fontFamily.bold,
   },
   gridAddToCartButton: {
     paddingVertical: 8,
-    borderRadius: 8,
+    borderRadius: radius.pill,
     alignItems: 'center',
   },
   gridAddToCartText: {
     fontSize: 12,
-    fontWeight: '600',
+    fontFamily: fontFamily.semiBold,
   },
   // Keep empty state styles
   emptyContainer: {
@@ -266,7 +261,7 @@ const styles = StyleSheet.create({
   },
   emptyTitle: {
     fontSize: 24,
-    fontWeight: 'bold',
+    fontFamily: fontFamily.bold,
     marginTop: 24,
     marginBottom: 8,
     textAlign: 'center',
@@ -279,12 +274,6 @@ const styles = StyleSheet.create({
   },
   browseButton: {
     paddingHorizontal: 32,
-    paddingVertical: 16,
-    borderRadius: 12,
-  },
-  browseButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
   },
   loadingIndicator: {
     flex: 1,

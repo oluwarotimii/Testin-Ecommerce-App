@@ -1,20 +1,20 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions, Alert, Share, Image } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions, Alert, Share } from 'react-native';
 import { useState, useEffect } from 'react';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
 import { useCart } from '@/context/CartContext';
-import { MaterialIcons, FontAwesome, Ionicons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import { useThemeColors } from '@/hooks/useColorScheme';
 import { transformProduct } from '@/utils/woocommerceTransformers';
 import { formatPrice } from '@/utils/formatNumber';
 import { stripHtml } from '@/utils/htmlUtils';
 import PriceNoticeBanner from '@/components/PriceNoticeBanner';
 import Constants from 'expo-constants';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import SkeletonProductDetail from '@/components/SkeletonProductDetail';
-import ProductCard from '@/components/ProductCard';
 import SafeImage from '@/components/SafeImage';
+import Button from '@/components/Button';
+import { spacing, radius, typeScale, fontFamily, shadow } from '@/constants/designTokens';
 
 const { width } = Dimensions.get('window');
 
@@ -330,6 +330,9 @@ export default function ProductDetailScreen() {
               <TouchableOpacity style={[styles.headerIconBg, { backgroundColor: colors.background + 'CC' }]} onPress={() => router.push('/search')}>
                 <Ionicons name="search" size={20} color={colors.text} />
               </TouchableOpacity>
+              <TouchableOpacity style={[styles.headerIconBg, { backgroundColor: colors.background + 'CC' }]} onPress={handleShare}>
+                <Ionicons name="share-outline" size={20} color={colors.text} />
+              </TouchableOpacity>
               <TouchableOpacity style={[styles.headerIconBg, { backgroundColor: colors.background + 'CC' }]} onPress={toggleWishlist}>
                 <Ionicons
                   name={isInWishlist ? "heart" : "heart-outline"}
@@ -477,6 +480,16 @@ export default function ProductDetailScreen() {
                 >
                   <View style={styles.similarProductImageContainer}>
                     <SafeImage source={{ uri: item.image }} style={[styles.similarProductImage, { backgroundColor: colors.background }]} />
+                    <TouchableOpacity
+                      style={[styles.similarWishlistButton, { backgroundColor: colors.background + 'CC' }]}
+                      onPress={(e) => { e.stopPropagation(); toggleSimilarProductWishlist(item.id); }}
+                    >
+                      <Ionicons
+                        name={similarProductsInWishlist.has(item.id) ? 'heart' : 'heart-outline'}
+                        size={14}
+                        color={similarProductsInWishlist.has(item.id) ? '#FF3B30' : colors.text}
+                      />
+                    </TouchableOpacity>
                   </View>
                   <View style={styles.similarProductInfoHorizontal}>
                     <Text style={[styles.similarProductName, { color: colors.text }]} numberOfLines={2}>{item.title}</Text>
@@ -493,12 +506,13 @@ export default function ProductDetailScreen() {
       <View style={[styles.actionBar, {
         paddingBottom: insets.bottom + 12
       }]}>
-        <TouchableOpacity
-          style={[styles.buyNowButton, { backgroundColor: colors.primary }]}
+        <Button
+          title="Buy Now"
           onPress={buyNow}
-        >
-          <Text style={[styles.buyNowText, { color: colors.white }]}>Buy Now</Text>
-        </TouchableOpacity>
+          size="lg"
+          fullWidth={false}
+          style={{ flex: 1.5, ...shadow.raised }}
+        />
         <TouchableOpacity
           style={[styles.addToCartOutline, { borderColor: colors.primary, backgroundColor: colors.background }]}
           onPress={addToCart}
@@ -546,7 +560,7 @@ const styles = StyleSheet.create({
   headerIconBg: {
     width: 36,
     height: 36,
-    borderRadius: 18,
+    borderRadius: radius.pill,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -567,7 +581,7 @@ const styles = StyleSheet.create({
     height: width * 0.8,
     maxWidth: 320,
     maxHeight: 320,
-    borderRadius: 16,
+    borderRadius: radius.xxl,
   },
   thumbnailContainer: {
     marginTop: 12,
@@ -581,7 +595,7 @@ const styles = StyleSheet.create({
   thumbnail: {
     width: 52,
     height: 52,
-    borderRadius: 10,
+    borderRadius: radius.md,
     overflow: 'hidden',
     borderWidth: 2,
     borderColor: 'transparent',
@@ -604,11 +618,11 @@ const styles = StyleSheet.create({
     fontSize: 12,
     textTransform: 'uppercase',
     letterSpacing: 0.8,
-    fontWeight: '600',
+    fontFamily: fontFamily.semiBold,
   },
   productName: {
-    fontSize: 22,
-    fontWeight: '700',
+    fontSize: typeScale.headline,
+    fontFamily: fontFamily.bold,
     marginTop: 4,
   },
   ratingRow: {
@@ -623,7 +637,7 @@ const styles = StyleSheet.create({
   },
   ratingText: {
     fontSize: 13,
-    fontWeight: '500',
+    fontFamily: fontFamily.medium,
   },
   priceSection: {
     marginBottom: 16,
@@ -631,7 +645,7 @@ const styles = StyleSheet.create({
   },
   currentPrice: {
     fontSize: 26,
-    fontWeight: '800',
+    fontFamily: fontFamily.extraBold,
   },
   priceRow: {
     flexDirection: 'row',
@@ -641,20 +655,21 @@ const styles = StyleSheet.create({
   },
   originalPriceTag: {
     fontSize: 16,
+    fontFamily: fontFamily.regular,
     textDecorationLine: 'line-through',
   },
   savingsBadge: {
-    paddingHorizontal: 8,
+    paddingHorizontal: spacing.sm,
     paddingVertical: 3,
-    borderRadius: 6,
+    borderRadius: radius.pill,
   },
   savingsText: {
     fontSize: 12,
-    fontWeight: '700',
+    fontFamily: fontFamily.bold,
   },
   detailsLabel: {
     fontSize: 15,
-    fontWeight: '600',
+    fontFamily: fontFamily.semiBold,
     marginBottom: 8,
     marginTop: 4,
   },
@@ -662,19 +677,20 @@ const styles = StyleSheet.create({
     fontSize: 15,
     lineHeight: 22,
     marginBottom: 20,
+    fontFamily: fontFamily.regular,
   },
   quantitySection: {
     marginBottom: 24,
   },
   quantityLabel: {
     fontSize: 15,
-    fontWeight: '600',
+    fontFamily: fontFamily.semiBold,
     marginBottom: 10,
   },
   quantityContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 12,
+    borderRadius: radius.pill,
     padding: 4,
     alignSelf: 'flex-start',
     gap: 4,
@@ -684,11 +700,11 @@ const styles = StyleSheet.create({
     height: 40,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 10,
+    borderRadius: radius.pill,
   },
   quantity: {
     fontSize: 17,
-    fontWeight: '600',
+    fontFamily: fontFamily.semiBold,
     marginHorizontal: 16,
     minWidth: 24,
     textAlign: 'center',
@@ -707,11 +723,11 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 17,
-    fontWeight: '700',
+    fontFamily: fontFamily.bold,
   },
   seeAllLink: {
     fontSize: 14,
-    fontWeight: '600',
+    fontFamily: fontFamily.semiBold,
   },
   similarProductsContainer: {
     paddingHorizontal: 20,
@@ -725,7 +741,7 @@ const styles = StyleSheet.create({
   },
   similarProductCard: {
     width: '47%', // Default width for grid
-    borderRadius: 16,
+    borderRadius: radius.xl,
     overflow: 'hidden',
     position: 'relative',
     marginBottom: 16,
@@ -733,7 +749,7 @@ const styles = StyleSheet.create({
   similarProductCardHorizontal: {
     width: 150,
     marginRight: 15,
-    borderRadius: 12,
+    borderRadius: radius.lg,
     overflow: 'hidden',
     position: 'relative',
   },
@@ -741,23 +757,33 @@ const styles = StyleSheet.create({
     position: 'relative',
     width: '100%',
   },
+  similarWishlistButton: {
+    position: 'absolute',
+    top: 6,
+    right: 6,
+    width: 26,
+    height: 26,
+    borderRadius: radius.pill,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   similarProductImage: {
     width: '100%',
     height: 150,
-    borderRadius: 12,
+    borderRadius: radius.lg,
   },
   similarProductInfoHorizontal: {
     padding: 10,
   },
   similarProductName: {
     fontSize: 13,
-    fontWeight: '500',
+    fontFamily: fontFamily.medium,
     marginBottom: 4,
     lineHeight: 17,
   },
   similarProductPrice: {
     fontSize: 15,
-    fontWeight: 'bold',
+    fontFamily: fontFamily.bold,
   },
   similarProductsScroll: {
     paddingHorizontal: 20,
@@ -774,35 +800,19 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     gap: 10,
   },
-  buyNowButton: {
-    flex: 1.5,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 16,
-    borderRadius: 14,
-    elevation: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 6,
-  },
-  buyNowText: {
-    fontSize: 16,
-    fontWeight: '700',
-  },
   addToCartOutline: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 16,
-    borderRadius: 14,
+    borderRadius: radius.pill,
     borderWidth: 1.5,
     gap: 6,
   },
   addToCartOutlineText: {
     fontSize: 15,
-    fontWeight: '600',
+    fontFamily: fontFamily.semiBold,
   },
   loadingContainer: {
     flex: 1,

@@ -33,7 +33,7 @@ export type AwoofStackParamList = {
     addedProduct?: any;
   };
   AwoofCheckout: { // Changed route name to match component
-    cartItems: Array<any>;
+    cartItems: any[];
   };
   OrderSuccess: {
     orderId: string;
@@ -136,7 +136,7 @@ import { AwoofCornerNavigator } from './navigation/AwoofCornerNavigator';
   name="AwoofCorner" 
   component={AwoofCornerNavigator}
   options={{
-    tabBarLabel: 'Awoof Corner',
+    tabBarLabel: 'Awoof',
     tabBarIcon: ({ color, size }) => (
       <Text style={{ fontSize: 24 }}>🔥</Text>
     ),

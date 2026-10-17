@@ -5,12 +5,14 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
 import { useCart } from '@/context/CartContext';
 import { useThemeColors } from '@/hooks/useColorScheme';
-import { MaterialIcons, FontAwesome, Ionicons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import SkeletonCartItem from '@/components/SkeletonCartItem';
 import SkeletonLoader from '@/components/SkeletonLoader';
 import { useIsFocused } from '@react-navigation/native';
 import SafeImage from '@/components/SafeImage';
 import { formatPrice } from '@/utils/formatNumber';
+import Button from '@/components/Button';
+import { spacing, radius, typeScale, fontFamily, shadow } from '@/constants/designTokens';
 
 export default function CartScreen() {
   const router = useRouter();
@@ -20,7 +22,6 @@ export default function CartScreen() {
   const { apiService } = useAuth();
   const { setCartCount } = useCart();
   const isFocused = useIsFocused();
-  const [cart, setCart] = useState<any>(null);
   const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const hasHandledActionRef = useRef(false);
@@ -29,7 +30,6 @@ export default function CartScreen() {
     try {
       setLoading(true);
       const cartResponse = await apiService.getCartContents();
-      setCart(cartResponse);
 
       if (cartResponse && cartResponse.products && cartResponse.products.length > 0) {
         // Cart items now have all necessary data (productId, image, title, price, quantity)
@@ -65,7 +65,6 @@ export default function CartScreen() {
       try {
         await apiService.emptyCart();
         setProducts([]);
-        setCart(null);
         setCartCount(0);
         Alert.alert('Cart cleared', 'Your cart has been emptied.');
       } catch (error) {
@@ -133,12 +132,7 @@ export default function CartScreen() {
         </View>
         <Text style={[styles.emptyTitle, { color: colors.text }]}>Your cart is empty</Text>
         <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>Add some products to get started</Text>
-        <TouchableOpacity
-          style={[styles.shopButton, { backgroundColor: colors.primary }]}
-          onPress={() => router.push('/(tabs)')}
-        >
-          <Text style={[styles.shopButtonText, { color: colors.white }]}>Start Shopping</Text>
-        </TouchableOpacity>
+        <Button title="Start Shopping" onPress={() => router.push('/(tabs)')} fullWidth={false} style={styles.shopButton} />
       </View>
     );
   }
@@ -247,12 +241,7 @@ export default function CartScreen() {
           <Text style={[styles.totalValue, { color: isDarkMode ? colors.white : colors.primary }]}>{formatPrice(total)}</Text>
         </View>
 
-        <TouchableOpacity
-          style={[styles.checkoutButton, { backgroundColor: colors.primary }]}
-          onPress={() => router.push('/checkout')}
-        >
-          <Text style={[styles.checkoutButtonText, { color: colors.white }]}>Proceed to Checkout</Text>
-        </TouchableOpacity>
+        <Button title="Proceed to Checkout" onPress={() => router.push('/checkout')} size="lg" style={shadow.raised} />
       </View>
     </SafeAreaView>
   );
@@ -279,7 +268,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 28,
-    fontWeight: 'bold',
+    fontFamily: fontFamily.bold,
   },
   itemCount: {
     fontSize: 14,
@@ -292,19 +281,15 @@ const styles = StyleSheet.create({
   cartItem: {
     flexDirection: 'row',
     paddingVertical: 16,
-    borderBottomWidth: 1,
-    borderRadius: 12,
+    borderRadius: radius.lg,
     marginBottom: 12,
-    elevation: 1,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
+    paddingHorizontal: spacing.md,
+    ...shadow.card,
   },
   itemImage: {
     width: 80,
     height: 80,
-    borderRadius: 12,
+    borderRadius: radius.md,
   },
   itemDetails: {
     flex: 1,
@@ -313,7 +298,7 @@ const styles = StyleSheet.create({
   },
   itemName: {
     fontSize: 16,
-    fontWeight: '500',
+    fontFamily: fontFamily.medium,
   },
   itemSpecs: {
     flexDirection: 'row',
@@ -324,8 +309,8 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   itemPrice: {
-    fontSize: 16,
-    fontWeight: 'bold',
+    fontSize: typeScale.bodyLarge,
+    fontFamily: fontFamily.bold,
   },
   itemActions: {
     alignItems: 'flex-end',
@@ -337,7 +322,7 @@ const styles = StyleSheet.create({
   quantityContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 20,
+    borderRadius: radius.pill,
     padding: 4,
     borderWidth: 1,
   },
@@ -346,11 +331,11 @@ const styles = StyleSheet.create({
     height: 32,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 16,
+    borderRadius: radius.pill,
   },
   quantity: {
     fontSize: 16,
-    fontWeight: '500',
+    fontFamily: fontFamily.medium,
     marginHorizontal: 16,
     minWidth: 20,
     textAlign: 'center',
@@ -358,11 +343,7 @@ const styles = StyleSheet.create({
   summary: {
     padding: 20,
     paddingBottom: 20,
-    elevation: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 10,
+    ...shadow.raised,
   },
   summaryRow: {
     flexDirection: 'row',
@@ -374,25 +355,11 @@ const styles = StyleSheet.create({
   },
   totalLabel: {
     fontSize: 18,
-    fontWeight: 'bold',
+    fontFamily: fontFamily.bold,
   },
   totalValue: {
     fontSize: 18,
-    fontWeight: 'bold',
-  },
-  checkoutButton: {
-    paddingVertical: 18,
-    borderRadius: 14,
-    alignItems: 'center',
-    elevation: 5,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-  },
-  checkoutButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
+    fontFamily: fontFamily.bold,
   },
   emptyContainer: {
     flex: 1,
@@ -403,14 +370,14 @@ const styles = StyleSheet.create({
   emptyIconContainer: {
     width: 120,
     height: 120,
-    borderRadius: 60,
+    borderRadius: radius.pill,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 24,
   },
   emptyTitle: {
     fontSize: 24,
-    fontWeight: 'bold',
+    fontFamily: fontFamily.bold,
     marginTop: 24,
     marginBottom: 8,
   },
@@ -421,11 +388,5 @@ const styles = StyleSheet.create({
   },
   shopButton: {
     paddingHorizontal: 32,
-    paddingVertical: 16,
-    borderRadius: 12,
-  },
-  shopButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
   },
 });

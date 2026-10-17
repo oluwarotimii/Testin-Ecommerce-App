@@ -4,6 +4,7 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import SafeImage from '@/components/SafeImage';
 import SkeletonProductItem from '@/components/SkeletonProductItem';
+import SalePill from '@/components/SalePill';
 import { useCart } from '@/context/CartContext';
 import { useThemeColors } from '@/hooks/useColorScheme';
 import { formatPrice } from '@/utils/formatNumber';
@@ -13,6 +14,8 @@ interface Product {
     title: string;
     image: string;
     price: string | number;
+    original_price?: string | number;
+    categories?: { id: number; name: string; slug: string }[];
 }
 
 interface BestDealsSectionProps {
@@ -41,7 +44,13 @@ export default function BestDealsSection({
     const [cartSuccess, setCartSuccess] = useState<{ [key: number]: boolean }>({});
 
     // Render individual product item
-    const renderProductItem = (item: any) => (
+    const renderProductItem = (item: any) => {
+        const price = typeof item.price === 'number' ? item.price : parseFloat(item.price || '0');
+        const originalPrice = typeof item.original_price === 'number' ? item.original_price : parseFloat(item.original_price || '0');
+        const isOnSale = originalPrice > price;
+        const percentOff = isOnSale ? ((originalPrice - price) / originalPrice) * 100 : 0;
+
+        return (
         <TouchableOpacity
             key={item.id}
             style={styles.productCard}
@@ -49,15 +58,16 @@ export default function BestDealsSection({
         >
             <View style={styles.productImageContainer}>
                 {/* OPTIMIZED: Use WooCommerce thumbnail if available, fallback to regular image */}
-                <SafeImage 
-                    source={{ uri: item.thumbnail || item.image }} 
-                    style={[styles.productImage, { backgroundColor: colors.background }]} 
+                <SafeImage
+                    source={{ uri: item.thumbnail || item.image }}
+                    style={[styles.productImage, { backgroundColor: colors.background }]}
                 />
 
-                {/* Sales Badge */}
-                <View style={styles.saleBadge}>
-                    <Text style={styles.saleBadgeText}>SALE</Text>
-                </View>
+                {isOnSale && (
+                    <View style={styles.saleBadge}>
+                        <SalePill percentOff={percentOff} />
+                    </View>
+                )}
 
                 <View style={styles.wishlistOverlay}>
                     <TouchableOpacity
@@ -105,7 +115,7 @@ export default function BestDealsSection({
                             }
                         }}
                     >
-                        <Ionicons name="cart" size={18} color={colors.white} />
+                        <Ionicons name={cartSuccess[item.id] ? "checkmark" : "cart"} size={18} color={colors.white} />
                     </TouchableOpacity>
                 </View>
             </View>
@@ -113,12 +123,15 @@ export default function BestDealsSection({
             <View style={styles.productInfo}>
                 <Text style={[styles.productName, { color: colors.text }]} numberOfLines={2}>{item.title}</Text>
                 <View style={styles.priceRow}>
-                    <Text style={[styles.originalPrice, { color: colors.textSecondary }]}>{formatPrice((typeof item.price === 'number' ? item.price : parseFloat(item.price || '0')) * 1.3)}</Text>
-                    <Text style={[styles.productPrice, { color: isDarkMode ? colors.white : colors.primary }]}>{formatPrice(typeof item.price === 'number' ? item.price : parseFloat(item.price || '0'))}</Text>
+                    {isOnSale && (
+                        <Text style={[styles.originalPrice, { color: colors.textSecondary }]}>{formatPrice(originalPrice)}</Text>
+                    )}
+                    <Text style={[styles.productPrice, { color: isDarkMode ? colors.white : colors.primary }]}>{formatPrice(price)}</Text>
                 </View>
             </View>
         </TouchableOpacity>
-    );
+        );
+    };
 
     if (loadingFeatured) {
         return (
@@ -151,10 +164,6 @@ export default function BestDealsSection({
         return null;
     }
 
-    if (featuredProducts.length === 0) {
-        return null;
-    }
-
     return (
         <View style={styles.section}>
             <View style={styles.sectionHeader}>
@@ -163,9 +172,9 @@ export default function BestDealsSection({
                     style={[styles.seeAllButton, { backgroundColor: colors.primary }]}
                     onPress={() => {
                         // Navigate to first product's category if available, otherwise all products
-                        if (featuredProducts.length > 0 && featuredProducts[0].categories?.length > 0) {
-                            const categoryId = featuredProducts[0].categories[0].id;
-                            router.push(`/category/${categoryId}` as any);
+                        const firstCategory = featuredProducts[0]?.categories?.[0];
+                        if (firstCategory) {
+                            router.push(`/category/${firstCategory.id}` as any);
                         } else {
                             router.push('/products');
                         }
@@ -175,7 +184,14 @@ export default function BestDealsSection({
                 </TouchableOpacity>
             </View>
 
-            {featuredProducts.length === 0 ? (
+            {loadingFeatured ? (
+                <View style={styles.productsGrid}>
+                    <SkeletonProductItem viewMode="grid" />
+                    <SkeletonProductItem viewMode="grid" />
+                    <SkeletonProductItem viewMode="grid" />
+                    <SkeletonProductItem viewMode="grid" />
+                </View>
+            ) : featuredProducts.length === 0 ? (
                 <Text style={[styles.noProductsText, { color: colors.textSecondary }]}>No trending products found.</Text>
             ) : (
                 <View style={styles.productsGrid}>
@@ -235,16 +251,7 @@ const styles = StyleSheet.create({
         position: 'absolute',
         top: 8,
         right: 8,
-        backgroundColor: '#FF3B30', // Red color for sale
-        paddingHorizontal: 6,
-        paddingVertical: 3,
-        borderRadius: 4,
         zIndex: 3,
-    },
-    saleBadgeText: {
-        color: 'white',
-        fontSize: 10,
-        fontWeight: 'bold',
     },
     wishlistOverlay: {
         position: 'absolute',

@@ -1,5 +1,4 @@
 import * as Device from 'expo-device';
-import * as Linking from 'expo-linking';
 import { Platform } from 'react-native';
 import Constants from 'expo-constants';
 import { DASHBOARD_API_BASE_URL } from './config';
@@ -12,7 +11,6 @@ const CART_REMINDER_DELAY_SECONDS = 60 * 60;
 
 const WINDOW_START_HOUR = 9;  // 9 AM
 const WINDOW_END_HOUR = 20;   // 8 PM
-const MIN_NOTIFICATION_GAP_HOURS = 3;
 
 const isExpoGo = Constants.appOwnership === 'expo';
 
@@ -27,21 +25,6 @@ const getNotifications = async () => {
     return null;
   }
 };
-
-// Function to create notification channel for Android 13+
-const createNotificationChannel = async () => {
-  const Notifications = await getNotifications();
-  if (!Notifications) return;
-  if (Platform.OS === 'android') {
-    await Notifications.setNotificationChannelAsync('default', {
-      name: 'default',
-      importance: Notifications.AndroidImportance.MAX,
-      vibrationPattern: [0, 500, 250, 500], // More noticeable vibration pattern
-      lightColor: '#FF231F7C',
-    });
-  }
-};
-
 
 const ensureNotificationHandler = (() => {
   let didSet = false;

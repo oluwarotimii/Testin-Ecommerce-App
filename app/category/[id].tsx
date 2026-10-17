@@ -1,14 +1,15 @@
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, TextInput, Animated, RefreshControl } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, TextInput, Animated, RefreshControl } from 'react-native';
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
 import { useCart } from '@/context/CartContext';
 import { Ionicons } from '@expo/vector-icons';
 import { useThemeColors } from '@/hooks/useColorScheme';
-import SafeImage from '@/components/SafeImage';
 import { transformProducts } from '@/utils/woocommerceTransformers';
 import ProductCard from '@/components/ProductCard';
 import PriceNoticeBanner from '@/components/PriceNoticeBanner';
+import { radius, typeScale, fontFamily } from '@/constants/designTokens';
+import { useResponsiveColumns } from '@/hooks/useResponsiveColumns';
 
 export default function CategoryScreen() {
     const router = useRouter();
@@ -20,6 +21,7 @@ export default function CategoryScreen() {
     const [products, setProducts] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [loadingMore, setLoadingMore] = useState(false);
+    const [refreshing, setRefreshing] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [wishlist, setWishlist] = useState<number[]>([]);
     const [categoryName, setCategoryName] = useState('Category');
@@ -31,11 +33,8 @@ export default function CategoryScreen() {
     const [hasMore, setHasMore] = useState(true);
     const [page, setPage] = useState(1);
     const scrollY = useRef(new Animated.Value(0)).current;
-
-    const formatPrice = (price: string | number) => {
-        const numPrice = typeof price === 'string' ? parseFloat(price) : price;
-        return numPrice.toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    };
+    const numColumns = useResponsiveColumns(2);
+    const cardWidthPercent = numColumns >= 4 ? 23 : numColumns === 3 ? 31 : 47;
 
     const fetchWishlist = useCallback(async () => {
         if (!apiService) return;
@@ -112,7 +111,8 @@ export default function CategoryScreen() {
                 setPage(prev => prev + 1);
             }
         } catch (err: any) {
-            setError(err.message || 'Failed to load products');
+            console.error('Error fetching category products:', err);
+            setError('Unable to load products right now. Please try again.');
         } finally {
             if (reset) {
                 setLoading(false);
@@ -154,6 +154,16 @@ export default function CategoryScreen() {
             fetchCategoryProducts(false); // Load more (not reset)
         }
     }, [hasMore, loadingMore, loading, fetchCategoryProducts]);
+
+    // Separate from `loading` (which drives the initial empty-state spinner)
+    // so a pull-to-refresh on an already-populated list doesn't also pop the
+    // big centered "Loading products..." indicator underneath the native
+    // pull-to-refresh spinner - two loading indicators stacked at once.
+    const handleRefresh = useCallback(async () => {
+        setRefreshing(true);
+        await fetchCategoryProducts(true);
+        setRefreshing(false);
+    }, [fetchCategoryProducts]);
 
     const toggleWishlist = async (productId: number) => {
         if (!apiService) return;
@@ -244,7 +254,7 @@ export default function CategoryScreen() {
             onAddToCart={() => handleAddToCart(item.id)}
             addingToCart={addingToCart[item.id]}
             cartSuccess={cartSuccess[item.id]}
-            style={{ marginBottom: 8 }} // Reduced margin to minimize whitespace
+            style={{ width: `${cardWidthPercent}%`, marginBottom: 8 }}
         />
     );
 
@@ -343,6 +353,7 @@ export default function CategoryScreen() {
 
             {/* Content */}
             <Animated.FlatList
+                key={numColumns}
                 data={filteredProducts}
                 renderItem={renderItem}
                 keyExtractor={keyExtractor}
@@ -355,12 +366,12 @@ export default function CategoryScreen() {
                 onEndReachedThreshold={0.5}
                 ListFooterComponent={renderFooter}
                 ListEmptyComponent={renderEmpty}
-                numColumns={2}
+                numColumns={numColumns}
                 columnWrapperStyle={styles.columnWrapper}
                 refreshControl={
                     <RefreshControl
-                        refreshing={loading}
-                        onRefresh={() => fetchCategoryProducts(true)}
+                        refreshing={refreshing}
+                        onRefresh={handleRefresh}
                         colors={[colors.primary]}
                         tintColor={colors.primary}
                     />
@@ -386,14 +397,14 @@ const styles = StyleSheet.create({
     backButton: {
         width: 36,
         height: 36,
-        borderRadius: 18,
+        borderRadius: radius.pill,
         alignItems: 'center',
         justifyContent: 'center',
     },
     searchIcon: {
         width: 36,
         height: 36,
-        borderRadius: 18,
+        borderRadius: radius.pill,
         alignItems: 'center',
         justifyContent: 'center',
     },
@@ -403,7 +414,7 @@ const styles = StyleSheet.create({
         marginHorizontal: 16,
         paddingHorizontal: 14,
         height: 42,
-        borderRadius: 14,
+        borderRadius: radius.pill,
         marginBottom: 4,
         gap: 8,
     },
@@ -414,8 +425,8 @@ const styles = StyleSheet.create({
     },
     title: {
         flex: 1,
-        fontSize: 20,
-        fontWeight: '700',
+        fontSize: typeScale.title,
+        fontFamily: fontFamily.bold,
         textTransform: 'capitalize',
         textAlign: 'center',
     },
@@ -426,7 +437,7 @@ const styles = StyleSheet.create({
     },
     countText: {
         fontSize: 13,
-        fontWeight: '500',
+        fontFamily: fontFamily.medium,
     },
     content: {
         flex: 1,

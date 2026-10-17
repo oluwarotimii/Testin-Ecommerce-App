@@ -24,6 +24,8 @@ import axios from 'axios';
 import { WebView } from 'react-native-webview';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { calculateAwoofCouponDiscount, clearStoredAwoofAppliedCoupon, getStoredAwoofAppliedCoupon, normalizeAwoofCouponCode, setStoredAwoofAppliedCoupon, type AwoofAppliedCoupon } from '@/utils/awoofCoupons';
+import { isExpiredTokenError } from '@/utils/tokenError';
+import { radius, fontFamily } from '@/constants/designTokens';
 
 const PAYSTACK_INIT_ENDPOINT = `${appConfig.wordpressUrl.replace(/\/$/, '')}/wp-json/awoof/v1/initialize-payment`;
 
@@ -38,7 +40,7 @@ export default function AwoofCheckoutScreen({ route, navigation }: any) {
   const colors = useThemeColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { apiService, isAuthenticated, loadingAuth, user, sessionToken } = useAuth();
+  const { apiService, isAuthenticated, loadingAuth, user, sessionToken, signOut } = useAuth();
   const cartItems: CartItem[] = route?.params?.cartItems || [];
 
   const webViewRef = useRef<any>(null);
@@ -349,9 +351,7 @@ export default function AwoofCheckoutScreen({ route, navigation }: any) {
         qty: item.quantity,
       }));
 
-      const subtotalNow = cartItems.reduce((sum, item) => sum + item.salePrice * item.quantity, 0);
       const deliveryFeeNow = getSelectedShippingCost();
-      const discountNow = appliedCoupon ? calculateAwoofCouponDiscount(subtotalNow, appliedCoupon) : 0;
 
       console.log('🚀 Initiating awoof payment:', {
         endpoint: PAYSTACK_INIT_ENDPOINT,
@@ -405,6 +405,32 @@ export default function AwoofCheckoutScreen({ route, navigation }: any) {
       setIsWebCheckoutVisible(true);
     } catch (error: any) {
       console.error('Payment initialization failed:', error.response?.data || error.message);
+
+      // An expired/invalid JWT isn't retryable - the same request will just
+      // fail again. Sign the user out and send them to log back in instead
+      // of offering a "Retry" that can't succeed. The cart itself survives
+      // (awoofCart is a module-level singleton, not tied to auth state) -
+      // we just flag that checkout should resume automatically once the
+      // user is back in, reusing the same pending-action mechanism built
+      // for push-notification deep links (see AwoofFeedScreen).
+      if (isExpiredTokenError(error)) {
+        try {
+          // replaceCart: false is required here - with no items[] supplied,
+          // the default (true) would call awoofCart.setCart([]) and wipe
+          // the very cart we're trying to preserve before the resume
+          // navigation even reads it back.
+          await AsyncStorage.setItem('pending_awoof_action', JSON.stringify({ actionType: 'checkout', replaceCart: false }));
+        } catch (storageError) {
+          console.error('Failed to save pending Awoof resume action:', storageError);
+        }
+        await signOut();
+        Alert.alert(
+          'Session Expired',
+          'Your session has expired. Please log in again to continue - your cart has been saved.',
+          [{ text: 'Log In', onPress: () => router.push('/login') }]
+        );
+        return;
+      }
 
       let errorMessage = 'An unexpected error occurred during payment initialization.';
       if (error.response?.data?.message) {
@@ -580,7 +606,7 @@ export default function AwoofCheckoutScreen({ route, navigation }: any) {
           <View style={styles.sectionHeader}>
             <Text style={[styles.sectionTitle, { color: colors.text }]}>Shipping Address</Text>
             <TouchableOpacity onPress={() => router.push('/addresses')}>
-              <Text style={{ color: colors.primary, fontWeight: '600' }}>Change</Text>
+              <Text style={{ color: colors.primary, fontFamily: fontFamily.semiBold }}>Change</Text>
             </TouchableOpacity>
           </View>
 
@@ -864,9 +890,6 @@ const styles = StyleSheet.create({
   section: {
     padding: 20,
   },
-  sectionShell: {
-    borderRadius: 24,
-  },
   sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -875,7 +898,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: '700',
+    fontFamily: fontFamily.bold,
   },
   header: {
     flexDirection: 'row',
@@ -887,13 +910,13 @@ const styles = StyleSheet.create({
   backButton: {
     width: 44,
     height: 44,
-    borderRadius: 22,
+    borderRadius: radius.pill,
     alignItems: 'center',
     justifyContent: 'center',
   },
   headerTitle: {
     fontSize: 18,
-    fontWeight: '700',
+    fontFamily: fontFamily.bold,
   },
   headerSubtitle: {
     fontSize: 12,
@@ -901,7 +924,7 @@ const styles = StyleSheet.create({
   },
   addressCard: {
     padding: 16,
-    borderRadius: 18,
+    borderRadius: radius.xl,
     borderWidth: 1,
   },
   addressInfo: {
@@ -913,7 +936,7 @@ const styles = StyleSheet.create({
   },
   addressName: {
     fontSize: 16,
-    fontWeight: '600',
+    fontFamily: fontFamily.semiBold,
     marginBottom: 4,
   },
   addressText: {
@@ -922,7 +945,7 @@ const styles = StyleSheet.create({
   },
   emptyAddress: {
     padding: 20,
-    borderRadius: 16,
+    borderRadius: radius.lg,
     borderWidth: 1,
     borderStyle: 'dashed',
     flexDirection: 'row',
@@ -931,7 +954,7 @@ const styles = StyleSheet.create({
   },
   summaryCard: {
     padding: 16,
-    borderRadius: 20,
+    borderRadius: radius.xl,
     borderWidth: 1,
     gap: 10,
   },
@@ -944,7 +967,7 @@ const styles = StyleSheet.create({
   itemImage: {
     width: 56,
     height: 56,
-    borderRadius: 14,
+    borderRadius: radius.md,
   },
   itemDetails: {
     marginLeft: 12,
@@ -952,17 +975,17 @@ const styles = StyleSheet.create({
   },
   itemName: {
     fontSize: 14,
-    fontWeight: '700',
+    fontFamily: fontFamily.bold,
     marginBottom: 2,
   },
   itemPrice: {
     fontSize: 12,
-    fontWeight: '700',
+    fontFamily: fontFamily.bold,
     marginTop: 2,
   },
   deliveryMethodTitle: {
     fontSize: 14,
-    fontWeight: '700',
+    fontFamily: fontFamily.bold,
   },
   deliveryMethodDescription: {
     fontSize: 12,
@@ -970,7 +993,7 @@ const styles = StyleSheet.create({
   },
   deliveryNotice: {
     fontSize: 12,
-    fontWeight: '600',
+    fontFamily: fontFamily.semiBold,
     lineHeight: 18,
   },
   divider: {
@@ -987,7 +1010,7 @@ const styles = StyleSheet.create({
   },
   priceValue: {
     fontSize: 14,
-    fontWeight: '500',
+    fontFamily: fontFamily.medium,
   },
   couponBox: {
     marginTop: 10,
@@ -995,7 +1018,7 @@ const styles = StyleSheet.create({
   },
   couponTitle: {
     fontSize: 14,
-    fontWeight: '700',
+    fontFamily: fontFamily.bold,
   },
   couponRow: {
     flexDirection: 'row',
@@ -1004,28 +1027,28 @@ const styles = StyleSheet.create({
   couponInput: {
     flex: 1,
     borderWidth: 1,
-    borderRadius: 14,
+    borderRadius: radius.md,
     paddingHorizontal: 12,
     paddingVertical: 10,
     fontSize: 14,
   },
   couponButton: {
     paddingHorizontal: 14,
-    borderRadius: 14,
+    borderRadius: radius.md,
     justifyContent: 'center',
   },
   couponButtonText: {
     color: '#fff',
     fontSize: 14,
-    fontWeight: '800',
+    fontFamily: fontFamily.extraBold,
   },
   totalLabel: {
     fontSize: 16,
-    fontWeight: '700',
+    fontFamily: fontFamily.bold,
   },
   totalValue: {
     fontSize: 22,
-    fontWeight: '700',
+    fontFamily: fontFamily.bold,
   },
   secureInfo: {
     flexDirection: 'row',
@@ -1038,23 +1061,14 @@ const styles = StyleSheet.create({
     lineHeight: 16,
   },
   bottomBar: {
-    // position: 'absolute',
-    // left: 0,
-    // top: 10,
-    // right: 20,
     padding: 10,
     borderTopWidth: 1,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    // shadowColor: '#000',
-    // shadowOffset: { width: 0, height: -4 },
-    // shadowOpacity: 0.08,
-    // shadowRadius: 12,
-    // elevation: 12,
+    borderTopLeftRadius: radius.xxl,
+    borderTopRightRadius: radius.xxl,
   },
   payButton: {
     height: 58,
-    borderRadius: 18,
+    borderRadius: radius.xl,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -1063,7 +1077,7 @@ const styles = StyleSheet.create({
   payButtonText: {
     color: '#fff',
     fontSize: 17,
-    fontWeight: '800',
+    fontFamily: fontFamily.extraBold,
     letterSpacing: 0.2,
   },
   loadingText: {
@@ -1086,7 +1100,7 @@ const styles = StyleSheet.create({
   closeButton: {
     width: 44,
     height: 44,
-    borderRadius: 22,
+    borderRadius: radius.pill,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -1097,14 +1111,14 @@ const styles = StyleSheet.create({
   securityBadge: {
     paddingHorizontal: 10,
     paddingVertical: 4,
-    borderRadius: 999,
+    borderRadius: radius.pill,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
   },
   securityText: {
     fontSize: 10,
-    fontWeight: '700',
+    fontFamily: fontFamily.bold,
     letterSpacing: 0.6,
     textTransform: 'uppercase',
   },
@@ -1122,7 +1136,7 @@ const styles = StyleSheet.create({
   },
   modalText: {
     fontSize: 16,
-    fontWeight: '500',
+    fontFamily: fontFamily.medium,
     marginTop: 16,
   },
 });

@@ -1,13 +1,11 @@
-import React, { useState, useRef, useMemo } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
   TouchableOpacity,
   Dimensions,
   Animated,
-  Alert,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -16,6 +14,7 @@ import { awoofCart, AwoofProduct, AwoofEvents, trackAwoofEvent } from '@/utils/a
 import SafeImage from '@/components/SafeImage';
 import AwoofToast, { AwoofToastRef } from '@/components/AwoofToast';
 import PriceNoticeBanner from '@/components/PriceNoticeBanner';
+import { radius, fontFamily } from '@/constants/designTokens';
 
 const { width } = Dimensions.get('window');
 
@@ -189,7 +188,7 @@ export default function ProductDetailScreen({ route, navigation }: any) {
               <Ionicons name="flash" size={22} color={colors.primary} />
               <View style={styles.benefitContent}>
                 <Text style={[styles.benefitTitle, { color: colors.text }]}>Flash Sale Price</Text>
-                <Text style={[styles.benefitDesc, { color: colors.textSecondary }]}>Exclusive Awoof Corner discount</Text>
+                <Text style={[styles.benefitDesc, { color: colors.textSecondary }]}>Exclusive Awoof discount</Text>
               </View>
             </View>
             <View style={styles.benefitRow}>
@@ -261,7 +260,7 @@ const styles = StyleSheet.create({
     left: 16,
     width: 44,
     height: 44,
-    borderRadius: 22,
+    borderRadius: radius.pill,
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 20,
@@ -281,14 +280,14 @@ const styles = StyleSheet.create({
     top: 48,
     right: 16,
     backgroundColor: '#FF3B30',
-    borderRadius: 10,
+    borderRadius: radius.sm,
     paddingHorizontal: 10,
     paddingVertical: 6,
   },
   discountText: {
     color: '#fff',
     fontSize: 16,
-    fontWeight: '700',
+    fontFamily: fontFamily.bold,
   },
   contentSection: {
     padding: 20,
@@ -301,7 +300,7 @@ const styles = StyleSheet.create({
   },
   productName: {
     fontSize: 22,
-    fontWeight: '700',
+    fontFamily: fontFamily.bold,
     marginBottom: 8,
     lineHeight: 30,
   },
@@ -311,7 +310,7 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
     paddingHorizontal: 10,
     paddingVertical: 4,
-    borderRadius: 6,
+    borderRadius: radius.xs,
   },
   stockDot: {
     width: 7,
@@ -321,10 +320,10 @@ const styles = StyleSheet.create({
   },
   stockText: {
     fontSize: 12,
-    fontWeight: '500',
+    fontFamily: fontFamily.medium,
   },
   priceSection: {
-    borderRadius: 12,
+    borderRadius: radius.lg,
     padding: 16,
     marginBottom: 24,
   },
@@ -335,7 +334,7 @@ const styles = StyleSheet.create({
   },
   salePrice: {
     fontSize: 28,
-    fontWeight: '700',
+    fontFamily: fontFamily.bold,
     marginRight: 12,
   },
   originalPrice: {
@@ -343,19 +342,19 @@ const styles = StyleSheet.create({
     textDecorationLine: 'line-through',
   },
   savingsCard: {
-    borderRadius: 8,
+    borderRadius: radius.sm,
     padding: 10,
   },
   savingsText: {
     fontSize: 13,
-    fontWeight: '600',
+    fontFamily: fontFamily.semiBold,
   },
   quantitySection: {
     marginBottom: 24,
   },
   sectionTitle: {
     fontSize: 16,
-    fontWeight: '600',
+    fontFamily: fontFamily.semiBold,
     marginBottom: 12,
   },
   quantitySelector: {
@@ -365,7 +364,7 @@ const styles = StyleSheet.create({
   quantityButton: {
     width: 48,
     height: 48,
-    borderRadius: 24,
+    borderRadius: radius.pill,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -373,16 +372,16 @@ const styles = StyleSheet.create({
     flex: 1,
     marginHorizontal: 20,
     height: 48,
-    borderRadius: 12,
+    borderRadius: radius.lg,
     justifyContent: 'center',
     alignItems: 'center',
   },
   quantityText: {
     fontSize: 18,
-    fontWeight: '600',
+    fontFamily: fontFamily.semiBold,
   },
   totalSection: {
-    borderRadius: 12,
+    borderRadius: radius.lg,
     padding: 16,
     marginBottom: 24,
     borderWidth: 1,
@@ -394,19 +393,19 @@ const styles = StyleSheet.create({
   },
   totalLabel: {
     fontSize: 14,
-    fontWeight: '500',
+    fontFamily: fontFamily.medium,
   },
   totalAmount: {
     fontSize: 16,
-    fontWeight: '700',
+    fontFamily: fontFamily.bold,
   },
   savingsLabel: {
     fontSize: 14,
-    fontWeight: '500',
+    fontFamily: fontFamily.medium,
   },
   savingsAmount: {
     fontSize: 16,
-    fontWeight: '700',
+    fontFamily: fontFamily.bold,
   },
   whyBuySection: {
     marginBottom: 24,
@@ -422,7 +421,7 @@ const styles = StyleSheet.create({
   },
   benefitTitle: {
     fontSize: 14,
-    fontWeight: '600',
+    fontFamily: fontFamily.semiBold,
     marginBottom: 2,
   },
   benefitDesc: {
@@ -450,7 +449,7 @@ const styles = StyleSheet.create({
   addToCartButton: {
     width: 66,
     height: 56,
-    borderRadius: 16,
+    borderRadius: radius.xl,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 2,
@@ -458,13 +457,13 @@ const styles = StyleSheet.create({
   },
   addToCartText: {
     fontSize: 11,
-    fontWeight: '700',
+    fontFamily: fontFamily.bold,
     marginTop: 3,
   },
   buyNowButton: {
     flex: 1,
     height: 56,
-    borderRadius: 16,
+    borderRadius: radius.xl,
     justifyContent: 'center',
     alignItems: 'center',
     flexDirection: 'row',
@@ -472,12 +471,12 @@ const styles = StyleSheet.create({
   },
   buyNowText: {
     fontSize: 16,
-    fontWeight: '700',
+    fontFamily: fontFamily.bold,
     color: '#fff',
   },
   buyNowPrice: {
     fontSize: 14,
-    fontWeight: '700',
+    fontFamily: fontFamily.bold,
     color: 'rgba(255,255,255,0.8)',
   },
 });

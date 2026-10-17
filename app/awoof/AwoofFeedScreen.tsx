@@ -4,7 +4,6 @@ import {
   Text,
   StyleSheet,
   FlatList,
-  Image,
   TouchableOpacity,
   Dimensions,
   ActivityIndicator,
@@ -19,6 +18,7 @@ import { useAuth } from '@/context/AuthContext';
 import { transformProducts } from '@/utils/woocommerceTransformers';
 import AwoofToast, { AwoofToastRef } from '@/components/AwoofToast';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { radius, fontFamily } from '@/constants/designTokens';
 
 const { width } = Dimensions.get('window');
 const CARD_WIDTH = (width - 48) / 2;
@@ -91,7 +91,7 @@ export default function AwoofFeedScreen({ navigation }: any) {
 
     const dealsById = new Map(deals.map((d) => [String(d.id), d]));
 
-    const resolvedProducts: Array<{ product: AwoofProduct; quantity: number }> = [];
+    const resolvedProducts: { product: AwoofProduct; quantity: number }[] = [];
     for (const item of items) {
       const id = item?.productId != null ? String(item.productId) : '';
       const quantity = Math.max(1, Number(item?.quantity ?? 1));
@@ -281,8 +281,8 @@ export default function AwoofFeedScreen({ navigation }: any) {
       <View style={[styles.header, { paddingTop: insets.top + 16 }]}>
         <View style={styles.headerContent}>
           <View style={styles.headerTitleContainer}>
-            <Text style={[styles.headerTitle, { color: colors.text }]}>Awoof Corner</Text>
-            <Text style={[styles.headerSubtitle, { color: isDarkMode ? colors.white : colors.primary }]}>🔥 Today's Hottest Deals</Text>
+            <Text style={[styles.headerTitle, { color: colors.text }]}>Awoof</Text>
+            <Text style={[styles.headerSubtitle, { color: isDarkMode ? colors.white : colors.primary }]}>🔥 Today&apos;s Hottest Deals</Text>
           </View>
 
           <TouchableOpacity
@@ -409,7 +409,7 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 12,
     fontSize: 14,
-    fontWeight: '500',
+    fontFamily: fontFamily.medium,
   },
   header: {
     paddingHorizontal: 16,
@@ -432,17 +432,17 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 24,
-    fontWeight: '700',
+    fontFamily: fontFamily.bold,
   },
   headerSubtitle: {
     fontSize: 13,
     marginTop: 2,
-    fontWeight: '600',
+    fontFamily: fontFamily.semiBold,
   },
   cartButton: {
     width: 44,
     height: 44,
-    borderRadius: 22,
+    borderRadius: radius.pill,
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 1, // Ensure cart button is above centered title if overlap occurs
@@ -452,7 +452,7 @@ const styles = StyleSheet.create({
     top: -4,
     right: -4,
     backgroundColor: '#FF3B30',
-    borderRadius: 10,
+    borderRadius: radius.sm,
     minWidth: 20,
     height: 20,
     justifyContent: 'center',
@@ -462,7 +462,7 @@ const styles = StyleSheet.create({
   cartBadgeText: {
     color: '#fff',
     fontSize: 11,
-    fontWeight: '700',
+    fontFamily: fontFamily.bold,
   },
   list: {
     flex: 1,
@@ -479,7 +479,7 @@ const styles = StyleSheet.create({
   },
   card: {
     width: CARD_WIDTH,
-    borderRadius: 20,
+    borderRadius: radius.xxl,
     overflow: 'hidden',
     borderWidth: 1,
   },
@@ -498,21 +498,21 @@ const styles = StyleSheet.create({
     top: 8,
     right: 8,
     backgroundColor: '#FF3B30',
-    borderRadius: 8,
+    borderRadius: radius.sm,
     paddingHorizontal: 8,
     paddingVertical: 4,
   },
   discountText: {
     color: '#fff',
     fontSize: 12,
-    fontWeight: '700',
+    fontFamily: fontFamily.bold,
   },
   cardContent: {
     padding: 14,
   },
   productName: {
     fontSize: 14,
-    fontWeight: '700',
+    fontFamily: fontFamily.bold,
     marginBottom: 8,
     lineHeight: 19,
   },
@@ -523,7 +523,7 @@ const styles = StyleSheet.create({
   },
   salePrice: {
     fontSize: 17,
-    fontWeight: '800',
+    fontFamily: fontFamily.extraBold,
     marginRight: 8,
   },
   originalPrice: {
@@ -545,10 +545,10 @@ const styles = StyleSheet.create({
   },
   stockText: {
     fontSize: 11,
-    fontWeight: '500',
-  }, 
+    fontFamily: fontFamily.medium,
+  },
   quickAddButton: {
-    borderRadius: 12,
+    borderRadius: radius.md,
     paddingVertical: 10,
     flexDirection: 'row',
     alignItems: 'center',
@@ -557,7 +557,7 @@ const styles = StyleSheet.create({
   quickAddText: {
     color: '#fff',
     fontSize: 13,
-    fontWeight: '700',
+    fontFamily: fontFamily.bold,
   },
   emptyContainer: {
     alignItems: 'center',
@@ -571,10 +571,10 @@ const styles = StyleSheet.create({
   retryButton: {
     paddingHorizontal: 20,
     paddingVertical: 10,
-    borderRadius: 8,
+    borderRadius: radius.sm,
   },
   retryText: {
     color: '#fff',
-    fontWeight: '600',
+    fontFamily: fontFamily.semiBold,
   },
 });

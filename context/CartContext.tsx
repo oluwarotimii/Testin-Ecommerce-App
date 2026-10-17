@@ -10,7 +10,7 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [cartCount, setCartCount] = useState(0);
-  const { apiService, isAuthenticated } = useAuth();
+  const { apiService } = useAuth();
 
   // OPTIMIZED: Load cart count only once on mount, not every time apiService changes
   useEffect(() => {

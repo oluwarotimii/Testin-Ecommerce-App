@@ -1,20 +1,7 @@
 import { Tabs } from 'expo-router';
-import { View, Text } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useThemeColors } from '@/hooks/useColorScheme';
-import { useCart } from '@/context/CartContext';
-import { useTheme } from '@/context/ThemeContext';
-import { Ionicons } from '@expo/vector-icons';
 import CustomTabBar from '@/components/CustomTabBar';
 
 export default function TabLayout() {
-  const colors = useThemeColors();
-  const { cartCount } = useCart();
-  const { colorScheme } = useTheme();
-
-  // Determine tab bar theme based on current theme
-  const isDark = colorScheme === 'dark';
-
   return (
     <Tabs
       tabBar={(props) => <CustomTabBar {...props} />}
@@ -38,7 +25,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="awoof"
         options={{
-          title: 'Awoof Corner',
+          title: 'Awoof',
         }}
       />
       {/* <Tabs.Screen

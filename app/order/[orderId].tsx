@@ -8,6 +8,7 @@ import BackButton from '@/components/BackButton';
 import { getOrderStatus } from '@/constants/orderStatus';
 import SafeImage from '@/components/SafeImage';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { radius, fontFamily, shadow } from '@/constants/designTokens';
 
 const getOrderMetaValue = (metaData: any[] | undefined, key: string) => {
   if (!Array.isArray(metaData)) return undefined;
@@ -110,7 +111,7 @@ export default function OrderDetailsScreen() {
         }
       } catch (err: any) {
         console.error('Error fetching order details:', err);
-        setError(err.message || 'Failed to load order details');
+        setError('Unable to load order details right now. Please try again.');
       } finally {
         setLoading(false);
       }
@@ -131,7 +132,7 @@ export default function OrderDetailsScreen() {
   if (!order) {
     return (
       <View style={[styles.container, { backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center' }]}>
-        <Text style={{ color: colors.text }}>Order not found</Text>
+        <Text style={{ color: colors.text }}>{error || 'Order not found'}</Text>
         <TouchableOpacity
           style={[styles.retryButton, { backgroundColor: colors.primary }]}
           onPress={() => router.back()}
@@ -393,7 +394,7 @@ export default function OrderDetailsScreen() {
         <View style={styles.actionButtons}>
           {canCancelOrder && (
             <TouchableOpacity
-              style={[styles.cancelButton, { backgroundColor: colors.danger }]}
+              style={[styles.cancelButton, { backgroundColor: colors.error }]}
               onPress={() => {
                 console.log('Cancel button pressed');
                 handleCancelOrder();
@@ -449,7 +450,7 @@ export default function OrderDetailsScreen() {
               </TouchableOpacity>
 
               <TouchableOpacity
-                style={[styles.modalConfirmButton, { backgroundColor: colors.danger }]}
+                style={[styles.modalConfirmButton, { backgroundColor: colors.error }]}
                 onPress={confirmCancelOrder}
               >
                 <Text style={[styles.modalConfirmButtonText, { color: colors.white }]}>Yes, Cancel Order</Text>
@@ -475,7 +476,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 23,
-    fontWeight: 'bold',
+    fontFamily: fontFamily.bold,
     flex: 1,
   },
   content: {
@@ -483,14 +484,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   card: {
-    borderRadius: 16,
+    borderRadius: radius.xl,
     padding: 16,
     marginBottom: 24,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
+    ...shadow.card,
   },
   statusHeader: {
     flexDirection: 'row',
@@ -505,14 +502,14 @@ const styles = StyleSheet.create({
   statusIconContainer: {
     width: 48,
     height: 48,
-    borderRadius: 24,
+    borderRadius: radius.pill,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 16,
   },
   statusText: {
     fontSize: 18,
-    fontWeight: 'bold',
+    fontFamily: fontFamily.bold,
     marginBottom: 4,
   },
   statusDate: {
@@ -521,23 +518,23 @@ const styles = StyleSheet.create({
   tagBadge: {
     paddingHorizontal: 10,
     paddingVertical: 4,
-    borderRadius: 999,
+    borderRadius: radius.pill,
   },
   tagText: {
     fontSize: 12,
-    fontWeight: '600',
+    fontFamily: fontFamily.semiBold,
   },
   deliveryNote: {
     marginTop: 10,
     fontSize: 12,
-    fontWeight: '600',
+    fontFamily: fontFamily.semiBold,
   },
   section: {
     marginBottom: 8,
   },
   sectionTitle: {
     fontSize: 16,
-    fontWeight: '600',
+    fontFamily: fontFamily.semiBold,
     marginBottom: 12,
     marginLeft: 4,
   },
@@ -554,13 +551,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: 8,
+    borderRadius: radius.pill,
     borderWidth: 1,
     gap: 4,
   },
   editButtonText: {
     fontSize: 14,
-    fontWeight: '500',
+    fontFamily: fontFamily.medium,
   },
   itemRow: {
     flexDirection: 'row',
@@ -570,7 +567,7 @@ const styles = StyleSheet.create({
   itemImage: {
     width: 50,
     height: 50,
-    borderRadius: 8,
+    borderRadius: radius.md,
     marginRight: 12,
   },
   itemInfo: {
@@ -579,7 +576,7 @@ const styles = StyleSheet.create({
   },
   itemTitle: {
     fontSize: 14,
-    fontWeight: '500',
+    fontFamily: fontFamily.medium,
     marginBottom: 4,
   },
   itemMeta: {
@@ -587,7 +584,7 @@ const styles = StyleSheet.create({
   },
   itemPrice: {
     fontSize: 14,
-    fontWeight: '600',
+    fontFamily: fontFamily.semiBold,
   },
   divider: {
     height: 1,
@@ -603,15 +600,15 @@ const styles = StyleSheet.create({
   },
   summaryValue: {
     fontSize: 14,
-    fontWeight: '500',
+    fontFamily: fontFamily.medium,
   },
   totalLabel: {
     fontSize: 16,
-    fontWeight: 'bold',
+    fontFamily: fontFamily.bold,
   },
   totalValue: {
     fontSize: 18,
-    fontWeight: 'bold',
+    fontFamily: fontFamily.bold,
   },
   infoRow: {
     flexDirection: 'row',
@@ -623,7 +620,7 @@ const styles = StyleSheet.create({
   },
   infoTitle: {
     fontSize: 16,
-    fontWeight: '600',
+    fontFamily: fontFamily.semiBold,
     marginBottom: 4,
   },
   infoText: {
@@ -639,34 +636,33 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: 'row',
     paddingVertical: 16,
-    borderRadius: 12,
+    borderRadius: radius.pill,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },
   outlineButtonText: {
     fontSize: 16,
-    fontWeight: '600',
+    fontFamily: fontFamily.semiBold,
   },
   primaryButton: {
     flex: 1,
     paddingVertical: 16,
-    borderRadius: 12,
+    borderRadius: radius.pill,
     alignItems: 'center',
     justifyContent: 'center',
   },
   primaryButtonText: {
     fontSize: 16,
-    fontWeight: '600',
+    fontFamily: fontFamily.semiBold,
   },
   cancelButton: {
     flex: 1,
     flexDirection: 'row',
     paddingVertical: 16,
-    borderRadius: 12,
+    borderRadius: radius.pill,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#ff4757', // Red background
     marginTop: 12,
   },
   loadingContainer: {
@@ -676,7 +672,7 @@ const styles = StyleSheet.create({
   },
   cancelButtonText: {
     fontSize: 16,
-    fontWeight: '600',
+    fontFamily: fontFamily.semiBold,
   },
   modalOverlay: {
     ...StyleSheet.absoluteFillObject,
@@ -688,13 +684,14 @@ const styles = StyleSheet.create({
   modalContent: {
     width: '85%',
     maxWidth: 400,
-    borderRadius: 16,
+    borderRadius: radius.xl,
     padding: 20,
     alignItems: 'center',
+    ...shadow.raised,
   },
   modalTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
+    fontFamily: fontFamily.bold,
     marginBottom: 12,
     textAlign: 'center',
   },
@@ -713,31 +710,29 @@ const styles = StyleSheet.create({
   modalCancelButton: {
     flex: 1,
     borderWidth: 1,
-    borderRadius: 12,
+    borderRadius: radius.pill,
     paddingVertical: 12,
     alignItems: 'center',
   },
   modalCancelButtonText: {
     fontSize: 16,
-    fontWeight: '600',
-     color: '#ff4757',
+    fontFamily: fontFamily.semiBold,
   },
   modalConfirmButton: {
     flex: 1,
-    borderRadius: 12,
+    borderRadius: radius.pill,
     paddingVertical: 12,
     alignItems: 'center',
-     color: '#ff4757',
   },
   modalConfirmButtonText: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#ff4757',
+    fontFamily: fontFamily.semiBold,
+    color: '#fff',
   },
   retryButton: {
     paddingHorizontal: 24,
     paddingVertical: 12,
-    borderRadius: 12,
+    borderRadius: radius.pill,
     marginTop: 16,
   },
 });

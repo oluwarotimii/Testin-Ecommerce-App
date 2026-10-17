@@ -1,11 +1,13 @@
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Alert, Image, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Image } from 'react-native';
 import { useState } from 'react';
 import { useRouter } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '@/context/AuthContext';
 import { useThemeColors } from '@/hooks/useColorScheme';
-import { useTheme } from '@/context/ThemeContext';
-import { MaterialIcons, FontAwesome, Ionicons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import Button from '@/components/Button';
+import { radius, fontFamily } from '@/constants/designTokens';
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -25,7 +27,12 @@ export default function LoginScreen() {
 
     try {
       await login(email, password);
-      router.push('/(tabs)');
+
+      // If an Awoof action (e.g. a payment interrupted by an expired
+      // session) is waiting to resume, land back on the Awoof tab so
+      // AwoofFeedScreen's pending-action check can pick it up.
+      const pendingAwoofAction = await AsyncStorage.getItem('pending_awoof_action');
+      router.push(pendingAwoofAction ? '/(tabs)/awoof' : '/(tabs)');
     } catch (error: any) {
       console.error("Login error:", error);
 
@@ -107,16 +114,11 @@ export default function LoginScreen() {
             <Text style={[styles.forgotPasswordText, { color: colors.primary }]}>Forgot Password?</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={[styles.loginButton, { backgroundColor: colors.primary }]} onPress={handleLogin} disabled={loadingAuth}>
-            <View style={styles.buttonContent}>
-              {loadingAuth && <ActivityIndicator size="small" color={colors.white} style={styles.buttonSpinner} />}
-              <Text style={[styles.loginButtonText, { color: colors.white }]}>{loadingAuth ? 'Signing In...' : 'Sign In'}</Text>
-            </View>
-          </TouchableOpacity>
+          <Button title="Sign In" onPress={handleLogin} loading={loadingAuth} size="lg" style={styles.loginButton} />
         </View>
 
         <View style={styles.footer}>
-          <Text style={[styles.footerText, { color: colors.textSecondary }]}>Don't have an account? </Text>
+          <Text style={[styles.footerText, { color: colors.textSecondary }]}>Don&apos;t have an account? </Text>
           <TouchableOpacity onPress={() => router.push('/register')}>
             <Text style={[styles.footerLink, { color: colors.primary }]}>Sign Up</Text>
           </TouchableOpacity>
@@ -148,7 +150,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 32,
-    fontWeight: 'bold',
+    fontFamily: fontFamily.bold,
     marginBottom: 8,
   },
   iconContainer: {
@@ -158,7 +160,7 @@ const styles = StyleSheet.create({
   appIcon: {
     width: 80,
     height: 80,
-    borderRadius: 20,
+    borderRadius: radius.xl,
   },
   subtitle: {
     fontSize: 16,
@@ -170,7 +172,7 @@ const styles = StyleSheet.create({
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 12,
+    borderRadius: radius.pill,
     paddingHorizontal: 16,
     marginBottom: 16,
     height: 56,
@@ -191,25 +193,10 @@ const styles = StyleSheet.create({
   },
   forgotPasswordText: {
     fontSize: 14,
-    fontWeight: '500',
+    fontFamily: fontFamily.medium,
   },
   loginButton: {
-    paddingVertical: 16,
-    borderRadius: 12,
-    alignItems: 'center',
     marginBottom: 24,
-  },
-  loginButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  buttonContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  buttonSpinner: {
-    marginRight: 8,
   },
   divider: {
     flexDirection: 'row',
@@ -226,13 +213,13 @@ const styles = StyleSheet.create({
   },
   socialButton: {
     paddingVertical: 16,
-    borderRadius: 12,
+    borderRadius: radius.pill,
     alignItems: 'center',
     marginBottom: 12,
   },
   socialButtonText: {
     fontSize: 16,
-    fontWeight: '500',
+    fontFamily: fontFamily.medium,
   },
   footer: {
     flexDirection: 'row',
@@ -244,13 +231,13 @@ const styles = StyleSheet.create({
   },
   footerLink: {
     fontSize: 14,
-    fontWeight: '500',
+    fontFamily: fontFamily.medium,
   },
   errorContainer: {
     marginVertical: 8,
   },
   errorText: {
     fontSize: 14,
-    fontWeight: '500',
+    fontFamily: fontFamily.medium,
   },
 });

@@ -4,6 +4,7 @@ import { useRouter } from 'expo-router';
 import { useThemeColors } from '@/hooks/useColorScheme';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { fontFamily } from '@/constants/designTokens';
 
 const PrivacyPolicyScreen = () => {
   const router = useRouter();
@@ -193,7 +194,7 @@ const PrivacyPolicyScreen = () => {
         <View style={styles.listItem}>
           <Text style={[styles.bulletPoint, { color: colors.text }]}>•</Text>
           <Text style={[styles.listText, { color: colors.text }]}>
-            Opt-out of marketing emails at any time by clicking "unsubscribe"
+            Opt-out of marketing emails at any time by clicking &quot;unsubscribe&quot;
           </Text>
         </View>
         <Text style={[styles.bodyText, { color: colors.text, marginTop: 10 }]}>
@@ -218,7 +219,7 @@ const PrivacyPolicyScreen = () => {
           Updates to This Policy
         </Text>
         <Text style={[styles.bodyText, { color: colors.text }]}>
-          Femtech may update this Privacy Policy from time to time. All updates will be posted on this page with a new "Last Updated" date. We encourage you to check this page periodically for changes.
+          Femtech may update this Privacy Policy from time to time. All updates will be posted on this page with a new &quot;Last Updated&quot; date. We encourage you to check this page periodically for changes.
         </Text>
 
         <Text style={[styles.sectionTitle, { color: colors.text, marginTop: 20 }]}>
@@ -278,7 +279,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 20,
-    fontWeight: 'bold',
+    fontFamily: fontFamily.bold,
   },
   content: {
     flex: 1,
@@ -292,7 +293,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
+    fontFamily: fontFamily.bold,
     marginTop: 20,
     marginBottom: 10,
   },
@@ -326,7 +327,7 @@ const styles = StyleSheet.create({
   },
   contactLabel: {
     fontSize: 16,
-    fontWeight: '500',
+    fontFamily: fontFamily.medium,
     marginBottom: 5,
   },
 });

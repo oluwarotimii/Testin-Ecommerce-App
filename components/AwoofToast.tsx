@@ -1,17 +1,13 @@
-import React, { useState, useEffect, forwardRef, useImperativeHandle } from 'react';
-import { View, Text, StyleSheet, Animated, Dimensions } from 'react-native';
+import React, { useState, forwardRef, useImperativeHandle } from 'react';
+import { Text, StyleSheet, Animated } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useThemeColors } from '@/hooks/useColorScheme';
 import * as Haptics from 'expo-haptics';
-
-const { width } = Dimensions.get('window');
 
 export interface AwoofToastRef {
   show: (message: string, type?: 'success' | 'error') => void;
 }
 
 const AwoofToast = forwardRef<AwoofToastRef>((props, ref) => {
-  const colors = useThemeColors();
   const [message, setMessage] = useState('');
   const [type, setType] = useState<'success' | 'error'>('success');
   const [visible, setVisible] = useState(false);
@@ -89,6 +85,7 @@ const AwoofToast = forwardRef<AwoofToastRef>((props, ref) => {
     </Animated.View>
   );
 });
+AwoofToast.displayName = 'AwoofToast';
 
 const styles = StyleSheet.create({
   container: {

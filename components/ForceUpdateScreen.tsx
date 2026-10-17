@@ -9,7 +9,7 @@ import {
   StatusBar,
   ScrollView,
 } from 'react-native';
-import { Download, Apple, Play, HelpCircle } from 'lucide-react-native';
+import { Download, Apple, Play } from 'lucide-react-native';
 import { useForceUpdate } from '@/context/ForceUpdateContext';
 import { useThemeColors } from '@/hooks/useColorScheme';
 
@@ -26,7 +26,7 @@ import { useThemeColors } from '@/hooks/useColorScheme';
  * - Professional, non-dismissible design
  */
 export default function ForceUpdateScreen() {
-  const { updateInfo, dismissUpdate } = useForceUpdate();
+  const { updateInfo } = useForceUpdate();
   const colors = useThemeColors();
   const isDarkMode = String(colors.background).toLowerCase() === '#000000';
 

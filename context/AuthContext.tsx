@@ -1,13 +1,14 @@
 import React, { createContext, useState, useEffect, useContext, useMemo } from 'react';
+import { Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import DummyApiService from '@/services/dummyApiService';
 import WordPressApiService from '@/services/wordpressApiService';
 import { API_SERVICE_TYPE, WORDPRESS_URL } from '@/services/config';
 import Constants from 'expo-constants';
-import notificationService, { updatePushTokenForUser } from '@/services/notificationService';
+import { updatePushTokenForUser } from '@/services/notificationService';
 
 // Configuration for API service type - using centralized config
-const { expoPublicApiServiceType, expoPublicWordpressUrl, expoPublicWordpressConsumerKey, expoPublicWordpressConsumerSecret } = Constants.expoConfig?.extra || {};
+const { expoPublicWordpressConsumerKey, expoPublicWordpressConsumerSecret } = Constants.expoConfig?.extra || {};
 
 // WordPress configuration - using centralized config with direct fallbacks for credentials only
 const WORDPRESS_CONFIG = {
@@ -46,6 +47,7 @@ interface ApiService {
   getProductBySlug: (slug: string) => Promise<any>;
   getCategories: (params?: any) => Promise<any>;
   getCategory: (category_id: number | string) => Promise<any>;
+  getProductsByCategory?: (categoryIdOrSlug: string, limit?: number) => Promise<any>;
   getCartContents: () => Promise<any>;
   addToCart: (product_id: number, quantity?: number, productData?: any) => Promise<any>;
   updateCart: (cart_id: number, quantity: number) => Promise<any>;
@@ -70,6 +72,9 @@ interface ApiService {
   setSessionToken: (token: string | null) => void;
   validateToken?: (token: string) => Promise<boolean>;
   updateCustomerAddress?: (addressData: any) => Promise<any>;
+  addCustomerAddress?: (addressData: any) => Promise<any>;
+  updateDefaultAddress?: (addressId: number) => Promise<any>;
+  deleteCustomerAddress?: (addressId: number) => Promise<any>;
   deleteAccount: (userId: number) => Promise<any>;
 }
 
@@ -107,6 +112,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const [user, setUser] = useState<any>(null);
 
+  const clearStoredSession = async () => {
+    await AsyncStorage.removeItem('sessionToken');
+    await AsyncStorage.removeItem('customerId');
+    await AsyncStorage.removeItem('loginTimestamp');
+    setSessionToken(null);
+    setIsAuthenticated(false);
+    setUser(null);
+    apiService.setSessionToken(null);
+  };
+
   useEffect(() => {
     const loadSession = async () => {
       try {
@@ -114,33 +129,55 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (storedToken) {
           apiService.setSessionToken(storedToken);
 
-          // Check 6-month expiry from stored login timestamp
+          // Client-side cap on how long a stored session is trusted before
+          // asking the user to log in again. This should match (or sit
+          // under) the server's jwt_auth_expire filter - see functions.php.
           const loginTimestamp = await AsyncStorage.getItem('loginTimestamp');
-          const sixMonthsMs = 6 * 30 * 24 * 60 * 60 * 1000;
+          const twelveMonthsMs = 12 * 30 * 24 * 60 * 60 * 1000;
           const tokenAge = loginTimestamp ? Date.now() - parseInt(loginTimestamp, 10) : 0;
 
-          if (loginTimestamp && tokenAge > sixMonthsMs) {
-            console.log('Session expired (6 months), clearing');
-            await AsyncStorage.removeItem('sessionToken');
-            await AsyncStorage.removeItem('customerId');
-            await AsyncStorage.removeItem('loginTimestamp');
-            setSessionToken(null);
-            setIsAuthenticated(false);
-            setUser(null);
-            apiService.setSessionToken(null);
-          } else {
-            setSessionToken(storedToken);
-            setIsAuthenticated(true);
+          if (loginTimestamp && tokenAge > twelveMonthsMs) {
+            console.log('Session expired (12 months), clearing');
+            await clearStoredSession();
+            Alert.alert(
+              'Session Expired',
+              'Your session has expired. Please log in again to continue.'
+            );
+            return;
+          }
 
-            // Try to load user details - don't clear session if it fails
-            try {
-              if (apiService.getAccountDetails) {
-                const userDetails = await apiService.getAccountDetails();
-                setUser(userDetails);
-              }
-            } catch (userError) {
-              console.warn("Could not fetch user details, session preserved:", userError);
+          // Check with the server whether the token is still accepted.
+          // This catches a token the JWT plugin has already expired
+          // server-side, before it can surface mid-checkout as a confusing
+          // "payment initialization failed" error. A network/server error
+          // here is NOT treated as invalid - we don't want a connectivity
+          // blip to force a logout, so the session is kept in that case.
+          let tokenIsValid = true;
+          try {
+            if (apiService.validateToken) {
+              tokenIsValid = await apiService.validateToken(storedToken);
             }
+          } catch (validationError) {
+            console.warn('Could not verify token with server, keeping session:', validationError);
+          }
+
+          if (!tokenIsValid) {
+            console.log('Stored token rejected by server, clearing session');
+            await clearStoredSession();
+            return;
+          }
+
+          setSessionToken(storedToken);
+          setIsAuthenticated(true);
+
+          // Try to load user details - don't clear session if it fails
+          try {
+            if (apiService.getAccountDetails) {
+              const userDetails = await apiService.getAccountDetails();
+              setUser(userDetails);
+            }
+          } catch (userError) {
+            console.warn("Could not fetch user details, session preserved:", userError);
           }
         }
       } catch (error) {
@@ -186,7 +223,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           // After successful login, register the push token if available
           try {
             const pushToken = await AsyncStorage.getItem('pushToken');
-            if (pushToken && apiService.updatePushToken) {
+            if (pushToken) {
               await updatePushTokenForUser(apiService, pushToken);
             }
           } catch (pushTokenError) {
@@ -237,7 +274,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           // After successful registration, register the push token if available
           try {
             const pushToken = await AsyncStorage.getItem('pushToken');
-            if (pushToken && apiService.updatePushToken) {
+            if (pushToken) {
               await updatePushTokenForUser(apiService, pushToken);
             }
           } catch (pushTokenError) {

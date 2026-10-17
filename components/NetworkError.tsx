@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useThemeColors } from '@/hooks/useColorScheme';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -8,7 +8,7 @@ interface NetworkErrorProps {
   message?: string;
   onRetry?: () => void;
   showRetry?: boolean;
-  icon?: string; // Ionicons name
+  icon?: keyof typeof Ionicons.glyphMap;
 }
 
 const NetworkError: React.FC<NetworkErrorProps> = ({

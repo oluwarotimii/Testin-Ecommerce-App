@@ -1,30 +1,106 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, TextInput, ActivityIndicator, useWindowDimensions } from 'react-native';
-import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, TextInput, ActivityIndicator } from 'react-native';
+import { FlashList } from '@shopify/flash-list';
+import { useState, useEffect, useMemo, useCallback, memo } from 'react';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
 import { useCart } from '@/context/CartContext';
 import { useNetwork } from '@/context/NetworkContext';
-import { MaterialIcons, FontAwesome, Ionicons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import SkeletonProductItem from '@/components/SkeletonProductItem';
 import { useThemeColors } from '@/hooks/useColorScheme';
 import SafeImage from '@/components/SafeImage';
 import FilterModal, { FilterOptions } from '@/components/FilterModal';
-import { transformProducts, transformCategories } from '@/utils/woocommerceTransformers';
+import { transformProducts } from '@/utils/woocommerceTransformers';
 import { formatPrice } from '@/utils/formatNumber';
-import BackButton from '@/components/BackButton';
 import ProductCard from '@/components/ProductCard';
 import NetworkError from '@/components/NetworkError';
-import { Colors } from '@/constants/Colors';
+import SalePill from '@/components/SalePill';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { spacing, radius, typeScale, fontFamily, shadow } from '@/constants/designTokens';
+import { useResponsiveColumns } from '@/hooks/useResponsiveColumns';
+
+// Memoized list-view row - only receives primitives derived for this item so
+// memo() can bail out when a sibling's wishlist/cart state changes.
+const ListProductItem = memo(({
+  product,
+  colors,
+  isDarkMode,
+  isLiked,
+  showCartSuccess,
+  onPress,
+  onToggleWishlist,
+  onAddToCart,
+}: {
+  product: any;
+  colors: any;
+  isDarkMode: boolean;
+  isLiked: boolean;
+  showCartSuccess: boolean;
+  onPress: (id: number) => void;
+  onToggleWishlist: (id: number) => void;
+  onAddToCart: (product: any) => void;
+}) => {
+  const price = typeof product.price === 'number' ? product.price : parseFloat(product.price || '0');
+  const originalPrice = typeof product.original_price === 'number'
+    ? product.original_price
+    : parseFloat(product.original_price ?? product.price ?? '0');
+  const isOnSale = originalPrice > price;
+  const percentOff = isOnSale ? ((originalPrice - price) / originalPrice) * 100 : 0;
+
+  return (
+    <TouchableOpacity
+      style={[styles.listItem, { backgroundColor: colors.surface }]}
+      onPress={() => onPress(product.id)}
+    >
+      <View style={styles.listImageContainer}>
+        <SafeImage source={{ uri: product.image }} style={[styles.listImage, { backgroundColor: colors.background }]} />
+        {isOnSale && (
+          <View style={styles.listSaleOverlay}>
+            <SalePill percentOff={percentOff} />
+          </View>
+        )}
+      </View>
+      <View style={styles.listProductInfo}>
+        <Text style={[styles.listProductName, { color: colors.text }]} numberOfLines={2}>{product.title}</Text>
+        <View style={styles.priceContainer}>
+          {isOnSale && (
+            <Text style={[styles.originalPrice, { color: colors.textSecondary }]}>{formatPrice(originalPrice)}</Text>
+          )}
+          <Text style={[styles.price, { color: isDarkMode ? colors.white : colors.primary }]}>{formatPrice(price)}</Text>
+        </View>
+      </View>
+      <View style={styles.listProductActions}>
+        <TouchableOpacity
+          style={[styles.listCartButton, { backgroundColor: colors.primary }]}
+          onPress={(e: any) => { e.stopPropagation(); onAddToCart(product); }}
+        >
+          <Ionicons name={showCartSuccess ? 'checkmark' : 'cart'} size={20} color={colors.white} />
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.listWishlistButton}
+          onPress={(e: any) => { e.stopPropagation(); onToggleWishlist(product.id); }}
+        >
+          <Ionicons
+            name={isLiked ? "heart" : "heart-outline"}
+            size={20}
+            color={isLiked ? "#FF3B30" : colors.textSecondary}
+          />
+        </TouchableOpacity>
+      </View>
+    </TouchableOpacity>
+  );
+});
+ListProductItem.displayName = 'ListProductItem';
 
 export default function ProductsScreen() {
   const router = useRouter();
   const { apiService } = useAuth();
   const { setCartCount } = useCart();
-  const { isConnected, isInternetReachable, checkConnectivity } = useNetwork();
+  const { checkConnectivity } = useNetwork();
   const colors = useThemeColors();
   const isDarkMode = String(colors.background).toLowerCase() === '#000000';
-  const scrollViewRef = useRef();
+  const numColumns = useResponsiveColumns(2);
+  const cardWidthPercent = numColumns >= 4 ? 23 : numColumns === 3 ? 31 : 47;
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [searchQuery, setSearchQuery] = useState('');
   const [products, setProducts] = useState<any[]>([]);
@@ -40,8 +116,6 @@ export default function ProductsScreen() {
     sortBy: 'newest',
   });
   const [wishlist, setWishlist] = useState<number[]>([]);
-  const [categories, setCategories] = useState<any[]>([]);
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [cartSuccess, setCartSuccess] = useState<{ [key: number]: boolean }>({});
 
   const fetchWishlist = useCallback(async () => {
@@ -54,157 +128,118 @@ export default function ProductsScreen() {
     }
   }, [apiService]);
 
-  const fetchCategories = useCallback(async () => {
+  const fetchProducts = useCallback(async () => {
     if (!apiService) return;
-    try {
-      const response = await apiService.getCategories();
-      // Use transformation utility to ensure consistent format
-      const transformedCategories = transformCategories(response);
-      setCategories(transformedCategories);
-    } catch (error) {
-      console.error('Error fetching categories:', error);
+
+    const isOnline = await checkConnectivity();
+    if (!isOnline) {
+      setError('No internet connection. Please check your connection and try again.');
+      setLoading(false);
+      return;
     }
-  }, [apiService]);
 
-  useEffect(() => {
-    const fetchProducts = async () => {
-      if (!apiService) return; // Ensure apiService is available
+    setLoading(true);
+    setError(null);
+    try {
+      const params: any = { per_page: 20, page: 1 };
+      if (searchQuery) params.search = searchQuery;
 
-      // Check connectivity first
+      const response = await apiService.getProducts(params);
+      const transformedProducts = transformProducts(response);
+      setProducts(transformedProducts);
+      setHasMore(response.length === 20);
+      setCurrentPage(1);
+    } catch (err: any) {
       const isOnline = await checkConnectivity();
       if (!isOnline) {
         setError('No internet connection. Please check your connection and try again.');
-        setLoading(false);
-        return;
+      } else {
+        console.error('Error fetching products:', err);
+        setError('Unable to load products right now. Please try again.');
       }
+    } finally {
+      setLoading(false);
+    }
+  }, [apiService, searchQuery, checkConnectivity]);
 
-      try {
-        setLoading(true);
-        // For initial load, we'll fetch with search and filters applied
-        const params: any = { per_page: 20, page: 1 };
-        if (searchQuery) params.search = searchQuery;
-
-        const response = await apiService.getProducts(params);
-        // Use transformation utility
-        const transformedProducts = transformProducts(response);
-        setProducts(transformedProducts);
-        // Check if there are more products available
-        setHasMore(response.length === 20); // If we got 20, there might be more
-        setCurrentPage(1);
-      } catch (err: any) {
-        // Check if it's a network error
-        const isOnline = await checkConnectivity();
-        if (!isOnline) {
-          setError('No internet connection. Please check your connection and try again.');
-        } else {
-          setError(err.message || 'An unexpected error occurred');
-        }
-      } finally {
-        setLoading(false);
-      }
-    };
-
+  useEffect(() => {
     fetchProducts();
     fetchWishlist();
-    fetchCategories();
-  }, [apiService, fetchWishlist, fetchCategories, searchQuery, checkConnectivity]); // Added checkConnectivity dependency
+  }, [fetchProducts, fetchWishlist]);
 
-  const toggleWishlist = async (productId: number) => {
+  const toggleWishlist = useCallback(async (productId: number) => {
     if (!apiService) return;
 
-    const isInWishlist = wishlist.includes(productId);
-
-    // Optimistic update
-    if (isInWishlist) {
-      setWishlist(prev => prev.filter(id => id !== productId));
-    } else {
-      setWishlist(prev => [...prev, productId]);
-    }
+    let wasInWishlist = false;
+    setWishlist(prev => {
+      wasInWishlist = prev.includes(productId);
+      return wasInWishlist ? prev.filter(id => id !== productId) : [...prev, productId];
+    });
 
     try {
-      if (isInWishlist) {
+      if (wasInWishlist) {
         await apiService.removeFromWishlist(productId);
       } else {
         await apiService.addToWishlist(productId);
       }
     } catch (error) {
       console.error('Wishlist toggle error:', error);
-      // Revert on error
-      if (isInWishlist) {
-        setWishlist(prev => [...prev, productId]);
-      } else {
-        setWishlist(prev => prev.filter(id => id !== productId));
-      }
+      setWishlist(prev =>
+        wasInWishlist ? [...prev, productId] : prev.filter(id => id !== productId)
+      );
     }
-  };
+  }, [apiService]);
 
-  const loadMoreProducts = async () => {
+  const loadMoreProducts = useCallback(async () => {
     if (!hasMore || loadingMore || !apiService) return;
 
-    // Check connectivity first
     const isOnline = await checkConnectivity();
     if (!isOnline) {
-      setError('No internet connection. Please check your connection and try again.');
-      setLoadingMore(false);
       return;
     }
 
     setLoadingMore(true);
     try {
       const nextPage = currentPage + 1;
-      // Include search and filters when loading more products
       const params: any = { per_page: 20, page: nextPage };
       if (searchQuery) params.search = searchQuery;
 
       const response = await apiService.getProducts(params);
-      // Use transformation utility
       const transformedProducts = transformProducts(response);
 
-      // Append new products to existing products
       setProducts(prev => [...prev, ...transformedProducts]);
-
-      // Check if there are more products available
       setHasMore(response.length === 20);
       setCurrentPage(nextPage);
-    } catch (err: any) {
-      // Check if it's a network error
-      const isOnline = await checkConnectivity();
-      if (!isOnline) {
-        setError('No internet connection. Please check your connection and try again.');
-      } else {
-        setError(err.message || 'An unexpected error occurred while loading more products');
-      }
+    } catch {
+      // Silent fail on pagination - keep existing products, user can scroll to retry
     } finally {
       setLoadingMore(false);
     }
-  };
+  }, [apiService, currentPage, hasMore, loadingMore, searchQuery, checkConnectivity]);
 
-  const addToCart = async (product: any) => {
-    // Optimistic update for faster UI response
+  const addToCart = useCallback(async (product: any) => {
     setCartCount(prev => prev + 1);
 
     try {
-      const result = await apiService.addToCart(product.id, 1);
-      console.log(`Added ${product.title} to cart!`, result);
+      await apiService.addToCart(product.id, 1, product);
 
-      // Show success indicator
       setCartSuccess(prev => ({ ...prev, [product.id]: true }));
       setTimeout(() => {
         setCartSuccess(prev => {
-          const newCartSuccess = { ...prev };
-          delete newCartSuccess[product.id];
-          return newCartSuccess;
+          const next = { ...prev };
+          delete next[product.id];
+          return next;
         });
-      }, 1500); // Hide after 1.5 seconds
-
-      // Don't fetch cart contents immediately - trust the add operation result
-      // Cart sync will happen naturally on next page load or cart screen visit
+      }, 1500);
     } catch (error) {
       console.error("Add to cart error:", error);
-      // Revert optimistic update on error
       setCartCount(prev => prev - 1);
     }
-  };
+  }, [apiService, setCartCount]);
+
+  const handleProductPress = useCallback((id: number) => {
+    router.push(`/product/${id}` as any);
+  }, [router]);
 
   const filteredProducts = useMemo(() => {
     let filtered = [...products]; // Work with all loaded products
@@ -214,64 +249,6 @@ export default function ProductsScreen() {
       filtered = filtered.filter(product =>
         product.title?.toLowerCase().includes(searchQuery.toLowerCase())
       );
-    }
-
-    // Apply category filter
-    if (selectedCategory !== 'all' && selectedCategory) {
-      filtered = filtered.filter(product => {
-        // Check if selectedCategory is a category ID (prefixed with 'cat_')
-        if (selectedCategory.startsWith('cat_')) {
-          const categoryId = parseInt(selectedCategory.replace('cat_', ''), 10);
-
-          // Check if the product's category_id matches the selected category ID
-          if (product.category_id && product.category_id === categoryId) {
-            return true;
-          }
-
-          // Check if product.categories array contains the selected category ID
-          if (product.categories && Array.isArray(product.categories)) {
-            return product.categories.some((cat: any) =>
-              cat.id === categoryId
-            );
-          }
-
-          // If no match found, return false
-          return false;
-        } else {
-          // For backward compatibility, if somehow it's not an ID format
-          // Find the category by slug from the available categories
-          const selectedCat = categories.find(cat => cat.slug === selectedCategory);
-
-          if (!selectedCat) {
-            // If we can't find the category by slug, match by product's category name
-            return product.category?.toLowerCase() === selectedCategory.toLowerCase();
-          }
-
-          // Check if the product belongs to the selected category
-          if (product.category_id && selectedCat.category_id &&
-            product.category_id === selectedCat.category_id) {
-            return true;
-          }
-
-          // Check if product.categories array contains the selected category
-          if (product.categories && Array.isArray(product.categories)) {
-            const hasMatchingCategory = product.categories.some((cat: any) =>
-              (cat.id && selectedCat.category_id && cat.id === selectedCat.category_id) ||
-              (cat.slug && selectedCategory && cat.slug === selectedCategory) ||
-              (cat.name && selectedCat.name && cat.name?.toLowerCase() === selectedCat.name?.toLowerCase())
-            );
-            if (hasMatchingCategory) return true;
-          }
-
-          // Fallback to product.category name matching - but make it more specific
-          if (product.category && selectedCat.name) {
-            return product.category.toLowerCase() === selectedCat.name.toLowerCase();
-          }
-
-          // If none of the above match, then the product doesn't belong to selected category
-          return false;
-        }
-      });
     }
 
     // Apply price filter
@@ -314,92 +291,86 @@ export default function ProductsScreen() {
     }
 
     return filtered;
-  }, [products, searchQuery, filters, selectedCategory, categories]);
+  }, [products, searchQuery, filters]);
 
-  const renderGridView = () => (
-    <View style={styles.gridContainer}>
-      {filteredProducts.map((product) => (
-        <ProductCard
-          key={product.id}
-          product={product}
-          onPress={() => router.push(`/product/${product.id}` as any)}
-          isLiked={wishlist.includes(product.id)}
-          onToggleWishlist={() => toggleWishlist(product.id)}
-          onAddToCart={() => addToCart(product)}
-          cartSuccess={cartSuccess[product.id]}
+  const keyExtractor = useCallback((item: any) => String(item.id), []);
+
+  const renderItem = useCallback(({ item }: { item: any }) => {
+    if (viewMode === 'list') {
+      return (
+        <ListProductItem
+          product={item}
+          colors={colors}
+          isDarkMode={isDarkMode}
+          isLiked={wishlist.includes(item.id)}
+          showCartSuccess={!!cartSuccess[item.id]}
+          onPress={handleProductPress}
+          onToggleWishlist={toggleWishlist}
+          onAddToCart={addToCart}
         />
-      ))}
-    </View>
-  );
+      );
+    }
+    return (
+      <View style={styles.gridItemWrapper}>
+        <ProductCard
+          product={item}
+          style={{ width: `${cardWidthPercent}%` }}
+          onPress={() => handleProductPress(item.id)}
+          isLiked={wishlist.includes(item.id)}
+          onToggleWishlist={() => toggleWishlist(item.id)}
+          onAddToCart={() => addToCart(item)}
+          cartSuccess={!!cartSuccess[item.id]}
+        />
+      </View>
+    );
+  }, [viewMode, colors, isDarkMode, wishlist, cartSuccess, cardWidthPercent, handleProductPress, toggleWishlist, addToCart]);
 
-  const renderListView = () => (
-    <View style={styles.listContainer}>
-      {filteredProducts.map((product) => (
-        <TouchableOpacity
-          key={product.id}
-          style={[styles.listItem, { backgroundColor: colors.surface }]}
-          onPress={() => router.push(`/product/${product.id}` as any)}
-        >
-          <View style={styles.listImageContainer}>
-            <SafeImage source={{ uri: product.image }} style={[styles.listImage, { backgroundColor: colors.background }]} />
-          </View>
-          <View style={styles.listProductInfo}>
-            <Text style={[styles.listProductName, { color: colors.text }]} numberOfLines={2}>{product.title}</Text>
-            {/* <Text style={[styles.categoryText, { color: colors.textSecondary }]} numberOfLines={1}>{product.category?.replace('-', ' ')}</Text> */}
-            {/* Commenting out reviews section from list view */}
-            {/* <View style={styles.ratingContainer}>
-              <Ionicons name="star" size={12} color="#FFD700" />
-              <Text style={[styles.ratingText, { color: colors.text }]}>{product.rating ? product.rating.rate : 0}</Text>
-              <Text style={[styles.reviewsText, { color: colors.textSecondary }]}>({product.rating ? product.rating.count : 0})</Text>
-            </View> */}
-            <View style={styles.priceContainer}>
-              <Text style={[styles.originalPrice, { color: colors.textSecondary }]}>{formatPrice((typeof product.price === 'number' ? product.price : parseFloat(product.price || '0')) * 1.3)}</Text>
-              <Text style={[styles.price, { color: isDarkMode ? colors.white : colors.primary }]}>{formatPrice(typeof product.price === 'number' ? product.price : parseFloat(product.price || '0'))}</Text>
-            </View>
-          </View>
-          <View style={styles.listProductActions}>
-            <TouchableOpacity
-              style={[styles.listCartButton, { backgroundColor: colors.primary }]}
-              onPress={async (e) => {
-                e.stopPropagation();
-                // Optimistic update for faster UI response
-                setCartCount(prev => prev + 1);
-                try {
-                  await apiService.addToCart(product.id, 1);
-                  // Fetch actual cart count to sync
-                  const cartResponse = await apiService.getCartContents();
-                  if (cartResponse && cartResponse.products) {
-                    const newCartCount = cartResponse.products.reduce((total: any, item: any) => total + item.quantity, 0);
-                    setCartCount(newCartCount);
-                  }
-                } catch (error) {
-                  console.error('Add to cart error:', error);
-                  // Revert optimistic update on error
-                  setCartCount(prev => prev - 1);
-                }
-              }}
-            >
-              <Ionicons name="cart" size={20} color={colors.white} />
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.listWishlistButton}
-              onPress={(e) => {
-                e.stopPropagation();
-                toggleWishlist(product.id);
-              }}
-            >
-              <Ionicons
-                name={wishlist.includes(product.id) ? "heart" : "heart-outline"}
-                size={20}
-                color={wishlist.includes(product.id) ? "#FF3B30" : colors.textSecondary}
-              />
-            </TouchableOpacity>
-          </View>
-        </TouchableOpacity>
-      ))}
-    </View>
-  );
-
+  const renderEmptyState = () => {
+    if (loading) {
+      return (
+        <View style={styles.gridContainer}>
+          {viewMode === 'grid' ? (
+            <>
+              <SkeletonProductItem viewMode="grid" />
+              <SkeletonProductItem viewMode="grid" />
+              <SkeletonProductItem viewMode="grid" />
+              <SkeletonProductItem viewMode="grid" />
+              <SkeletonProductItem viewMode="grid" />
+              <SkeletonProductItem viewMode="grid" />
+            </>
+          ) : (
+            <>
+              <SkeletonProductItem viewMode="list" />
+              <SkeletonProductItem viewMode="list" />
+              <SkeletonProductItem viewMode="list" />
+              <SkeletonProductItem viewMode="list" />
+              <SkeletonProductItem viewMode="list" />
+            </>
+          )}
+        </View>
+      );
+    }
+    if (error) {
+      return error.includes('internet connection') || error.includes('No internet') ? (
+        <NetworkError
+          title="No Internet Connection"
+          message="Please check your connection and try again"
+          onRetry={fetchProducts}
+        />
+      ) : (
+        <View style={styles.errorContainer}>
+          <Text style={[styles.errorText, { color: colors.error }]}>Error loading products: {error}</Text>
+          <TouchableOpacity
+            style={[styles.retryButton, { backgroundColor: colors.primary }]}
+            onPress={fetchProducts}
+          >
+            <Text style={[styles.retryButtonText, { color: colors.white }]}>Retry</Text>
+          </TouchableOpacity>
+        </View>
+      );
+    }
+    return <Text style={[styles.noProductsText, { color: colors.textSecondary }]}>No products found.</Text>;
+  };
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
@@ -455,176 +426,49 @@ export default function ProductsScreen() {
             value={searchQuery}
             onChangeText={(text) => {
               setSearchQuery(text);
-              // Reset pagination when search changes
               setCurrentPage(1);
               setHasMore(true);
             }}
           />
         </View>
-
-        {/* Category Filter */}
-        {/* <Animated.View style={{ opacity: headerOpacity }}>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            style={[styles.categoryScroll, { maxHeight: 40 }]}
-            contentContainerStyle={[styles.categoryScrollContent, {
-              alignItems: 'center',
-              paddingVertical: 0
-            }]}
-          >
-            <View style={{ flexDirection: 'row', flexWrap: 'nowrap', gap: 8 }}>
-              <TouchableOpacity
-                style={[
-                  styles.categoryButton,
-                  { backgroundColor: colors.surface },
-                  selectedCategory === 'all' ? { backgroundColor: colors.primary } : null
-                ]}
-                onPress={() => setSelectedCategory('all')}
-              >
-                <Text style={[
-                  styles.categoryText,
-                  selectedCategory === 'all' ? { color: colors.white } : { color: colors.text }
-                ]}>
-                  All
-                </Text>
-              </TouchableOpacity>
-
-              {categories.map((category) => (
-                <TouchableOpacity
-                  key={category.category_id}
-                  style={[
-                    styles.categoryButton,
-                    { backgroundColor: colors.surface },
-                    selectedCategory === `cat_${category.category_id}` ? { backgroundColor: colors.primary } : null
-                  ]}
-                  onPress={() => setSelectedCategory(`cat_${category.category_id}`)}
-                >
-                  <Text style={[
-                    styles.categoryText,
-                    selectedCategory === `cat_${category.category_id}` ? { color: colors.white } : { color: colors.text }
-                  ]}>
-                    {category.name}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </ScrollView>
-        </View> */}
       </View>
 
-      {/* Results Count */}
-      <View style={styles.resultsContainer}>
-        {loading ? (
-          <ActivityIndicator size="small" color={colors.primary} />
-        ) : error ? (
-          <Text style={[styles.errorText, { color: colors.error }]}>Error: {error}</Text>
-        ) : (
-          <Text style={[styles.resultsText, { color: colors.textSecondary }]}>{filteredProducts.length} products found</Text>
-        )}
-      </View>
+      {/* Results Count - omitted while loading; the skeleton grid below
+          already communicates that, showing a second spinner here too was
+          redundant. */}
+      {!loading && (
+        <View style={styles.resultsContainer}>
+          {error ? (
+            <Text style={[styles.errorText, { color: colors.error }]}>Error: {error}</Text>
+          ) : (
+            <Text style={[styles.resultsText, { color: colors.textSecondary }]}>{filteredProducts.length} products found</Text>
+          )}
+        </View>
+      )}
 
-      {/* Products */}
-      <ScrollView
-        ref={scrollViewRef}
-        style={styles.content}
+      {/* Products - virtualized so only visible rows are ever mounted, even
+          after many pages have been loaded via infinite scroll. */}
+      <FlashList
+        key={`${viewMode}-${numColumns}`}
+        data={filteredProducts}
+        keyExtractor={keyExtractor}
+        renderItem={renderItem}
+        numColumns={viewMode === 'grid' ? numColumns : 1}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
-        onScroll={(event) => {
-          const { layoutMeasurement, contentOffset, contentSize } = event.nativeEvent;
-          const isCloseToBottom = layoutMeasurement.height + contentOffset.y >= contentSize.height - 500;
-
-          if (isCloseToBottom && hasMore && !loadingMore) {
+        contentContainerStyle={viewMode === 'grid' ? styles.gridContentContainer : styles.listContentContainer}
+        ListEmptyComponent={renderEmptyState}
+        ListFooterComponent={loadingMore ? (
+          <View style={styles.loadingMoreContainer}>
+            <ActivityIndicator size="small" color={colors.primary} />
+          </View>
+        ) : null}
+        onEndReached={() => {
+          if (hasMore && !loadingMore) {
             loadMoreProducts();
           }
         }}
-        scrollEventThrottle={16}
-      >
-        {loading ? (
-          <View style={styles.gridContainer}>
-            {viewMode === 'grid' ? (
-              <>
-                <SkeletonProductItem viewMode="grid" />
-                <SkeletonProductItem viewMode="grid" />
-                <SkeletonProductItem viewMode="grid" />
-                <SkeletonProductItem viewMode="grid" />
-                <SkeletonProductItem viewMode="grid" />
-                <SkeletonProductItem viewMode="grid" />
-              </>
-            ) : (
-              <>
-                <SkeletonProductItem viewMode="list" />
-                <SkeletonProductItem viewMode="list" />
-                <SkeletonProductItem viewMode="list" />
-                <SkeletonProductItem viewMode="list" />
-                <SkeletonProductItem viewMode="list" />
-              </>
-            )}
-          </View>
-        ) : error ? (
-          // Check if the error is related to network connectivity
-          error.includes('internet connection') || error.includes('No internet') ? (
-            <NetworkError
-              title="No Internet Connection"
-              message="Please check your connection and try again"
-              onRetry={async () => {
-                const isOnline = await checkConnectivity();
-                if (isOnline) {
-                  // Retry the fetch
-                  const params: any = { per_page: 20, page: 1 };
-                  if (searchQuery) params.search = searchQuery;
-
-                  const response = await apiService.getProducts(params);
-                  const transformedProducts = transformProducts(response);
-                  setProducts(transformedProducts);
-                  setHasMore(response.length === 20);
-                  setCurrentPage(1);
-                  setError(null);
-                } else {
-                  setError('Still no internet connection. Please check your connection and try again.');
-                }
-              }}
-            />
-          ) : (
-            <View style={styles.errorContainer}>
-              <Text style={[styles.errorText, { color: colors.error }]}>Error loading products: {error}</Text>
-              <TouchableOpacity
-                style={[styles.retryButton, { backgroundColor: colors.primary }]}
-                onPress={async () => {
-                  const isOnline = await checkConnectivity();
-                  if (isOnline) {
-                    // Retry the fetch
-                    const params: any = { per_page: 20, page: 1 };
-                    if (searchQuery) params.search = searchQuery;
-
-                    const response = await apiService.getProducts(params);
-                    const transformedProducts = transformProducts(response);
-                    setProducts(transformedProducts);
-                    setHasMore(response.length === 20);
-                    setCurrentPage(1);
-                    setError(null);
-                  } else {
-                    setError('No internet connection. Please check your connection and try again.');
-                  }
-                }}
-              >
-                <Text style={[styles.retryButtonText, { color: colors.white }]}>Retry</Text>
-              </TouchableOpacity>
-            </View>
-          )
-        ) : filteredProducts.length === 0 ? (
-          <Text style={[styles.noProductsText, { color: colors.textSecondary }]}>No products found.</Text>
-        ) : (
-          <>
-            {viewMode === 'grid' ? renderGridView() : renderListView()}
-            {loadingMore && (
-              <View style={styles.loadingMoreContainer}>
-                <ActivityIndicator size="small" color={colors.primary} />
-              </View>
-            )}
-          </>
-        )}
-      </ScrollView>
+        onEndReachedThreshold={0.5}
+      />
 
       {/* Filter Modal */}
       <FilterModal
@@ -632,7 +476,6 @@ export default function ProductsScreen() {
         onClose={() => setShowFilterModal(false)}
         onApply={(newFilters) => {
           setFilters(newFilters);
-          // Reset pagination when filters change
           setCurrentPage(1);
           setHasMore(true);
         }}
@@ -662,7 +505,11 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   backButton: {
-    padding: 8,
+    width: 36,
+    height: 36,
+    borderRadius: radius.pill,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   headerCenter: {
     flex: 1,
@@ -671,7 +518,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 28,
-    fontWeight: 'bold',
+    fontFamily: fontFamily.bold,
   },
   headerActions: {
     flexDirection: 'row',
@@ -683,20 +530,20 @@ const styles = StyleSheet.create({
   },
   viewToggle: {
     flexDirection: 'row',
-    borderRadius: 8,
+    borderRadius: radius.pill,
     padding: 2,
   },
   toggleButton: {
     padding: 8,
-    borderRadius: 6,
+    borderRadius: radius.pill,
   },
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     marginHorizontal: 16,
-    paddingHorizontal: 10,
+    paddingHorizontal: spacing.md,
     paddingVertical: 4,
-    borderRadius: 12,
+    borderRadius: radius.pill,
     marginBottom: 6,
   },
   searchInput: {
@@ -711,10 +558,12 @@ const styles = StyleSheet.create({
   resultsText: {
     fontSize: 14,
   },
-  content: {
-    flex: 1,
+  gridContentContainer: {
+    paddingHorizontal: 10,
+    paddingBottom: 120,
   },
-  scrollContent: {
+  listContentContainer: {
+    paddingHorizontal: 20,
     paddingBottom: 120,
   },
   gridContainer: {
@@ -723,14 +572,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     gap: 12,
   },
-  listContainer: {
-    paddingHorizontal: 20,
+  gridItemWrapper: {
+    flex: 1,
+    paddingHorizontal: 6,
+    marginBottom: spacing.lg,
   },
   listItem: {
     flexDirection: 'row',
-    borderRadius: 12,
-    marginBottom: 12,
+    borderRadius: radius.lg,
+    marginBottom: spacing.md,
     overflow: 'hidden',
+    ...shadow.card,
   },
   listImageContainer: {
     position: 'relative',
@@ -739,32 +591,19 @@ const styles = StyleSheet.create({
     width: 100,
     height: 100,
   },
+  listSaleOverlay: {
+    position: 'absolute',
+    top: 4,
+    left: 4,
+  },
   listProductInfo: {
     flex: 1,
     padding: 12,
   },
   listProductName: {
-    fontSize: 16,
-    fontWeight: '500',
+    fontSize: typeScale.bodyLarge,
+    fontFamily: fontFamily.medium,
     marginBottom: 4,
-  },
-  categoryText: {
-    fontSize: 12,
-    marginBottom: 6,
-  },
-  ratingContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 6,
-  },
-  ratingText: {
-    fontSize: 12,
-    marginLeft: 4,
-    fontWeight: '500',
-  },
-  reviewsText: {
-    fontSize: 12,
-    marginLeft: 2,
   },
   priceContainer: {
     flexDirection: 'row',
@@ -772,12 +611,13 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   originalPrice: {
-    fontSize: 12,
+    fontSize: typeScale.small,
+    fontFamily: fontFamily.regular,
     textDecorationLine: 'line-through',
   },
   price: {
-    fontSize: 18,
-    fontWeight: 'bold',
+    fontSize: typeScale.subtitle,
+    fontFamily: fontFamily.bold,
   },
   listProductActions: {
     flexDirection: 'column',
@@ -788,7 +628,7 @@ const styles = StyleSheet.create({
   listCartButton: {
     width: 40,
     height: 40,
-    borderRadius: 20,
+    borderRadius: radius.pill,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -807,21 +647,6 @@ const styles = StyleSheet.create({
     marginTop: 20,
     fontSize: 16,
   },
-  categoryScroll: {
-    paddingHorizontal: 8,
-    marginBottom: 4,
-  },
-  categoryButton: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
-    marginRight: 6,
-    height: 30,
-  },
-  categoryText: {
-    fontSize: 10,
-    fontWeight: '500',
-  },
   loadingMoreContainer: {
     width: '100%',
     padding: 20,
@@ -838,12 +663,12 @@ const styles = StyleSheet.create({
     marginTop: 15,
     paddingHorizontal: 20,
     paddingVertical: 12,
-    borderRadius: 8,
+    borderRadius: radius.pill,
     minWidth: 120,
     alignItems: 'center',
   },
   retryButtonText: {
     fontSize: 16,
-    fontWeight: '600',
+    fontFamily: fontFamily.semiBold,
   },
 });

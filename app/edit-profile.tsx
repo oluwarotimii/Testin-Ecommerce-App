@@ -5,13 +5,14 @@ import { useAuth } from '@/context/AuthContext';
 import { useThemeColors } from '@/hooks/useColorScheme';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import Button from '@/components/Button';
+import { radius, fontFamily, shadow } from '@/constants/designTokens';
 
 export default function EditProfileScreen() {
   const router = useRouter();
   const colors = useThemeColors();
   const { apiService, isAuthenticated } = useAuth();
   const [loading, setLoading] = useState(true);
-  const [user, setUser] = useState<any>(null);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -27,7 +28,6 @@ export default function EditProfileScreen() {
         try {
           setLoading(true);
           const response = await apiService.getAccountDetails();
-          setUser(response);
           setFormData({
             firstname: response.first_name || response.name?.firstname || response.firstname || '',
             lastname: response.last_name || response.name?.lastname || response.lastname || '',
@@ -89,18 +89,8 @@ export default function EditProfileScreen() {
           <Ionicons name="person-circle-outline" size={80} color={colors.textSecondary} style={styles.emptyIcon} />
           <Text style={[styles.emptyTitle, { color: colors.text }]}>You are not logged in.</Text>
           <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>Please log in to edit your profile.</Text>
-          <TouchableOpacity
-            style={[styles.loginButton, { backgroundColor: colors.primary }]}
-            onPress={() => router.push('/login')}
-          >
-            <Text style={[styles.loginButtonText, { color: colors.white }]}>Log In</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.registerButton, { borderColor: colors.primary }]}
-            onPress={() => router.push('/register')}
-          >
-            <Text style={[styles.registerButtonText, { color: colors.primary }]}>Create Account</Text>
-          </TouchableOpacity>
+          <Button title="Log In" onPress={() => router.push('/login')} style={{ marginBottom: 15 }} />
+          <Button title="Create Account" onPress={() => router.push('/register')} variant="outline" />
         </View>
       </SafeAreaView>
     );
@@ -118,7 +108,7 @@ export default function EditProfileScreen() {
           {loading ? (
             <ActivityIndicator size="small" color={colors.primary} />
           ) : (
-            <Text style={{ color: colors.primary, fontSize: 16, fontWeight: '500' }}>
+            <Text style={{ color: colors.primary, fontSize: 16, fontFamily: fontFamily.medium }}>
               Save
             </Text>
           )}
@@ -182,17 +172,7 @@ export default function EditProfileScreen() {
             />
           </View>
 
-          <TouchableOpacity
-            style={[styles.saveButton, { backgroundColor: colors.primary }]}
-            onPress={handleSave}
-            disabled={loading}
-          >
-            {loading ? (
-              <ActivityIndicator size="small" color="white" />
-            ) : (
-              <Text style={styles.saveButtonText}>Save Changes</Text>
-            )}
-          </TouchableOpacity>
+          <Button title="Save Changes" onPress={handleSave} loading={loading} style={styles.saveButton} />
         </View>
 
         <View style={{ height: 40 }} />
@@ -221,16 +201,12 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 20,
-    fontWeight: 'bold',
+    fontFamily: fontFamily.bold,
   },
   profileCard: {
     padding: 20,
-    borderRadius: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
+    borderRadius: radius.xl,
+    ...shadow.card,
   },
   profileHeader: {
     flexDirection: 'row',
@@ -240,7 +216,7 @@ const styles = StyleSheet.create({
   profilePicture: {
     width: 70,
     height: 70,
-    borderRadius: 35,
+    borderRadius: radius.pill,
     marginRight: 16,
   },
   profileTexts: {
@@ -248,7 +224,7 @@ const styles = StyleSheet.create({
   },
   profileName: {
     fontSize: 20,
-    fontWeight: 'bold',
+    fontFamily: fontFamily.bold,
     marginBottom: 4,
   },
   profileEmail: {
@@ -263,25 +239,17 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 12,
     marginBottom: 6,
-    fontWeight: '500',
+    fontFamily: fontFamily.medium,
   },
   input: {
     paddingVertical: 12,
     paddingHorizontal: 16,
-    borderRadius: 12,
+    borderRadius: radius.pill,
     borderWidth: 1,
     fontSize: 16,
   },
   saveButton: {
-    paddingVertical: 14,
-    borderRadius: 12,
-    alignItems: 'center',
     marginTop: 10,
-  },
-  saveButtonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: '600',
   },
   emptyContainer: {
     flex: 1,
@@ -295,7 +263,7 @@ const styles = StyleSheet.create({
   },
   emptyTitle: {
     fontSize: 22,
-    fontWeight: 'bold',
+    fontFamily: fontFamily.bold,
     marginBottom: 10,
     textAlign: 'center',
   },
@@ -304,27 +272,5 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 30,
     paddingHorizontal: 20,
-  },
-  loginButton: {
-    width: '100%',
-    paddingVertical: 15,
-    borderRadius: 10,
-    alignItems: 'center',
-    marginBottom: 15,
-  },
-  loginButtonText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  registerButton: {
-    width: '100%',
-    paddingVertical: 15,
-    borderRadius: 10,
-    alignItems: 'center',
-    borderWidth: 1,
-  },
-  registerButtonText: {
-    fontSize: 18,
-    fontWeight: 'bold',
   },
 });

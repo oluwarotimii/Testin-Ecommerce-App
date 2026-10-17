@@ -246,7 +246,7 @@ export default function TestNotificationsScreen() {
 
         {/* Tips Card */}
         <View style={[styles.tipCard, { backgroundColor: colors.surface, borderColor: colors.info }]}>
-          <Ionicons name="lightbulb" size={24} color={colors.info} />
+          <Ionicons name="bulb" size={24} color={colors.info} />
           <View style={styles.tipContent}>
             <Text style={[styles.tipTitle, { color: colors.text }]}>Testing Tips</Text>
             <Text style={[styles.tipText, { color: colors.textSecondary }]}>

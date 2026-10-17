@@ -4,6 +4,8 @@ import SafeImage from '@/components/SafeImage';
 import { Ionicons } from '@expo/vector-icons';
 import { useThemeColors } from '@/hooks/useColorScheme';
 import { formatPrice } from '@/utils/formatNumber';
+import { spacing, radius, typeScale, fontFamily, shadow } from '@/constants/designTokens';
+import SalePill from '@/components/SalePill';
 
 interface ProductCardProps {
     product: any;
@@ -20,9 +22,15 @@ export default function ProductCard({ product, onPress, isLiked, onToggleWishlis
     const colors = useThemeColors();
     const isDarkMode = String(colors.background).toLowerCase() === '#000000';
 
-    // Calculate discount percentage if original price exists and is higher than current price
+    // Use the real WooCommerce regular/sale price data (already computed by
+    // transformProducts) instead of a fabricated markup, so the discount
+    // badge and strikethrough price reflect an actual sale.
     const price = typeof product.price === 'number' ? product.price : parseFloat(product.price || '0');
-    const originalPrice = price * 1.3; // Mock original price as per design
+    const originalPrice = typeof product.original_price === 'number'
+        ? product.original_price
+        : parseFloat(product.original_price ?? product.price ?? '0');
+    const isOnSale = originalPrice > price;
+    const percentOff = isOnSale ? ((originalPrice - price) / originalPrice) * 100 : 0;
 
     return (
         <TouchableOpacity
@@ -31,6 +39,12 @@ export default function ProductCard({ product, onPress, isLiked, onToggleWishlis
         >
             <View style={styles.productImageContainer}>
                 <SafeImage source={{ uri: product.image }} style={styles.productImage} />
+
+                {isOnSale && (
+                    <View style={styles.saleOverlay}>
+                        <SalePill percentOff={percentOff} />
+                    </View>
+                )}
 
                 <View style={styles.wishlistOverlay}>
                     <TouchableOpacity
@@ -73,7 +87,9 @@ export default function ProductCard({ product, onPress, isLiked, onToggleWishlis
                 <Text style={[styles.productName, { color: colors.text }]} numberOfLines={2}>{product.title}</Text>
                 <View style={styles.priceContainer}>
                     <View>
-                        <Text style={[styles.originalPrice, { color: colors.textSecondary }]}>{formatPrice(originalPrice)}</Text>
+                        {isOnSale && (
+                            <Text style={[styles.originalPrice, { color: colors.textSecondary }]}>{formatPrice(originalPrice)}</Text>
+                        )}
                         <Text style={[styles.productPrice, { color: isDarkMode ? colors.white : colors.primary }]}>{formatPrice(price)}</Text>
                     </View>
                 </View>
@@ -84,11 +100,12 @@ export default function ProductCard({ product, onPress, isLiked, onToggleWishlis
 
 const styles = StyleSheet.create({
     productCard: {
-        width: '47%', // Default width for grid
-        borderRadius: 16,
+        width: '47%', // Default width for a 2-up grid; override via `style` for other column counts
+        borderRadius: radius.xl,
         overflow: 'hidden',
         position: 'relative',
-        marginBottom: 16,
+        marginBottom: spacing.lg,
+        ...shadow.card,
     },
     productImageContainer: {
         position: 'relative',
@@ -97,10 +114,16 @@ const styles = StyleSheet.create({
         width: '100%',
         height: 200, // Increased height to prevent image cutoff
     },
-    wishlistOverlay: {
+    saleOverlay: {
         position: 'absolute',
         top: 8,
         left: 8,
+        zIndex: 2,
+    },
+    wishlistOverlay: {
+        position: 'absolute',
+        top: 8,
+        right: 8,
         zIndex: 2,
     },
     cartOverlayBottom: {
@@ -112,24 +135,24 @@ const styles = StyleSheet.create({
     wishlistButton: {
         width: 32,
         height: 32,
-        borderRadius: 16,
+        borderRadius: radius.pill,
         alignItems: 'center',
         justifyContent: 'center',
     },
     addToCartButton: {
         width: 36,
         height: 36,
-        borderRadius: 18,
+        borderRadius: radius.pill,
         alignItems: 'center',
         justifyContent: 'center',
     },
     productDetails: {
-        padding: 12,
+        padding: spacing.md,
     },
     productName: {
-        fontSize: 14,
-        fontWeight: '500',
-        marginBottom: 8,
+        fontSize: typeScale.body,
+        fontFamily: fontFamily.medium,
+        marginBottom: spacing.xs + 4,
         height: 40,
         lineHeight: 20,
     },
@@ -140,12 +163,13 @@ const styles = StyleSheet.create({
         width: '100%',
     },
     originalPrice: {
-        fontSize: 12,
+        fontSize: typeScale.small,
+        fontFamily: fontFamily.regular,
         textDecorationLine: 'line-through',
     },
     productPrice: {
-        fontSize: 16,
-        fontWeight: 'bold',
+        fontSize: typeScale.bodyLarge,
+        fontFamily: fontFamily.bold,
     },
     successOverlay: {
         position: 'absolute',

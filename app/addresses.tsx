@@ -5,6 +5,8 @@ import { useAuth } from '@/context/AuthContext';
 import { useThemeColors } from '@/hooks/useColorScheme';
 import { Ionicons } from '@expo/vector-icons';
 import BackButton from '@/components/BackButton';
+import Button from '@/components/Button';
+import { radius, fontFamily, shadow } from '@/constants/designTokens';
 
 export default function AddressesScreen() {
   const router = useRouter();
@@ -211,18 +213,8 @@ export default function AddressesScreen() {
           <Ionicons name="location-outline" size={80} color={colors.textSecondary} style={styles.emptyIcon} />
           <Text style={[styles.emptyTitle, { color: colors.text }]}>You are not logged in.</Text>
           <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>Please log in to manage your shipping addresses.</Text>
-          <TouchableOpacity
-            style={[styles.loginButton, { backgroundColor: colors.primary }]}
-            onPress={() => router.push('/login')}
-          >
-            <Text style={[styles.loginButtonText, { color: colors.white }]}>Log In</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.registerButton, { borderColor: colors.primary }]}
-            onPress={() => router.push('/register')}
-          >
-            <Text style={[styles.registerButtonText, { color: colors.primary }]}>Create Account</Text>
-          </TouchableOpacity>
+          <Button title="Log In" onPress={() => router.push('/login')} style={{ marginBottom: 15 }} />
+          <Button title="Create Account" onPress={() => router.push('/register')} variant="outline" />
         </View>
       </View>
     );
@@ -359,17 +351,13 @@ export default function AddressesScreen() {
               />
             </View>
 
-            <TouchableOpacity
-              style={[styles.saveButton, { backgroundColor: colors.primary }]}
+            <Button
+              title="Save Shipping Address"
               onPress={handleSaveAddress}
-              disabled={loading}
-            >
-              {loading ? (
-                <ActivityIndicator size="small" color={colors.white} />
-              ) : (
-                <Text style={[styles.saveButtonText, { color: colors.white }]}>Save Shipping Address</Text>
-              )}
-            </TouchableOpacity>
+              loading={loading}
+              fullWidth
+              style={styles.saveButton}
+            />
           </View>
           <View style={{ height: 40 }} />
         </ScrollView>
@@ -411,8 +399,8 @@ export default function AddressesScreen() {
             <Ionicons name="location-outline" size={80} color={colors.textSecondary} />
             <Text style={[styles.emptyTitle, { color: colors.text }]}>No addresses yet</Text>
             <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>Add your first shipping address</Text>
-            <TouchableOpacity
-              style={[styles.primaryButton, { backgroundColor: colors.primary }]}
+            <Button
+              title="Add Address"
               onPress={() => {
                 setFormData({
                   firstName: '',
@@ -430,9 +418,8 @@ export default function AddressesScreen() {
                 setIsAdding(true);
                 setIsEditing(false);
               }}
-            >
-              <Text style={[styles.primaryButtonText, { color: colors.white }]}>Add Address</Text>
-            </TouchableOpacity>
+              style={styles.primaryButton}
+            />
           </View>
         ) : (
           addresses.map((address) => (
@@ -463,6 +450,12 @@ export default function AddressesScreen() {
                 >
                   <Text style={[styles.actionButtonText, { color: colors.text }]}>Edit</Text>
                 </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.actionButton, { borderColor: colors.error }]}
+                  onPress={() => handleDeleteAddress(address.id)}
+                >
+                  <Text style={[styles.actionButtonText, { color: colors.error }]}>Delete</Text>
+                </TouchableOpacity>
               </View>
             </View>
           ))
@@ -484,12 +477,9 @@ const styles = StyleSheet.create({
     paddingTop: 15,
     paddingBottom: 20,
   },
-  backButton: {
-    padding: 8,
-  },
   title: {
     fontSize: 20,
-    fontWeight: 'bold',
+    fontFamily: fontFamily.bold,
   },
   content: {
     flex: 1,
@@ -512,19 +502,20 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 16,
-    fontWeight: '500',
+    fontFamily: fontFamily.medium,
     marginBottom: 8,
   },
   input: {
     paddingVertical: 14,
     paddingHorizontal: 16,
-    borderRadius: 12,
+    borderRadius: radius.lg,
     fontSize: 16,
   },
   addressCard: {
-    borderRadius: 16,
+    borderRadius: radius.xl,
     padding: 16,
     marginBottom: 16,
+    ...shadow.card,
   },
   addressHeader: {
     flexDirection: 'row',
@@ -534,13 +525,13 @@ const styles = StyleSheet.create({
   },
   addressName: {
     fontSize: 16,
-    fontWeight: 'bold',
+    fontFamily: fontFamily.bold,
   },
   defaultBadge: {
     fontSize: 12,
-    fontWeight: '600',
+    fontFamily: fontFamily.semiBold,
     borderWidth: 1,
-    borderRadius: 8,
+    borderRadius: radius.sm,
     paddingHorizontal: 8,
     paddingVertical: 2,
   },
@@ -564,34 +555,16 @@ const styles = StyleSheet.create({
   actionButton: {
     flex: 1,
     borderWidth: 1,
-    borderRadius: 8,
+    borderRadius: radius.sm,
     paddingVertical: 8,
     alignItems: 'center',
   },
   actionButtonText: {
     fontSize: 14,
-    fontWeight: '500',
-  },
-  defaultAddressContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 10,
-    marginBottom: 20,
-  },
-  defaultAddressText: {
-    marginLeft: 10,
-    fontSize: 16,
+    fontFamily: fontFamily.medium,
   },
   saveButton: {
-    width: '100%',
-    paddingVertical: 16,
-    borderRadius: 12,
-    alignItems: 'center',
     marginTop: 10,
-  },
-  saveButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
   },
   emptyContainer: {
     flex: 1,
@@ -600,9 +573,12 @@ const styles = StyleSheet.create({
     padding: 20,
     paddingTop: 100,
   },
+  emptyIcon: {
+    marginBottom: 20,
+  },
   emptyTitle: {
     fontSize: 22,
-    fontWeight: 'bold',
+    fontFamily: fontFamily.bold,
     marginBottom: 10,
     textAlign: 'center',
   },
@@ -612,35 +588,6 @@ const styles = StyleSheet.create({
     marginBottom: 30,
   },
   primaryButton: {
-    paddingHorizontal: 32,
-    paddingVertical: 16,
-    borderRadius: 12,
-    alignItems: 'center',
-  },
-  primaryButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  loginButton: {
-    width: '100%',
-    paddingVertical: 15,
-    borderRadius: 10,
-    alignItems: 'center',
-    marginBottom: 15,
-  },
-  loginButtonText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  registerButton: {
-    width: '100%',
-    paddingVertical: 15,
-    borderRadius: 10,
-    alignItems: 'center',
-    borderWidth: 1,
-  },
-  registerButtonText: {
-    fontSize: 18,
-    fontWeight: 'bold',
+    marginTop: 10,
   },
 });

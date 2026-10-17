@@ -1,9 +1,14 @@
 import React, { useState, useRef } from 'react';
-import { Image as RNImage, ImageProps as RNImageProps, View, StyleSheet, TouchableOpacity } from 'react-native';
+import { Image as RNImage, ImageProps as RNImageProps, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useThemeColors } from '@/hooks/useColorScheme';
 
-// Safe Image component that handles the DOM constructor issue and image loading errors
+// Safe Image component that handles the DOM constructor issue and image loading errors.
+// NOTE: expo-image would give memory/disk caching here (fixes scroll jank from
+// re-decoding images on every FlashList recycle), but it's a native module not
+// yet in the shipped app binary - adding it requires a new native build, it
+// can't go out via OTA. Deliberately using RN's core Image here until a native
+// build ships; swap back to expo-image once that happens.
 const SafeImage: React.FC<RNImageProps> = (props) => {
   const colors = useThemeColors();
   const [imageError, setImageError] = useState(false);

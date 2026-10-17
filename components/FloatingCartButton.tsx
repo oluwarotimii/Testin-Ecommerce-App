@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef } from 'react';
 import { TouchableOpacity, Text, View, StyleSheet, Animated } from 'react-native';
 import { useCart } from '@/context/CartContext';
 import { useThemeColors } from '@/hooks/useColorScheme';

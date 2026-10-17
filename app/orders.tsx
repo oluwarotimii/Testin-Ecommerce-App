@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
@@ -8,6 +8,8 @@ import SkeletonLoader from '@/components/SkeletonLoader';
 import BackButton from '@/components/BackButton';
 import { getOrderStatus } from '@/constants/orderStatus';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import Button from '@/components/Button';
+import { radius, fontFamily, shadow } from '@/constants/designTokens';
 
 const getOrderMetaValue = (metaData: any[] | undefined, key: string) => {
   if (!Array.isArray(metaData)) return undefined;
@@ -47,8 +49,6 @@ export default function OrdersScreen() {
   const { apiService, isAuthenticated } = useAuth();
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [cancellingOrderId, setCancellingOrderId] = useState<number | null>(null);
-  const [showCancelModal, setShowCancelModal] = useState<number | null>(null); // Track which order ID the modal is for
 
   useEffect(() => {
     // Redirect to login if not authenticated
@@ -96,115 +96,6 @@ export default function OrdersScreen() {
     return numPrice.toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   };
 
-  const handleCancelOrder = (orderId: number) => {
-    console.log('handleCancelOrder called for order:', orderId);
-    console.log('Current orders array:', orders);
-    console.log('Looking for order with ID:', orderId);
-
-    // Show the confirmation modal instead of Alert
-    setShowCancelModal(orderId);
-    console.log('Showed cancel confirmation modal for order:', orderId);
-  };
-
-  const confirmCancelOrder = async (orderId: number) => {
-    console.log('Confirming cancellation for order:', orderId);
-    setShowCancelModal(null); // Close the modal
-
-    try {
-      console.log('Setting cancellingOrderId to:', orderId);
-      setCancellingOrderId(orderId);
-      console.log('cancellingOrderId state set to:', orderId);
-
-      // Find the order to preserve its original status in case of failure
-      console.log('Finding order to cancel...');
-      const orderToCancel = orders.find(order => order.order_id === orderId);
-      console.log('Found order to cancel:', orderToCancel);
-
-      if (!orderToCancel) {
-        console.log('Order not found, throwing error');
-        throw new Error('Order not found');
-      }
-
-      // Update the order status in the local state instantly
-      console.log('Updating order status to cancelled in local state for order:', orderId);
-      setOrders(prevOrders => {
-        console.log('Updating orders state...');
-        return prevOrders.map(order =>
-          order.order_id === orderId
-            ? { ...order, status: 'cancelled' }
-            : order
-        );
-      });
-
-      // Make the API call
-      console.log('Making API call to cancel order with ID:', orderId);
-      await apiService.cancelOrder(orderId);
-      console.log('API call to cancel order completed successfully');
-
-      // Refresh the orders list after successful API call
-      console.log('Refreshing orders list after successful cancellation...');
-      const response = await apiService.getOrders();
-      console.log('Received updated orders list:', response);
-
-      if (Array.isArray(response)) {
-        console.log('Transforming orders data...');
-        const transformedOrders = response.map((order: any) => ({
-          order_id: order.id || order.order_id,
-          date_added: order.date_created || order.date_added,
-          status: order.status,
-          total: order.total,
-          products: order.line_items || order.products || [],
-          meta_data: order.meta_data || [],
-          shipping_lines: order.shipping_lines || [],
-          date_paid: order.date_paid,
-          payment_method_title: order.payment_method_title
-        }));
-
-        console.log('Setting updated orders state...');
-        setOrders(transformedOrders);
-        console.log('Orders list refreshed with', transformedOrders.length, 'orders');
-      } else {
-        console.log('Response is not an array, response:', response);
-      }
-    } catch (error) {
-      console.error('Error cancelling order:', error);
-      console.error('Error details:', error.message, error.stack);
-
-      // If the API call fails, refresh the orders to get the correct status
-      try {
-        console.log('Refreshing orders after failed cancellation...');
-        const response = await apiService.getOrders();
-        if (Array.isArray(response)) {
-          const transformedOrders = response.map((order: any) => ({
-            order_id: order.id || order.order_id,
-            date_added: order.date_created || order.date_added,
-            status: order.status,
-            total: order.total,
-            products: order.line_items || order.products || [],
-            meta_data: order.meta_data || [],
-            shipping_lines: order.shipping_lines || [],
-            date_paid: order.date_paid,
-            payment_method_title: order.payment_method_title
-          }));
-          setOrders(transformedOrders);
-          console.log('Orders list refreshed after failed cancellation');
-        }
-      } catch (refreshError) {
-        console.error('Error refreshing orders after failed cancellation:', refreshError);
-      }
-      Alert.alert('Error', 'Failed to cancel order. Please try again.');
-    } finally {
-      console.log('In finally block, resetting cancellingOrderId...');
-      setCancellingOrderId(null);
-      console.log('cancellingOrderId reset to null');
-    }
-  };
-
-  const cancelCancelOrder = () => {
-    console.log('User cancelled the cancellation');
-    setShowCancelModal(null);
-  };
-
   if (loading) {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
@@ -238,12 +129,7 @@ export default function OrdersScreen() {
           <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>
             Start shopping to see your orders here.
           </Text>
-          <TouchableOpacity
-            style={[styles.shopButton, { backgroundColor: colors.primary }]}
-            onPress={() => router.push('/(tabs)')}
-          >
-            <Text style={[styles.shopButtonText, { color: colors.white }]}>Start Shopping</Text>
-          </TouchableOpacity>
+          <Button title="Start Shopping" onPress={() => router.push('/(tabs)')} fullWidth={false} style={styles.shopButton} />
         </View>
       </SafeAreaView>
     );
@@ -313,30 +199,6 @@ export default function OrdersScreen() {
                   </Text>
                 </View>
               </View>
-
-              {/* Show cancel button for pending/processing orders
-              {order && order.status && ['pending', 'processing'].includes(order.status.toLowerCase()) && (
-                <View style={styles.cancelButtonContainer}>
-                  <TouchableOpacity
-                    style={[styles.cancelButton, { backgroundColor: colors.danger }]}
-                    onPress={() => {
-                      console.log('Cancel button pressed for order:', order.order_id);
-                      handleCancelOrder(order.order_id);
-                    }}
-                    disabled={cancellingOrderId === order.order_id}
-                  >
-                    {cancellingOrderId === order.order_id ? (
-                      <View style={styles.loadingContainer}>
-                        <ActivityIndicator size="small" color={colors.white} />
-                      </View>
-                    ) : (
-                      <Text style={[styles.cancelButtonText, { color: colors.white }]}>
-                        Cancel Order
-                      </Text>
-                    )}
-                  </TouchableOpacity>
-                </View>
-              )} */}
             </TouchableOpacity>
           );
         })}
@@ -358,7 +220,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 23,
-    fontWeight: 'bold',
+    fontFamily: fontFamily.bold,
     flex: 1,
   },
   content: {
@@ -366,14 +228,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   orderCard: {
-    borderRadius: 16,
+    borderRadius: radius.xl,
     padding: 16,
     marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.03,
-    shadowRadius: 4,
-    elevation: 1,
+    ...shadow.card,
   },
   cardHeader: {
     flexDirection: 'row',
@@ -388,7 +246,7 @@ const styles = StyleSheet.create({
   },
   orderId: {
     fontSize: 16,
-    fontWeight: 'bold',
+    fontFamily: fontFamily.bold,
     marginBottom: 4,
   },
   orderDate: {
@@ -397,29 +255,29 @@ const styles = StyleSheet.create({
   statusBadge: {
     paddingHorizontal: 10,
     paddingVertical: 4,
-    borderRadius: 12,
+    borderRadius: radius.pill,
   },
   sourceBadge: {
     paddingHorizontal: 10,
     paddingVertical: 4,
-    borderRadius: 12,
+    borderRadius: radius.pill,
   },
   paymentBadge: {
     paddingHorizontal: 10,
     paddingVertical: 4,
-    borderRadius: 12,
+    borderRadius: radius.pill,
   },
   statusText: {
     fontSize: 12,
-    fontWeight: '600',
+    fontFamily: fontFamily.semiBold,
   },
   sourceText: {
     fontSize: 12,
-    fontWeight: '600',
+    fontFamily: fontFamily.semiBold,
   },
   paymentText: {
     fontSize: 12,
-    fontWeight: '600',
+    fontFamily: fontFamily.semiBold,
   },
   divider: {
     height: 1,
@@ -446,7 +304,7 @@ const styles = StyleSheet.create({
   },
   totalAmount: {
     fontSize: 16,
-    fontWeight: 'bold',
+    fontFamily: fontFamily.bold,
   },
   emptyContainer: {
     flex: 1,
@@ -456,7 +314,7 @@ const styles = StyleSheet.create({
   },
   emptyTitle: {
     fontSize: 20,
-    fontWeight: 'bold',
+    fontFamily: fontFamily.bold,
     marginTop: 20,
     marginBottom: 8,
   },
@@ -467,35 +325,10 @@ const styles = StyleSheet.create({
   },
   shopButton: {
     paddingHorizontal: 32,
-    paddingVertical: 16,
-    borderRadius: 12,
-  },
-  shopButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
   },
   skeletonCard: {
-    borderRadius: 16,
+    borderRadius: radius.xl,
     padding: 16,
     marginBottom: 16,
-  },
-  cancelButtonContainer: {
-    marginTop: 12,
-    alignItems: 'flex-start', // Align the button to the start
-  },
-  cancelButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 8,
-    backgroundColor: '#ff4757', // Red background
-  },
-  loadingContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  cancelButtonText: {
-    fontSize: 12,
-    fontWeight: '600',
   },
 });

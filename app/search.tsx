@@ -1,18 +1,23 @@
-import { View, Text, StyleSheet, TextInput, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
-import { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, TextInput, ScrollView, TouchableOpacity } from 'react-native';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useRouter } from 'expo-router';
+import { FlashList } from '@shopify/flash-list';
 import { useAuth } from '@/context/AuthContext';
 import { useThemeColors } from '@/hooks/useColorScheme';
-import { MaterialIcons, FontAwesome, Ionicons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import { formatPrice } from '@/utils/formatNumber';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import SafeImage from '@/components/SafeImage';
+import SkeletonProductItem from '@/components/SkeletonProductItem';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { radius, fontFamily } from '@/constants/designTokens';
+
+const RESULTS_PAGE_SIZE = 20;
+const MIN_QUERY_LENGTH = 2;
 
 export default function SearchScreen() {
   const router = useRouter();
   const colors = useThemeColors();
-  const isDarkMode = String(colors.background).toLowerCase() === '#000000';
   const { apiService } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
@@ -22,7 +27,9 @@ export default function SearchScreen() {
   const [error, setError] = useState<string | null>(null);
   const [hasMore, setHasMore] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalResults, setTotalResults] = useState(0);
+  // Guards against a slow earlier keystroke's response landing after a
+  // later one and overwriting fresher results with stale ones.
+  const latestQueryRef = useRef('');
 
   // Load recent searches from storage
   useEffect(() => {
@@ -44,17 +51,21 @@ export default function SearchScreen() {
 
   // Search as user types with debounce
   useEffect(() => {
+    const trimmed = searchQuery.trim();
+    if (trimmed.length < MIN_QUERY_LENGTH) {
+      return;
+    }
+
     const debounceTimer = setTimeout(() => {
-      if (searchQuery.trim()) {
-        performSearch(searchQuery.trim(), true); // Reset to page 1
-      }
-      // Don't clear results when searchQuery is empty - preserve them for viewing
-    }, 500); // Increased to 500ms debounce
+      performSearch(trimmed, true); // Reset to page 1
+    }, 500);
 
     return () => clearTimeout(debounceTimer);
   }, [searchQuery]);
 
-  const performSearch = async (query: string, reset: boolean = false) => {
+  const performSearch = useCallback(async (query: string, reset: boolean = false) => {
+    latestQueryRef.current = query;
+
     try {
       if (reset) {
         setLoading(true);
@@ -65,36 +76,50 @@ export default function SearchScreen() {
 
       setError(null);
       const page = reset ? 1 : currentPage + 1;
-      const results = await apiService.searchProductsExtended(query, page, 100); // Fetch 100 products per page (max)
+      const results = await apiService.searchProductsExtended(query, page, RESULTS_PAGE_SIZE);
+
+      // A newer search started while this one was in flight - its response
+      // will win instead, so drop this stale one rather than overwrite.
+      if (latestQueryRef.current !== query) {
+        return;
+      }
 
       if (reset) {
         setSearchResults(results);
       } else {
         // Append new results, avoiding duplicates
-        const existingIds = new Set(searchResults.map((p: any) => p.id));
-        const newResults = results.filter((p: any) => !existingIds.has(p.id));
-        setSearchResults(prev => [...prev, ...newResults]);
+        setSearchResults(prev => {
+          const existingIds = new Set(prev.map((p: any) => p.id));
+          const newResults = results.filter((p: any) => !existingIds.has(p.id));
+          return [...prev, ...newResults];
+        });
       }
 
-      setHasMore(results.length === 100); // If we got 100 results, there might be more
+      setHasMore(results.length === RESULTS_PAGE_SIZE);
       setCurrentPage(page);
-      setTotalResults(prev => reset ? results.length : prev + results.length);
     } catch (err: any) {
-      setError(err.message || 'An error occurred during search');
+      if (latestQueryRef.current !== query) {
+        return;
+      }
+      console.error('Search error:', err);
+      setError('Unable to search right now. Please try again.');
       if (reset) {
         setSearchResults([]);
       }
     } finally {
-      setLoading(false);
-      setLoadingMore(false);
+      if (latestQueryRef.current === query) {
+        setLoading(false);
+        setLoadingMore(false);
+      }
     }
-  };
+  }, [apiService, currentPage]);
 
-  const loadMoreResults = () => {
-    if (!loading && !loadingMore && hasMore && searchQuery.trim()) {
-      performSearch(searchQuery.trim(), false);
+  const loadMoreResults = useCallback(() => {
+    const trimmed = searchQuery.trim();
+    if (!loading && !loadingMore && hasMore && trimmed) {
+      performSearch(trimmed, false);
     }
-  };
+  }, [loading, loadingMore, hasMore, searchQuery, performSearch]);
 
   const handleSearch = async (query: string) => {
     if (query.trim()) {
@@ -134,6 +159,112 @@ export default function SearchScreen() {
     }
   };
 
+  const renderResultItem = useCallback(({ item: product }: { item: any }) => (
+    <TouchableOpacity
+      style={[styles.resultItem, { borderBottomColor: colors.border }]}
+      onPress={() => router.push(`/product/${product.id}`)}
+    >
+      <SafeImage source={{ uri: product.image }} style={[styles.resultImage, { backgroundColor: colors.surface }]} />
+      <View style={styles.resultInfo}>
+        <Text style={[styles.resultName, { color: colors.text }]} numberOfLines={2}>{product.title}</Text>
+        <View style={styles.resultMeta}>
+          <Text style={[styles.resultCategory, { color: colors.textSecondary }]}>{product.category}</Text>
+          <Text style={[styles.resultPrice, { color: colors.primary }]}>
+            {formatPrice(typeof product.price === 'number' ? product.price : parseFloat(product.price || '0'))}
+          </Text>
+        </View>
+      </View>
+      <Ionicons name="chevron-forward" size={16} color={colors.textSecondary} />
+    </TouchableOpacity>
+  ), [colors, router]);
+
+  const keyExtractor = useCallback((item: any) => String(item.id), []);
+
+  const isSearchActive = searchQuery.trim().length >= MIN_QUERY_LENGTH;
+
+  const resultsHeader = useMemo(() => (
+    <Text style={[styles.sectionTitle, { color: colors.text, marginBottom: 8 }]}>
+      {searchResults.length}+ results for &quot;{searchQuery.trim()}&quot;
+      {hasMore && ' (scroll for more)'}
+    </Text>
+  ), [searchResults.length, searchQuery, hasMore, colors]);
+
+  const resultsFooter = useMemo(() => {
+    if (loadingMore) {
+      return (
+        <View style={styles.loadingMoreContainer}>
+          <SkeletonProductItem viewMode="list" />
+        </View>
+      );
+    }
+    if (!hasMore && searchResults.length > 0) {
+      return (
+        <Text style={[styles.noMoreResultsText, { color: colors.textSecondary }]}>
+          No more products to load
+        </Text>
+      );
+    }
+    return null;
+  }, [loadingMore, hasMore, searchResults.length, colors]);
+
+  if (isSearchActive && (loading || searchResults.length > 0 || error)) {
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+        <View style={styles.searchHeader}>
+          <View style={styles.searchHeaderLeft}>
+            <TouchableOpacity onPress={() => router.back()} style={styles.backArrow}>
+              <Ionicons name="arrow-back" size={22} color={colors.text} />
+            </TouchableOpacity>
+            <View style={[styles.searchBar, { backgroundColor: colors.surface }]}>
+              <Ionicons name="search" size={18} color={colors.textSecondary} />
+              <TextInput
+                style={[styles.searchInput, { color: colors.text }]}
+                placeholder="Search products..."
+                placeholderTextColor={colors.textSecondary}
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+                onSubmitEditing={() => handleSearch(searchQuery)}
+                autoFocus
+              />
+              {searchQuery.length > 0 && (
+                <TouchableOpacity onPress={() => setSearchQuery('')} style={styles.clearSearch}>
+                  <Ionicons name="close-circle" size={18} color={colors.textSecondary} />
+                </TouchableOpacity>
+              )}
+            </View>
+          </View>
+        </View>
+
+        {loading && searchResults.length === 0 ? (
+          <View style={styles.content}>
+            <SkeletonProductItem viewMode="list" />
+            <SkeletonProductItem viewMode="list" />
+            <SkeletonProductItem viewMode="list" />
+            <SkeletonProductItem viewMode="list" />
+          </View>
+        ) : error ? (
+          <View style={styles.content}>
+            <Text style={[styles.errorText, { color: colors.error }]}>{error}</Text>
+          </View>
+        ) : (
+          // Virtualized - only the rows actually on screen are mounted, so
+          // scrolling stays smooth no matter how many pages have loaded.
+          <FlashList
+            data={searchResults}
+            keyExtractor={keyExtractor}
+            renderItem={renderResultItem}
+            contentContainerStyle={styles.content}
+            showsVerticalScrollIndicator={false}
+            ListHeaderComponent={resultsHeader}
+            ListFooterComponent={resultsFooter}
+            onEndReached={loadMoreResults}
+            onEndReachedThreshold={0.5}
+          />
+        )}
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Search Header */}
@@ -162,93 +293,44 @@ export default function SearchScreen() {
         </View>
       </View>
 
-      <ScrollView 
-        style={styles.content} 
+      <ScrollView
+        style={styles.content}
         showsVerticalScrollIndicator={false}
-        onScroll={(event) => {
-          const { layoutMeasurement, contentOffset, contentSize } = event.nativeEvent;
-          const paddingToBottom = 100; // Load more when user is 100px from bottom
-          if (layoutMeasurement.height + contentOffset.y >= contentSize.height - paddingToBottom) {
-            loadMoreResults();
-          }
-        }}
-        scrollEventThrottle={400}
       >
-        {loading && !loadingMore && searchQuery.length > 0 ? (
-          <ActivityIndicator size="large" color={colors.primary} style={styles.loadingIndicator} />
-        ) : error ? (
-          <Text style={[styles.errorText, { color: colors.error }]}>Error: {error}</Text>
-        ) : searchResults.length > 0 ? (
-          /* Search Results */
-          <View style={styles.section}>
-            <Text style={[styles.sectionTitle, { color: colors.text }]}>
-              {searchResults.length}+ results{searchQuery.length > 0 ? ` for "${searchQuery}"` : ''}
-              {hasMore && ' (scroll for more)'}
-            </Text>
-            {searchResults.map((product) => (
-              <TouchableOpacity
-                key={product.id}
-                style={[styles.resultItem, { borderBottomColor: colors.border }]}
-                onPress={() => router.push(`/product/${product.id}`)}
-              >
-                <SafeImage source={{ uri: product.image }} style={[styles.resultImage, { backgroundColor: colors.surface }]} />
-                <View style={styles.resultInfo}>
-                  <Text style={[styles.resultName, { color: colors.text }]} numberOfLines={2}>{product.title}</Text>
-                  <View style={styles.resultMeta}>
-                    <Text style={[styles.resultCategory, { color: colors.textSecondary }]}>{product.category}</Text>
-                    <Text style={[styles.resultPrice, { color: colors.primary }]}>
-                      {formatPrice(typeof product.price === 'number' ? product.price : parseFloat(product.price || '0'))}
-                    </Text>
+        {!isSearchActive ? (
+          /* Recent Searches (shown until the query reaches MIN_QUERY_LENGTH) */
+          recentSearches.length > 0 && (
+            <View style={styles.section}>
+              <View style={styles.sectionHeader}>
+                <Text style={[styles.sectionTitle, { color: colors.text }]}>Recent</Text>
+                <TouchableOpacity onPress={clearAllRecentSearches}>
+                  <Text style={[styles.clearButton, { color: colors.primary }]}>Clear</Text>
+                </TouchableOpacity>
+              </View>
+              {recentSearches.map((search, index) => (
+                <TouchableOpacity
+                  key={index}
+                  style={[styles.searchItem, { borderBottomColor: colors.border }]}
+                  onPress={() => {
+                    setSearchQuery(search);
+                    handleSearch(search);
+                  }}
+                >
+                  <View style={[styles.recentIcon, { backgroundColor: colors.surface }]}>
+                    <Ionicons name="time-outline" size={16} color={colors.textSecondary} />
                   </View>
-                </View>
-                <Ionicons name="chevron-forward" size={16} color={colors.textSecondary} />
-              </TouchableOpacity>
-            ))}
-            {loadingMore && (
-              <View style={styles.loadingMoreContainer}>
-                <ActivityIndicator size="small" color={colors.primary} />
-                <Text style={[styles.loadingMoreText, { color: colors.textSecondary }]}>Loading more products...</Text>
-              </View>
-            )}
-            {!hasMore && searchResults.length > 0 && (
-              <Text style={[styles.noMoreResultsText, { color: colors.textSecondary }]}>
-                No more products to load
-              </Text>
-            )}
-          </View>
-        ) : searchQuery.length === 0 ? (
-          /* Recent Searches (shown only when no search has been performed) */
-          <>
-            {recentSearches.length > 0 && (
-              <View style={styles.section}>
-                <View style={styles.sectionHeader}>
-                  <Text style={[styles.sectionTitle, { color: colors.text }]}>Recent</Text>
-                  <TouchableOpacity onPress={clearAllRecentSearches}>
-                    <Text style={[styles.clearButton, { color: colors.primary }]}>Clear</Text>
+                  <Text style={[styles.searchItemText, { color: colors.text }]}>{search}</Text>
+                  <TouchableOpacity onPress={() => removeRecentSearch(search)} style={styles.removeButton}>
+                    <Ionicons name="close" size={16} color={colors.textSecondary} />
                   </TouchableOpacity>
-                </View>
-                {recentSearches.map((search, index) => (
-                  <TouchableOpacity
-                    key={index}
-                    style={[styles.searchItem, { borderBottomColor: colors.border }]}
-                    onPress={() => {
-                      setSearchQuery(search);
-                      handleSearch(search);
-                    }}
-                  >
-                    <View style={[styles.recentIcon, { backgroundColor: colors.surface }]}>
-                      <Ionicons name="time-outline" size={16} color={colors.textSecondary} />
-                    </View>
-                    <Text style={[styles.searchItemText, { color: colors.text }]}>{search}</Text>
-                    <TouchableOpacity onPress={() => removeRecentSearch(search)} style={styles.removeButton}>
-                      <Ionicons name="close" size={16} color={colors.textSecondary} />
-                    </TouchableOpacity>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            )}
-          </>
+                </TouchableOpacity>
+              ))}
+            </View>
+          )
         ) : (
+          /* isSearchActive but we got here means the search completed with
+             zero matches - loading/results/error are handled by the early
+             return above */
           <View style={styles.emptyState}>
             <View style={[styles.emptyIconCircle, { backgroundColor: colors.surface }]}>
               <Ionicons name="search-outline" size={32} color={colors.textSecondary} />
@@ -281,7 +363,7 @@ const styles = StyleSheet.create({
   backArrow: {
     width: 36,
     height: 36,
-    borderRadius: 18,
+    borderRadius: radius.pill,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -291,7 +373,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 14,
     height: 42,
-    borderRadius: 14,
+    borderRadius: radius.pill,
     gap: 8,
   },
   searchInput: {
@@ -317,11 +399,11 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 17,
-    fontWeight: '700',
+    fontFamily: fontFamily.bold,
   },
   clearButton: {
     fontSize: 14,
-    fontWeight: '600',
+    fontFamily: fontFamily.semiBold,
   },
   searchItem: {
     flexDirection: 'row',
@@ -332,7 +414,7 @@ const styles = StyleSheet.create({
   recentIcon: {
     width: 32,
     height: 32,
-    borderRadius: 16,
+    borderRadius: radius.pill,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
@@ -340,7 +422,7 @@ const styles = StyleSheet.create({
   searchItemText: {
     flex: 1,
     fontSize: 15,
-    fontWeight: '500',
+    fontFamily: fontFamily.medium,
   },
   removeButton: {
     padding: 6,
@@ -355,7 +437,7 @@ const styles = StyleSheet.create({
   resultImage: {
     width: 56,
     height: 56,
-    borderRadius: 12,
+    borderRadius: radius.lg,
   },
   resultInfo: {
     flex: 1,
@@ -364,7 +446,7 @@ const styles = StyleSheet.create({
   },
   resultName: {
     fontSize: 15,
-    fontWeight: '600',
+    fontFamily: fontFamily.semiBold,
     lineHeight: 20,
   },
   resultMeta: {
@@ -374,11 +456,11 @@ const styles = StyleSheet.create({
   },
   resultCategory: {
     fontSize: 12,
-    fontWeight: '500',
+    fontFamily: fontFamily.medium,
   },
   resultPrice: {
     fontSize: 15,
-    fontWeight: '700',
+    fontFamily: fontFamily.bold,
   },
   emptyState: {
     alignItems: 'center',
@@ -389,30 +471,20 @@ const styles = StyleSheet.create({
   emptyIconCircle: {
     width: 64,
     height: 64,
-    borderRadius: 32,
+    borderRadius: radius.pill,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 8,
   },
   emptyText: {
     fontSize: 17,
-    fontWeight: '600',
+    fontFamily: fontFamily.semiBold,
   },
   emptySubtext: {
     fontSize: 14,
   },
-  loadingIndicator: {
-    marginTop: 40,
-  },
   loadingMoreContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingVertical: 20,
-    gap: 8,
-  },
-  loadingMoreText: {
-    fontSize: 13,
+    paddingVertical: 8,
   },
   noMoreResultsText: {
     textAlign: 'center',

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -8,7 +8,6 @@ import {
   Modal,
   Dimensions,
   Animated,
-  ActivityIndicator,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -16,7 +15,7 @@ import { useThemeColors } from '@/hooks/useColorScheme';
 import { awoofCart, CartItem } from '@/utils/awoof/AwoofUtils';
 import SafeImage from '@/components/SafeImage';
 import { useAuth } from '@/context/AuthContext';
-import appConfig from '@/hooks/useAppConfig';
+import { radius, fontFamily } from '@/constants/designTokens';
 
 const { height } = Dimensions.get('window');
 
@@ -196,7 +195,7 @@ export default function AwoofMiniCartModal({ navigation, route }: any) {
 
               <View style={[styles.savingsCard, { backgroundColor: colors.success + '15' }]}>
                 <Text style={[styles.savingsText, { color: colors.success }]}>
-                  🎉 You're saving ₦{totalSavings.toLocaleString()} on this order!
+                  🎉 You&apos;re saving ₦{totalSavings.toLocaleString()} on this order!
                 </Text>
               </View>
             </View>
@@ -301,8 +300,8 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
+    borderTopLeftRadius: radius.xxl,
+    borderTopRightRadius: radius.xxl,
     maxHeight: height * 0.85,
     paddingTop: 20,
   },
@@ -324,7 +323,7 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 20,
-    fontWeight: '700',
+    fontFamily: fontFamily.bold,
   },
   headerSubtitle: {
     fontSize: 13,
@@ -341,7 +340,7 @@ const styles = StyleSheet.create({
   itemImage: {
     width: 80,
     height: 80,
-    borderRadius: 12,
+    borderRadius: radius.lg,
   },
   itemDetails: {
     flex: 1,
@@ -349,7 +348,7 @@ const styles = StyleSheet.create({
   },
   itemName: {
     fontSize: 14,
-    fontWeight: '500',
+    fontFamily: fontFamily.medium,
     marginBottom: 6,
   },
   priceRow: {
@@ -359,7 +358,7 @@ const styles = StyleSheet.create({
   },
   itemPrice: {
     fontSize: 16,
-    fontWeight: '700',
+    fontFamily: fontFamily.bold,
     marginRight: 8,
   },
   itemOriginalPrice: {
@@ -374,19 +373,19 @@ const styles = StyleSheet.create({
   quantityControl: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 8,
+    borderRadius: radius.sm,
     padding: 4,
   },
   quantityBtn: {
     width: 28,
     height: 28,
-    borderRadius: 6,
+    borderRadius: radius.xs,
     justifyContent: 'center',
     alignItems: 'center',
   },
   quantityValue: {
     fontSize: 15,
-    fontWeight: '600',
+    fontFamily: fontFamily.semiBold,
     paddingHorizontal: 16,
   },
   removeButton: {
@@ -398,7 +397,7 @@ const styles = StyleSheet.create({
   },
   summaryTitle: {
     fontSize: 16,
-    fontWeight: '600',
+    fontFamily: fontFamily.semiBold,
     marginBottom: 12,
   },
   summaryRow: {
@@ -411,7 +410,7 @@ const styles = StyleSheet.create({
   },
   summaryValue: {
     fontSize: 14,
-    fontWeight: '600',
+    fontFamily: fontFamily.semiBold,
   },
   divider: {
     height: 1,
@@ -419,20 +418,20 @@ const styles = StyleSheet.create({
   },
   totalLabel: {
     fontSize: 16,
-    fontWeight: '700',
+    fontFamily: fontFamily.bold,
   },
   totalValue: {
     fontSize: 20,
-    fontWeight: '700',
+    fontFamily: fontFamily.bold,
   },
   savingsCard: {
-    borderRadius: 8,
+    borderRadius: radius.sm,
     padding: 12,
     marginTop: 12,
   },
   savingsText: {
     fontSize: 13,
-    fontWeight: '600',
+    fontFamily: fontFamily.semiBold,
     textAlign: 'center',
   },
   trustSection: {
@@ -446,7 +445,7 @@ const styles = StyleSheet.create({
   },
   trustText: {
     fontSize: 11,
-    fontWeight: '500',
+    fontFamily: fontFamily.medium,
   },
   bottomSection: {
     borderTopWidth: 1,
@@ -466,10 +465,10 @@ const styles = StyleSheet.create({
   },
   bottomPrice: {
     fontSize: 22,
-    fontWeight: '700',
+    fontFamily: fontFamily.bold,
   },
   checkoutButton: {
-    borderRadius: 12,
+    borderRadius: radius.lg,
     paddingVertical: 14,
     flexDirection: 'row',
     justifyContent: 'center',
@@ -478,7 +477,7 @@ const styles = StyleSheet.create({
   },
   checkoutText: {
     fontSize: 16,
-    fontWeight: '600',
+    fontFamily: fontFamily.semiBold,
     color: '#fff',
   },
   emptyContainer: {
@@ -487,7 +486,7 @@ const styles = StyleSheet.create({
   },
   emptyTitle: {
     fontSize: 18,
-    fontWeight: '600',
+    fontFamily: fontFamily.semiBold,
     marginTop: 16,
   },
   emptySubtitle: {
@@ -496,7 +495,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   emptyButton: {
-    borderRadius: 12,
+    borderRadius: radius.lg,
     paddingVertical: 12,
     paddingHorizontal: 24,
     marginTop: 20,
@@ -504,6 +503,6 @@ const styles = StyleSheet.create({
   emptyButtonText: {
     color: '#fff',
     fontSize: 15,
-    fontWeight: '600',
+    fontFamily: fontFamily.semiBold,
   },
 });

@@ -4,7 +4,7 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
 import { useCart } from '@/context/CartContext';
 import { useThemeColors } from '@/hooks/useColorScheme';
-import { Ionicons, MaterialIcons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import { formatPrice } from '@/utils/formatNumber';
 import SkeletonLoader from '@/components/SkeletonLoader';
 import BackButton from '@/components/BackButton';
@@ -12,6 +12,8 @@ import SafeImage from '@/components/SafeImage';
 import Dropdown from '@/components/Dropdown';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { clearCartAbandonmentReminder, sendLocalNotification } from '@/services/notificationService';
+import Button from '@/components/Button';
+import { spacing, radius, typeScale, fontFamily, shadow } from '@/constants/designTokens';
 
 export default function CheckoutScreen() {
   const router = useRouter();
@@ -27,12 +29,12 @@ export default function CheckoutScreen() {
   const [loadingCart, setLoadingCart] = useState(true);
   const [placingOrder, setPlacingOrder] = useState(false);
 
-  // Dynamic payment and shipping state
-  const [paymentMethods, setPaymentMethods] = useState<any[]>([]);
+  // Dynamic shipping state. Payment is NOT a user choice here - online
+  // payment isn't accepted on this flow, so the only real decision is
+  // delivery vs pickup, and the payment method/messaging is derived from
+  // that below (see paymentSummary).
   const [shippingMethods, setShippingMethods] = useState<any[]>([]);
-  const [loadingPaymentMethods, setLoadingPaymentMethods] = useState(true);
   const [loadingShippingMethods, setLoadingShippingMethods] = useState(true);
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string>('');
   const [selectedShippingMethod, setSelectedShippingMethod] = useState<any>(null);
   const [selectedPickupBranch, setSelectedPickupBranch] = useState<string>('');
 
@@ -109,23 +111,8 @@ export default function CheckoutScreen() {
     }
   }, [apiService, productId, quantity]);
 
-  // Fetch payment and shipping methods
+  // Fetch shipping methods (delivery vs pickup is the only real choice here)
   const fetchPaymentAndShippingMethods = useCallback(async () => {
-    try {
-      setLoadingPaymentMethods(true);
-      const methods = await apiService.getPaymentMethods();
-      setPaymentMethods(methods);
-      // Auto-select first payment method if available
-      if (methods.length > 0) {
-        setSelectedPaymentMethod(methods[0].id);
-      }
-    } catch (error) {
-      console.error('Error fetching payment methods:', error);
-      setPaymentMethods([]);
-    } finally {
-      setLoadingPaymentMethods(false);
-    }
-
     try {
       setLoadingShippingMethods(true);
       const methods = await apiService.getShippingMethods();
@@ -206,11 +193,13 @@ export default function CheckoutScreen() {
 
     setPlacingOrder(true);
     try {
-      // Format order data for WooCommerce
-      // Using default/fallback values for payment and shipping as sections were removed
+      // Online payment isn't accepted on this flow. There's no separate
+      // "pay in store" gateway on the WooCommerce side - pickup and delivery
+      // both settle as Payment on Delivery (COD), just with different
+      // instructions shown to the customer below for when/how that happens.
       const orderData: any = {
-        payment_method: selectedPaymentMethod || 'bacs', // Use selected payment method
-        payment_method_title: paymentMethods.find(m => m.id === selectedPaymentMethod)?.title || 'Direct Bank Transfer',
+        payment_method: 'cod',
+        payment_method_title: 'Payment on Delivery',
         set_paid: false,
         billing: {
           first_name: user?.first_name || user?.name?.split(' ')[0] || 'Customer',
@@ -329,12 +318,7 @@ export default function CheckoutScreen() {
               Please login to proceed with checkout and complete your purchase
             </Text>
 
-            <TouchableOpacity
-              style={[styles.loginButton, { backgroundColor: colors.primary }]}
-              onPress={() => router.push('/login')}
-            >
-              <Text style={[styles.loginButtonText, { color: colors.white }]}>Login to Continue</Text>
-            </TouchableOpacity>
+            <Button title="Login to Continue" onPress={() => router.push('/login')} style={{ marginBottom: spacing.md }} />
 
             <TouchableOpacity
               style={styles.signupButton}
@@ -461,60 +445,6 @@ export default function CheckoutScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* Payment Method */}
-        <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>Payment Method</Text>
-          {loadingPaymentMethods ? (
-            <View style={[styles.card, { backgroundColor: colors.surface }]}>
-              <ActivityIndicator color={colors.primary} />
-            </View>
-          ) : paymentMethods.length > 0 ? (
-            <View style={[styles.card, { backgroundColor: colors.surface }]}>
-              {paymentMethods.map((method, index) => (
-                <View key={method.id}>
-                  <TouchableOpacity
-                    style={styles.paymentMethodItem}
-                    onPress={() => setSelectedPaymentMethod(method.id)}
-                  >
-                    <View style={styles.radioOuter}>
-                      {selectedPaymentMethod === method.id && (
-                        <View style={[styles.radioInner, { backgroundColor: colors.primary }]} />
-                      )}
-                    </View>
-                    <View style={{ flex: 1 }}>
-                      <Text style={[styles.paymentMethodTitle, { color: colors.text }]}>
-                        {method.title}
-                      </Text>
-                      {method.description && (
-                        <Text style={[styles.paymentMethodDescription, { color: colors.textSecondary }]}>
-                          {method.description}
-                        </Text>
-                      )}
-                      {selectedPaymentMethod === method.id && method.instructions && (
-                        <View style={[styles.instructionsBox, { backgroundColor: colors.background, borderColor: colors.border }]}>
-                          <Ionicons name="information-circle" size={16} color={colors.primary} />
-                          <Text style={[styles.instructionsText, { color: colors.text }]}>
-                            {method.instructions}
-                          </Text>
-                        </View>
-                      )}
-                    </View>
-                  </TouchableOpacity>
-                  {index < paymentMethods.length - 1 && (
-                    <View style={[styles.divider, { backgroundColor: colors.border }]} />
-                  )}
-                </View>
-              ))}
-            </View>
-          ) : (
-            <View style={[styles.card, { backgroundColor: colors.surface }]}>
-              <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
-                No payment methods available
-              </Text>
-            </View>
-          )}
-        </View>
-
         {/* Shipping/Delivery Method */}
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: colors.text }]}>Delivery Method</Text>
@@ -558,6 +488,23 @@ export default function CheckoutScreen() {
             </View>
           )}
         </View>
+
+        {/* Payment - online payment isn't accepted here, so this just tells
+            the customer what happens next based on the delivery choice
+            above, instead of offering a payment method to pick. */}
+        {selectedShippingMethod && (
+          <View style={styles.section}>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>Payment</Text>
+            <View style={[styles.instructionsBox, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+              <Ionicons name="information-circle" size={18} color={colors.primary} />
+              <Text style={[styles.instructionsText, { color: colors.text }]}>
+                {selectedShippingMethod.method_id === 'local_pickup'
+                  ? "Payment on Delivery - pay in store when you arrive to pick up your order. We'll be expecting you!"
+                  : "Payment on Delivery - we'll contact you to arrange payment before your order arrives."}
+              </Text>
+            </View>
+          </View>
+        )}
 
         {/* Pickup Branch Selection (conditional) */}
         {selectedShippingMethod?.method_id === 'local_pickup' && (
@@ -610,19 +557,13 @@ export default function CheckoutScreen() {
         }
       ]}>
     
-        <TouchableOpacity
-          style={[styles.placeOrderButton, { backgroundColor: colors.primary }]}
+        <Button
+          title={`Place Order - ${formatPrice(orderSummary.total)}`}
           onPress={handlePlaceOrder}
-          disabled={placingOrder}
-        >
-          {placingOrder ? (
-            <ActivityIndicator color={colors.white} />
-          ) : (
-            <Text style={[styles.placeOrderText, { color: colors.white }]}>
-              {`Place Order - ${formatPrice(orderSummary.total)}`}
-            </Text>
-          )}
-        </TouchableOpacity>
+          loading={placingOrder}
+          size="lg"
+          style={shadow.raised}
+        />
       </View>
     </SafeAreaView>
   );
@@ -647,7 +588,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 20,
-    fontWeight: 'bold',
+    fontFamily: fontFamily.bold,
   },
   content: {
     flex: 1,
@@ -663,12 +604,12 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
+    fontSize: typeScale.subtitle,
+    fontFamily: fontFamily.bold,
     marginBottom: 12,
   },
   itemsContainer: {
-    borderRadius: 12,
+    borderRadius: radius.lg,
     overflow: 'hidden',
   },
   cartItem: {
@@ -679,7 +620,7 @@ const styles = StyleSheet.create({
   itemImage: {
     width: 60,
     height: 60,
-    borderRadius: 8,
+    borderRadius: radius.md,
   },
   itemDetails: {
     flex: 1,
@@ -688,12 +629,12 @@ const styles = StyleSheet.create({
   },
   itemName: {
     fontSize: 14,
-    fontWeight: '500',
+    fontFamily: fontFamily.medium,
     marginBottom: 4,
   },
   itemPrice: {
     fontSize: 14,
-    fontWeight: '600',
+    fontFamily: fontFamily.semiBold,
   },
   itemQuantity: {
     fontSize: 12,
@@ -701,11 +642,11 @@ const styles = StyleSheet.create({
   },
   itemTotal: {
     fontSize: 16,
-    fontWeight: 'bold',
+    fontFamily: fontFamily.bold,
     marginLeft: 8,
   },
   optionCard: {
-    borderRadius: 12,
+    borderRadius: radius.lg,
     padding: 16,
     marginBottom: 12,
     borderWidth: 2,
@@ -720,7 +661,7 @@ const styles = StyleSheet.create({
   },
   addressName: {
     fontSize: 16,
-    fontWeight: '600',
+    fontFamily: fontFamily.semiBold,
     marginBottom: 4,
   },
   addressText: {
@@ -729,27 +670,29 @@ const styles = StyleSheet.create({
   },
   defaultBadge: {
     fontSize: 12,
-    fontWeight: '500',
+    fontFamily: fontFamily.medium,
     marginTop: 4,
   },
   addButton: {
     borderWidth: 1,
     borderStyle: 'dashed',
-    borderRadius: 12,
+    borderRadius: radius.lg,
     padding: 16,
     alignItems: 'center',
   },
   addButtonText: {
     fontSize: 16,
-    fontWeight: '500',
+    fontFamily: fontFamily.medium,
   },
   card: {
-    borderRadius: 12,
+    borderRadius: radius.lg,
     padding: 16,
+    ...shadow.card,
   },
   summaryCard: {
-    borderRadius: 12,
+    borderRadius: radius.lg,
     padding: 16,
+    ...shadow.card,
   },
   summaryRow: {
     flexDirection: 'row',
@@ -771,15 +714,15 @@ const styles = StyleSheet.create({
   },
   totalLabel: {
     fontSize: 18,
-    fontWeight: 'bold',
+    fontFamily: fontFamily.bold,
   },
   totalValue: {
     fontSize: 18,
-    fontWeight: 'bold',
+    fontFamily: fontFamily.bold,
   },
   deliveryNotice: {
     fontSize: 12,
-    fontWeight: '600',
+    fontFamily: fontFamily.semiBold,
     lineHeight: 18,
   },
   bottomBar: {
@@ -791,16 +734,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 12,
     fontSize: 14,
-    fontWeight: '500',
-  },
-  placeOrderButton: {
-    paddingVertical: 16,
-    borderRadius: 12,
-    alignItems: 'center',
-  },
-  placeOrderText: {
-    fontSize: 16,
-    fontWeight: '600',
+    fontFamily: fontFamily.medium,
   },
   loginPromptContainer: {
     flex: 1,
@@ -813,7 +747,7 @@ const styles = StyleSheet.create({
   },
   loginPromptTitle: {
     fontSize: 24,
-    fontWeight: 'bold',
+    fontFamily: fontFamily.bold,
     marginBottom: 12,
     textAlign: 'center',
   },
@@ -822,23 +756,12 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 32,
   },
-  loginButton: {
-    width: '100%',
-    paddingVertical: 16,
-    borderRadius: 12,
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  loginButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-  },
   signupButton: {
     paddingVertical: 12,
   },
   signupButtonText: {
     fontSize: 14,
-    fontWeight: '500',
+    fontFamily: fontFamily.medium,
   },
   // Payment and Shipping Method styles
   paymentMethodItem: {
@@ -849,7 +772,7 @@ const styles = StyleSheet.create({
   radioOuter: {
     width: 20,
     height: 20,
-    borderRadius: 10,
+    borderRadius: radius.pill,
     borderWidth: 2,
     borderColor: '#042861',
     marginRight: 12,
@@ -860,11 +783,11 @@ const styles = StyleSheet.create({
   radioInner: {
     width: 10,
     height: 10,
-    borderRadius: 5,
+    borderRadius: radius.pill,
   },
   paymentMethodTitle: {
     fontSize: 16,
-    fontWeight: '600',
+    fontFamily: fontFamily.semiBold,
     marginBottom: 4,
   },
   paymentMethodDescription: {
@@ -875,7 +798,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     marginTop: 8,
     padding: 12,
-    borderRadius: 8,
+    borderRadius: radius.md,
     borderWidth: 1,
     gap: 8,
   },

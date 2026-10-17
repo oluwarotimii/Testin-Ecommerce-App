@@ -1,27 +1,26 @@
-import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, RefreshControl, Animated, NativeScrollEvent, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, RefreshControl, Animated, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { FlashList, FlashListProps } from '@shopify/flash-list';
+import { FlashList } from '@shopify/flash-list';
 import SafeImage from '@/components/SafeImage';
 import { useRouter } from 'expo-router';
-import { useState, useEffect, useCallback, useRef, memo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef, memo } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useCart } from '@/context/CartContext';
 import { useNetwork } from '@/context/NetworkContext';
 import InstagramCarousel from '@/components/InstagramCarousel';
 import { useThemeColors } from '@/hooks/useColorScheme';
-import { useTheme } from '@/context/ThemeContext';
-import { MaterialIcons, Ionicons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import SkeletonLoader from '@/components/SkeletonLoader';
 import SkeletonProductItem from '@/components/SkeletonProductItem';
 import { transformProducts, transformCategories } from '@/utils/woocommerceTransformers';
 import { formatPrice } from '@/utils/formatNumber';
 import MarketingBanner from '@/components/MarketingBanner';
-import AwoofPromoBanner from '@/components/AwoofPromoBanner';
 import { fetchCarousels } from '@/services/carousel';
 import BestDealsSection from '@/components/BestDealsSection';
-import ProductCard from '@/components/ProductCard';
 import NetworkError from '@/components/NetworkError';
 import { FEATURED_PRODUCTS_LIMIT } from '@/services/config';
+import { spacing, radius, typeScale, fontFamily, shadow } from '@/constants/designTokens';
+import { useResponsiveColumns } from '@/hooks/useResponsiveColumns';
 
 // Section types for FlashList
 type SectionType =
@@ -29,6 +28,7 @@ type SectionType =
   | { type: 'carousel' }
   | { type: 'products' }
   | { type: 'categories' }
+  | { type: 'bestDeals' }
   | { type: 'banner' };
 
 // Memoized Category Item - prevents re-renders when parent state changes
@@ -61,30 +61,32 @@ const CategoryItem = memo(({ category, colors, isDarkMode, onPress }: {
 CategoryItem.displayName = 'CategoryItem';
 
 // Memoized Product Item - prevents re-renders when parent state changes
-const ProductItem = memo(({ 
-  product, 
-  colors, 
-  wishlist, 
-  cartSuccess, 
-  onProductPress, 
-  onToggleWishlist, 
-  onAddToCart 
-}: { 
-  product: any; 
+const ProductItem = memo(({
+  product,
+  colors,
+  wishlist,
+  cartSuccess,
+  cardWidthPercent,
+  onProductPress,
+  onToggleWishlist,
+  onAddToCart
+}: {
+  product: any;
   colors: any;
   wishlist: number[];
   cartSuccess: { [key: number]: boolean };
+  cardWidthPercent: number;
   onProductPress: () => void;
   onToggleWishlist: (e: any) => void;
   onAddToCart: (e: any) => void;
 }) => {
   const isInWishlist = wishlist.includes(product.id);
   const isDarkMode = String(colors.background).toLowerCase() === '#000000';
-  
+
   return (
     <TouchableOpacity
       key={product.id}
-      style={[styles.productCard, { backgroundColor: colors.surface }]}
+      style={[styles.productCard, { backgroundColor: colors.surface, width: `${cardWidthPercent}%` }]}
       onPress={onProductPress}
     >
       <View style={styles.productImageContainer}>
@@ -143,7 +145,13 @@ export default function HomeScreen() {
   const isDarkMode = String(colors.background).toLowerCase() === '#000000';
   const { apiService, user, isAuthenticated } = useAuth();
   const { setCartCount } = useCart();
-  const { isConnected, isInternetReachable, checkConnectivity } = useNetwork();
+  const { checkConnectivity } = useNetwork();
+
+  // Column count adapts to screen width (phones vs tablets) instead of a
+  // hardcoded 2-up grid; card width then derives from that so the grid
+  // actually fills wider screens instead of leaving dead space.
+  const numColumns = useResponsiveColumns(2);
+  const cardWidthPercent = numColumns >= 4 ? 23 : numColumns === 3 ? 31 : 47;
 
   // OPTIMIZED: Use Animated.Value directly for scroll - no useState re-renders
   const scrollY = useRef(new Animated.Value(0)).current;
@@ -163,9 +171,9 @@ export default function HomeScreen() {
   });
 
   // Carousel state
-  const [loadingCarousel, setLoadingCarousel] = useState(true);
+  const [, setLoadingCarousel] = useState(true);
   const [carouselItems, setCarouselItems] = useState<any[]>([]);
-  const [carouselError, setCarouselError] = useState<string | null>(null);
+  const [, setCarouselError] = useState<string | null>(null);
 
   // Categories state
   const [categories, setCategories] = useState<any[]>([]);
@@ -239,7 +247,8 @@ export default function HomeScreen() {
       if (!stillOnline) {
         setErrorProducts('No internet connection. Please check your connection and try again.');
       } else {
-        setErrorProducts(err.message || 'An unexpected error occurred');
+        console.error('Error fetching products:', err);
+        setErrorProducts('Unable to load products right now. Please try again.');
       }
     } finally {
       setLoadingProducts(false);
@@ -269,7 +278,7 @@ export default function HomeScreen() {
 
       setHasMoreProducts(response.length >= 20);
       setCurrentPage(nextPage);
-    } catch (err: any) {
+    } catch {
       const isOnline = await checkConnectivity();
       if (!isOnline) {
         setErrorProducts('No internet connection. Please check your connection and try again.');
@@ -300,7 +309,7 @@ export default function HomeScreen() {
         setCarouselError('No internet connection. Please check your connection and try again.');
       } else {
         console.error('Error fetching carousel items:', err);
-        setCarouselError(err.message || 'Failed to load carousel');
+        setCarouselError('Failed to load carousel. Please try again.');
       }
     } finally {
       setLoadingCarousel(false);
@@ -329,14 +338,15 @@ export default function HomeScreen() {
       if (!stillOnline) {
         setErrorCategories('No internet connection. Please check your connection and try again.');
       } else {
-        setErrorCategories(err.message || 'An unexpected error occurred');
+        console.error('Error fetching categories:', err);
+        setErrorCategories('Unable to load categories right now. Please try again.');
       }
     } finally {
       setLoadingCategories(false);
     }
   }, [apiService, checkConnectivity]);
 
-  // OPTIMIZED: Fetch featured products with ref-based caching
+  // OPTIMIZED: Fetch featured products from 'daily-deals' category only
   const fetchFeaturedProducts = useCallback(async () => {
     if (!apiService) return;
 
@@ -355,58 +365,17 @@ export default function HomeScreen() {
     setErrorFeatured(null);
 
     try {
-      // Try to fetch from 'daily-deals' category first
-      try {
-        const products = await apiService.getProducts({
-          category: 'daily-deals',
-          per_page: FEATURED_PRODUCTS_LIMIT,
-          status: 'publish',
-        });
+      // Use getProductsByCategory which properly handles slug-to-ID resolution
+      const products = await apiService.getProductsByCategory?.('daily-deals', FEATURED_PRODUCTS_LIMIT);
 
-        if (products && products.length > 0) {
-          const transformed = transformProducts(products);
-          setFeaturedProducts(transformed);
-          setLoadingFeatured(false);
-          hasFeaturedRef.current = true;
-          return;
-        }
-      } catch (slugError) {
-        console.warn('Failed to fetch by slug, trying featured products:', slugError);
+      if (products && products.length > 0) {
+        setFeaturedProducts(transformProducts(products));
+      } else {
+        // No products in daily-deals category - show empty state
+        setFeaturedProducts([]);
       }
-
-      // Fallback: Fetch featured products
-      try {
-        const products = await apiService.getProducts({
-          featured: true,
-          per_page: FEATURED_PRODUCTS_LIMIT,
-          status: 'publish',
-        });
-
-        if (products && products.length > 0) {
-          const transformed = transformProducts(products);
-          setFeaturedProducts(transformed);
-          setLoadingFeatured(false);
-          hasFeaturedRef.current = true;
-          return;
-        }
-      } catch (featuredError) {
-        console.warn('Failed to fetch featured products:', featuredError);
-      }
-
-      // Final fallback: Fetch latest products
-      const products = await apiService.getProducts({
-        per_page: FEATURED_PRODUCTS_LIMIT,
-        status: 'publish',
-        orderby: 'date',
-        order: 'desc',
-      });
-
-      const transformed = transformProducts(products);
-      setFeaturedProducts(transformed);
       hasFeaturedRef.current = true;
-
-    } catch (error: any) {
-      console.error('Error fetching featured products:', error);
+    } catch {
       // Silently fail - keep existing data if available
       if (featuredProducts.length === 0) {
         setErrorFeatured('Failed to load best deals');
@@ -425,20 +394,25 @@ export default function HomeScreen() {
       // Wait 500ms on first launch to ensure network is ready (iOS fix)
       await new Promise(resolve => setTimeout(resolve, 500));
 
-      // Load visible content first (carousel + categories)
-      await Promise.all([
-        fetchCarouselItems(),
-        fetchCategories(),
-      ]).then(() => {
-        // Then load below-the-fold content
-        Promise.all([
+      try {
+        // Wave 1: load visible content first (carousel + categories)
+        await Promise.all([
+          fetchCarouselItems(),
+          fetchCategories(),
+        ]);
+
+        // Wave 2: below-the-fold content, only once wave 1 has landed -
+        // keeps cold start from firing 4-5 requests at once
+        await Promise.all([
           fetchProducts(),
           fetchFeaturedProducts(),
         ]);
-      }).catch(err => console.error('Staggered fetch error:', err));
+      } catch (err) {
+        console.error('Staggered fetch error:', err);
+      }
 
       if (isAuthenticated) {
-        fetchWishlist();
+        await fetchWishlist();
       }
     };
 
@@ -544,6 +518,21 @@ export default function HomeScreen() {
     }
   };
 
+  // A product can legitimately sit in the 'daily-deals' category AND be
+  // among the newest published products, so Best Deals and Latest Products
+  // can overlap even with correct fetch logic on both sides. Hiding
+  // featured IDs from the Latest Products grid guarantees no repeated
+  // product cards between the two sections regardless of how the store's
+  // catalog/categories are set up.
+  const featuredProductIds = useMemo(
+    () => new Set(featuredProducts.map((p: any) => p.id)),
+    [featuredProducts]
+  );
+  const displayedProducts = useMemo(
+    () => products.filter((p: any) => !featuredProductIds.has(p.id)),
+    [products, featuredProductIds]
+  );
+
   // OPTIMIZED: FlashList data sections
   const sections: SectionType[] = [
     { type: 'header' },
@@ -551,7 +540,6 @@ export default function HomeScreen() {
     { type: 'categories' },
     { type: 'bestDeals' },
     { type: 'banner' },
-    // { type: 'awoofBanner' },
     { type: 'products' },
   ];
 
@@ -573,7 +561,7 @@ export default function HomeScreen() {
                 <Text style={[styles.greeting, { color: colors.textSecondary }]}>
                   {isAuthenticated && user ? `Hello, ${user.first_name || 'User'}` : 'Hello'}
                 </Text>
-                <Text style={[styles.title, { color: colors.text }]}>Your wallet's new best friend excluse prices</Text>
+                <Text style={[styles.title, { color: colors.text }]}>Your wallet&apos;s new best friend excluse prices</Text>
               </View>
               <TouchableOpacity style={[styles.headerSearchIcon, { backgroundColor: colors.surface }]} onPress={() => router.push('/search')}>
                 <Ionicons name="search" size={20} color={colors.text} />
@@ -643,9 +631,6 @@ export default function HomeScreen() {
       case 'banner':
         return <MarketingBanner />;
 
-      case 'awoofBanner':
-        // return <AwoofPromoBanner />;
-
       case 'products':
         return (
           <View style={styles.section}>
@@ -683,17 +668,18 @@ export default function HomeScreen() {
                   </TouchableOpacity>
                 </View>
               )
-            ) : products.length === 0 ? (
+            ) : displayedProducts.length === 0 ? (
               <Text style={[styles.noProductsText, { color: colors.textSecondary }]}>No products found.</Text>
             ) : (
               <View style={styles.productsGrid}>
-                {products.map((product) => (
+                {displayedProducts.map((product) => (
                   <ProductItem
                     key={product.id}
                     product={product}
                     colors={colors}
                     wishlist={wishlist}
                     cartSuccess={cartSuccess}
+                    cardWidthPercent={cardWidthPercent}
                     onProductPress={() => handleProductPress(product.id)}
                     onToggleWishlist={(e: any) => {
                       e.stopPropagation();
@@ -734,7 +720,8 @@ export default function HomeScreen() {
     wishlist,
     loadingProducts,
     errorProducts,
-    products,
+    displayedProducts,
+    cardWidthPercent,
     isLoadingMore,
     cartSuccess,
     handleCarouselItemPress,
@@ -748,22 +735,8 @@ export default function HomeScreen() {
     router,
   ]);
 
-  // Get estimated item sizes for FlashList optimization
-  const getEstimatedItemSize = (item: SectionType) => {
-    switch (item.type) {
-      case 'header': return 70;
-      case 'carousel': return 260;
-      case 'categories': return 180;
-      case 'bestDeals': return 280;
-      case 'banner': return 150;
-      case 'products': return 450;
-      default: return 200;
-    }
-  };
-
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-      {/* <AwoofPromoBanner /> */}
       {/* Sticky Header - positioned absolutely */}
       <Animated.View style={[
         styles.stickyHeader, 
@@ -849,16 +822,17 @@ const styles = StyleSheet.create({
   },
   greeting: {
     fontSize: 13,
+    fontFamily: fontFamily.regular,
     marginBottom: 2,
   },
   title: {
     fontSize: 14,
-    fontWeight: '700',
+    fontFamily: fontFamily.bold,
   },
   headerSearchIcon: {
     width: 40,
     height: 40,
-    borderRadius: 20,
+    borderRadius: radius.pill,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -885,12 +859,12 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   sectionTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
+    fontSize: typeScale.title,
+    fontFamily: fontFamily.bold,
   },
   seeAll: {
     fontSize: 14,
-    fontWeight: '500',
+    fontFamily: fontFamily.medium,
   },
   categoriesContainer: {
     paddingHorizontal: 16,
@@ -942,7 +916,7 @@ const styles = StyleSheet.create({
   categoryName: {
     fontSize: 11,
     textAlign: 'center',
-    fontWeight: '600',
+    fontFamily: fontFamily.semiBold,
     marginTop: 8,
     maxWidth: 80,
   },
@@ -960,16 +934,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   productCard: {
-    width: '47%',
-    borderRadius: 16,
+    borderRadius: radius.xl,
     overflow: 'hidden',
     position: 'relative',
-    marginBottom: 16,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    marginBottom: spacing.lg,
+    ...shadow.card,
   },
   productImageContainer: {
     position: 'relative',
@@ -1021,8 +990,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
   },
   productName: {
-    fontSize: 14,
-    fontWeight: '500',
+    fontSize: typeScale.body,
+    fontFamily: fontFamily.medium,
     marginBottom: 6,
     lineHeight: 18,
   },
@@ -1032,21 +1001,22 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   originalPrice: {
-    fontSize: 11,
+    fontSize: typeScale.caption,
+    fontFamily: fontFamily.regular,
     textDecorationLine: 'line-through',
   },
   productPrice: {
-    fontSize: 16,
-    fontWeight: 'bold',
+    fontSize: typeScale.bodyLarge,
+    fontFamily: fontFamily.bold,
   },
   seeAllButton: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs + 2,
+    borderRadius: radius.pill,
   },
   seeAllButtonText: {
     fontSize: 14,
-    fontWeight: '500',
+    fontFamily: fontFamily.semiBold,
   },
   errorContainer: {
     flex: 1,
@@ -1059,12 +1029,12 @@ const styles = StyleSheet.create({
     marginTop: 15,
     paddingHorizontal: 20,
     paddingVertical: 12,
-    borderRadius: 8,
+    borderRadius: radius.pill,
     minWidth: 120,
     alignItems: 'center',
   },
   retryButtonText: {
     fontSize: 16,
-    fontWeight: '600',
+    fontFamily: fontFamily.semiBold,
   },
 });
