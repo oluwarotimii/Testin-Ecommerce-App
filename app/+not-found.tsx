@@ -1,6 +1,6 @@
 import { Link, Stack } from 'expo-router';
 import { StyleSheet, Text, View } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { CompassIcon } from 'phosphor-react-native';
 import { useThemeColors } from '@/hooks/useColorScheme';
 import { fontFamily } from '@/constants/designTokens';
 
@@ -11,7 +11,7 @@ export default function NotFoundScreen() {
     <>
       <Stack.Screen options={{ title: 'Oops!' }} />
       <View style={[styles.container, { backgroundColor: colors.background }]}>
-        <Ionicons name="compass-outline" size={64} color={colors.textSecondary} />
+        <CompassIcon size={64} color={colors.textSecondary} />
         <Text style={[styles.text, { color: colors.text }]}>This screen doesn&apos;t exist.</Text>
         <Link href="/" style={styles.link}>
           <Text style={{ color: colors.primary, fontFamily: fontFamily.semiBold, fontSize: 16 }}>

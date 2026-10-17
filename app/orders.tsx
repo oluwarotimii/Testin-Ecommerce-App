@@ -3,7 +3,7 @@ import { useRouter } from 'expo-router';
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useThemeColors } from '@/hooks/useColorScheme';
-import { Ionicons } from '@expo/vector-icons';
+import { BagIcon } from 'phosphor-react-native';
 import SkeletonLoader from '@/components/SkeletonLoader';
 import BackButton from '@/components/BackButton';
 import { getOrderStatus } from '@/constants/orderStatus';
@@ -124,7 +124,7 @@ export default function OrdersScreen() {
           <Text style={[styles.title, { color: colors.text }]}>Orders</Text>
         </View>
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 40 }}>
-          <Ionicons name="bag-handle-outline" size={80} color={colors.textSecondary} />
+          <BagIcon weight="regular" size={80} color={colors.textSecondary} />
           <Text style={[styles.emptyTitle, { color: colors.text }]}>No orders yet</Text>
           <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>
             Start shopping to see your orders here.

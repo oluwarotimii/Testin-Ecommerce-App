@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
 import { useThemeColors } from '@/hooks/useColorScheme';
-import { Ionicons } from '@expo/vector-icons';
+import { HeartIcon, TrashIcon, ShoppingCartIcon } from 'phosphor-react-native';
 import SkeletonProductItem from '@/components/SkeletonProductItem';
 import SkeletonLoader from '@/components/SkeletonLoader';
 import BackButton from '@/components/BackButton';
@@ -88,7 +88,7 @@ export default function WishlistScreen() {
           <View style={{ width: 60 }} />
         </View>
         <View style={styles.emptyContainer}>
-          <Ionicons name="heart-outline" size={80} color={colors.textSecondary} />
+          <HeartIcon weight="regular" size={80} color={colors.textSecondary} />
           <Text style={[styles.emptyTitle, { color: colors.text }]}>Your wishlist is empty</Text>
           <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>Add items to your wishlist to see them here</Text>
           <Button title="Browse Products" onPress={() => router.push('/(tabs)')} fullWidth={false} style={styles.browseButton} />
@@ -133,7 +133,7 @@ export default function WishlistScreen() {
                     style={[styles.removeButtonAbsolute, { backgroundColor: isDarkMode ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.8)' }]}
                     onPress={() => removeFromWishlist(item.id)}
                   >
-                    <Ionicons name="trash-outline" size={20} color={colors.error} />
+                    <TrashIcon weight="regular" size={20} color={colors.error} />
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={[styles.wishlistAddToCartButton, { backgroundColor: colors.primary }]}
@@ -142,7 +142,7 @@ export default function WishlistScreen() {
                       addToCart(item);
                     }}
                   >
-                    <Ionicons name="cart" size={18} color={colors.white} />
+                    <ShoppingCartIcon weight="fill" size={18} color={colors.white} />
                   </TouchableOpacity>
                 </TouchableOpacity>
 

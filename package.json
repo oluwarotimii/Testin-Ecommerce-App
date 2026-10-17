@@ -11,7 +11,8 @@
     "ios": "expo run:ios"
   },
   "dependencies": {
-    "@expo-google-fonts/roboto": "^0.4.3",
+    "@expo-google-fonts/funnel-display": "^0.4.1",
+    "@expo-google-fonts/funnel-sans": "^0.4.2",
     "@expo/vector-icons": "^15.0.3",
     "@lucide/lab": "^0.1.2",
     "@react-native-async-storage/async-storage": "^2.2.0",
@@ -46,6 +47,7 @@
     "fs-extra": "^11.3.2",
     "install": "^0.13.0",
     "lucide-react-native": "^0.475.0",
+    "phosphor-react-native": "^3.0.6",
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "react-native": "0.81.5",

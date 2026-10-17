@@ -3,14 +3,22 @@ import { Stack, useRouter } from 'expo-router';
 import { View, Alert, AppState } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
+import { useFonts } from 'expo-font';
 import {
-  useFonts,
-  Roboto_400Regular,
-  Roboto_500Medium,
-  Roboto_600SemiBold,
-  Roboto_700Bold,
-  Roboto_800ExtraBold,
-} from '@expo-google-fonts/roboto';
+  FunnelSans_300Light,
+  FunnelSans_400Regular,
+  FunnelSans_500Medium,
+  FunnelSans_600SemiBold,
+  FunnelSans_700Bold,
+  FunnelSans_800ExtraBold,
+} from '@expo-google-fonts/funnel-sans';
+import {
+  FunnelDisplay_400Regular,
+  FunnelDisplay_500Medium,
+  FunnelDisplay_600SemiBold,
+  FunnelDisplay_700Bold,
+  FunnelDisplay_800ExtraBold,
+} from '@expo-google-fonts/funnel-display';
 import { useFrameworkReady } from '@/hooks/useFrameworkReady';
 import notificationService from '@/services/notificationService';
 import updateService from '@/services/updateService';
@@ -27,7 +35,7 @@ import * as Linking from 'expo-linking';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Keep the native splash up until the custom fonts are ready, so the app
-// never flashes system-font text before swapping to Roboto.
+// never flashes system-font text before swapping to Funnel Sans/Display.
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
 function AppContent() {
@@ -59,11 +67,17 @@ export default function RootLayout() {
   useFrameworkReady();
 
   const [fontsLoaded, fontError] = useFonts({
-    Roboto_400Regular,
-    Roboto_500Medium,
-    Roboto_600SemiBold,
-    Roboto_700Bold,
-    Roboto_800ExtraBold,
+    FunnelSans_300Light,
+    FunnelSans_400Regular,
+    FunnelSans_500Medium,
+    FunnelSans_600SemiBold,
+    FunnelSans_700Bold,
+    FunnelSans_800ExtraBold,
+    FunnelDisplay_400Regular,
+    FunnelDisplay_500Medium,
+    FunnelDisplay_600SemiBold,
+    FunnelDisplay_700Bold,
+    FunnelDisplay_800ExtraBold,
   });
 
   useEffect(() => {

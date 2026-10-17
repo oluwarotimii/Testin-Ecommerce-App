@@ -3,18 +3,22 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
 import { useThemeColors } from '@/hooks/useColorScheme';
-import { Ionicons } from '@expo/vector-icons';
+import { MapPinIcon, ArrowLeftIcon } from 'phosphor-react-native';
 import BackButton from '@/components/BackButton';
 import Button from '@/components/Button';
 import { radius, fontFamily, shadow } from '@/constants/designTokens';
 
+// WooCommerce only stores one shipping/billing address per customer - there
+// is no "add another address" endpoint. This screen reflects that directly
+// instead of pretending to manage a list (the old Add/Delete/Set Default
+// actions called API methods that don't exist on the backend and silently
+// did nothing).
 export default function AddressesScreen() {
   const router = useRouter();
   const colors = useThemeColors();
   const { apiService, isAuthenticated, user } = useAuth();
   const [loading, setLoading] = useState(true);
-  const [addresses, setAddresses] = useState<any[]>([]);
-  const [isAdding, setIsAdding] = useState(false);
+  const [address, setAddress] = useState<any>(null);
   const [isEditing, setIsEditing] = useState(false);
 
   const [formData, setFormData] = useState({
@@ -28,168 +32,62 @@ export default function AddressesScreen() {
     country: '',
     phone: '',
     email: '',
-    isDefault: false,
   });
 
   useEffect(() => {
     if (isAuthenticated) {
-      fetchAddresses();
+      fetchAddress();
     } else {
       setLoading(false);
     }
   }, [isAuthenticated, apiService]);
 
-  const fetchAddresses = async () => {
+  const fetchAddress = async () => {
     try {
       setLoading(true);
       const response = await apiService.getAddressBook();
-      setAddresses(response);
+      setAddress(Array.isArray(response) && response.length > 0 ? response[0] : null);
     } catch (error) {
-      console.error('Error fetching addresses:', error);
+      console.error('Error fetching address:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleEditAddress = (address: any) => {
+  const openEditForm = () => {
     setFormData({
-      firstName: address.firstName || '',
-      lastName: address.lastName || '',
-      company: address.company || '',
-      address: address.address || '',
-      address2: address.address2 || '',
-      city: address.city || '',
-      state: address.state || '',
-      country: address.country || '',
-      phone: address.phone || '',
-      email: address.email || '',
-      isDefault: address.isDefault || false,
+      firstName: address?.firstName || '',
+      lastName: address?.lastName || '',
+      company: address?.company || '',
+      address: address?.address || '',
+      address2: address?.address2 || '',
+      city: address?.city || '',
+      state: address?.state || '',
+      country: address?.country || '',
+      phone: address?.phone || user?.phone || '',
+      email: address?.email || user?.email || '',
     });
     setIsEditing(true);
-    setIsAdding(true);
   };
 
   const handleSaveAddress = async () => {
+    if (!formData.firstName || !formData.lastName || !formData.address || !formData.city || !formData.country) {
+      Alert.alert('Missing Information', 'Please fill in all required fields (First Name, Last Name, Address, City, Country).');
+      return;
+    }
+
     try {
-      if (!formData.firstName || !formData.lastName || !formData.address || !formData.city || !formData.country) {
-        Alert.alert('Missing Information', 'Please fill in all required fields (First Name, Last Name, Address, City, Country).');
-        return;
-      }
-
       setLoading(true);
-
-      if (isEditing) {
-        // Update existing address
-        if (apiService.updateCustomerAddress) {
-          await apiService.updateCustomerAddress(formData);
-          Alert.alert('Success', 'Shipping address updated successfully');
-        } else {
-          console.warn("Update address not supported by API service");
-        }
-      } else {
-        // Add new address - try to find the appropriate method
-        if (apiService.addCustomerAddress) {
-          await apiService.addCustomerAddress(formData);
-          Alert.alert('Success', 'New shipping address added successfully');
-        } else if (apiService.updateCustomerAddress) {
-          // Fallback: This may create/update depending on implementation
-          await apiService.updateCustomerAddress(formData);
-          Alert.alert('Success', 'Shipping address saved successfully');
-        } else {
-          console.warn("Address management not supported by API service");
-        }
-      }
-
-      // Refresh addresses
-      await fetchAddresses();
-
-      // Reset form and navigation state
-      setFormData({
-        firstName: '',
-        lastName: '',
-        company: '',
-        address: '',
-        address2: '',
-        city: '',
-        state: '',
-        country: '',
-        phone: '',
-        email: '',
-        isDefault: false,
-      });
-      setIsAdding(false);
+      await apiService.updateCustomerAddress?.(formData);
+      await fetchAddress();
       setIsEditing(false);
+      Alert.alert('Success', 'Shipping address saved successfully');
     } catch (error) {
       console.error('Error saving address:', error);
       Alert.alert('Error', 'Failed to save shipping address. Please try again.');
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleSetDefault = async (addressId: number) => {
-    try {
-      setLoading(true);
-
-      // Update the default address on the server
-      if (apiService.updateDefaultAddress) {
-        await apiService.updateDefaultAddress(addressId);
-      }
-
-      // Update local state
-      setAddresses(addresses.map(addr => ({
-        ...addr,
-        isDefault: addr.id === addressId
-      })));
-
-      Alert.alert('Success', 'Default address updated successfully');
-    } catch (error) {
-      console.error('Error setting default address:', error);
-      Alert.alert('Error', 'Failed to update default address. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleDeleteAddress = async (addressId: number) => {
-    Alert.alert(
-      'Confirm Delete',
-      'Are you sure you want to delete this address?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              setLoading(true);
-
-              // Delete address on the server - try multiple possible API methods
-              if (apiService.deleteCustomerAddress) {
-                await apiService.deleteCustomerAddress(addressId);
-              } else if (apiService.updateCustomerAddress) {
-                // If we can't delete directly, try to remove via update with empty values
-                // But this would require tracking which address ID to update
-                console.warn("Direct address deletion not supported, may need to update customer profile");
-              } else {
-                // Fallback to a more generic update method if available
-                console.warn("No delete address method found in API service");
-              }
-
-              // Refresh addresses to reflect the change
-              await fetchAddresses();
-
-              Alert.alert('Success', 'Address deleted successfully');
-            } catch (error) {
-              console.error('Error deleting address:', error);
-              Alert.alert('Error', 'Failed to delete address. Please try again.');
-            } finally {
-              setLoading(false);
-            }
-          }
-        }
-      ]
-    );
   };
 
   if (loading) {
@@ -205,14 +103,14 @@ export default function AddressesScreen() {
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         <View style={styles.header}>
           <BackButton />
-          <Text style={[styles.title, { color: colors.text }]}>Shipping Addresses</Text>
+          <Text style={[styles.title, { color: colors.text }]}>Shipping Address</Text>
           <View style={{ width: 40 }} />
         </View>
 
         <View style={[styles.emptyContainer, { backgroundColor: colors.background }]}>
-          <Ionicons name="location-outline" size={80} color={colors.textSecondary} style={styles.emptyIcon} />
+          <MapPinIcon weight="regular" size={80} color={colors.textSecondary} style={styles.emptyIcon} />
           <Text style={[styles.emptyTitle, { color: colors.text }]}>You are not logged in.</Text>
-          <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>Please log in to manage your shipping addresses.</Text>
+          <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>Please log in to manage your shipping address.</Text>
           <Button title="Log In" onPress={() => router.push('/login')} style={{ marginBottom: 15 }} />
           <Button title="Create Account" onPress={() => router.push('/register')} variant="outline" />
         </View>
@@ -220,20 +118,19 @@ export default function AddressesScreen() {
     );
   }
 
-  if (isAdding) {
+  if (isEditing) {
     return (
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         {/* Header */}
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => { setIsAdding(false); setIsEditing(false); }}>
-            <Ionicons name="arrow-back" size={24} color={colors.text} />
+          <TouchableOpacity onPress={() => setIsEditing(false)}>
+            <ArrowLeftIcon weight="bold" size={24} color={colors.text} />
           </TouchableOpacity>
-          <Text style={[styles.title, { color: colors.text }]}>{isEditing ? 'Edit Shipping Address' : 'Add Shipping Address'}</Text>
+          <Text style={[styles.title, { color: colors.text }]}>{address ? 'Edit Shipping Address' : 'Add Shipping Address'}</Text>
           <View style={{ width: 40 }} />
         </View>
 
         <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-          {/* Add Address Form */}
           <View style={styles.formContainer}>
             <View style={styles.inputGroup}>
               <Text style={[styles.label, { color: colors.text }]}>First Name *</Text>
@@ -241,7 +138,6 @@ export default function AddressesScreen() {
                 style={[styles.input, { backgroundColor: colors.surface, color: colors.text }]}
                 value={formData.firstName}
                 onChangeText={(text) => setFormData({ ...formData, firstName: text })}
-                placeholder="Name for this shipping address"
                 placeholderTextColor={colors.textSecondary}
               />
             </View>
@@ -252,7 +148,6 @@ export default function AddressesScreen() {
                 style={[styles.input, { backgroundColor: colors.surface, color: colors.text }]}
                 value={formData.lastName}
                 onChangeText={(text) => setFormData({ ...formData, lastName: text })}
-                placeholder="Last name for this shipping address"
                 placeholderTextColor={colors.textSecondary}
               />
             </View>
@@ -263,7 +158,6 @@ export default function AddressesScreen() {
                 style={[styles.input, { backgroundColor: colors.surface, color: colors.text }]}
                 value={formData.email}
                 onChangeText={(text) => setFormData({ ...formData, email: text })}
-                placeholder=""
                 placeholderTextColor={colors.textSecondary}
                 keyboardType="email-address"
                 autoCapitalize="none"
@@ -276,7 +170,6 @@ export default function AddressesScreen() {
                 style={[styles.input, { backgroundColor: colors.surface, color: colors.text }]}
                 value={formData.company}
                 onChangeText={(text) => setFormData({ ...formData, company: text })}
-                placeholder=""
                 placeholderTextColor={colors.textSecondary}
               />
             </View>
@@ -287,7 +180,6 @@ export default function AddressesScreen() {
                 style={[styles.input, { backgroundColor: colors.surface, color: colors.text }]}
                 value={formData.address}
                 onChangeText={(text) => setFormData({ ...formData, address: text })}
-                placeholder=""
                 placeholderTextColor={colors.textSecondary}
               />
             </View>
@@ -298,7 +190,6 @@ export default function AddressesScreen() {
                 style={[styles.input, { backgroundColor: colors.surface, color: colors.text }]}
                 value={formData.address2}
                 onChangeText={(text) => setFormData({ ...formData, address2: text })}
-                placeholder=""
                 placeholderTextColor={colors.textSecondary}
               />
             </View>
@@ -310,7 +201,6 @@ export default function AddressesScreen() {
                   style={[styles.input, { backgroundColor: colors.surface, color: colors.text }]}
                   value={formData.city}
                   onChangeText={(text) => setFormData({ ...formData, city: text })}
-                  placeholder=""
                   placeholderTextColor={colors.textSecondary}
                 />
               </View>
@@ -320,23 +210,19 @@ export default function AddressesScreen() {
                   style={[styles.input, { backgroundColor: colors.surface, color: colors.text }]}
                   value={formData.state}
                   onChangeText={(text) => setFormData({ ...formData, state: text })}
-                  placeholder=""
                   placeholderTextColor={colors.textSecondary}
                 />
               </View>
             </View>
 
-            <View style={styles.rowGroup}>
-              <View style={styles.halfInputGroup}>
-                <Text style={[styles.label, { color: colors.text }]}>Country *</Text>
-                <TextInput
-                  style={[styles.input, { backgroundColor: colors.surface, color: colors.text }]}
-                  value={formData.country}
-                  onChangeText={(text) => setFormData({ ...formData, country: text })}
-                  placeholder=""
-                  placeholderTextColor={colors.textSecondary}
-                />
-              </View>
+            <View style={styles.inputGroup}>
+              <Text style={[styles.label, { color: colors.text }]}>Country *</Text>
+              <TextInput
+                style={[styles.input, { backgroundColor: colors.surface, color: colors.text }]}
+                value={formData.country}
+                onChangeText={(text) => setFormData({ ...formData, country: text })}
+                placeholderTextColor={colors.textSecondary}
+              />
             </View>
 
             <View style={styles.inputGroup}>
@@ -345,7 +231,6 @@ export default function AddressesScreen() {
                 style={[styles.input, { backgroundColor: colors.surface, color: colors.text }]}
                 value={formData.phone}
                 onChangeText={(text) => setFormData({ ...formData, phone: text })}
-                placeholder=""
                 placeholderTextColor={colors.textSecondary}
                 keyboardType="phone-pad"
               />
@@ -370,95 +255,40 @@ export default function AddressesScreen() {
       {/* Header */}
       <View style={styles.header}>
         <BackButton />
-        <Text style={[styles.title, { color: colors.text }]}>Shipping Addresses</Text>
-        <TouchableOpacity onPress={() => {
-          setFormData({
-            firstName: '',
-            lastName: '',
-            company: '',
-            address: '',
-            address2: '',
-            city: '',
-            state: '',
-            country: '',
-            phone: '',
-            email: '',
-            isDefault: false,
-          });
-          setIsAdding(true);
-          setIsEditing(false);
-        }}>
-          <Ionicons name="add" size={24} color={colors.primary} />
-        </TouchableOpacity>
+        <Text style={[styles.title, { color: colors.text }]}>Shipping Address</Text>
+        <View style={{ width: 40 }} />
       </View>
 
-      {/* Addresses List */}
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {addresses.length === 0 ? (
+        {!address ? (
           <View style={styles.emptyContainer}>
-            <Ionicons name="location-outline" size={80} color={colors.textSecondary} />
-            <Text style={[styles.emptyTitle, { color: colors.text }]}>No addresses yet</Text>
-            <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>Add your first shipping address</Text>
-            <Button
-              title="Add Address"
-              onPress={() => {
-                setFormData({
-                  firstName: '',
-                  lastName: '',
-                  company: '',
-                  address: '',
-                  address2: '',
-                  city: '',
-                  state: '',
-                  country: '',
-                  phone: user?.phone || '',
-                  email: user?.email || '',
-                  isDefault: false,
-                });
-                setIsAdding(true);
-                setIsEditing(false);
-              }}
-              style={styles.primaryButton}
-            />
+            <MapPinIcon weight="regular" size={80} color={colors.textSecondary} />
+            <Text style={[styles.emptyTitle, { color: colors.text }]}>No address yet</Text>
+            <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>Add your shipping address</Text>
+            <Button title="Add Address" onPress={openEditForm} style={styles.primaryButton} />
           </View>
         ) : (
-          addresses.map((address) => (
-            <View key={address.id} style={[styles.addressCard, { backgroundColor: colors.surface }]}>
-              <View style={styles.addressHeader}>
-                <Text style={[styles.addressName, { color: colors.text }]}>{address.firstName} {address.lastName}</Text>
-                {address.isDefault && (
-                  <Text style={[styles.defaultBadge, { color: colors.primary, borderColor: colors.primary }]}>Default</Text>
-                )}
-              </View>
-              <Text style={[styles.addressText, { color: colors.text }]}>{address.address}</Text>
-              <Text style={[styles.addressText, { color: colors.text }]}>{address.city}, {address.state}</Text>
-              <Text style={[styles.addressText, { color: colors.text }]}>{address.country}</Text>
+          <View style={[styles.addressCard, { backgroundColor: colors.surface }]}>
+            <Text style={[styles.addressName, { color: colors.text }]}>{address.firstName} {address.lastName}</Text>
+            <Text style={[styles.addressText, { color: colors.text }]}>{address.address}</Text>
+            {!!address.address2 && (
+              <Text style={[styles.addressText, { color: colors.text }]}>{address.address2}</Text>
+            )}
+            <Text style={[styles.addressText, { color: colors.text }]}>{address.city}, {address.state}</Text>
+            <Text style={[styles.addressText, { color: colors.text }]}>{address.country}</Text>
+            {!!address.phone && (
               <Text style={[styles.addressPhone, { color: colors.textSecondary }]}>{address.phone}</Text>
+            )}
+            {!!address.email && (
               <Text style={[styles.addressPhone, { color: colors.textSecondary }]}>{address.email}</Text>
-              <View style={styles.addressActions}>
-                {!address.isDefault && (
-                  <TouchableOpacity
-                    style={[styles.actionButton, { borderColor: colors.primary }]}
-                    onPress={() => handleSetDefault(address.id)}
-                  >
-                    <Text style={[styles.actionButtonText, { color: colors.primary }]}>Set Default</Text>
-                  </TouchableOpacity>
-                )}
-                <TouchableOpacity
-                  style={[styles.actionButton, { borderColor: colors.textSecondary }]}
-                  onPress={() => handleEditAddress(address)}
-                >
-                  <Text style={[styles.actionButtonText, { color: colors.text }]}>Edit</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.actionButton, { borderColor: colors.error }]}
-                  onPress={() => handleDeleteAddress(address.id)}
-                >
-                  <Text style={[styles.actionButtonText, { color: colors.error }]}>Delete</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          ))
+            )}
+            <TouchableOpacity
+              style={[styles.actionButton, { borderColor: colors.primary }]}
+              onPress={openEditForm}
+            >
+              <Text style={[styles.actionButtonText, { color: colors.primary }]}>Edit</Text>
+            </TouchableOpacity>
+          </View>
         )}
       </ScrollView>
     </View>
@@ -513,50 +343,29 @@ const styles = StyleSheet.create({
   },
   addressCard: {
     borderRadius: radius.xl,
-    padding: 16,
-    marginBottom: 16,
+    padding: 20,
+    marginTop: 16,
+    gap: 4,
     ...shadow.card,
   },
-  addressHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
   addressName: {
-    fontSize: 16,
+    fontSize: 18,
     fontFamily: fontFamily.bold,
-  },
-  defaultBadge: {
-    fontSize: 12,
-    fontFamily: fontFamily.semiBold,
-    borderWidth: 1,
-    borderRadius: radius.sm,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
+    marginBottom: 4,
   },
   addressText: {
     fontSize: 14,
-    marginBottom: 4,
+    marginBottom: 2,
   },
   addressPhone: {
     fontSize: 14,
     marginTop: 4,
-    marginBottom: 2,
-  },
-  addressActions: {
-    flexDirection: 'row',
-    gap: 12,
-    paddingTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: '#E5E5EA',
-    marginTop: 10,
   },
   actionButton: {
-    flex: 1,
+    marginTop: 16,
     borderWidth: 1,
     borderRadius: radius.sm,
-    paddingVertical: 8,
+    paddingVertical: 10,
     alignItems: 'center',
   },
   actionButtonText: {

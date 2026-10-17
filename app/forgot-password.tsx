@@ -2,7 +2,7 @@ import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Alert,
 import { useState } from 'react';
 import { useRouter } from 'expo-router';
 import { useThemeColors } from '@/hooks/useColorScheme';
-import { Ionicons } from '@expo/vector-icons';
+import { ArrowLeftIcon, EnvelopeIcon, InfoIcon } from 'phosphor-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Button from '@/components/Button';
 import { radius, fontFamily } from '@/constants/designTokens';
@@ -22,7 +22,7 @@ export default function ForgotPasswordScreen() {
                     style={styles.backButton}
                     onPress={() => router.push('/login')}
                 >
-                    <Ionicons name="arrow-back" size={24} color={colors.primary} />
+                    <ArrowLeftIcon weight="bold" size={24} color={colors.primary} />
                 </TouchableOpacity>
 
                 <View style={styles.header}>
@@ -37,7 +37,7 @@ export default function ForgotPasswordScreen() {
 
                 <View style={styles.form}>
                     <View style={[styles.inputContainer, { backgroundColor: colors.surface }]}>
-                        <Ionicons name="mail" size={20} color={colors.textSecondary} style={styles.inputIcon} />
+                        <EnvelopeIcon weight="bold" size={20} color={colors.textSecondary} style={styles.inputIcon} />
                         <TextInput
                             style={[styles.input, { color: colors.text }]}
                             placeholder="Email"
@@ -52,7 +52,7 @@ export default function ForgotPasswordScreen() {
 
                     {/* Information message about password reset */}
                     <View style={[styles.infoBox, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-                        <Ionicons name="information-circle-outline" size={24} color={colors.primary} style={styles.infoIcon} />
+                        <InfoIcon weight="regular" size={24} color={colors.primary} style={styles.infoIcon} />
                         <Text style={[styles.infoText, { color: colors.text }]}>
                             Password reset functionality is available on our website. Please visit femtechit.com to reset your password.
                         </Text>

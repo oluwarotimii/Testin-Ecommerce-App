@@ -4,6 +4,7 @@ import { useThemeColors } from '@/hooks/useColorScheme';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { markWelcomeScreenAsSeen } from '@/utils/welcomeState';
 import Button from '@/components/Button';
+import { UserIcon, UserPlusIcon } from 'phosphor-react-native';
 import { fontFamily } from '@/constants/designTokens';
 
 export default function WelcomeScreen() {
@@ -43,8 +44,8 @@ export default function WelcomeScreen() {
         </View>
 
         <View style={styles.buttonContainer}>
-          <Button title="Login" icon="person" onPress={handleLogin} size="lg" />
-          <Button title="Register" icon="person-add" onPress={handleRegister} variant="outline" size="lg" />
+          <Button title="Login" icon={UserIcon} onPress={handleLogin} size="lg" />
+          <Button title="Register" icon={UserPlusIcon} onPress={handleRegister} variant="outline" size="lg" />
 
           <TouchableOpacity
             style={styles.guestButton}

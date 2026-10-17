@@ -72,9 +72,6 @@ interface ApiService {
   setSessionToken: (token: string | null) => void;
   validateToken?: (token: string) => Promise<boolean>;
   updateCustomerAddress?: (addressData: any) => Promise<any>;
-  addCustomerAddress?: (addressData: any) => Promise<any>;
-  updateDefaultAddress?: (addressId: number) => Promise<any>;
-  deleteCustomerAddress?: (addressId: number) => Promise<any>;
   deleteAccount: (userId: number) => Promise<any>;
 }
 

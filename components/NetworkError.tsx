@@ -1,14 +1,14 @@
-import React from 'react';
+import React, { ComponentType } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useThemeColors } from '@/hooks/useColorScheme';
-import { Ionicons } from '@expo/vector-icons';
+import { WifiSlashIcon, IconProps } from 'phosphor-react-native';
 
 interface NetworkErrorProps {
   title?: string;
   message?: string;
   onRetry?: () => void;
   showRetry?: boolean;
-  icon?: keyof typeof Ionicons.glyphMap;
+  icon?: ComponentType<IconProps>;
 }
 
 const NetworkError: React.FC<NetworkErrorProps> = ({
@@ -16,17 +16,16 @@ const NetworkError: React.FC<NetworkErrorProps> = ({
   message = "Please check your connection and try again",
   onRetry,
   showRetry = true,
-  icon = "wifi"
+  icon: Icon = WifiSlashIcon
 }) => {
   const colors = useThemeColors();
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={styles.content}>
-        <Ionicons 
-          name={icon} 
-          size={64} 
-          color={colors.textSecondary} 
+        <Icon
+          size={64}
+          color={colors.textSecondary}
           style={styles.icon}
         />
         <Text style={[styles.title, { color: colors.text }]}>{title}</Text>

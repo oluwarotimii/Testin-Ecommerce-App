@@ -9,7 +9,14 @@ import { useCart } from '@/context/CartContext';
 import { useNetwork } from '@/context/NetworkContext';
 import InstagramCarousel from '@/components/InstagramCarousel';
 import { useThemeColors } from '@/hooks/useColorScheme';
-import { Ionicons } from '@expo/vector-icons';
+import {
+  BellIcon,
+  MagnifyingGlassIcon,
+  ImageIcon,
+  HeartIcon,
+  ShoppingCartIcon,
+  CheckCircleIcon,
+} from 'phosphor-react-native';
 import SkeletonLoader from '@/components/SkeletonLoader';
 import SkeletonProductItem from '@/components/SkeletonProductItem';
 import { transformProducts, transformCategories } from '@/utils/woocommerceTransformers';
@@ -18,6 +25,7 @@ import MarketingBanner from '@/components/MarketingBanner';
 import { fetchCarousels } from '@/services/carousel';
 import BestDealsSection from '@/components/BestDealsSection';
 import NetworkError from '@/components/NetworkError';
+import SalePill from '@/components/SalePill';
 import { FEATURED_PRODUCTS_LIMIT } from '@/services/config';
 import { spacing, radius, typeScale, fontFamily, shadow } from '@/constants/designTokens';
 import { useResponsiveColumns } from '@/hooks/useResponsiveColumns';
@@ -50,7 +58,7 @@ const CategoryItem = memo(({ category, colors, isDarkMode, onPress }: {
           style={styles.categoryItemImage}
         />
       ) : (
-        <Ionicons name="image-outline" size={24} color={colors.textSecondary} />
+        <ImageIcon size={24} color={colors.textSecondary} />
       )}
     </View>
     <Text style={[styles.categoryName, { color: colors.text }]} numberOfLines={2}>
@@ -82,6 +90,10 @@ const ProductItem = memo(({
 }) => {
   const isInWishlist = wishlist.includes(product.id);
   const isDarkMode = String(colors.background).toLowerCase() === '#000000';
+  const price = typeof product.price === 'number' ? product.price : parseFloat(product.price || '0');
+  const originalPrice = typeof product.original_price === 'number' ? product.original_price : parseFloat(product.original_price || '0');
+  const isOnSale = originalPrice > price;
+  const percentOff = isOnSale ? ((originalPrice - price) / originalPrice) * 100 : 0;
 
   return (
     <TouchableOpacity
@@ -90,17 +102,22 @@ const ProductItem = memo(({
       onPress={onProductPress}
     >
       <View style={styles.productImageContainer}>
-        <SafeImage 
-          source={{ uri: product.image }} 
-          style={[styles.productImage, { backgroundColor: colors.background }]} 
+        <SafeImage
+          source={{ uri: product.image }}
+          style={[styles.productImage, { backgroundColor: colors.background }]}
         />
+        {isOnSale && (
+          <View style={styles.saleBadge}>
+            <SalePill percentOff={percentOff} />
+          </View>
+        )}
         <View style={styles.wishlistOverlay}>
           <TouchableOpacity
             style={[styles.wishlistButton, { backgroundColor: colors.surface }]}
             onPress={onToggleWishlist}
           >
-            <Ionicons
-              name={isInWishlist ? "heart" : "heart-outline"}
+            <HeartIcon
+              weight={isInWishlist ? 'fill' : 'regular'}
               size={16}
               color={isInWishlist ? "#FF3B30" : colors.text}
             />
@@ -111,12 +128,12 @@ const ProductItem = memo(({
             style={[styles.addToCartButton, { backgroundColor: colors.primary }]}
             onPress={onAddToCart}
           >
-            <Ionicons name="cart" size={18} color={colors.white} />
+            <ShoppingCartIcon weight="fill" size={18} color={colors.white} />
           </TouchableOpacity>
         </View>
         {cartSuccess[product.id] && (
           <View style={styles.successOverlay}>
-            <Ionicons name="checkmark-circle" size={24} color="#4CD964" />
+            <CheckCircleIcon weight="fill" size={24} color="#4CD964" />
           </View>
         )}
       </View>
@@ -126,11 +143,13 @@ const ProductItem = memo(({
           {product.title}
         </Text>
         <View style={styles.priceRow}>
-          <Text style={[styles.originalPrice, { color: colors.textSecondary }]}>
-            {formatPrice((typeof product.price === 'number' ? product.price : parseFloat(product.price || '0')) * 1.3)}
-          </Text>
+          {isOnSale && (
+            <Text style={[styles.originalPrice, { color: colors.textSecondary }]}>
+              {formatPrice(originalPrice)}
+            </Text>
+          )}
           <Text style={[styles.productPrice, { color: isDarkMode ? colors.white : colors.primary }]}>
-            {formatPrice(typeof product.price === 'number' ? product.price : parseFloat(product.price || '0'))}
+            {formatPrice(price)}
           </Text>
         </View>
       </View>
@@ -155,7 +174,6 @@ export default function HomeScreen() {
 
   // OPTIMIZED: Use Animated.Value directly for scroll - no useState re-renders
   const scrollY = useRef(new Animated.Value(0)).current;
-  const fadeAnim = scrollY; // Reuse the same Animated.Value for header fade
 
   // Derived animated values for header animation (computed on native thread)
   const headerOpacity = scrollY.interpolate({
@@ -163,6 +181,19 @@ export default function HomeScreen() {
     outputRange: [1, 0],
     extrapolate: 'clamp',
   });
+
+  // Crossfades in just after the inline header has scrolled out of view -
+  // was previously driven by the raw scroll offset fed straight into
+  // `opacity` (clamps to 1 after ~1px of scroll, not an intentional fade).
+  const stickyHeaderOpacity = scrollY.interpolate({
+    inputRange: [80, 120],
+    outputRange: [0, 1],
+    extrapolate: 'clamp',
+  });
+  // Opacity alone doesn't stop touches - without this, the sticky search
+  // bar would still intercept taps meant for the inline header underneath
+  // it while invisible at the top of the scroll.
+  const [showStickySearch, setShowStickySearch] = useState(false);
 
   const headerTranslateY = scrollY.interpolate({
     inputRange: [0, 50],
@@ -557,14 +588,24 @@ export default function HomeScreen() {
                 transform: [{ translateY: headerTranslateY }],
               }
             ]}>
-              <View style={styles.headerLeft}>
-                <Text style={[styles.greeting, { color: colors.textSecondary }]}>
+              <View style={styles.headerTopRow}>
+                <Text style={[styles.greeting, { color: colors.text }]}>
                   {isAuthenticated && user ? `Hello, ${user.first_name || 'User'}` : 'Hello'}
                 </Text>
-                <Text style={[styles.title, { color: colors.text }]}>Your wallet&apos;s new best friend excluse prices</Text>
+                <TouchableOpacity
+                  style={[styles.bellButton, { backgroundColor: colors.surface }]}
+                  onPress={() => router.push('/notifications')}
+                >
+                  <BellIcon size={20} color={colors.text} />
+                </TouchableOpacity>
               </View>
-              <TouchableOpacity style={[styles.headerSearchIcon, { backgroundColor: colors.surface }]} onPress={() => router.push('/search')}>
-                <Ionicons name="search" size={20} color={colors.text} />
+              <TouchableOpacity
+                style={[styles.searchBar, { backgroundColor: colors.surface }]}
+                onPress={() => router.push('/search')}
+                activeOpacity={0.7}
+              >
+                <MagnifyingGlassIcon size={18} color={colors.textSecondary} />
+                <Text style={[styles.searchBarPlaceholder, { color: colors.textSecondary }]}>Search products</Text>
               </TouchableOpacity>
             </Animated.View>
           </View>
@@ -737,20 +778,26 @@ export default function HomeScreen() {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-      {/* Sticky Header - positioned absolutely */}
-      <Animated.View style={[
-        styles.stickyHeader, 
-        {
-          backgroundColor: colors.background,
-          opacity: fadeAnim,
-          transform: [{ translateY: headerTranslateY }],
-        }
-      ]}>
-        <View style={styles.headerIcons}>
-          <TouchableOpacity style={styles.iconButton} onPress={() => router.push('/search')}>
-            <Ionicons name="search" size={24} color={colors.text} />
-          </TouchableOpacity>
-        </View>
+      {/* Sticky search bar - same tap target as the inline header's, just
+          persisted once that's scrolled out of view */}
+      <Animated.View
+        pointerEvents={showStickySearch ? 'auto' : 'none'}
+        style={[
+          styles.stickyHeader,
+          {
+            backgroundColor: colors.background,
+            opacity: stickyHeaderOpacity,
+          }
+        ]}
+      >
+        <TouchableOpacity
+          style={[styles.searchBar, { backgroundColor: colors.surface }]}
+          onPress={() => router.push('/search')}
+          activeOpacity={0.7}
+        >
+          <MagnifyingGlassIcon size={18} color={colors.textSecondary} />
+          <Text style={[styles.searchBarPlaceholder, { color: colors.textSecondary }]}>Search products</Text>
+        </TouchableOpacity>
       </Animated.View>
 
       {/* OPTIMIZED: FlashList with virtualized rendering */}
@@ -770,7 +817,11 @@ export default function HomeScreen() {
         }
         onScroll={(event) => {
           // Update scroll position for header animation (JS driver)
-          scrollY.setValue(event.nativeEvent.contentOffset.y);
+          const offsetY = event.nativeEvent.contentOffset.y;
+          scrollY.setValue(offsetY);
+
+          const shouldShowSticky = offsetY > 100;
+          setShowStickySearch(prev => (prev === shouldShowSticky ? prev : shouldShowSticky));
 
           // Pagination check
           const { layoutMeasurement, contentOffset, contentSize } = event.nativeEvent;
@@ -793,15 +844,13 @@ const styles = StyleSheet.create({
   },
   stickyHeader: {
     position: 'absolute',
-    top: 10,
+    top: 0,
     left: 0,
     right: 0,
     zIndex: 100,
-    flexDirection: 'row',
-    alignItems: 'center',
     paddingHorizontal: 16,
-    paddingTop: 25,
-    paddingBottom: 8,
+    paddingTop: 50,
+    paddingBottom: 10,
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(0,0,0,0.05)',
   },
@@ -811,37 +860,35 @@ const styles = StyleSheet.create({
     paddingBottom: 4,
   },
   header: {
+    gap: 12,
+  },
+  headerTopRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingBottom: 6,
-  },
-  headerLeft: {
-    flex: 1,
-    marginRight: 12,
   },
   greeting: {
-    fontSize: 13,
-    fontFamily: fontFamily.regular,
-    marginBottom: 2,
+    fontSize: typeScale.headline,
+    fontFamily: fontFamily.display.bold,
   },
-  title: {
-    fontSize: 14,
-    fontFamily: fontFamily.bold,
-  },
-  headerSearchIcon: {
+  bellButton: {
     width: 40,
     height: 40,
     borderRadius: radius.pill,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  headerIcons: {
+  searchBar: {
     flexDirection: 'row',
-    gap: 12,
+    alignItems: 'center',
+    gap: 10,
+    height: 48,
+    borderRadius: radius.pill,
+    paddingHorizontal: 16,
   },
-  iconButton: {
-    padding: 8,
+  searchBarPlaceholder: {
+    fontSize: typeScale.bodyLarge,
+    fontFamily: fontFamily.regular,
   },
   section: {
     marginBottom: 16,
@@ -860,11 +907,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: typeScale.title,
-    fontFamily: fontFamily.bold,
-  },
-  seeAll: {
-    fontSize: 14,
-    fontFamily: fontFamily.medium,
+    fontFamily: fontFamily.display.bold,
   },
   categoriesContainer: {
     paddingHorizontal: 16,
@@ -889,10 +932,6 @@ const styles = StyleSheet.create({
     padding: 20,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  loadingIndicator: {
-    marginTop: 20,
-    marginBottom: 20,
   },
   categoryCard: {
     width: 80,
@@ -947,6 +986,12 @@ const styles = StyleSheet.create({
   productImage: {
     width: '100%',
     height: 200,
+  },
+  saleBadge: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    zIndex: 2,
   },
   wishlistOverlay: {
     position: 'absolute',

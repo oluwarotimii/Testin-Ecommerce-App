@@ -6,7 +6,24 @@ import { useThemeColors } from '@/hooks/useColorScheme';
 import { useAuth } from '@/context/AuthContext';
 import { useTheme } from '@/context/ThemeContext';
 import ReferralSystem from '@/components/ReferralSystem';
-import { Ionicons } from '@expo/vector-icons';
+import {
+  ReceiptIcon,
+  UserIcon,
+  MapPinIcon,
+  CreditCardIcon,
+  HeartIcon,
+  MoonIcon,
+  QuestionIcon,
+  CaretRightIcon,
+  PaletteIcon,
+  NotePencilIcon,
+  GridFourIcon,
+  HeadsetIcon,
+  SignOutIcon,
+  XIcon,
+  SignInIcon,
+  UserPlusIcon,
+} from 'phosphor-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { radius, fontFamily, shadow } from '@/constants/designTokens';
 import Button from '@/components/Button';
@@ -69,31 +86,31 @@ export default function AccountScreen() {
     {
       id: 'orders',
       title: 'My Orders',
-      icon: () => <Ionicons name="receipt" size={20} color={colors.primary} />,
+      icon: () => <ReceiptIcon weight="fill" size={20} color={colors.primary} />,
       onPress: () => router.push('/orders'),
     },
     {
       id: 'profile',
       title: 'Edit Profile',
-      icon: () => <Ionicons name="person" size={20} color={colors.primary} />,
+      icon: () => <UserIcon weight="fill" size={20} color={colors.primary} />,
       onPress: () => router.push('/profile'),
     },
     {
       id: 'addresses',
       title: 'Shipping Addresses',
-      icon: () => <Ionicons name="location" size={20} color={colors.primary} />,
+      icon: () => <MapPinIcon weight="fill" size={20} color={colors.primary} />,
       onPress: () => router.push('/addresses'),
     },
     {
       id: 'payment',
       title: 'Payment Method',
-      icon: () => <Ionicons name="card" size={20} color={colors.primary} />,
+      icon: () => <CreditCardIcon weight="fill" size={20} color={colors.primary} />,
       onPress: () => router.push('/payment-methods'),
     },
     {
       id: 'wishlist',
       title: 'Wishlist',
-      icon: () => <Ionicons name="heart" size={20} color={colors.primary} />,
+      icon: () => <HeartIcon weight="fill" size={20} color={colors.primary} />,
       onPress: () => router.push('/wishlist'),
     },
   ];
@@ -102,7 +119,7 @@ export default function AccountScreen() {
     {
       id: 'darkmode',
       title: 'Dark Mode',
-      icon: () => <Ionicons name="moon" size={20} color={colors.primary} />,
+      icon: () => <MoonIcon weight="fill" size={20} color={colors.primary} />,
       type: 'switch',
       value: darkMode,
       onToggle: () => {
@@ -114,16 +131,10 @@ export default function AccountScreen() {
   ];
 
   const supportItems = [
-    // {
-    //   id: 'referral',
-    //   title: 'Referral Program',
-    //   icon: () => <Ionicons name="people" size={20} color={colors.primary} />,
-    //   onPress: () => setShowReferralModal(true),
-    // },
     {
       id: 'help',
       title: 'Help & Support',
-      icon: () => <Ionicons name="help-circle" size={20} color={colors.primary} />,
+      icon: () => <QuestionIcon weight="fill" size={20} color={colors.primary} />,
       onPress: () => router.push('/help'),
     },
   ];
@@ -149,7 +160,7 @@ export default function AccountScreen() {
         </View>
         <Text style={[styles.menuItemText, { color: colors.text }]}>{item.title}</Text>
       </View>
-      <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
+      <CaretRightIcon weight="bold" size={18} color={colors.textSecondary} />
     </TouchableOpacity>
   );
 
@@ -170,7 +181,7 @@ export default function AccountScreen() {
         />
       ) : (
         <TouchableOpacity onPress={item.onPress}>
-          <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
+          <CaretRightIcon weight="bold" size={18} color={colors.textSecondary} />
         </TouchableOpacity>
       )}
     </View>
@@ -194,7 +205,7 @@ export default function AccountScreen() {
             {/* Theme Settings - Always visible */}
             <View style={styles.section}>
               <View style={styles.sectionHeaderRow}>
-                <Ionicons name="color-palette-outline" size={18} color={colors.primary} />
+                <PaletteIcon weight="regular" size={18} color={colors.primary} />
                 <Text style={[styles.sectionTitle, { color: colors.text }]}>Appearance</Text>
               </View>
               <View style={[styles.menuContainer, { backgroundColor: colors.surface }]}>
@@ -227,17 +238,14 @@ export default function AccountScreen() {
                     </View>
                   </View>
                   <TouchableOpacity style={[styles.editButton, { backgroundColor: colors.primary }]} onPress={() => router.push('/profile')}>
-                    <Ionicons name="create-outline" size={18} color={colors.white} />
+                    <NotePencilIcon weight="regular" size={18} color={colors.white} />
                   </TouchableOpacity>
                 </View>
-
-                {/* Referral System - Hidden from main view, moved to modal */}
-                {/* <ReferralSystem /> */}
 
                 {/* Account Menu */}
                 <View style={styles.section}>
                   <View style={styles.sectionHeaderRow}>
-                    <Ionicons name="grid-outline" size={18} color={colors.primary} />
+                    <GridFourIcon weight="regular" size={18} color={colors.primary} />
                     <Text style={[styles.sectionTitle, { color: colors.text }]}>Account</Text>
                   </View>
                   <View style={[styles.menuContainer, { backgroundColor: colors.surface }]}>
@@ -248,7 +256,7 @@ export default function AccountScreen() {
                 {/* Support */}
                 <View style={styles.section}>
                   <View style={styles.sectionHeaderRow}>
-                    <Ionicons name="headset-outline" size={18} color={colors.primary} />
+                    <HeadsetIcon weight="regular" size={18} color={colors.primary} />
                     <Text style={[styles.sectionTitle, { color: colors.text }]}>Support</Text>
                   </View>
                   <View style={[styles.menuContainer, { backgroundColor: colors.surface }]}>
@@ -267,10 +275,10 @@ export default function AccountScreen() {
                 <View style={styles.section}>
                   <TouchableOpacity style={[styles.logoutCard, { backgroundColor: colors.surface, borderColor: colors.error + '20' }]} onPress={() => setShowSignOutModal(true)}>
                     <View style={[styles.logoutIconContainer, { backgroundColor: colors.error + '15' }]}>
-                      <Ionicons name="log-out-outline" size={22} color={colors.error} />
+                      <SignOutIcon weight="regular" size={22} color={colors.error} />
                     </View>
                     <Text style={[styles.logoutText, { color: colors.error }]}>Sign Out</Text>
-                    <Ionicons name="chevron-forward" size={18} color={colors.error} />
+                    <CaretRightIcon weight="bold" size={18} color={colors.error} />
                   </TouchableOpacity>
                 </View>
               </>
@@ -278,12 +286,12 @@ export default function AccountScreen() {
               <>
                 <View style={[styles.emptyContainer, { backgroundColor: colors.background }]}>
                   <View style={[styles.emptyIconCircle, { backgroundColor: colors.primary + '10' }]}>
-                    <Ionicons name="person-outline" size={40} color={colors.primary} />
+                    <UserIcon weight="regular" size={40} color={colors.primary} />
                   </View>
                   <Text style={[styles.emptyTitle, { color: colors.text }]}>You are not logged in.</Text>
                   <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>Please log in or create an account to view your profile, orders, and more.</Text>
-                  <Button title="Log In" icon="log-in-outline" onPress={() => router.push('/login')} style={{ marginBottom: 14 }} />
-                  <Button title="Create Account" icon="person-add-outline" onPress={() => router.push('/register')} variant="outline" />
+                  <Button title="Log In" icon={SignInIcon} onPress={() => router.push('/login')} style={{ marginBottom: 14 }} />
+                  <Button title="Create Account" icon={UserPlusIcon} onPress={() => router.push('/register')} variant="outline" />
 
                   {/* Privacy Policy Link for non-authenticated users */}
                   <TouchableOpacity
@@ -320,7 +328,7 @@ export default function AccountScreen() {
             <View style={styles.referralModalHeader}>
               <Text style={[styles.referralModalTitle, { color: colors.text }]}>Referral Program</Text>
               <TouchableOpacity onPress={() => setShowReferralModal(false)} style={styles.closeModalButton}>
-                <Ionicons name="close" size={28} color={colors.text} />
+                <XIcon weight="bold" size={28} color={colors.text} />
               </TouchableOpacity>
             </View>
             <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.referralModalScroll}>
@@ -340,7 +348,7 @@ export default function AccountScreen() {
         <View style={styles.modalOverlay}>
           <View style={[styles.modalContent, { backgroundColor: colors.surface }]}>
             <View style={[styles.modalIconContainer, { backgroundColor: colors.error + '20' }]}>
-              <Ionicons name="log-out-outline" size={40} color={colors.error} />
+              <SignOutIcon weight="regular" size={40} color={colors.error} />
             </View>
 
             <Text style={[styles.modalTitle, { color: colors.text }]}>Sign Out?</Text>

@@ -5,7 +5,7 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
 import { useCart } from '@/context/CartContext';
 import { useThemeColors } from '@/hooks/useColorScheme';
-import { Ionicons } from '@expo/vector-icons';
+import { ArrowLeftIcon, ShoppingCartIcon, MinusIcon, PlusIcon, TrashIcon } from 'phosphor-react-native';
 import SkeletonCartItem from '@/components/SkeletonCartItem';
 import SkeletonLoader from '@/components/SkeletonLoader';
 import { useIsFocused } from '@react-navigation/native';
@@ -98,7 +98,7 @@ export default function CartScreen() {
         <View style={styles.header}>
           <View style={styles.headerLeft}>
             <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-              <Ionicons name="arrow-back" size={24} color={colors.text} />
+              <ArrowLeftIcon weight="bold" size={24} color={colors.text} />
             </TouchableOpacity>
             <Text style={[styles.title, { color: colors.text, marginLeft: 10 }]}>Shopping Cart</Text>
           </View>
@@ -128,7 +128,7 @@ export default function CartScreen() {
     return (
       <View style={[styles.emptyContainer, { backgroundColor: colors.background }]}>
         <View style={[styles.emptyIconContainer, { backgroundColor: colors.surface }]}>
-          <Ionicons name="cart-outline" size={80} color={colors.textSecondary} />
+          <ShoppingCartIcon weight="regular" size={80} color={colors.textSecondary} />
         </View>
         <Text style={[styles.emptyTitle, { color: colors.text }]}>Your cart is empty</Text>
         <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>Add some products to get started</Text>
@@ -143,7 +143,7 @@ export default function CartScreen() {
       <View style={styles.header}>
         <View style={styles.headerLeft}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={24} color={colors.text} />
+            <ArrowLeftIcon weight="bold" size={24} color={colors.text} />
           </TouchableOpacity>
           <Text style={[styles.title, { color: colors.text, marginLeft: 10 }]}>Shopping Cart</Text>
         </View>
@@ -183,7 +183,7 @@ export default function CartScreen() {
                     }
                   }}
                 >
-                  <Ionicons name="remove" size={20} color={colors.text} />
+                  <MinusIcon weight="bold" size={20} color={colors.text} />
                 </TouchableOpacity>
                 <Text style={[styles.quantity, { color: colors.text }]}>{item.quantity}</Text>
                 <TouchableOpacity
@@ -206,7 +206,7 @@ export default function CartScreen() {
                     }
                   }}
                 >
-                  <Ionicons name="add" size={20} color={colors.text} />
+                  <PlusIcon weight="bold" size={20} color={colors.text} />
                 </TouchableOpacity>
               </View>
               <TouchableOpacity
@@ -227,7 +227,7 @@ export default function CartScreen() {
                   }
                 }}
               >
-                <Ionicons name="trash" size={20} color={colors.textSecondary} />
+                <TrashIcon weight="fill" size={20} color={colors.textSecondary} />
               </TouchableOpacity>
             </View>
           </View>

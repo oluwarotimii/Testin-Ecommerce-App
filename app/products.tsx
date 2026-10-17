@@ -5,7 +5,16 @@ import { useRouter } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
 import { useCart } from '@/context/CartContext';
 import { useNetwork } from '@/context/NetworkContext';
-import { Ionicons } from '@expo/vector-icons';
+import {
+  CheckIcon,
+  ShoppingCartIcon,
+  HeartIcon,
+  ArrowLeftIcon,
+  FunnelIcon,
+  GridFourIcon,
+  ListIcon,
+  MagnifyingGlassIcon,
+} from 'phosphor-react-native';
 import SkeletonProductItem from '@/components/SkeletonProductItem';
 import { useThemeColors } from '@/hooks/useColorScheme';
 import SafeImage from '@/components/SafeImage';
@@ -74,14 +83,18 @@ const ListProductItem = memo(({
           style={[styles.listCartButton, { backgroundColor: colors.primary }]}
           onPress={(e: any) => { e.stopPropagation(); onAddToCart(product); }}
         >
-          <Ionicons name={showCartSuccess ? 'checkmark' : 'cart'} size={20} color={colors.white} />
+          {showCartSuccess ? (
+            <CheckIcon weight="bold" size={20} color={colors.white} />
+          ) : (
+            <ShoppingCartIcon weight="fill" size={20} color={colors.white} />
+          )}
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.listWishlistButton}
           onPress={(e: any) => { e.stopPropagation(); onToggleWishlist(product.id); }}
         >
-          <Ionicons
-            name={isLiked ? "heart" : "heart-outline"}
+          <HeartIcon
+            weight={isLiked ? 'fill' : 'regular'}
             size={20}
             color={isLiked ? "#FF3B30" : colors.textSecondary}
           />
@@ -389,7 +402,7 @@ export default function ProductsScreen() {
               onPress={() => router.push('/(tabs)')}
               style={styles.backButton}
             >
-              <Ionicons name="arrow-back" size={24} color={colors.text} />
+              <ArrowLeftIcon weight="bold" size={24} color={colors.text} />
             </TouchableOpacity>
           </View>
           <View style={styles.headerCenter}>
@@ -397,20 +410,20 @@ export default function ProductsScreen() {
           </View>
           <View style={styles.headerActions}>
             <TouchableOpacity style={styles.filterButton} onPress={() => setShowFilterModal(true)}>
-              <Ionicons name="filter" size={20} color={colors.primary} />
+              <FunnelIcon weight="bold" size={20} color={colors.primary} />
             </TouchableOpacity>
             <View style={[styles.viewToggle, { backgroundColor: colors.surface }]}>
               <TouchableOpacity
                 style={[styles.toggleButton, viewMode === 'grid' && { backgroundColor: colors.primary }]}
                 onPress={() => setViewMode('grid')}
               >
-                <Ionicons name="grid" size={16} color={viewMode === 'grid' ? colors.white : colors.textSecondary} />
+                <GridFourIcon weight={viewMode === 'grid' ? 'fill' : 'regular'} size={16} color={viewMode === 'grid' ? colors.white : colors.textSecondary} />
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.toggleButton, viewMode === 'list' && { backgroundColor: colors.primary }]}
                 onPress={() => setViewMode('list')}
               >
-                <Ionicons name="list" size={16} color={viewMode === 'list' ? colors.white : colors.textSecondary} />
+                <ListIcon weight={viewMode === 'list' ? 'fill' : 'regular'} size={16} color={viewMode === 'list' ? colors.white : colors.textSecondary} />
               </TouchableOpacity>
             </View>
           </View>
@@ -418,7 +431,7 @@ export default function ProductsScreen() {
 
         {/* Search Bar */}
         <View style={[styles.searchContainer, { backgroundColor: colors.surface }]}>
-          <Ionicons name="search" size={20} color={colors.textSecondary} />
+          <MagnifyingGlassIcon weight="bold" size={20} color={colors.textSecondary} />
           <TextInput
             style={[styles.searchInput, { color: colors.text }]}
             placeholder="Search products..."

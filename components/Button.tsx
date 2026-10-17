@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { ComponentType } from 'react';
 import { ActivityIndicator, StyleProp, StyleSheet, Text, TouchableOpacity, ViewStyle } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { IconProps } from 'phosphor-react-native';
 import { useThemeColors } from '@/hooks/useColorScheme';
 import { radius, spacing, typeScale, fontFamily } from '@/constants/designTokens';
 
@@ -9,7 +9,7 @@ interface ButtonProps {
   onPress: () => void;
   variant?: 'filled' | 'outline' | 'text';
   size?: 'md' | 'lg';
-  icon?: keyof typeof Ionicons.glyphMap;
+  icon?: ComponentType<IconProps>;
   loading?: boolean;
   disabled?: boolean;
   fullWidth?: boolean;
@@ -25,7 +25,7 @@ export default function Button({
   onPress,
   variant = 'filled',
   size = 'md',
-  icon,
+  icon: Icon,
   loading = false,
   disabled = false,
   fullWidth = true,
@@ -61,7 +61,7 @@ export default function Button({
         <ActivityIndicator color={variant === 'filled' ? colors.white : colors.primary} />
       ) : (
         <>
-          {icon && <Ionicons name={icon} size={20} color={textColor} style={styles.icon} />}
+          {Icon && <Icon weight="bold" size={20} color={textColor} style={styles.icon} />}
           <Text style={[styles.text, size === 'lg' && styles.textLg, { color: textColor }]}>
             {title}
           </Text>

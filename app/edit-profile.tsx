@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
 import { useThemeColors } from '@/hooks/useColorScheme';
-import { Ionicons } from '@expo/vector-icons';
+import { ArrowLeftIcon, UserCircleIcon } from 'phosphor-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Button from '@/components/Button';
 import { radius, fontFamily, shadow } from '@/constants/designTokens';
@@ -79,14 +79,14 @@ export default function EditProfileScreen() {
       <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={24} color={colors.text} />
+            <ArrowLeftIcon weight="bold" size={24} color={colors.text} />
           </TouchableOpacity>
           <Text style={[styles.title, { color: colors.text }]}>Edit Profile</Text>
           <View style={{ width: 40 }} />
         </View>
 
         <View style={[styles.emptyContainer, { backgroundColor: colors.background }]}>
-          <Ionicons name="person-circle-outline" size={80} color={colors.textSecondary} style={styles.emptyIcon} />
+          <UserCircleIcon weight="regular" size={80} color={colors.textSecondary} style={styles.emptyIcon} />
           <Text style={[styles.emptyTitle, { color: colors.text }]}>You are not logged in.</Text>
           <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>Please log in to edit your profile.</Text>
           <Button title="Log In" onPress={() => router.push('/login')} style={{ marginBottom: 15 }} />
@@ -101,7 +101,7 @@ export default function EditProfileScreen() {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color={colors.text} />
+          <ArrowLeftIcon weight="bold" size={24} color={colors.text} />
         </TouchableOpacity>
         <Text style={[styles.title, { color: colors.text }]}>Edit Profile</Text>
         <TouchableOpacity onPress={handleSave} disabled={loading}>

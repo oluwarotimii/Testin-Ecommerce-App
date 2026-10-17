@@ -4,7 +4,7 @@ import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '@/context/AuthContext';
 import { useThemeColors } from '@/hooks/useColorScheme';
-import { Ionicons } from '@expo/vector-icons';
+import { ArrowLeftIcon, EnvelopeIcon, LockIcon, EyeIcon, EyeSlashIcon } from 'phosphor-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Button from '@/components/Button';
 import { radius, fontFamily } from '@/constants/designTokens';
@@ -58,7 +58,7 @@ export default function LoginScreen() {
           style={styles.backButton}
           onPress={() => router.push('/(tabs)')}
         >
-          <Ionicons name="arrow-back" size={24} color={colors.primary} />
+          <ArrowLeftIcon weight="bold" size={24} color={colors.primary} />
         </TouchableOpacity>
 
         <View style={styles.header}>
@@ -76,7 +76,7 @@ export default function LoginScreen() {
             </View>
           ) : null}
           <View style={[styles.inputContainer, { backgroundColor: colors.surface }]}>
-            <Ionicons name="mail" size={20} color={colors.textSecondary} style={styles.inputIcon} />
+            <EnvelopeIcon weight="bold" size={20} color={colors.textSecondary} style={styles.inputIcon} />
             <TextInput
               style={[styles.input, { color: colors.text }]}
               placeholder="Email"
@@ -89,7 +89,7 @@ export default function LoginScreen() {
           </View>
 
           <View style={[styles.inputContainer, { backgroundColor: colors.surface }]}>
-            <Ionicons name="lock-closed" size={20} color={colors.textSecondary} style={styles.inputIcon} />
+            <LockIcon weight="bold" size={20} color={colors.textSecondary} style={styles.inputIcon} />
             <TextInput
               style={[styles.input, { color: colors.text }]}
               placeholder="Password"
@@ -103,9 +103,9 @@ export default function LoginScreen() {
               style={styles.eyeIcon}
             >
               {showPassword ? (
-                <Ionicons name="eye-off" size={20} color={colors.textSecondary} />
+                <EyeSlashIcon weight="bold" size={20} color={colors.textSecondary} />
               ) : (
-                <Ionicons name="eye" size={20} color={colors.textSecondary} />
+                <EyeIcon weight="bold" size={20} color={colors.textSecondary} />
               )}
             </TouchableOpacity>
           </View>

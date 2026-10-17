@@ -62,16 +62,30 @@ export const shadow = {
   },
 } as const;
 
-// Roboto matches the Material 3 reference directly and reads as a cleaner,
-// more neutral UI font. Weight-specific font files (not a single family +
-// fontWeight) since that's how custom TTFs work in React Native -
-// fontWeight is ignored once a custom fontFamily is set.
+// Funnel Sans is the body/UI typeface - used everywhere by default, same as
+// every other screen already reaching for fontFamily.regular/bold/etc.
+// Weight-specific font files (not a single family + fontWeight) since
+// that's how custom TTFs work in React Native - fontWeight is ignored once
+// a custom fontFamily is set.
+//
+// Funnel Display is the paired headline typeface, used sparingly and only
+// where a screen explicitly opts in via fontFamily.display.* (large screen
+// titles, hero/promo text) - it's not a drop-in replacement for every bold
+// weight, which would mismatch its intended scale.
 export const fontFamily = {
-  regular: 'Roboto_400Regular',
-  medium: 'Roboto_500Medium',
-  semiBold: 'Roboto_600SemiBold',
-  bold: 'Roboto_700Bold',
-  extraBold: 'Roboto_800ExtraBold',
+  light: 'FunnelSans_300Light',
+  regular: 'FunnelSans_400Regular',
+  medium: 'FunnelSans_500Medium',
+  semiBold: 'FunnelSans_600SemiBold',
+  bold: 'FunnelSans_700Bold',
+  extraBold: 'FunnelSans_800ExtraBold',
+  display: {
+    regular: 'FunnelDisplay_400Regular',
+    medium: 'FunnelDisplay_500Medium',
+    semiBold: 'FunnelDisplay_600SemiBold',
+    bold: 'FunnelDisplay_700Bold',
+    extraBold: 'FunnelDisplay_800ExtraBold',
+  },
 } as const;
 
 // Deal/urgency accent for a bargain-marketplace feel - kept separate from

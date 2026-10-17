@@ -4,7 +4,14 @@ import { useRouter } from 'expo-router';
 import { FlashList } from '@shopify/flash-list';
 import { useAuth } from '@/context/AuthContext';
 import { useThemeColors } from '@/hooks/useColorScheme';
-import { Ionicons } from '@expo/vector-icons';
+import {
+  CaretRightIcon,
+  ArrowLeftIcon,
+  MagnifyingGlassIcon,
+  XCircleIcon,
+  ClockIcon,
+  XIcon,
+} from 'phosphor-react-native';
 import { formatPrice } from '@/utils/formatNumber';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import SafeImage from '@/components/SafeImage';
@@ -174,7 +181,7 @@ export default function SearchScreen() {
           </Text>
         </View>
       </View>
-      <Ionicons name="chevron-forward" size={16} color={colors.textSecondary} />
+      <CaretRightIcon weight="bold" size={16} color={colors.textSecondary} />
     </TouchableOpacity>
   ), [colors, router]);
 
@@ -213,10 +220,10 @@ export default function SearchScreen() {
         <View style={styles.searchHeader}>
           <View style={styles.searchHeaderLeft}>
             <TouchableOpacity onPress={() => router.back()} style={styles.backArrow}>
-              <Ionicons name="arrow-back" size={22} color={colors.text} />
+              <ArrowLeftIcon weight="bold" size={22} color={colors.text} />
             </TouchableOpacity>
             <View style={[styles.searchBar, { backgroundColor: colors.surface }]}>
-              <Ionicons name="search" size={18} color={colors.textSecondary} />
+              <MagnifyingGlassIcon weight="bold" size={18} color={colors.textSecondary} />
               <TextInput
                 style={[styles.searchInput, { color: colors.text }]}
                 placeholder="Search products..."
@@ -228,7 +235,7 @@ export default function SearchScreen() {
               />
               {searchQuery.length > 0 && (
                 <TouchableOpacity onPress={() => setSearchQuery('')} style={styles.clearSearch}>
-                  <Ionicons name="close-circle" size={18} color={colors.textSecondary} />
+                  <XCircleIcon weight="fill" size={18} color={colors.textSecondary} />
                 </TouchableOpacity>
               )}
             </View>
@@ -271,10 +278,10 @@ export default function SearchScreen() {
       <View style={styles.searchHeader}>
         <View style={styles.searchHeaderLeft}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backArrow}>
-            <Ionicons name="arrow-back" size={22} color={colors.text} />
+            <ArrowLeftIcon weight="bold" size={22} color={colors.text} />
           </TouchableOpacity>
           <View style={[styles.searchBar, { backgroundColor: colors.surface }]}>
-            <Ionicons name="search" size={18} color={colors.textSecondary} />
+            <MagnifyingGlassIcon weight="bold" size={18} color={colors.textSecondary} />
             <TextInput
               style={[styles.searchInput, { color: colors.text }]}
               placeholder="Search products..."
@@ -286,7 +293,7 @@ export default function SearchScreen() {
             />
             {searchQuery.length > 0 && (
               <TouchableOpacity onPress={() => setSearchQuery('')} style={styles.clearSearch}>
-                <Ionicons name="close-circle" size={18} color={colors.textSecondary} />
+                <XCircleIcon weight="fill" size={18} color={colors.textSecondary} />
               </TouchableOpacity>
             )}
           </View>
@@ -317,11 +324,11 @@ export default function SearchScreen() {
                   }}
                 >
                   <View style={[styles.recentIcon, { backgroundColor: colors.surface }]}>
-                    <Ionicons name="time-outline" size={16} color={colors.textSecondary} />
+                    <ClockIcon weight="regular" size={16} color={colors.textSecondary} />
                   </View>
                   <Text style={[styles.searchItemText, { color: colors.text }]}>{search}</Text>
                   <TouchableOpacity onPress={() => removeRecentSearch(search)} style={styles.removeButton}>
-                    <Ionicons name="close" size={16} color={colors.textSecondary} />
+                    <XIcon weight="bold" size={16} color={colors.textSecondary} />
                   </TouchableOpacity>
                 </TouchableOpacity>
               ))}
@@ -333,7 +340,7 @@ export default function SearchScreen() {
              return above */
           <View style={styles.emptyState}>
             <View style={[styles.emptyIconCircle, { backgroundColor: colors.surface }]}>
-              <Ionicons name="search-outline" size={32} color={colors.textSecondary} />
+              <MagnifyingGlassIcon weight="regular" size={32} color={colors.textSecondary} />
             </View>
             <Text style={[styles.emptyText, { color: colors.text }]}>No results found</Text>
             <Text style={[styles.emptySubtext, { color: colors.textSecondary }]}>

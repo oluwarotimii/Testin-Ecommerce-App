@@ -1,17 +1,18 @@
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch } from 'react-native';
-import { useState } from 'react';
+import { useState, ComponentType } from 'react';
 import { useRouter } from 'expo-router';
+import Constants from 'expo-constants';
 import { useThemeColors } from '@/hooks/useColorScheme';
 import { useTheme } from '@/context/ThemeContext';
 import { useAuth } from '@/context/AuthContext';
-import { Ionicons } from '@expo/vector-icons';
+import { ArrowLeftIcon, CaretRightIcon, SignOutIcon, MoonIcon, ShieldCheckIcon, IconProps } from 'phosphor-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { radius, fontFamily } from '@/constants/designTokens';
 
 type SettingsItem = {
   id: string;
   title: string;
-  icon: keyof typeof Ionicons.glyphMap;
+  icon: ComponentType<IconProps>;
   onPress: () => void;
   type?: 'switch';
   value?: boolean;
@@ -28,7 +29,7 @@ export default function SettingsScreen() {
     {
       id: 'appearance',
       title: 'Appearance',
-      icon: 'moon',
+      icon: MoonIcon,
       onPress: () => {
         const newScheme = darkMode ? 'light' : 'dark';
         setColorScheme(newScheme);
@@ -43,7 +44,7 @@ export default function SettingsScreen() {
     {
       id: 'privacy',
       title: 'Privacy Policy',
-      icon: 'shield-checkmark',
+      icon: ShieldCheckIcon,
       onPress: () => router.push('/privacy-policy'),
     },
   ];
@@ -59,7 +60,7 @@ export default function SettingsScreen() {
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={24} color={colors.text} />
+            <ArrowLeftIcon weight="bold" size={24} color={colors.text} />
           </TouchableOpacity>
           <Text style={[styles.title, { color: colors.text }]}>Settings</Text>
           <View style={{ width: 24 }} /> {/* Spacer for alignment */}
@@ -73,7 +74,7 @@ export default function SettingsScreen() {
               <View key={item.id} style={[styles.menuItem, { borderBottomColor: colors.border }]}>
                 <View style={styles.menuItemLeft}>
                   <View style={[styles.iconContainer, { backgroundColor: colors.surface }]}>
-                    <Ionicons name={item.icon} size={20} color={colors.primary} />
+                    <item.icon weight="regular" size={20} color={colors.primary} />
                   </View>
                   <Text style={[styles.menuItemText, { color: colors.text }]}>{item.title}</Text>
                 </View>
@@ -86,7 +87,7 @@ export default function SettingsScreen() {
                   />
                 ) : (
                   <TouchableOpacity onPress={item.onPress}>
-                    <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
+                    <CaretRightIcon weight="bold" size={20} color={colors.textSecondary} />
                   </TouchableOpacity>
                 )}
               </View>
@@ -105,11 +106,11 @@ export default function SettingsScreen() {
               >
                 <View style={styles.menuItemLeft}>
                   <View style={[styles.iconContainer, { backgroundColor: colors.surface }]}>
-                    <Ionicons name={item.icon} size={20} color={colors.primary} />
+                    <item.icon weight="regular" size={20} color={colors.primary} />
                   </View>
                   <Text style={[styles.menuItemText, { color: colors.text }]}>{item.title}</Text>
                 </View>
-                <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
+                <CaretRightIcon weight="bold" size={20} color={colors.textSecondary} />
               </TouchableOpacity>
             ))}
           </View>
@@ -122,7 +123,7 @@ export default function SettingsScreen() {
               style={[styles.logoutButton, { backgroundColor: colors.surface }]}
               onPress={handleLogout}
             >
-              <Ionicons name="log-out" size={20} color={colors.error} />
+              <SignOutIcon weight="fill" size={20} color={colors.error} />
               <Text style={[styles.logoutText, { color: colors.error }]}>Sign Out</Text>
             </TouchableOpacity>
           </View>
@@ -130,7 +131,9 @@ export default function SettingsScreen() {
 
         {/* App Version */}
         <View style={styles.footer}>
-          <Text style={[styles.versionText, { color: colors.textSecondary }]}>Techin Mobile v1.0.0</Text>
+          <Text style={[styles.versionText, { color: colors.textSecondary }]}>
+            {Constants.expoConfig?.name || 'Femtech'} v{Constants.expoConfig?.version || '1.0.0'}
+          </Text>
         </View>
       </ScrollView>
     </SafeAreaView>

@@ -4,7 +4,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useThemeColors } from '@/hooks/useColorScheme';
 import { useCart } from '@/context/CartContext';
 import { useTheme } from '@/context/ThemeContext';
-import { Ionicons } from '@expo/vector-icons';
+import { HouseIcon, ListIcon, TagIcon, ShoppingCartIcon, UserIcon, IconProps } from 'phosphor-react-native';
+import type { ComponentType } from 'react';
 
 interface CustomTabBarProps {
   state: any;
@@ -71,17 +72,12 @@ const CustomTabBar: React.FC<CustomTabBarProps> = ({ state, descriptors, navigat
   const activeTintColor = colors.primary;
   const inactiveTintColor = colors.textSecondary;
 
-  const tabIcons = {
-    index: 'home',
-    categories: 'menu',
-    awoof: 'pricetag',
-    cart: 'cart',
-    account: 'person',
-  };
-
-  const getIconName = (routeName: string, focused: boolean): any => {
-    const baseIcon = tabIcons[routeName as keyof typeof tabIcons] || 'help';
-    return focused ? baseIcon : `${baseIcon}-outline`;
+  const tabIcons: Record<string, ComponentType<IconProps>> = {
+    index: HouseIcon,
+    categories: ListIcon,
+    awoof: TagIcon,
+    cart: ShoppingCartIcon,
+    account: UserIcon,
   };
 
   const renderTab = (route: any, index: number) => {
@@ -89,7 +85,7 @@ const CustomTabBar: React.FC<CustomTabBarProps> = ({ state, descriptors, navigat
     const focused = state.index === index;
     const { options } = descriptors[key];
     const label = options.title || name;
-    const iconName = getIconName(name, focused);
+    const TabIcon = tabIcons[name] || UserIcon;
 
     const isAwoof = name === 'awoof';
     const awoofColor = '#ff0000'; // Gold color to make it pop
@@ -128,8 +124,8 @@ const CustomTabBar: React.FC<CustomTabBarProps> = ({ state, descriptors, navigat
               isAwoof && { transform: [{ scale: pulseAnim }] }
             ]}
           >
-            <Ionicons
-              name={iconName}
+            <TabIcon
+              weight={focused ? 'fill' : 'regular'}
               size={isAwoof ? 26 : 24} // Slightly larger for Awoof
               color={isAwoof ? awoofColor : (focused ? activeTintColor : inactiveTintColor)}
             />

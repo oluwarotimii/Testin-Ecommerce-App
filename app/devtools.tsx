@@ -3,7 +3,7 @@ import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { useThemeColors } from '@/hooks/useColorScheme';
 import { useTheme } from '@/context/ThemeContext';
-import { Ionicons } from '@expo/vector-icons';
+import { CaretUpIcon, CaretDownIcon, CaretRightIcon } from 'phosphor-react-native';
 
 export default function DevToolsScreen() {
   const router = useRouter();
@@ -84,11 +84,11 @@ export default function DevToolsScreen() {
             <Text style={[styles.sectionTitle, { color: colors.text }]}>
               {sectionName}
             </Text>
-            <Ionicons
-              name={expandedSection === sectionName ? 'chevron-up' : 'chevron-down'}
-              size={20}
-              color={colors.textSecondary}
-            />
+            {expandedSection === sectionName ? (
+              <CaretUpIcon weight="bold" size={20} color={colors.textSecondary} />
+            ) : (
+              <CaretDownIcon weight="bold" size={20} color={colors.textSecondary} />
+            )}
           </TouchableOpacity>
 
           {expandedSection === sectionName && (
@@ -102,8 +102,8 @@ export default function DevToolsScreen() {
                   <Text style={[styles.screenItemText, { color: colors.text }]}>
                     {screen.name}
                   </Text>
-                  <Ionicons
-                    name="chevron-forward"
+                  <CaretRightIcon
+                    weight="bold"
                     size={20}
                     color={colors.textSecondary}
                   />

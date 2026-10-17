@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { Image as RNImage, ImageProps as RNImageProps, StyleSheet, TouchableOpacity } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { ImageIcon, ArrowsClockwiseIcon } from 'phosphor-react-native';
 import { useThemeColors } from '@/hooks/useColorScheme';
 
 // Safe Image component that handles the DOM constructor issue and image loading errors.
@@ -78,9 +78,9 @@ const SafeImage: React.FC<RNImageProps> = (props) => {
         style={[styles.placeholderContainer, props.style, { backgroundColor: colors.surface }]}
         onPress={handleRetry}
       >
-        <Ionicons name="image-outline" size={32} color={colors.textSecondary} />
-        <Ionicons
-          name="refresh"
+        <ImageIcon size={32} color={colors.textSecondary} />
+        <ArrowsClockwiseIcon
+          weight="bold"
           size={16}
           color={colors.primary}
           style={styles.retryIcon}

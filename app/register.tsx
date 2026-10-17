@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
 import { useThemeColors } from '@/hooks/useColorScheme';
-import { Ionicons } from '@expo/vector-icons';
+import { ArrowLeftIcon, UserIcon, EnvelopeIcon, PhoneIcon, LockIcon, EyeIcon, EyeSlashIcon } from 'phosphor-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Button from '@/components/Button';
 import { radius, fontFamily } from '@/constants/designTokens';
@@ -72,7 +72,7 @@ export default function RegisterScreen() {
               style={styles.backButton}
               onPress={() => router.push('/(tabs)')}
             >
-              <Ionicons name="arrow-back" size={24} color={colors.primary} />
+              <ArrowLeftIcon weight="bold" size={24} color={colors.primary} />
             </TouchableOpacity>
 
             <View style={styles.header}>
@@ -95,7 +95,7 @@ export default function RegisterScreen() {
                 </View>
               ) : null}
               <View style={[styles.inputContainer, { backgroundColor: colors.surface }]}>
-                <Ionicons name="person-outline" size={20} color={colors.textSecondary} style={styles.inputIcon} />
+                <UserIcon weight="regular" size={20} color={colors.textSecondary} style={styles.inputIcon} />
                 <TextInput
                   style={[styles.input, { color: colors.text }]}
                   placeholder="First Name"
@@ -106,7 +106,7 @@ export default function RegisterScreen() {
               </View>
 
               <View style={[styles.inputContainer, { backgroundColor: colors.surface }]}>
-                <Ionicons name="person-outline" size={20} color={colors.textSecondary} style={styles.inputIcon} />
+                <UserIcon weight="regular" size={20} color={colors.textSecondary} style={styles.inputIcon} />
                 <TextInput
                   style={[styles.input, { color: colors.text }]}
                   placeholder="Last Name"
@@ -117,7 +117,7 @@ export default function RegisterScreen() {
               </View>
 
               <View style={[styles.inputContainer, { backgroundColor: colors.surface }]}>
-                <Ionicons name="mail-outline" size={20} color={colors.textSecondary} style={styles.inputIcon} />
+                <EnvelopeIcon weight="regular" size={20} color={colors.textSecondary} style={styles.inputIcon} />
                 <TextInput
                   style={[styles.input, { color: colors.text }]}
                   placeholder="Email"
@@ -130,7 +130,7 @@ export default function RegisterScreen() {
               </View>
 
               <View style={[styles.inputContainer, { backgroundColor: colors.surface }]}>
-                <Ionicons name="call-outline" size={20} color={colors.textSecondary} style={styles.inputIcon} />
+                <PhoneIcon weight="regular" size={20} color={colors.textSecondary} style={styles.inputIcon} />
                 <TextInput
                   style={[styles.input, { color: colors.text }]}
                   placeholder="Phone Number"
@@ -142,7 +142,7 @@ export default function RegisterScreen() {
               </View>
 
               <View style={[styles.inputContainer, { backgroundColor: colors.surface }]}>
-                <Ionicons name="lock-closed-outline" size={20} color={colors.textSecondary} style={styles.inputIcon} />
+                <LockIcon weight="regular" size={20} color={colors.textSecondary} style={styles.inputIcon} />
                 <TextInput
                   style={[styles.input, { color: colors.text }]}
                   placeholder="Password"
@@ -156,15 +156,15 @@ export default function RegisterScreen() {
                   style={styles.eyeIcon}
                 >
                   {showPassword ? (
-                    <Ionicons name="eye-off-outline" size={20} color={colors.textSecondary} />
+                    <EyeSlashIcon weight="regular" size={20} color={colors.textSecondary} />
                   ) : (
-                    <Ionicons name="eye-outline" size={20} color={colors.textSecondary} />
+                    <EyeIcon weight="regular" size={20} color={colors.textSecondary} />
                   )}
                 </TouchableOpacity>
               </View>
 
               <View style={[styles.inputContainer, { backgroundColor: colors.surface }]}>
-                <Ionicons name="lock-closed-outline" size={20} color={colors.textSecondary} style={styles.inputIcon} />
+                <LockIcon weight="regular" size={20} color={colors.textSecondary} style={styles.inputIcon} />
                 <TextInput
                   style={[styles.input, { color: colors.text }]}
                   placeholder="Confirm Password"
@@ -178,9 +178,9 @@ export default function RegisterScreen() {
                   style={styles.eyeIcon}
                 >
                   {showConfirmPassword ? (
-                    <Ionicons name="eye-off-outline" size={20} color={colors.textSecondary} />
+                    <EyeSlashIcon weight="regular" size={20} color={colors.textSecondary} />
                   ) : (
-                    <Ionicons name="eye-outline" size={20} color={colors.textSecondary} />
+                    <EyeIcon weight="regular" size={20} color={colors.textSecondary} />
                   )}
                 </TouchableOpacity>
               </View>

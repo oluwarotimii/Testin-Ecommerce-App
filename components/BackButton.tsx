@@ -1,6 +1,6 @@
 import { TouchableOpacity, StyleSheet, ViewStyle } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
+import { ArrowLeftIcon } from 'phosphor-react-native';
 import { useThemeColors } from '@/hooks/useColorScheme';
 
 
@@ -24,7 +24,7 @@ export default function BackButton({ onPress, style }: BackButtonProps) {
 
     return (
         <TouchableOpacity onPress={handlePress} style={[styles.button, style]}>
-            <Ionicons name="arrow-back" size={24} color={colors.text} />
+            <ArrowLeftIcon weight="bold" size={24} color={colors.text} />
         </TouchableOpacity>
     );
 }

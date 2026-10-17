@@ -2,7 +2,15 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl } 
 import { useState } from 'react';
 import { useRouter } from 'expo-router';
 import { useThemeColors } from '@/hooks/useColorScheme';
-import { Ionicons } from '@expo/vector-icons';
+import {
+  PackageIcon,
+  TagIcon,
+  InfoIcon,
+  BellIcon,
+  ArrowLeftIcon,
+  BellSlashIcon,
+  CheckCircleIcon,
+} from 'phosphor-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { radius, fontFamily } from '@/constants/designTokens';
 
@@ -51,13 +59,13 @@ export default function NotificationsScreen() {
   const getNotificationIcon = (type: string) => {
     switch (type) {
       case 'order':
-        return <Ionicons name="cube" size={20} color={colors.primary} />;
+        return <PackageIcon weight="fill" size={20} color={colors.primary} />;
       case 'promotion':
-        return <Ionicons name="pricetag" size={20} color="#042861" />;
+        return <TagIcon weight="fill" size={20} color="#042861" />;
       case 'system':
-        return <Ionicons name="information-circle" size={20} color="#042861" />;
+        return <InfoIcon weight="fill" size={20} color="#042861" />;
       default:
-        return <Ionicons name="notifications" size={20} color={colors.primary} />;
+        return <BellIcon weight="fill" size={20} color={colors.primary} />;
     }
   };
 
@@ -77,7 +85,7 @@ export default function NotificationsScreen() {
       <View style={styles.header}>
         <View style={styles.headerLeft}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={24} color={colors.text} />
+            <ArrowLeftIcon weight="bold" size={24} color={colors.text} />
           </TouchableOpacity>
           <Text style={[styles.title, { color: colors.text }]}>Notifications</Text>
         </View>
@@ -112,7 +120,7 @@ export default function NotificationsScreen() {
       >
         {notifications.length === 0 ? (
           <View style={styles.emptyContainer}>
-            <Ionicons name="notifications-off" size={80} color={colors.textSecondary} />
+            <BellSlashIcon weight="regular" size={80} color={colors.textSecondary} />
             <Text style={[styles.emptyTitle, { color: colors.text }]}>No notifications</Text>
             <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>
               You&apos;ll see updates here when they arrive
@@ -146,7 +154,7 @@ export default function NotificationsScreen() {
                   </Text>
                   {!notification.read && (
                     <TouchableOpacity onPress={() => markAsRead(notification.id)}>
-                      <Ionicons name="checkmark-circle" size={20} color={colors.primary} />
+                      <CheckCircleIcon weight="fill" size={20} color={colors.primary} />
                     </TouchableOpacity>
                   )}
                 </View>

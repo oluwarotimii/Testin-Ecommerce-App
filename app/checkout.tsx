@@ -1,6 +1,7 @@
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter, useLocalSearchParams } from 'expo-router';
+import { useIsFocused } from '@react-navigation/native';
 import { useAuth } from '@/context/AuthContext';
 import { useCart } from '@/context/CartContext';
 import { useThemeColors } from '@/hooks/useColorScheme';
@@ -22,6 +23,7 @@ export default function CheckoutScreen() {
   const { apiService, isAuthenticated, loadingAuth, user } = useAuth();
   const { setCartCount } = useCart();
   const insets = useSafeAreaInsets();
+  const isFocused = useIsFocused();
   const [addresses, setAddresses] = useState<any[]>([]);
   const [cartItems, setCartItems] = useState<any[]>([]);
 
@@ -48,7 +50,7 @@ export default function CheckoutScreen() {
 
   const { productId, quantity } = useLocalSearchParams();
 
-  const fetchCheckoutData = useCallback(async () => {
+  const fetchAddresses = useCallback(async () => {
     try {
       setLoadingAddresses(true);
       const addressResponse = await apiService.getAddressBook();
@@ -66,6 +68,10 @@ export default function CheckoutScreen() {
     } finally {
       setLoadingAddresses(false);
     }
+  }, [apiService]);
+
+  const fetchCheckoutData = useCallback(async () => {
+    await fetchAddresses();
 
     try {
       setLoadingCart(true);
@@ -109,7 +115,7 @@ export default function CheckoutScreen() {
     } finally {
       setLoadingCart(false);
     }
-  }, [apiService, productId, quantity]);
+  }, [apiService, productId, quantity, fetchAddresses]);
 
   // Fetch shipping methods (delivery vs pickup is the only real choice here)
   const fetchPaymentAndShippingMethods = useCallback(async () => {
@@ -136,6 +142,16 @@ export default function CheckoutScreen() {
       fetchPaymentAndShippingMethods();
     }
   }, [isAuthenticated, fetchCheckoutData]);
+
+  // Refetch just the address on every focus - without this, saving an
+  // address on the Addresses screen and coming back here showed the stale
+  // (often empty) address this screen loaded on mount, making it look like
+  // the save never happened.
+  useEffect(() => {
+    if (isAuthenticated && isFocused) {
+      fetchAddresses();
+    }
+  }, [isFocused, isAuthenticated, fetchAddresses]);
 
   useEffect(() => {
     const subtotal = cartItems.reduce((sum, item) => {

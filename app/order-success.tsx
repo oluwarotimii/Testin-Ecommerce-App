@@ -1,7 +1,7 @@
 import { View, Text, StyleSheet } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useThemeColors } from '@/hooks/useColorScheme';
-import { Ionicons } from '@expo/vector-icons';
+import { CheckCircleIcon } from 'phosphor-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Button from '@/components/Button';
 import { radius, fontFamily, shadow } from '@/constants/designTokens';
@@ -15,7 +15,7 @@ export default function OrderSuccessScreen() {
         <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
             <View style={styles.content}>
                 <View style={styles.iconContainer}>
-                    <Ionicons name="checkmark-circle" size={100} color={colors.success} />
+                    <CheckCircleIcon weight="fill" size={100} color={colors.success} />
                 </View>
 
                 <Text style={[styles.title, { color: colors.text }]}>Order Placed!</Text>

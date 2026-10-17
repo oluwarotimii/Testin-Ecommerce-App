@@ -3,7 +3,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState } from 'react';
 import { useRouter } from 'expo-router';
 import { useThemeColors } from '@/hooks/useColorScheme';
-import { Ionicons } from '@expo/vector-icons';
+import { CaretLeftIcon, InfoIcon, LightbulbIcon } from 'phosphor-react-native';
 import * as Notifications from 'expo-notifications';
 import notificationService from '@/services/notificationService';
 
@@ -101,7 +101,7 @@ export default function TestNotificationsScreen() {
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={[styles.header, { backgroundColor: colors.surface }]}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <Ionicons name="chevron-back" size={24} color={colors.text} />
+          <CaretLeftIcon weight="bold" size={24} color={colors.text} />
         </TouchableOpacity>
         <Text style={[styles.title, { color: colors.text }]}>Test Push Notifications</Text>
         <View style={styles.placeholder} />
@@ -110,7 +110,7 @@ export default function TestNotificationsScreen() {
       <ScrollView style={styles.content} contentContainerStyle={styles.scrollContent}>
         {/* Info Card */}
         <View style={[styles.infoCard, { backgroundColor: colors.surface }]}>
-          <Ionicons name="information-circle" size={48} color={colors.primary} />
+          <InfoIcon weight="fill" size={48} color={colors.primary} />
           <Text style={[styles.infoTitle, { color: colors.text }]}>How to Test</Text>
           <Text style={[styles.infoText, { color: colors.textSecondary }]}>
             1. Enter a product/category slug or ID above (or use preset tests below)
@@ -246,7 +246,7 @@ export default function TestNotificationsScreen() {
 
         {/* Tips Card */}
         <View style={[styles.tipCard, { backgroundColor: colors.surface, borderColor: colors.info }]}>
-          <Ionicons name="bulb" size={24} color={colors.info} />
+          <LightbulbIcon weight="fill" size={24} color={colors.info} />
           <View style={styles.tipContent}>
             <Text style={[styles.tipTitle, { color: colors.text }]}>Testing Tips</Text>
             <Text style={[styles.tipText, { color: colors.textSecondary }]}>

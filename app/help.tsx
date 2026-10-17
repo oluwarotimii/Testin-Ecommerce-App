@@ -1,8 +1,17 @@
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Linking, Platform } from 'react-native';
-import { useState } from 'react';
+import { useState, ComponentType } from 'react';
 import { useRouter } from 'expo-router';
 import { useThemeColors } from '@/hooks/useColorScheme';
-import { Ionicons } from '@expo/vector-icons';
+import {
+  ArrowLeftIcon,
+  CaretRightIcon,
+  CaretUpIcon,
+  CaretDownIcon,
+  WhatsappLogoIcon,
+  EnvelopeIcon,
+  PhoneIcon,
+  IconProps,
+} from 'phosphor-react-native';
 import { radius, fontFamily } from '@/constants/designTokens';
 
 export default function HelpScreen() {
@@ -38,25 +47,25 @@ export default function HelpScreen() {
     }
   ];
 
-  const contactOptions: { id: string; title: string; icon: keyof typeof Ionicons.glyphMap; subtitle: string; onPress: () => void }[] = [
+  const contactOptions: { id: string; title: string; icon: ComponentType<IconProps>; subtitle: string; onPress: () => void }[] = [
     {
       id: 'whatsapp',
       title: 'WhatsApp Support',
-      icon: 'chatbubbles',
+      icon: WhatsappLogoIcon,
       subtitle: '+2348051516565',
       onPress: () => Linking.openURL('https://wa.me/+2348051516565')
     },
     {
       id: 'email',
       title: 'Email Support',
-      icon: 'mail',
+      icon: EnvelopeIcon,
       subtitle: 'support@femtechit.com',
       onPress: () => Linking.openURL('mailto:support@femtechit.com')
     },
     {
       id: 'phone',
       title: 'Phone Support',
-      icon: 'call',
+      icon: PhoneIcon,
       subtitle: '+2348051516565',
       onPress: () => Linking.openURL(`tel:${Platform.OS === 'ios' ? '+' : ''}+2348051516565`)
     },
@@ -67,7 +76,7 @@ export default function HelpScreen() {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color={colors.text} />
+          <ArrowLeftIcon weight="bold" size={24} color={colors.text} />
         </TouchableOpacity>
         <Text style={[styles.title, { color: colors.text }]}>Help & Support</Text>
         <View style={{ width: 24 }} /> {/* Spacer for alignment */}
@@ -86,14 +95,14 @@ export default function HelpScreen() {
               >
                 <View style={styles.menuItemLeft}>
                   <View style={[styles.iconContainer, { backgroundColor: colors.surface }]}>
-                    <Ionicons name={item.icon} size={20} color={colors.primary} />
+                    <item.icon weight="regular" size={20} color={colors.primary} />
                   </View>
                   <View>
                     <Text style={[styles.menuItemText, { color: colors.text }]}>{item.title}</Text>
                     <Text style={[styles.menuItemSubtitle, { color: colors.textSecondary }]}>{item.subtitle}</Text>
                   </View>
                 </View>
-                <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
+                <CaretRightIcon weight="bold" size={20} color={colors.textSecondary} />
               </TouchableOpacity>
             ))}
           </View>
@@ -113,7 +122,11 @@ export default function HelpScreen() {
                 >
                   <View style={styles.faqHeader}>
                     <Text style={[styles.faqQuestion, { color: colors.text }]}>{faq.question}</Text>
-                    <Ionicons name={isExpanded ? 'chevron-up' : 'chevron-down'} size={20} color={colors.textSecondary} />
+                    {isExpanded ? (
+                      <CaretUpIcon weight="bold" size={20} color={colors.textSecondary} />
+                    ) : (
+                      <CaretDownIcon weight="bold" size={20} color={colors.textSecondary} />
+                    )}
                   </View>
                   {isExpanded && (
                     <Text style={[styles.faqAnswer, { color: colors.text }]}>{faq.answer}</Text>

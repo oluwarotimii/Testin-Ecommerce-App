@@ -3,7 +3,17 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
 import { useThemeColors } from '@/hooks/useColorScheme';
-import { Ionicons } from '@expo/vector-icons';
+import {
+  ArrowLeftIcon,
+  UserCircleIcon,
+  PhoneIcon,
+  PackageIcon,
+  MapPinIcon,
+  HeartIcon,
+  SignOutIcon,
+  TrashIcon,
+  CaretRightIcon,
+} from 'phosphor-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Button from '@/components/Button';
 import { radius, fontFamily, shadow } from '@/constants/designTokens';
@@ -122,13 +132,13 @@ export default function ProfileScreen() {
       <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={24} color={colors.text} />
+            <ArrowLeftIcon weight="bold" size={24} color={colors.text} />
           </TouchableOpacity>
           <Text style={[styles.title, { color: colors.text }]}>Profile</Text>
         </View>
 
         <View style={[styles.emptyContainer, { backgroundColor: colors.background }]}>
-          <Ionicons name="person-circle-outline" size={80} color={colors.textSecondary} style={styles.emptyIcon} />
+          <UserCircleIcon weight="regular" size={80} color={colors.textSecondary} style={styles.emptyIcon} />
           <Text style={[styles.emptyTitle, { color: colors.text }]}>You are not logged in.</Text>
           <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>Please log in to view and edit your profile.</Text>
           <Button title="Log In" onPress={() => router.push('/login')} style={{ marginBottom: 15 }} />
@@ -152,7 +162,7 @@ export default function ProfileScreen() {
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={24} color={colors.text} />
+            <ArrowLeftIcon weight="bold" size={24} color={colors.text} />
           </TouchableOpacity>
           <Text style={[styles.title, { color: colors.text }]}>My Profile</Text>
           <TouchableOpacity onPress={() => router.push('/edit-profile')}>
@@ -181,7 +191,7 @@ export default function ProfileScreen() {
 
           <View style={styles.infoGrid}>
             <View style={styles.infoItem}>
-              <Ionicons name="call-outline" size={20} color={colors.textSecondary} />
+              <PhoneIcon weight="regular" size={20} color={colors.textSecondary} />
               <Text style={[styles.infoText, { color: colors.text }]}>{userData.phone || user?.billing?.phone || user?.mobile || user?.phone_number || 'No phone number'}</Text>
             </View>
           </View>
@@ -191,31 +201,31 @@ export default function ProfileScreen() {
         <View style={styles.menuContainer}>
           <TouchableOpacity style={[styles.menuItem, { backgroundColor: colors.surface }]} onPress={() => router.push('/orders')}>
             <View style={[styles.menuIcon, { backgroundColor: '#E3F2FD' }]}>
-              <Ionicons name="cube-outline" size={22} color="#2196F3" />
+              <PackageIcon weight="regular" size={22} color="#2196F3" />
             </View>
             <Text style={[styles.menuText, { color: colors.text }]}>My Orders</Text>
-            <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
+            <CaretRightIcon weight="bold" size={20} color={colors.textSecondary} />
           </TouchableOpacity>
 
           <TouchableOpacity style={[styles.menuItem, { backgroundColor: colors.surface }]} onPress={() => router.push('/addresses')}>
             <View style={[styles.menuIcon, { backgroundColor: '#E8F5E9' }]}>
-              <Ionicons name="location-outline" size={22} color="#4CAF50" />
+              <MapPinIcon weight="regular" size={22} color="#4CAF50" />
             </View>
             <Text style={[styles.menuText, { color: colors.text }]}>Shipping Addresses</Text>
-            <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
+            <CaretRightIcon weight="bold" size={20} color={colors.textSecondary} />
           </TouchableOpacity>
 
           <TouchableOpacity style={[styles.menuItem, { backgroundColor: colors.surface }]} onPress={() => router.push('/wishlist')}>
             <View style={[styles.menuIcon, { backgroundColor: '#FFEBEE' }]}>
-              <Ionicons name="heart-outline" size={22} color="#F44336" />
+              <HeartIcon weight="regular" size={22} color="#F44336" />
             </View>
             <Text style={[styles.menuText, { color: colors.text }]}>My Wishlist</Text>
-            <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
+            <CaretRightIcon weight="bold" size={20} color={colors.textSecondary} />
           </TouchableOpacity>
 
           <TouchableOpacity style={[styles.menuItem, { backgroundColor: colors.surface, marginTop: 20 }]} onPress={handleLogout}>
             <View style={[styles.menuIcon, { backgroundColor: '#FFEBEE' }]}>
-              <Ionicons name="log-out-outline" size={22} color="#D32F2F" />
+              <SignOutIcon weight="regular" size={22} color="#D32F2F" />
             </View>
             <Text style={[styles.menuText, { color: '#D32F2F' }]}>Log Out</Text>
           </TouchableOpacity>
@@ -226,7 +236,7 @@ export default function ProfileScreen() {
             onPress={() => handleDeleteAccount()}
           >
             <View style={[styles.menuIcon, { backgroundColor: '#FFEBEE' }]}>
-              <Ionicons name="trash-outline" size={22} color="#F44336" />
+              <TrashIcon weight="regular" size={22} color="#F44336" />
             </View>
             <Text style={[styles.menuText, { color: '#D32F2F' }]}>Delete Account</Text>
           </TouchableOpacity>
